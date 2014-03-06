@@ -1,2 +1,4 @@
-TOOLCHAIN_DIR=toolchains
-EABI_TARGET=arm-unknown-eabi
+TOOLCHAIN_DIR=toolchain
+
+BARE_METAL_TUPLE=arm-none-eabi
+BARE_METAL_TARGET:=$(BARE_METAL_TUPLE)-old
