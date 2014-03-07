@@ -21,7 +21,7 @@ run2: flash.bin
 
 flash.bin: kernel.img
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel2.img
-	dd if=/dev/zero of=flash.bin bs=1 count=6M
+	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=1
 	dd if=kernel2.img of=flash.bin conv=notrunc bs=1 seek=2M
 
