@@ -4,6 +4,15 @@ PREFIX=`pwd`/arm-none-eabi
 TARGET=`pwd`/target
 URL=ftp://ftp.gnu.org/gnu
 
+# libraries
+GMP_VERSION=4.2
+GMP_URL=https://gmplib.org/download/gmp
+MPFR_VERSION=2.4.2
+MPFR_URL=http://mpfr.loria.fr
+MPC_VERSION=0.8.2
+MPC_URL=http://www.multiprecision.org/mpc/download
+
+# toolchain
 GCC_VERSION=4.8.1
 BINUTILS_VERSION=2.24
 NEWLIB_VERSION=2.0.0
@@ -18,6 +27,18 @@ mkdir -p ${TARGET}/src
 mkdir -p ${TARGET}/build
 
 cd ${TARGET}/orig
+
+if [ ! -e gmp-${GMP_VERSION}.tar.bz2 ]; then
+        wget ${GMP_URL}/gmp-${GMP_VERSION}.tar.bz2 || exit 1;
+fi
+
+if [ ! -e mpfr-${MPFR_VERSION}.tar.bz2 ]; then
+        wget ${MPFR_URL}/mpfr-${MPFR_VERSION}/mpfr-${MPFR_VERSION}.tar.bz2 || exit 1;
+fi
+
+if [ ! -e mpc-${MPC_VERSION}.tar.gz ]; then
+        wget ${MPC_URL}/mpc-${MPC_VERSION}.tar.gz || exit 1;
+fi
 
 if [ ! -e gcc-${GCC_VERSION}.tar.gz ]; then
 	wget ${URL}/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz || exit 1;
@@ -40,6 +61,18 @@ fi
 
 cd ${TARGET}/src
 
+if [ ! -d ${TARGET}/src/gmp-${GMP_VERSION} ]; then
+   tar xvf ../orig/gmp-${GMP_VERSION}.tar.bz2 || exit 1;
+fi
+
+if [ ! -d ${TARGET}/src/mpfr-${MPFR_VERSION} ]; then
+   tar xvf ../orig/mpfr-${MPFR_VERSION}.tar.bz2 || exit 1;
+fi
+
+if [ ! -d ${TARGET}/src/mpc-${MPC_VERSION} ]; then
+   tar xvf ../orig/mpc-${MPC_VERSION}.tar.gz || exit 1;
+fi
+
 if [ ! -d ${TARGET}/src/gcc-${GCC_VERSION} ]; then 
    tar xvf ../orig/gcc-${GCC_VERSION}.tar.gz || exit 1;
 fi
@@ -58,6 +91,29 @@ fi
 
 if [ ! -d ${TARGET}/src/newlib-${NEWLIB_VERSION} ]; then
 	tar xvf ../orig/newlib-${NEWLIB_VERSION}.tar.gz || exit 1;
+fi
+
+
+
+if [ ! -d ${TARGET}/build/gmp-${GMP_VERSION} ]; then
+   mkdir -p ${TARGET}/build/gmp-${GMP_VERSION}
+   cd ${TARGET}/build/gmp-${GMP_VERSION}
+   ../../src/gmp-${GMP_VERSION}/configure || exit 1;
+   make || exit 1;
+fi
+
+if [ ! -d ${TARGET}/build/mpfr-${MPFR_VERSION} ]; then
+   mkdir -p ${TARGET}/build/mpfr-${MPFR_VERSION}
+   cd ${TARGET}/build/mpfr-${MPFR_VERSION}
+   ../../src/mpfr-${MPFR_VERSION}/configure --with-gmp-build=../gmp-${GMP_VERSION} || exit 1;
+   make || exit 1;
+fi
+
+if [ ! -d ${TARGET}/build/mpc-${MPC_VERSION} ]; then
+   mkdir -p ${TARGET}/build/mpc-${MPC_VERSION}
+   cd ${TARGET}/build/mpc-${MPC_VERSION}
+   ../../src/mpc-${MPC_VERSION}/configure --with-gmp=${TARGET}/build/gmp-${GMP_VERSION} --with-mpfr=${TARGET}/build/mpfr-${MPFR_VERSION} || exit 1;
+   make || exit 1;
 fi
 
 if [ ! -e ${PREFIX}/bin/arm-none-eabi-ld ]; then
@@ -90,6 +146,9 @@ cd ${TARGET}/build/gcc-${GCC_VERSION}
 	--with-system-zlib \
 	--enable-languages="c" \
 	--without-docdir \
+  	--with-gmp=../gmp-${GMP_VERSION} \
+  	--with-mpfr=../mpfr-${MPFR_VERSION} \
+  	--with-mpc=../mpc-${MPC_VERSION} \
 	--with-newlib \
 	--with-headers=../../src/newlib-${NEWLIB_VERSION}/newlib/libc/include || exit 1;
 make all-gcc install-gcc || exit 1;
