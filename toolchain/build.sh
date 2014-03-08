@@ -106,7 +106,7 @@ if [ ! -d ${TARGET}/build/mpfr-${MPFR_VERSION} ]; then
    mkdir -p ${TARGET}/build/mpfr-${MPFR_VERSION}
    cd ${TARGET}/build/mpfr-${MPFR_VERSION}
    ../../src/mpfr-${MPFR_VERSION}/configure \
-	--prefix=. \
+	--prefix=${TARGET}/build/mpfr-${MPFR_VERSION} \
 	--with-gmp-build=../gmp-${GMP_VERSION} || exit 1;
    make || exit 1;
    make install || exit 1;
