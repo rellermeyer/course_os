@@ -70,7 +70,7 @@ if [ ! -e ${PREFIX}/bin/arm-none-eabi-ld ]; then
 		--with-gnu-ld \
 		--disable-nls \
 		--disable-werror || exit 1;
-	make all $$ make install || exit 1;
+	make all && make install || exit 1;
 fi
 export PATH="$PATH:${PREFIX}/bin"
 
