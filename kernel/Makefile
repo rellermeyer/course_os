@@ -5,6 +5,8 @@ CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
+MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
+
 OBJS=start.o uart.o startup.o
 
 OFFSET:=0x24DB0
@@ -23,7 +25,7 @@ kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary kernel.elf kernel.bin
 
 kernel.img: kernel.bin
-	mkimage -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
+	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
 
 course_os.img: kernel.img 
 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
