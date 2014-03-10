@@ -31,7 +31,7 @@ course_os.img: kernel.img
 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
 
 startup.o: startup.s
-	$(AS) -mcpu=arm926ej-s -g startup.s -o startup.o
+	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
 	$(CC) -c -mcpu=arm1176jzf-s $< -o $@
