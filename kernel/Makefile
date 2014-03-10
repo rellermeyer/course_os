@@ -9,14 +9,11 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 OBJS=start.o uart.o startup.o
 
-OFFSET:=0x24DB0
-# printf "bootm 0x%X\n" $(expr $(stat -c%s ../u-boot/u-boot-2010.03/u-boot.bin) + 65536)
-
 all: course_os.img
 
 run: course_os.img
-	echo $(OFFSET)
-	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img -append "bootm 0x24DB0"
+	offset.sh
+	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
