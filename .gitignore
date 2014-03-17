@@ -1,8 +1,9 @@
 #these were not originally apart of the repo -- appeared after build
 /kernel/kernel.bin
 /toolchain/target/
-/u-boot/u-boot-2010.03.tar.bz2
-/u-boot/u-boot-2010.03/
+/u-boot/u-boot-*
+/qemu/
+!/qemu/build.sh
 
 #always exclude these from being pushed
 *.o
