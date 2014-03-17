@@ -12,7 +12,7 @@ OBJS=start.o uart.o startup.o
 all: course_os.img
 
 run: course_os.img
-	./offset.sh
+	./offset.sh $(UBOOT_VERSION)
 	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
 
 kernel.elf: $(OBJS)
