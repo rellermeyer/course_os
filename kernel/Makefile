@@ -12,6 +12,7 @@ OBJS=start.o uart.o startup.o
 all: course_os.img
 
 run: course_os.img
+	./offset.sh $(UBOOT_VERSION)
 	./offset.sh $(UBOOT_VERSION) > boot-commands
 	$(MKIMAGE) -T script -C none -n 'Script File' -d boot-commands bootcom.img
 	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
