@@ -4,6 +4,7 @@
 /u-boot/u-boot-*
 /qemu/
 !/qemu/build.sh
+/kernel/boot-commands
 
 #always exclude these from being pushed
 *.o
