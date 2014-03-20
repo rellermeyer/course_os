@@ -53,7 +53,7 @@ typedef struct process{
 
   uint32_t total_cpu_time;
 
-} process;
+} pcb;
 
 /* interface
 processes can
