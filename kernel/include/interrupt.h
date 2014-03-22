@@ -11,8 +11,10 @@
  *	+ UND - processing an undefined instruction exception
  *	+ SYS - also protecteed mode for OS --if anyone wants to clarify, feel free--
  *	These modes can be entered or exited by modifying the CPSR (status register)
+ *  - When an interrupt occurs, the apropriate bits are pulled 
  *
- *  ARM has two interrupt schemes: FIQ (fast interrupt), IRQ (normal interrupt)
+ *  - ARM has two interrupt lines: FIQ (fast interrupt), IRQ (normal interrupt)
+ *  - Our VIC multiplexes intterupts from multiple sources and feeds them to the processor as either FIQ or IRQ
  *  Basic interrupt control flow (no vectored interrupts, no nested interrupts) is as follows:
  *	Interrupt Occurs -> Core branches to FIQ or IRQ vector -> vector branches to hanlder \
  *		handler interfaces with VIC to determine source of interrupt -> branch to service routine \

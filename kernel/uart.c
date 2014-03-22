@@ -9,3 +9,9 @@ void print_uart0(const char *s) {
    }
 }
 
+void print_bits(uint32_t * c) {
+	int a = 31;
+	for( ; a >= 0; a--)
+		*c & (1 << a) ? print_uart0("1") : print_uart0("0");
+	print_uart0("\n");
+}
