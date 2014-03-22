@@ -20,24 +20,19 @@
  *		handler interfaces with VIC to determine source of interrupt -> branch to service routine \
  *
  */
-
+#include <stdint.h>
+#include "mmap.h"
 
 // these prototypes aren't complete
 void irq_enable(void);
 void irq_disable(void);
 void irq_handle(void);
-
 void irq_register_handler(void);
 // etc. etc.
 
 
 
-static inline unsigned long get_proc_status(void)
-{
-	unsigned long cpsr;
-	asm ("mrs %0, cpsr" : "=r"(cpsr));
-	return cpsr;
-}
+inline uint32_t get_proc_status(void); 
 
 
 /* VIC Interrupt Mappings */
