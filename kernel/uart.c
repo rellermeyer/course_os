@@ -28,6 +28,7 @@ void print_word_hex(uint32_t * c){
 		int a = *c & (0xF << (i*4));
 		a >>= (i*4);
 
+		// code was crashing when I tried to do this w/o a giant switch
 		switch(a){
 			case 0:
 				print_uart0("0");
