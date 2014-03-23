@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PREFIX=`pwd`/arm-none-eabi
-TARGET=`pwd`/target
+TARGET=/tmp/course_os/target
 URL=ftp://ftp.gnu.org/gnu
 
 # toolchain
@@ -115,3 +115,5 @@ mkdir -p ${TARGET}/build/gdb-${GDB_VERSION}
 cd ${TARGET}/build/gdb-${GDB_VERSION}
 ../../src/gdb-${GDB_VERSION}/configure --target=arm-none-eabi --prefix=${PREFIX} --disable-werror --enable-interwork --enable-multilib || exit 1;
 make all && make install || exit 1;
+
+rm -rf ${TARGET}
