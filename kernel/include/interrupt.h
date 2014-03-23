@@ -23,6 +23,11 @@
 #include <stdint.h>
 #include "mmap.h"
 
+#define IRQ_DISABLED	0x80	/* IRQs are masked when bit 7 of CPSR is pulled high */
+#define FIQ_DISABLED	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
+#define NO_INTERRUPTS	0xC0
+
+
 // these prototypes aren't complete
 void irq_enable(void);
 void irq_disable(void);
