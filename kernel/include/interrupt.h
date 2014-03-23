@@ -28,6 +28,16 @@
 #define NO_INTERRUPTS	0xC0
 
 
+// vector table handlers, should be loaded at 0x00 in this order!
+void reset_handler(void);		// 0x00
+void undef_instruction_handler(void);	// 0x04
+void software_interrupt_handler(void);	// 0x08
+void prefetch_abort_handler(void);	// 0x0c
+void data_abort_handler(void);		// 0x10
+void reserved_handler(void);		// 0x14
+void irq_handler(void);			// 0x18
+void fiq_handler(void);			// 0x1c
+
 // these prototypes aren't complete
 void irq_enable(void);
 void irq_disable(void);
