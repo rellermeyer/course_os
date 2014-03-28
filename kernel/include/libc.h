@@ -14,9 +14,11 @@
 
 #ifndef __libc_h
 #define __libc_h
-
+typedef unsigned int size_t;
 /* string.h type functionality for comparing strings or mem blocks */
-int memcmp ( const void *left, const void *right, size_t num );
-int strcmp ( const void *left, const void *right);
+int os_memcmp ( const void *left, const void *right, size_t num );
+int os_strcmp ( const char *left, const char *right);
 
 /* TODO: create print function for kernel debugging purposes */
+
+#endif
