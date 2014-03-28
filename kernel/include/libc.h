@@ -9,7 +9,8 @@
 *					This header provides function skeletons
 					for libc.c
 *
-*	Usage:	Compile into kernel
+*	Usage:	Compile into kernel. Adaptations of normal libc functions
+*			can be used by prepending os_ suffix.
 ********************************************************************/
 
 #ifndef __libc_h
