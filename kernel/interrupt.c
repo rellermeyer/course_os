@@ -23,11 +23,48 @@ inline uint32_t get_proc_status(void) {
 int ChangeIRQ(unsigned int NewState)
 {
   int my_cpsr;
-  asm(
-	"MRS my_cpsr, CPSR \n\t"                      /* get current program status */
-  	"ORR my_cpsr, my_cpsr, #0x80 \n\t"            /* set IRQ disable bit flag */
-  	"BIC my_cpsr, my_cpsr, NewState, LSL #7 \n\t" /* reset IRQ bit with new value */
-  	"MSR CPSR_c, my_cpsr \n\t"                    /* store updated program status */
+  NewState = NewState << 7;
+  asm
+  (
+	"MRS %[result], CPSR \n\t"                 /* get current program status */
+  	"ORR %[result], %[value], #0x80 \n\t"      /* set IRQ disable bit flag */
+  	"BIC %[result], %[value], %[state] \n\t"   /* reset IRQ bit with new value */
+		: [result]"=r"(my_cpsr)
+		: [value]"r"(my_cpsr), [state]"r"(NewState)
+		: // clobber list?
+  );
+  asm
+  (
+	"MSR CPSR_c, %[result] \n\t"                      /* store updated program status */
+		: // no output
+		: [result]"r"(my_cpsr)
+		: // clobber list?
+  );
+  return my_cpsr;
+}
+
+/* NewState=1 will enable FIQ, NewState=0 will disable FIQ
+   ARM core must be in a privileged mode, e.g. supervisor  */
+
+int ChangeFIQ(unsigned int NewState)
+{
+  int my_cpsr;
+  NewState = NewState << 6;
+  asm
+  (
+        "MRS %[result], CPSR \n\t"                 /* get current program status */
+        "ORR %[result], %[value], #0x40 \n\t"      /* set IRQ disable bit flag */
+        "BIC %[result], %[value], %[state] \n\t"   /* reset IRQ bit with new value */
+                : [result]"=r"(my_cpsr)
+                : [value]"r"(my_cpsr), [state]"r"(NewState)
+                : // clobber list?
+  );
+  asm
+  (
+        "MSR CPSR_c, %[result] \n\t"                      /* store updated program status */
+                : // no output
+                : [result]"r"(my_cpsr)
+                : // clobber list?
   );
   return my_cpsr;
 }
