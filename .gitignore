@@ -4,8 +4,6 @@
 /u-boot/u-boot-*
 /qemu/
 !/qemu/build.sh
-/kernel/boot-commands
-/kernel/versatile-overrides
 
 #always exclude these from being pushed
 *.o

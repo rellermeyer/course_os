@@ -20,7 +20,11 @@
 
 
 void start() {
-	print_uart0("CourseOS!\n");
+ 
+	print_uart0("arguments ");
+   	print_uart0(44 + p_bootargs);
+   	print_uart0("\n");
+   	print_uart0("CourseOS!\n");
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
 	/* TODO: intialize the vector table, stack space, etc. */
@@ -50,4 +54,3 @@ void start() {
         print_word_bits(&cpsr);
 
 }
-
