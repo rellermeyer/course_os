@@ -33,9 +33,21 @@ void start() {
 	cpsr = get_proc_status();
 	print_word_bits(&cpsr);
 	
-	
-	ChangeIRQ(0);
-        cpsr = get_proc_status();
+	// test enabling IRQ
+	cpsr = ChangeIRQ(1);
         print_word_bits(&cpsr);
+
+	// test disabling IRQ
+	cpsr = ChangeIRQ(0);	
+        print_word_bits(&cpsr);
+
+       // test enabling FIQ
+        cpsr = ChangeFIQ(1);
+        print_word_bits(&cpsr);
+
+        // test disabling FIQ
+        cpsr = ChangeFIQ(0);
+        print_word_bits(&cpsr);
+
 }
 
