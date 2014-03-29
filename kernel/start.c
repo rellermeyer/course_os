@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 /*
  *  A bit of background:
  *  - The ARM architecture has 7 modes of operation:
@@ -25,7 +27,15 @@ void start() {
 	asm volatile(
 		""
 	);
-
 	
+	/* testing */
+	uint32_t cpsr;
+	cpsr = get_proc_status();
+	print_word_bits(&cpsr);
+	
+	
+	ChangeIRQ(0);
+        cpsr = get_proc_status();
+        print_word_bits(&cpsr);
 }
 
