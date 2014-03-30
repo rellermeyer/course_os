@@ -24,21 +24,15 @@ int ChangeIRQ(unsigned int NewState)
 {
   int my_cpsr;
   NewState = NewState << 7;
-  asm
+  asm volatile
   (
 	"MRS %[result], CPSR \n\t"                 /* get current program status */
   	"ORR %[result], %[value], #0x80 \n\t"      /* set IRQ disable bit flag */
   	"BIC %[result], %[value], %[state] \n\t"   /* reset IRQ bit with new value */
+	"MSR CPSR_c, %[value] \n\t"                /* store updated program status */
 		: [result]"=r"(my_cpsr)
 		: [value]"r"(my_cpsr), [state]"r"(NewState)
-		: // clobber list?
-  );
-  asm
-  (
-	"MSR CPSR_c, %[result] \n\t"                      /* store updated program status */
-		: // no output
-		: [result]"r"(my_cpsr)
-		: // clobber list?
+		: // no clobber list needed
   );
   return my_cpsr;
 }
@@ -50,21 +44,15 @@ int ChangeFIQ(unsigned int NewState)
 {
   int my_cpsr;
   NewState = NewState << 6;
-  asm
+  asm volatile
   (
         "MRS %[result], CPSR \n\t"                 /* get current program status */
         "ORR %[result], %[value], #0x40 \n\t"      /* set IRQ disable bit flag */
         "BIC %[result], %[value], %[state] \n\t"   /* reset IRQ bit with new value */
+        "MSR CPSR_c, %[value] \n\t"                /* store updated program status */
                 : [result]"=r"(my_cpsr)
                 : [value]"r"(my_cpsr), [state]"r"(NewState)
-                : // clobber list?
-  );
-  asm
-  (
-        "MSR CPSR_c, %[result] \n\t"                      /* store updated program status */
-                : // no output
-                : [result]"r"(my_cpsr)
-                : // clobber list?
+                : // no clobber list needed
   );
   return my_cpsr;
 }
