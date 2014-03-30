@@ -111,7 +111,4 @@ typedef struct {
 		Elf_Addr	d_ptr;
 	}d_un;
 } Elf_Dyn;
-
-
-int isElf(FILE *f, Elf_Ehdr h);
 #endif
