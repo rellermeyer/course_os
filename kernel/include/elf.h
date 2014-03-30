@@ -6,11 +6,13 @@
 #ifndef _ELF_H_
 #define _ELF_H_
 
-typedef u32 Elf_Addr;	// Program Address
-typedef u16 Elf_Half;	// 16 bit 
-typedef u32 Elf_Off;	// File Offset
-typedef s32 Elf_Sword;	// Signed 32 bit int
-typedef u32 Elf_Word;	// Unsigned 32 bit int
+#include <stdint.h>
+#include <stdio.h>
+typedef uint32_t Elf_Addr;	// Program Address
+typedef uint16_t Elf_Half;	// 16 bit 
+typedef uint32_t Elf_Off;	// File Offset
+typedef int32_t Elf_Sword;	// Signed 32 bit int
+typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 #define EI_NIDENT	16
 
 /* Elf Header */
@@ -20,6 +22,21 @@ typedef u32 Elf_Word;	// Unsigned 32 bit int
 	EI_MAG2 = 'L'
 	EI_MAG3 = 'F'
 */
+
+/* Magic Numbers and preliminary info about file */
+#define EI_MAG0 	0	// 0x7f
+#define EI_MAG1		1	// 'E'
+#define EI_MAG2		2	// 'L'
+#define EI_MAG3		3	// 'F'
+#define EI_CLASS	4
+#define EI_DATA		5
+#define	EI_VERSION	6
+#define EI_OSABI	7	// Targeted operating system
+#define EI_ABIVERSION	8
+
+/* Defines what type of file it is */
+#define no_file_type	0
+
 typedef struct {
 	unsigned char 	e_ident[EI_NIDENT];	// How to interpret file
 	Elf_Half 	e_type;
@@ -94,4 +111,7 @@ typedef struct {
 		Elf_Addr	d_ptr;
 	}d_un;
 } Elf_Dyn;
-extern Elf_Dyn_DYNAMIC[];
+
+
+int isElf(FILE *f, Elf_Ehdr h);
+#endif
