@@ -20,6 +20,7 @@ typedef unsigned int size_t;
 int os_memcmp ( const void *left, const void *right, size_t num );
 int os_strcmp ( const char *left, const char *right);
 
+int os_printf (const char *str_buf, ...);
 /* TODO: create print function for kernel debugging purposes */
 
 #endif
