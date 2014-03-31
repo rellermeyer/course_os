@@ -5,24 +5,30 @@
 #include <string.h>
 #include <sys/stat.h>
 
-char* filePointer;
+unsigned char* filePointer;
 
-void increment_pointer()
+/* Gets value of bytes given a size of bytes */
+int get_value(int size)
 {
-	filePointer+=1;
-}
-char get_next_char()
-{
-	increment_pointer();
-	return *filePointer;
+	unsigned int value = 0;
+	unsigned int num = 0;
+	int i = 0;
+	while(i < size) {
+		num = *filePointer;
+		num = num << (8 * i);
+		value = value + num;
+		filePointer++;
+		i++;
+	}
+	return value;
 }
 
 int isElf(Elf_Ehdr h) {
 	// checks if elf file
-	char ELFMAG0 = get_next_char();	// 0x7f	
-	char ELFMAG1 = get_next_char();	// 'E'
-	char ELFMAG2 = get_next_char();	// 'L'
-	char ELFMAG3 = get_next_char();	// 'F'
+	char ELFMAG0 = get_value(1);	// 0x7f
+	char ELFMAG1 = get_value(1);	// 'E'
+	char ELFMAG2 = get_value(1);	// 'L'
+	char ELFMAG3 = get_value(1);	// 'F'
 	if(ELFMAG0 != 127 || ELFMAG1 != 'E' || ELFMAG2 != 'L' || ELFMAG3 != 'F')
 		return -1;
 	h.e_ident[EI_MAG0] = ELFMAG1;
@@ -34,26 +40,133 @@ int isElf(Elf_Ehdr h) {
 void read_elf_header(Elf_Ehdr h) {
 	int check = isElf(h);
 	if(check == -1)
-		printf("File is not an ELF file");
-	else
-		printf("File IS an ELF file");
+		return;
+	
+	h.e_ident[EI_CLASS] = get_value(1);	// get class
 
-	h.e_ident[EI_CLASS] = get_next_char();	// get class
-	h.e_ident[EI_DATA] = get_next_char();	// endian
-	h.e_ident[EI_VERSION] = get_next_char();// original version of ELF
-	h.e_ident[EI_OSABI] = get_next_char();	// Target operating system ABI
-	h.e_ident[EI_ABIVERSION] = get_next_char(); // 
+	h.e_ident[EI_DATA] = get_value(1);	// endian
+	h.e_ident[EI_VERSION] = get_value(1);// original version of ELF
+	h.e_ident[EI_OSABI] = get_value(1);	// Target operating system ABI
+	h.e_ident[EI_ABIVERSION] = get_value(1); // 
 	int skip = 0;				// skips the padding
 	while(skip < 7) {
-		get_next_char();
+		get_value(1);
 		skip++;
 	}
-	char e_type = get_next_char();			// get type of file
-	printf("type is %i\n", ((int)e_type));
+	h.e_type = get_value(2);			// get type of file
+
+	h.e_machine = get_value(2);
+	h.e_version = get_value(4);
+
+	
+	if(h.e_ident[EI_CLASS] == 1)
+		h.e_entry = get_value(4);
+	else
+		h.e_entry = get_value(8);
+
+	
+	if(h.e_ident[EI_CLASS] == 1)
+		h.e_phoff = get_value(4);
+	else
+		h.e_phoff = get_value(8);
+
+	
+	if(h.e_ident[EI_CLASS] == 1)
+		h.e_shoff = get_value(4);
+	else
+		h.e_shoff = get_value(8);
+
+
+	h.e_flags = get_value(4);
+
+
+	h.e_ehsize = get_value(2);
+
+
+	h.e_phentsize = get_value(2);
+
+
+	h.e_phnum = get_value(2);
+
+
+	h.e_shentsize = get_value(2);
+
+
+	h.e_shnum = get_value(2);
+
+
+	h.e_shstrndx = get_value(2);
+
+	
 }
 
+/* Don't use this unless we have printf functionality */
 void print_elf_header(Elf_Ehdr h) {
-	// prints the information of the header file
+	int class, endian, version, osabi, abiVersion;
+	class = h.e_ident[EI_CLASS];
+	endian = h.e_ident[EI_DATA];
+	version = h.e_ident[EI_VERSION];
+	osabi = h.e_ident[EI_OSABI];
+	abiVersion = h.e_ident[EI_ABIVERSION];
+
+	// class variable
+	if (class == 1)
+	{
+		printf("Class: 32-bit objects\n");
+	}
+	else if (class == 2)
+	{
+		printf("Class: 64-bit objects\n");
+	}
+	else //invalid
+	{
+		printf("Invalid class: %i.\n", class);
+	}
+	
+	// data/endian variable
+	if (endian == 1)
+	{
+		printf("Data Format: Little Endian\n");
+	}
+	else if (endian == 2)
+	{
+		printf("Data Format: Big Endian\n");
+	}
+	else //invalid
+	{
+		printf("Invalid data encoding: %i.\n", endian);
+	}	
+
+	// version variable
+	if (version == 1)
+	{
+		printf("Version: Currrent version\n");
+	}
+	else	//invalid
+	{
+		printf("Invalid version: %i.\n", version);
+	}
+
+	// OS ABI variable
+	if (osabi == 0)
+	{
+		printf("OS-specific flags: None\n");
+	}
+	else	//??? not sure what to do otherwise
+	{
+		printf("OS ABI value: %i\n", osabi);
+	}
+
+	// ABI version variable
+	if (abiVersion == 0)
+	{
+		//don't worry about it
+	}
+	else	//not sure what to do - probably doesn't matter
+	{
+		printf("Invalid ABI version: %i.\n", abiVersion);
+	}
+	
 }
 
 void read_section_header_table(int32_t fd, Elf_Ehdr h, Elf_Shdr sh_table[]) {
@@ -120,12 +233,9 @@ unsigned char* read_whole_file(char *file_name) {
 int main() {
 	unsigned char* file_contents;
 	//char* pointer;
-	file_contents = filePointer = read_whole_file("hello.c");
-	printf("pointer %c\n", *filePointer);
-	filePointer++;
-	printf("%c\n", *filePointer);	
-	char c = get_next_char();
-	printf("%c\n", c);
+	file_contents = filePointer = read_whole_file("a.out");
+	Elf_Ehdr e;
+	read_elf_header(e);
 	free(file_contents);
 	return 0;
 }
