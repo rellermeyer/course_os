@@ -20,7 +20,7 @@ run2:
 	dd if=/dev/zero of=flash.bin bs=1 count=6M
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=1
 	dd if=kernel.img2 of=flash.bin conv=notrunc bs=1 seek=2M
-	${QEMU} -M versatilepb -m 128M -nographic -kernel kernel.img2
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
