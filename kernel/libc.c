@@ -6,8 +6,8 @@
 *	Date last edit: 28 March 2014
 *
 *	Purpose:	Provide basic libc funtionality for CourseOS
-*					This header provides function skeletons
-					for libc.c
+*				This file provides function implementations
+*				for skels in libc.h
 *
 *	Usage:	Compile into kernel. Adaptations of normal libc functions
 *			can be used by prepending os_ suffix.
