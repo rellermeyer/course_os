@@ -36,6 +36,10 @@ typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 
 /* Defines what type of file it is */
 #define no_file_type	0
+#define relocatable	1
+#define	executable	2
+#define	shared_obj	3
+#define	core		4
 
 typedef struct {
 	unsigned char 	e_ident[EI_NIDENT];	// How to interpret file
@@ -48,7 +52,7 @@ typedef struct {
 	Elf_Word	e_flags;
 	Elf_Half	e_ehsize;
 	Elf_Half	e_phentsize;
-	Elf_Half	e_phunum;
+	Elf_Half	e_phnum;
 	Elf_Half	e_shentsize;
 	Elf_Half	e_shnum;
 	Elf_Half	e_shstrndx;
