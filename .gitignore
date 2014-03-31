@@ -10,3 +10,6 @@
 *.img
 *.map
 *.elf
+*.bin
+
+NOTES
