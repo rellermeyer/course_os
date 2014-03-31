@@ -15,7 +15,8 @@ run: course_os.img
 	./offset.sh $(UBOOT_VERSION)
 	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
 
-run2:
+# This takes the images and concatenates them to flash storage, which is what gets booted now
+run2: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img2
 	dd if=/dev/zero of=flash.bin bs=1 count=6M
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=1
@@ -30,17 +31,6 @@ kernel.bin: kernel.elf
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
-
-# The commented portions I believe are a step in the right direction,
-# we want to concatenate the bootcom img, but need to figure out a way
-# to get the size of the entire image, and use that size for the offset.
-
-# bootcom.img:
-# 	./offset.sh $(UBOOT_VERSION) > boot-commands 
-# 	$(MKIMAGE) -T script -C none -n 'Script File' -d boot-commands bootcom.img
-
-# course_os.img: kernel.img bootcom.img
-# 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin bootcom.img kernel.img > course_os.img
 
 course_os.img: kernel.img 
 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
