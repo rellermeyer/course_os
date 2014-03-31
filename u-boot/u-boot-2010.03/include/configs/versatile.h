@@ -129,7 +129,7 @@
 #define CONFIG_BOOTARGS        "root=/dev/ram mem=128M rdinit=/sbin/init"
 #define CONFIG_BOOTCOMMAND   "bootm 0x210000"
 #define CONFIG_INITRD_TAG   1
- 
+
 
 /*
  * Static configuration when assigning fixed address
