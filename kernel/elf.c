@@ -8,8 +8,18 @@
 unsigned char* filePointer;
 
 /* Gets value of bytes given a size of bytes */
-int get_value(int size)
-{
+int do_big_endian(int size) {
+	unsigned int value = 0;
+	while(size > 0) {
+		value = value << 8;
+		value = value + *filePointer;
+		filePointer++;
+		size--;
+	}
+	return value;
+}
+
+int do_little_endian(int size) {
 	unsigned int value = 0;
 	unsigned int num = 0;
 	int i = 0;
@@ -21,14 +31,25 @@ int get_value(int size)
 		i++;
 	}
 	return value;
+
+}
+
+int get_value(int size, Elf_Ehdr h)
+{
+	unsigned int ret;
+	if(h.e_ident[EI_DATA] == 1)
+		ret = do_little_endian(size);
+	else
+		ret = do_big_endian(size);
+	return ret;
 }
 
 int isElf(Elf_Ehdr h) {
 	// checks if elf file
-	char ELFMAG0 = get_value(1);	// 0x7f
-	char ELFMAG1 = get_value(1);	// 'E'
-	char ELFMAG2 = get_value(1);	// 'L'
-	char ELFMAG3 = get_value(1);	// 'F'
+	char ELFMAG0 = get_value(1, h);	// 0x7f
+	char ELFMAG1 = get_value(1, h);	// 'E'
+	char ELFMAG2 = get_value(1, h);	// 'L'
+	char ELFMAG3 = get_value(1, h);	// 'F'
 	if(ELFMAG0 != 127 || ELFMAG1 != 'E' || ELFMAG2 != 'L' || ELFMAG3 != 'F')
 		return -1;
 	h.e_ident[EI_MAG0] = ELFMAG1;
@@ -42,62 +63,61 @@ void read_elf_header(Elf_Ehdr h) {
 	if(check == -1)
 		return;
 	
-	h.e_ident[EI_CLASS] = get_value(1);	// get class
+	h.e_ident[EI_CLASS] = get_value(1, h);		// get class
 
-	h.e_ident[EI_DATA] = get_value(1);	// endian
-	h.e_ident[EI_VERSION] = get_value(1);// original version of ELF
-	h.e_ident[EI_OSABI] = get_value(1);	// Target operating system ABI
-	h.e_ident[EI_ABIVERSION] = get_value(1); // 
-	int skip = 0;				// skips the padding
+	h.e_ident[EI_DATA] = get_value(1, h);		// endian
+	h.e_ident[EI_VERSION] = get_value(1, h);	// original version of ELF
+	h.e_ident[EI_OSABI] = get_value(1, h);		// Target operating system ABI
+	h.e_ident[EI_ABIVERSION] = get_value(1, h); 	// Don't really know?
+	int skip = 0;					// skips the padding
 	while(skip < 7) {
-		get_value(1);
+		get_value(1, h);
 		skip++;
 	}
-	h.e_type = get_value(2);			// get type of file
+	h.e_type = get_value(2, h);			// get type of file
 
-	h.e_machine = get_value(2);
-	h.e_version = get_value(4);
+	h.e_machine = get_value(2, h);
+	h.e_version = get_value(4, h);
 
 	
-	if(h.e_ident[EI_CLASS] == 1)
-		h.e_entry = get_value(4);
+	if(h.e_ident[EI_CLASS] == 1)			// get entry point
+		h.e_entry = get_value(4, h);
 	else
-		h.e_entry = get_value(8);
+		h.e_entry = get_value(8, h);
 
 	
-	if(h.e_ident[EI_CLASS] == 1)
-		h.e_phoff = get_value(4);
+	if(h.e_ident[EI_CLASS] == 1)			// get program header offset
+		h.e_phoff = get_value(4, h);
 	else
-		h.e_phoff = get_value(8);
+		h.e_phoff = get_value(8, h);
 
 	
-	if(h.e_ident[EI_CLASS] == 1)
-		h.e_shoff = get_value(4);
+	if(h.e_ident[EI_CLASS] == 1)			// get section header offset
+		h.e_shoff = get_value(4, h);
 	else
-		h.e_shoff = get_value(8);
+		h.e_shoff = get_value(8, h);
 
 
-	h.e_flags = get_value(4);
-
-
-	h.e_ehsize = get_value(2);
-
-
-	h.e_phentsize = get_value(2);
-
-
-	h.e_phnum = get_value(2);
-
-
-	h.e_shentsize = get_value(2);
-
-
-	h.e_shnum = get_value(2);
-
-
-	h.e_shstrndx = get_value(2);
-
+	h.e_flags = get_value(4, h);			// get flag number
 	
+
+	h.e_ehsize = get_value(2, h);			// get elf header size
+
+
+	h.e_phentsize = get_value(2, h);		// get program header size
+
+
+	h.e_phnum = get_value(2, h);			// number of program headers
+
+
+	h.e_shentsize = get_value(2, h);		// section header size
+
+
+	h.e_shnum = get_value(2, h);			// number of section headers
+
+
+	h.e_shstrndx = get_value(2, h);			// section header string table index
+
 }
 
 /* Don't use this unless we have printf functionality */
@@ -236,6 +256,7 @@ int main() {
 	file_contents = filePointer = read_whole_file("a.out");
 	Elf_Ehdr e;
 	read_elf_header(e);
+
 	free(file_contents);
 	return 0;
 }
