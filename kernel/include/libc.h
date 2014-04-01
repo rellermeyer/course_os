@@ -1,7 +1,7 @@
 /********************************************************************
 *	libc.h
 *
-*	Author: Jared McArthur	// any collaborators, please add name
+*	Author: Jared McArthur, Taylor Smith	// any collaborators, please add name
 *
 *	Date: 28 March 2014
 *
@@ -12,6 +12,10 @@
 *	Usage:	Compile into kernel. Adaptations of normal libc functions
 *			can be used by prepending os_ suffix.
 ********************************************************************/
+
+/* LOG:
+ * 4/30 added os_printf function - Taylor Smith
+ */
 
 #ifndef __libc_h
 #define __libc_h
