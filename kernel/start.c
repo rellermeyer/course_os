@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 /*
  *  A bit of background:
  *  - The ARM architecture has 7 modes of operation:
@@ -18,6 +16,9 @@
  *	(others...)		
  */
 
+#include <mmap.h>
+#include <stdint.h>
+
 void start(void *p_bootargs) {
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
@@ -25,7 +26,13 @@ void start(void *p_bootargs) {
 	asm volatile(
 		""
 	);
-	
+		/* Setup primary vector table */
+	uint32_t * addr = 0x00;
+	print_uart0("0x00: "); print_word_bits(addr);
+	mmio_write(addr, 0xDEADBEEF);
+	print_uart0("0x00: "); print_word_bits(addr);
+
+
 	/* testing */
 	uint32_t cpsr;
 	cpsr = get_proc_status();
@@ -47,24 +54,4 @@ void start(void *p_bootargs) {
         cpsr = ChangeFIQ(0);
         print_word_bits(&cpsr);
     
-	/* Setup primary vector table */
-    *(uint32_t volatile *)(0x00) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x04) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x08) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x0C) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x10) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x14) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x18) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x1C) = (LDR_PC_PC | 0x18);
-
-    /* Setup secondary vector table */
-    *(uint32_t volatile *)(0x20) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x24) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x28) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x2C) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x30) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x34) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x38) = (uint32_t)test_handler;
-    *(uint32_t volatile *)(0x3C) = (uint32_t)test_handler;
-
 }
