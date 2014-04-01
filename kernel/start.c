@@ -18,28 +18,7 @@
  *	(others...)		
  */
 
-static const uint32_t LDR_PC_PC = 0xe59ff000;
-
-void test_handler() {
-    int i, callNumber;
-
-    // the link register currently holds the address of the instruction immediately
-    // after the SVC call
-    register int address asm("lr"); 
-    
-    // load the SVC call and mask to get the number
-    callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
-
-    for (i = 0; i < callNumber; i++) {
-        print_uart0("success!\n");
-    }
-}
-
 void start(void *p_bootargs) {
-	print_uart0("arguments ");
-   	print_uart0(44 + p_bootargs);
-   	print_uart0("\n");
-   	print_uart0("CourseOS!\n");
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
 	/* TODO: intialize the vector table, stack space, etc. */
