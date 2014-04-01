@@ -46,35 +46,28 @@ int analyze_args(char **argv)
 }
 
 
-void copy_cmdline_tag(uint32_t *tag_base)
+char* read_cmdline_tag(uint32_t *tag_base)
 {
   uint32_t *tag_pointer = tag_base;
-  print_uart0("In copy_cmdline_tag\n"); // TODO: remove
+  uint32_t ATAG_CMDLINE = 0x54410009; // "Type" of cmdline tag
 
-  uint32_t ATAG_CMDLINE = 0x54410009; // Value of cmdline tag will be this
-
-  // Look through the headers starting at tag_base
+  // Look through the tag headers
   uint32_t size = 0;
   uint32_t type = 0;
   while (type != ATAG_CMDLINE)
   {
-    size = *tag_pointer;
-    tag_pointer += 1;
-    type = *tag_pointer;
-    tag_pointer -= 1;
-
-    if (*tag_pointer == 0x54410002)
-      print_uart0("CORE");
-
-    print_uart0(size);
-    print_uart0(type);
     tag_pointer += size;
+
+    // Each tag has a header containing the tag's size and type.
+    size = *tag_pointer; // In bytes, including the header
+    tag_pointer += 1;
+    type = *tag_pointer; // Specifies which tag follows
+    tag_pointer -= 1; // Size includes the size of the header
   }
 
-  // TODO: Get the ATAG_CMDLINE
-  char *command_line_args = tag_pointer;
-  command_line_args = 'a';
-  print_uart0(command_line_args);
+  // We are now pointing at the ATAG_CMDLINE header
+  tag_pointer += 2; // Move past the tag header to the data
+  char *command_line_args = (char *)tag_pointer;
 
-  print_uart0("\nDone with copy_cmdline_tag\n"); // TODO: remove
+  return command_line_args;
 }
