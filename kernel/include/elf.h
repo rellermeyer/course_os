@@ -41,6 +41,14 @@ typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 #define	shared_obj	3
 #define	core		4
 
+/* ELF Header Flags */
+#define EF_ARM_ABIMASK		0xFF000000
+#define EF_ARM_BE8		0x00800000
+#define EF_ARM_GCCMASK		0x00400FFF
+#define EF_ARM_ABI_FLOAT_HARD	0x00000400
+#define EF_ARM_ABI_FLOAT_SOFT	0x00000200
+
+
 typedef struct {
 	unsigned char 	e_ident[EI_NIDENT];	// How to interpret file
 	Elf_Half 	e_type;
