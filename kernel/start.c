@@ -17,27 +17,19 @@
  */
 
 #include <mmap.h>
+#include "include/interrupt.h"
 #include <stdint.h>
 
 void start(void *p_bootargs) {
 
+	uint32_t c;
 	/* we boot into SVC mode with FIQ and IRQ masked */
 	/* TODO: intialize the vector table, stack space, etc. */
 	asm volatile(
 		""
 	);
-		/* Setup primary vector table */
-	uint32_t * addr = 0x00;
-	print_uart0("0x00: "); print_word_bits(addr);
-	mmio_write(addr, 0xDEADBEEF);
-	print_uart0("0x00: "); print_word_bits(addr);
-
-
-	/* testing */
-	uint32_t cpsr;
-	cpsr = get_proc_status();
-	print_word_bits(&cpsr);
 	
+/*	
 	// test enabling IRQ
 	cpsr = ChangeIRQ(1);
         print_word_bits(&cpsr);
@@ -53,5 +45,5 @@ void start(void *p_bootargs) {
         // test disabling FIQ
         cpsr = ChangeFIQ(0);
         print_word_bits(&cpsr);
-    
+*/  
 }
