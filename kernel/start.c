@@ -15,12 +15,7 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)		
  */
-
-#include <mmap.h>
-#include "include/interrupt.h"
 #include <stdint.h>
-#include "include/argparse.h"
-
 
 void start(void *p_bootargs) {
    print_uart0("arguments: ");
@@ -28,28 +23,10 @@ void start(void *p_bootargs) {
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-	uint32_t c;
 	/* we boot into SVC mode with FIQ and IRQ masked */
 	/* TODO: intialize the vector table, stack space, etc. */
 	asm volatile(
 		""
 	);
 	
-/*	
-	// test enabling IRQ
-	cpsr = ChangeIRQ(1);
-        print_word_bits(&cpsr);
-
-	// test disabling IRQ
-	cpsr = ChangeIRQ(0);	
-        print_word_bits(&cpsr);
-
-       // test enabling FIQ
-        cpsr = ChangeFIQ(1);
-        print_word_bits(&cpsr);
-
-        // test disabling FIQ
-        cpsr = ChangeFIQ(0);
-        print_word_bits(&cpsr);
-*/  
 }
