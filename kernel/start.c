@@ -21,14 +21,14 @@ void start() {
     print_uart0("CourseOS!\n");
 
     /* Setup primary vector table */
-    *(uint32_t volatile *)(0x00) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x04) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x08) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x0C) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x10) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x14) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x18) = (LDR_PC_PC | 0x18);
-    *(uint32_t volatile *)(0x1C) = (LDR_PC_PC | 0x18);
+    *(uint32_t volatile *)(0x00) = (LDR_PC_PC | 0x18); // Reset
+    *(uint32_t volatile *)(0x04) = (LDR_PC_PC | 0x18); // Undefined instruction
+    *(uint32_t volatile *)(0x08) = (LDR_PC_PC | 0x18); // Software interrupt (SWI)
+    *(uint32_t volatile *)(0x0C) = (LDR_PC_PC | 0x18); // Abort (prefetch)
+    *(uint32_t volatile *)(0x10) = (LDR_PC_PC | 0x18); // Abort (data)
+    *(uint32_t volatile *)(0x14) = (LDR_PC_PC | 0x18); // Address exception
+    *(uint32_t volatile *)(0x18) = (LDR_PC_PC | 0x18); // IRQ
+    *(uint32_t volatile *)(0x1C) = (LDR_PC_PC | 0x18); // FIQ
 
     /* Setup secondary vector table */
     *(uint32_t volatile *)(0x20) = (uint32_t)test_handler;
