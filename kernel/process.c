@@ -2,9 +2,6 @@
 
 //process memory resides starting at 0X20000 
 
-int main() {
-	return 0;
-}
 
 int init_all_processes() {
 	pcb_table = mem_alloc(32);
