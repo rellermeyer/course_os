@@ -1,5 +1,6 @@
 #these were not originally apart of the repo -- appeared after build
 /kernel/kernel.bin
+/kernel/flash.bin
 /toolchain/target/
 /u-boot/u-boot-*
 /qemu/
@@ -10,3 +11,6 @@
 *.img
 *.map
 *.elf
+*.bin
+
+NOTES
