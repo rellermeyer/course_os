@@ -15,7 +15,7 @@
 *	Notes:	memcmp and strcmp adapted directly from musl-libc
 ********************************************************************/
 
-#include "include/libc.h"
+#include "include/klibc.h"
 #include <stdarg.h>
 #include <stdint.h>
 
