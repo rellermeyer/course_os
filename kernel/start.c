@@ -1,3 +1,4 @@
+#include "global_defs.h"
 #include <stdint.h>
 
 static const uint32_t LDR_PC_PC = 0xe59ff000;
