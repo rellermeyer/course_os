@@ -19,7 +19,7 @@
  *  proper handler. 
  *
  *  When this happens the state of the machine must be preserved. The HW handler interface
- *  centralizes the exception/interrupt handling code and takes care of the dirty low-level
+ *  centralizes the 'top half' exception/interrupt handling code and takes care of the dirty low-level
  *  work so that the software handling interfaces for interrupts, system calls, and exceptions
  *  can be written more clearly elsewhere.
  *
@@ -29,6 +29,9 @@
  */
 #include <stdint.h>
 
+#define BRANCH_INSTRUCTION	0xe59ff018	// ldr pc, pc+offset
+
+void init_vector_table(void); 
 
 // vector table handlers, should be loaded at 0x00 in this order!
 void reset_handler(void);		// 0x00
@@ -39,5 +42,3 @@ void data_abort_handler(void);		// 0x10
 void reserved_handler(void);		// 0x14
 void irq_handler(void);			// 0x18
 void fiq_handler(void);			// 0x1c
-
-inline uint32_t get_proc_status(void); 
