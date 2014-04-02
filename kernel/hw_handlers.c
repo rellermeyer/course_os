@@ -4,6 +4,9 @@
  *
  */
 
+#include "include/hw_handlers.h"
+#include "include/mmap.h"
+
 void init_vector_table(void) {
 
 	/* Primary Vector Table */
