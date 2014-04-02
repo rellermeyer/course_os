@@ -4,15 +4,15 @@
 #include <stdint.h>
 #include "mem_alloc.h"
 
-/*LOG: 
-3/15: Initial skeleton and comments by Josh Guan. 
+/*LOG:
+3/15: Initial skeleton and comments by Josh Guan.
 3/21: More research and comments by Faseeh Akhter and Josh Guan
 3/31: Further research and beginning implementation of process initialization and creation by Faseeh Akhter, Taylor Smith, Sean Villars
 
 
 /*******************
 a work in progress
-  memory boundaries?
+memory boundaries?
 ********************
 
 /* process struct outline
@@ -49,7 +49,7 @@ last run?, total CPU time accumulation
 
 */
 typedef
-enum PROCESS_STATE {PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING} 
+enum PROCESS_STATE {PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING}
 PROCESS_STATE;
 
 static uint32_t MAX_PROCESSES = 32;
@@ -68,29 +68,29 @@ typedef struct pcb{
   PROCESS_STATE current_state;
 
 // WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
-//  uint32_t PC;
-//  uint32_t SP;
+// uint32_t PC;
+// uint32_t SP;
   // 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
-//  uint32_t CPSR; //current prog status register
-//  uint32_t SPSR; //saved prog status register when execption occurs
+// uint32_t CPSR; //current prog status register
+// uint32_t SPSR; //saved prog status register when execption occurs
   //unbanked register
-//  uint32_t R0;
+// uint32_t R0;
 // uint32_t R1;
-//  uint32_t R2;
+// uint32_t R2;
  // uint32_t R3;
-//  uint32_t R4;
-//  uint32_t R5;
-//  uint32_t R6;
-//  uint32_t R7;
+// uint32_t R4;
+// uint32_t R5;
+// uint32_t R6;
+// uint32_t R7;
   //banked registers
-//  uint32_t R8;
-//  uint32_t R9;
+// uint32_t R8;
+// uint32_t R9;
 // uint32_t R10;
-//  uint32_t R11;
+// uint32_t R11;
 // uint32_t R12;
-//  uint32_t R13; //corresponds to the SP; do we need both?
-//  uint32_t R14;
-//  uint32_t R15; //corresponds to the PC; do we need both?
+// uint32_t R13; //corresponds to the SP; do we need both?
+// uint32_t R14;
+// uint32_t R15; //corresponds to the PC; do we need both?
 
 //Control data
   //int priority_value;
@@ -129,7 +129,7 @@ int init_all_processes();
 int process_create(uint32_t starting_address, char * process_name);
 
 // static void process_exit(process p); //harder because we have to clean up
-// int fork(); 
+// int fork();
 // int process_suspend(process p);
 // int process_resume(process p);
 #endif
