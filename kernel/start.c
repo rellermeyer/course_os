@@ -1,3 +1,5 @@
+#include "include/global_defs.h"
+
 void start(void *p_bootargs) {
    print_uart0("arguments ");
    print_uart0(44 + p_bootargs);
