@@ -25,6 +25,15 @@ device_driver *dd;
  uint32_t UARTDMACR; 		// DMA Control Register
 } uart;
 
+enum {
+// UARTFR reg. enums
+RXFE = 0x10,
+RXFF = 0x40, 
+TXFF = 0x20,
+TXFE = 0x80,
+BUSY = 0x08,
+};
+
 uart * const UART0 = (pl011_T *)0x101f1000;
 uart * const UART1 = (pl011_T *)0x101f2000;
 uart * const UART2 = (pl011_T *)0x101f3000;
@@ -33,5 +42,12 @@ void print_uart0(const char *s) {
 	while(*s != '\0') {
 		*UART0 = (uint32_t)(*s);
 		s++;
+	}
+}
+
+void write_uart0(const char *s) {
+	// Will need to check UARTFR in SoC implementation
+	while (*s != '\0') {
+		// Will want to pull here
 	}
 }
