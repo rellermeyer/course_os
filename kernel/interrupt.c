@@ -7,33 +7,6 @@
  */
 
 
-/* handlers */
-void reset_handler(void){
-	print_uart0("RESET\n");
-}
-
-void undef_instruction_handler(void){
-}
-
-void software_interrupt_handler(void){
-}
-
-void prefetch_abort_handler(void){
-}
-
-void data_abort_handler(void){
-}
-
-void reserved_handler(void){
-}
-
-void irq_handler(void){
-}
-
-void fiq_handler(void){
-}
-
-
 // SWI are used to call privileged OS routines.
 // IRQ are assigned to general purpose interrupts like  periodic timers.
 // FIQ is reserved for one single interrupt source that requires fast response time.
