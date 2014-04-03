@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 typedef volatile struct {
-// Some sort of locking mechanism
+// Needs some sort of locking mechanism
 } device_driver;
 
 typedef volatile struct {
@@ -33,7 +33,7 @@ TXFF = 0x20,
 TXFE = 0x80,
 BUSY = 0x08,
 TXE = 0x100,
-RXE = 0x200,
+RXE = 0x200
 };
 
 uart * const UART0 = (uart *)0x101f1000;
