@@ -3,7 +3,6 @@
  * Harware Handler Interface  
  *
  */
-
 #include "include/hw_handlers.h"
 #include "include/mmap.h"
 
