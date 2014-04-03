@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 typedef volatile struct {
-void *driver_stuff;
+// Some sort of locking mechanism
 } device_driver;
 
 typedef volatile struct {
@@ -32,22 +32,35 @@ RXFF = 0x40,
 TXFF = 0x20,
 TXFE = 0x80,
 BUSY = 0x08,
+TXE = 0x100,
+RXE = 0x200,
 };
 
-uart * const UART0 = (pl011_T *)0x101f1000;
-uart * const UART1 = (pl011_T *)0x101f2000;
-uart * const UART2 = (pl011_T *)0x101f3000;
+uart * const UART0 = (uart *)0x101f1000;
+uart * const UART1 = (uart *)0x101f2000;
+uart * const UART2 = (uart *)0x101f3000;
 
-void print_uart0(const char *s) {
-	while(*s != '\0') {
-		*UART0 = (uint32_t)(*s);
-		s++;
+void stdout_uart0(const char *s) {
+	if(uart.UARTCR & RXE > 0) {
+		while(*s != '\0') {
+			*UART0 = (uint32_t)(*s);
+			s++;
+		}
 	}
 }
 
-void write_uart0(const char *s) {
-	// Will need to check UARTFR in SoC implementation
-	while (*s != '\0') {
-		// Will want to pull here
-	}
+#define STD_IN_BUFFER_SIZE 4096
+char *stdin_uart0() {
+	uint32_t *buffer = malloc(sizeof(uart.UARTDR) * STD_IN_BUFFER_SIZE);
+	uint32_t *iterator = buffer;
+	do {
+		if(uart.UARTCR & TXE > 0) {
+			break;
+		} else {
+			*iterator = uart.UARTDR;
+			iterator++;
+		}
+	} while (*iterator != '\0');
+
+	return buffer;
 }
