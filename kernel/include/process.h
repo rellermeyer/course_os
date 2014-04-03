@@ -8,7 +8,7 @@
 3/15: Initial skeleton and comments by Josh Guan.
 3/21: More research and comments by Faseeh Akhter and Josh Guan
 3/31: Further research and beginning implementation of process initialization and creation by Faseeh Akhter, Taylor Smith, Sean Villars
-
+4/2:  Fixed mem_alloc and began initial pcb creation by Sean Villars, Faseeh Akhter, Josh Guan, Taylor Smith
 
 /*******************
 a work in progress
@@ -53,10 +53,11 @@ enum PROCESS_STATE {PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED
 PROCESS_STATE;
 
 static uint32_t MAX_PROCESSES = 32;
+static uint32_t GLOBAL_PID;
 
 typedef struct pcb{
 //ID data
-  char name[16]; /* for debugging purposes */
+  char* name; /* for debugging purposes */
   uint32_t PID;
   uint32_t starting_address;
   //uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
@@ -126,7 +127,7 @@ be resumed
 //create a corresponding pcb ds
 
 int init_all_processes();
-int process_create(uint32_t starting_address, char * process_name);
+int process_create(uint32_t starting_address, char* process_name);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();

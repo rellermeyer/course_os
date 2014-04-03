@@ -16,6 +16,7 @@ all: course_os.img
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
+#boots the kernel at 0x210000
 flash.bin: kernel.img
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
