@@ -34,13 +34,6 @@ typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 #define EI_OSABI	7	// Targeted operating system
 #define EI_ABIVERSION	8
 
-/* Defines what type of file it is */
-#define no_file_type	0
-#define relocatable	1
-#define	executable	2
-#define	shared_obj	3
-#define	core		4
-
 /* ELF Header Flags */
 #define EF_ARM_ABIMASK		0xFF000000
 #define EF_ARM_BE8		0x00800000
@@ -48,7 +41,31 @@ typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 #define EF_ARM_ABI_FLOAT_HARD	0x00000400
 #define EF_ARM_ABI_FLOAT_SOFT	0x00000200
 
+/* Defines what type of file it is */
+#define no_file_type	0
+#define relocatable	1
+#define	executable	2
+#define	shared_obj	3
+#define	core		4
 
+/* Types of Program Headers */
+#define PT_NULL		0	// Indicates an unused program header
+#define PT_LOAD		1	// Indicates that this program header describes a segment to be loaded from the file. 
+#define PT_DYNAMIC	2	// Indicates a segment where dynamic linking information can be found. 
+#define PT_INTERP	3	// Indicates a segment where the name of the program interpreter may be found.
+#define PT_NOTE		4	// Indicates a segment holding note information. 
+#define PT_SHLIB	5	// A reserved program header type, defined but not specified by the ELF ABI. 
+#define PT_PHDR		6	// Indicates a segment where the program headers may be found. 
+
+/* Program Flags */
+// 0:			No access
+// 1:			Just execute
+// 2:			Write only
+// 3:			Write, execute only
+// 4:			Read only
+// 5:			Read, execute only
+// 6:			Read, write only
+// 7:			Read, Write, and Execute
 typedef struct {
 	unsigned char 	e_ident[EI_NIDENT];	// How to interpret file
 	Elf_Half 	e_type;
@@ -123,4 +140,7 @@ typedef struct {
 		Elf_Addr	d_ptr;
 	}d_un;
 } Elf_Dyn;
+
+void read_program_header_table(Elf_Ehdr h);
+void print_elf_header(Elf_Ehdr h);
 #endif
