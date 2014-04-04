@@ -25,5 +25,4 @@ void start(void *p_bootargs) {
 	asm volatile(
 		""
 	);
-
 }

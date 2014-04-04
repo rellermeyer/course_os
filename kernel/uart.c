@@ -10,8 +10,8 @@ void print_uart0(const char *s) {
    }
 }
 
-/* print the full 32 bits of a word a the given address */
-/* NB: (right now) this the absolute address! */
+/* print the full 32 bits of a word at the given address */
+/* trailing newline... */
 void print_word_bits(uint32_t * c) {
 	int i;
 	for(i = 31; i >= 0; i--)
@@ -19,6 +19,8 @@ void print_word_bits(uint32_t * c) {
 	print_uart0("\n");
 }
 
+/* print the full 8-digit hex code of a word at the given address */
+/* no '0x' prefix, NO trailing newline */
 void print_word_hex(uint32_t * c){
 	int i;
 	uint32_t a;
@@ -27,23 +29,28 @@ void print_word_hex(uint32_t * c){
 		a >>= (i*0x4);
 
 		if(a <= 9)
-			*UART = (uint32_t)(a + '0');
+			*UART = (uint32_t)(a + (uint32_t )'0');
 		else if(a <= 0xf)
-			*UART = (uint32_t)((a - 0xa) + 'a');
+			*UART = (uint32_t)((a - 0xa) + (uint32_t )'a');
 		else
 			*UART = (uint32_t)('?');
 	}
 }
 
-/* display memory */
+/* display memory at given address */
+/* format is: "[address]: word1 word2 word3\n", etc. */
+/* displays 30 words (10 lines) */
 void md(uint32_t * start){
 	int i, j;
+	uint32_t *addr = start;
 	for(i = 0; i < 10; i++) {
-		*UART = "0x"; print_word_hex(&start); *UART = ": ";
+		print_uart0("0x"); print_word_hex((uint32_t *)&addr); print_uart0(": ");
 		for(j = 0; j < 3; j++) {
-			print_word_hex(start);
-			*UART = "  ";
-			start += 0x4;
+			print_word_hex(addr);
+			print_uart0("  ");
+			addr++;
 		}
+		print_uart0("\n");
 	}
 }
+
