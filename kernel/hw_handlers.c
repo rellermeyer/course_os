@@ -40,6 +40,19 @@ void undef_instruction_handler(void){
 }
 
 void software_interrupt_handler(void){
+	int i, callNumber;
+
+	// the link register currently holds the address of the instruction immediately
+	// after the SVC call
+	// possible that syscall # passed directly in r7, not sure yet though
+	register int address asm("lr"); 
+	        
+	// load the SVC call and mask to get the number
+	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+
+	// once we merge in printf functionality, can print out the syscall #
+	// to verify correct parsing.
+
 	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
 }
 
