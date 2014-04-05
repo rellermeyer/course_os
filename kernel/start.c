@@ -20,7 +20,7 @@
 void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
 
-	/* we boot into SVC mode with FIQ and IRQ masked */
+	/* we boot into SVC mode with FIQ and IRQ masked/disabled */
 	/* TODO: intialize the vector table, stack space, etc. */
 	asm volatile(
 		""
