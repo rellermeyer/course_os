@@ -27,7 +27,8 @@
 #define FIQ_DISABLED	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
 #define NO_INTERRUPTS	0xC0
 
-
+// general syscall function
+extern int syscall(int number);
 
 // these prototypes aren't complete
 void irq_enable(void);
