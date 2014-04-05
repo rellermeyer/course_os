@@ -23,14 +23,24 @@
 #include <stdint.h>
 #include "mmap.h"
 
-#define IRQ_DISABLED	0x80	/* IRQs are masked when bit 7 of CPSR is pulled high */
-#define FIQ_DISABLED	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
-#define NO_INTERRUPTS	0xC0
+#define IRQ_MASK	0x80	/* IRQs are masked when bit 7 of CPSR is pulled high */
+#define FIQ_MASK	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
+#define ALL_INTER_MASK	0xC0
 
+typedef enum inter_os
+{
+        IRQ_MASK,
+        FIQ_MASK,
+        ALL_INTER_MASK
+};
 
+enum inter_os IRQ = IRQ_MASK;
+enum inter_os FIQ = FIQ_MASK;
+enum inter_os ALL = ALL_INTER_MASK;
 
 // these prototypes aren't complete
-void irq_enable(void);
+int enableInterrupt(enum inter_os);
+
 void irq_disable(void);
 void irq_handle(void);
 void irq_register_handler(void);
