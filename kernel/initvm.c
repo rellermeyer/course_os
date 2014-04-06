@@ -36,9 +36,10 @@ static unsigned int *kernel_leveltwo_pt = (unsigned int * const)0xb000;
  */	
 
 void initvm(void){
+   	print_uart0("Initializing virtual memory\n");
 
 	//Registers r0:r2 are used by start/main
-	asm volatile("push {r0, r1, r2}")
+	asm volatile("push {r0, r1, r2}");
 
 	unsigned int i;
 	/*
@@ -55,7 +56,7 @@ void initvm(void){
 
 		if(i >= 2048 && i < 2176){
 			// section base addr | AP | entry type
-			levelone_pt[i] = (x-2048)<<20 | 0x0400 | 2;
+			levelone_pt[i] = (i-2048)<<20 | 0x0400 | 2;
 		}
 
 		else {
@@ -89,7 +90,7 @@ void initvm(void){
 	 * (ie somewhere after initvm and start) to 0xc0000000
 	 * At the moment this is the only kernel structure in the kernel heap region
 	 */
-	initpagetable[3072] = 1 | (unsigned int)kernel_leveltwo_pt;
+	levelone_pt[3072] = 1 | (unsigned int)kernel_leveltwo_pt;
 
 
 	//TODO: initailze the 256 entries in the coarse table
@@ -102,6 +103,9 @@ void initvm(void){
 		*bss = 0;
 		bss++;
 	}
+
+    print_uart0("Enabling MMU\n");
+
 
 	//Set TTBR0 and TTBR1 in the MMU with the address
 	//of the level one page table
