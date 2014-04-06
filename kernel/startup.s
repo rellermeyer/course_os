@@ -15,5 +15,5 @@ _Reset:
  LDR sp, =svc_stack
 
  MOV R0, R2
- BL initsys
+ BL initvm
  WFI
