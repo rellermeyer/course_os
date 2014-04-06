@@ -33,5 +33,9 @@ SECTIONS
 		_bssend = ABSOLUTE(.);
 	} 
 	
+	system_stack = 0x3c00;
+	irq_stack = 0x2c00;
+	abort_stack = 0x2800;
+	svc_stack = 0x2400;
 
 }
