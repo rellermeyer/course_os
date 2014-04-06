@@ -8,7 +8,7 @@
 
 
 /* disable IRQ and/or FIQ */
-static inline void disable_interrupt(interrupt_t mask) {
+inline void disable_interrupt(interrupt_t mask) {
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsid i");
@@ -23,7 +23,7 @@ static inline void disable_interrupt(interrupt_t mask) {
 }
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
-static inline void disable_interrupt_save(interrupt_t mask) {
+inline long disable_interrupt_save(interrupt_t mask) {
 	/* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
@@ -39,12 +39,14 @@ static inline void disable_interrupt_save(interrupt_t mask) {
 			asm volatile("cpsid if");
 			break;
 	}
+	return cpsr;
 }
 
 
 
 /* I commented this code out because it was throwing a weird
-   "bad instruction" error during assembly */
+   "bad instruction" error during assembly which I don't know 
+   how to debug */
 
 // returns -1 if error, else the final state of the CPSR
 //int enableInterrupt(interrupt_t interRequest){
