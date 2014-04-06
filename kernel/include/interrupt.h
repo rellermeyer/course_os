@@ -1,3 +1,5 @@
+#ifndef __INTERRUPT_H__
+#define __INTERRUPT_H__
 /*
  *
  *  Interrupt handler four course_os
@@ -20,6 +22,7 @@
  *		handler interfaces with VIC to determine source of interrupt -> branch to service routine \
  *
  */
+
 #include <stdint.h>
 #include "mmap.h"
 
@@ -33,22 +36,32 @@ interrupt_t IRQ = IRQ_MASK;
 interrupt_t FIQ = FIQ_MASK;
 interrupt_t ALL = ALL_INTERRUPT_MASK;
 
-/* these are the functions you should use to effect an
+/* these are what you should use to effect an
    interrupt status change! */
+
 #define disable_irq() \
 	disable_interrupt(IRQ)
+#define disable_irq_save() \
+	disable_interrupt_save(IRQ)
+
+#define disable_fiq() \
+	disable_interrupt(FIQ)
+#define disable_fiq_save() \
+	disable_interrupt_save(FIQ)
+
+#define disable_interrupts() \
+	disable_interrupt(ALL);
+#define disable_interrupts_save() \
+	disable_interrupt_save(ALL);
+
 
 /* we don't really wan't others mucking around with the interrupt state
-   functions with parameters, so we'll make these static and refer to the
-   macros for specific cases when we adjust interrupt status */
-static inline void	disable_interrupt(interrupt_t mask);
-static inline void	disable_interrupt_save(interrupt_t mask);
-
-static inline int enableInterrupt(interrupt_t mask);
-
-
-
-inline uint32_t get_proc_status(void); 
+   functions (e.g. passing a bad parameter, so we'll  
+   refer to the macros above for adjusting specific interrupt status */
+inline int	enableInterrupt(interrupt_t mask);
+	
+inline void	disable_interrupt(interrupt_t mask);
+inline long	disable_interrupt_save(interrupt_t mask);
 
 
 /* VIC Interrupt Mappings */
@@ -87,3 +100,4 @@ inline uint32_t get_proc_status(void);
 #define VICINTSOURCE_31	(1 << 31)	/* secondary interrupt controller (SIC) */
 
 	// Secondary Interrupt Controller
+#endif //__INTERRUPT_H__
