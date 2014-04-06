@@ -23,11 +23,11 @@ static unsigned int *kernel_leveltwo_pt = (unsigned int * const)0xb000;
 
 
 /*
- * AP            Privileged    Unprivileged
- * 11 (0x8c00) = read-only     read-only
- * 01 (0x8400) = read-only     no access
- * 10 (0x0800) = read-write    read-only
- * 01 (0x0400) = read-write    no-access
+ * APX AP            Privileged    Unprivileged
+ *  1  11 (0x8c00) = read-only     read-only
+ *  1  01 (0x8400) = read-only     no access
+ *  0  10 (0x0800) = read-write    read-only
+ *  0  01 (0x0400) = read-write    no-access
 
  * Bits 0 and 1 identify the table entry type
  * 0 = translation fault 
@@ -50,7 +50,7 @@ void initvm(void){
 	 *		   (128 entries cover 128MB of PM)
 	 * 		-- permission is R/W
      *
-	*/
+	 */
 
 	for(i=0; i<4096; i++){
 
@@ -80,7 +80,7 @@ void initvm(void){
 	 *  ?? leave 0xf00fffff - 0xffffffff if kernel grows
 	 *	    -- if so, will need more coarse tables 
      *
-	*/
+	 */
     levelone_pt[3840] = 0<<20 | 0x8400 | 2;
 
     /* 0xc0000000-0xc00fffff is mapped to physical memory by a coarse
@@ -93,8 +93,26 @@ void initvm(void){
 	levelone_pt[3072] = 1 | (unsigned int)kernel_leveltwo_pt;
 
 
-	//TODO: initailze the 256 entries in the coarse table
+	/* Populate kerneldatatable - see ARM1176JZF-S manual, 6-40
+	 *
+	 * APX/AP bits for a page table entry are at bits 9 and 4&5.
+	 * 0 01 (0x0010) =  read-write privileded modes, no access otherwise
+	 *
+	 * bits 0 and 1 determine the page type:
+	 * b00 = unmapped, translation fault
+	 * b01 = large page (64K)			
+	 * b10 = small page (4K), executable	(XN is bit 0)
+	 * 
+	 * 256 entries, one for each 4KB in the 1MB covered by the table
+	 */
 
+	for(i = 0; i < 256; i++){
+		//_bssend is the physical address of the end of the kernel data
+		if(i <= ((unsigned int)&_bssend >> 12))
+			kernel_leveltwo_pt[i] = ((unsigned int)&_datastart + (x<<12)) | 0x0010 | 2;
+		else
+			kernel_leveltwo_pt[i] = 0;
+	}
 
 	//Initialize .bss section
 	unsigned int* bss;
@@ -116,7 +134,19 @@ void initvm(void){
 	// Translation table 1 
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 1" : : [addr] "r" (pt_addr));
 
-	//TODO: other MMU registers
+	//Set Domain Access Control Register to enforce out permissions
+	//See ARM1176JZF-S manual, 3-63 
+	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
+	asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
+
+	//Enable MMU by setting bit 0 in the control register
+	register unsigned int control;
+	//Read contents into control
+	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
+	//Set bit 0
+	control = control | 1;
+	//Write back value into the register
+	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
 	//Set lr to the address of start
 	asm volatile("mov lr, %[start]" : : [start] "r" ((unsigned int)&start) );
