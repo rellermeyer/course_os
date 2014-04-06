@@ -23,28 +23,28 @@
 #include <stdint.h>
 #include "mmap.h"
 
-#define IRQ_MASK	0x80	/* IRQs are masked when bit 7 of CPSR is pulled high */
-#define FIQ_MASK	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
-#define ALL_INTER_MASK	0xC0
+typedef enum {
+        IRQ_MASK,		// (this is bit 0x8 on the CPSR)
+        FIQ_MASK,		// (this is bit 0x4 on the CPSR)
+        ALL_INTERRUPT_MASK
+} interrupt_t;
 
-typedef enum inter_os
-{
-        IRQ_MASK,
-        FIQ_MASK,
-        ALL_INTER_MASK
-};
+interrupt_t IRQ = IRQ_MASK;
+interrupt_t FIQ = FIQ_MASK;
+interrupt_t ALL = ALL_INTERRUPT_MASK;
 
-enum inter_os IRQ = IRQ_MASK;
-enum inter_os FIQ = FIQ_MASK;
-enum inter_os ALL = ALL_INTER_MASK;
+/* these are the functions you should use to effect an
+   interrupt status change! */
+#define disable_irq() \
+	disable_interrupt(IRQ)
 
-// these prototypes aren't complete
-int enableInterrupt(enum inter_os);
+/* we don't really wan't others mucking around with the interrupt state
+   functions with parameters, so we'll make these static and refer to the
+   macros for specific cases when we adjust interrupt status */
+static inline void	disable_interrupt(interrupt_t mask);
+static inline void	disable_interrupt_save(interrupt_t mask);
 
-void irq_disable(void);
-void irq_handle(void);
-void irq_register_handler(void);
-// etc. etc.
+static inline int enableInterrupt(interrupt_t mask);
 
 
 
