@@ -50,11 +50,12 @@ void software_interrupt_handler(void){
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	// once we merge in printf functionality, can print out the syscall #
-	// to verify correct parsing.
-	// (just an FYI, use print_word_hex or md from the uart.c file in this branch)
-
 	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
+
+	// Print out syscall # for debug purposes
+	print_uart0("Syscall #: ");
+	print_word_hex(&callNumber);
+	print_uart0("\n");
 }
 
 void prefetch_abort_handler(void){
