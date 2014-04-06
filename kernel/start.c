@@ -16,13 +16,12 @@
  *	(others...)		
  */
 #include <stdint.h>
+#include "hw_handlers.h"
 
 void start(void *p_bootargs) {
-   print_uart0("CourseOS!\n");
+    print_uart0("CourseOS!\n");
 
-	/* we boot into SVC mode with FIQ and IRQ masked */
-	/* TODO: intialize the vector table, stack space, etc. */
-	asm volatile(
-		""
-	);
+    /* we boot into SVC mode with FIQ and IRQ masked */
+    /* TODO: intialize the vector table, stack space, etc. */
+    init_vector_table();
 }
