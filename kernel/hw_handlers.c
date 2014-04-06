@@ -52,6 +52,7 @@ void software_interrupt_handler(void){
 
 	// once we merge in printf functionality, can print out the syscall #
 	// to verify correct parsing.
+	// (just an FYI, use print_word_hex or md from the uart.c file in this branch)
 
 	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
 }
