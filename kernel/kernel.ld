@@ -13,7 +13,10 @@ SECTIONS
 */
 	. = 0x10000;
 
- 	.startup . : { startup.o(.text) }
+	.startup . : {
+		initvm.o(.text .data .bss)
+		startup.o(.text .data .bss)
+	}
 
 	.text BLOCK(4k) : {
 		_kstart = ABSOLUTE(.);
