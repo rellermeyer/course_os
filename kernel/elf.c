@@ -1,12 +1,11 @@
 /* Worked on by Jeremy Wenzel and Sam Allen */
 #include "elf.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
+#include <stdio.h>		// Going to be changed or removed
+#include <stdlib.h>		// Probably going to be removed
+#include <sys/stat.h>		// will be removed
 
 unsigned char* filePointer;
-
+unsigned char* startPointer;
 /* Gets value of bytes given a size of bytes */
 uint32_t do_big_endian(uint32_t size) {
 	uint32_t value = 0;
@@ -58,7 +57,6 @@ int32_t isElf(Elf_Ehdr h) {
 
 Elf_Ehdr read_elf_header(Elf_Ehdr h) {
 	int32_t check = isElf(h);
-	int i = 0;
 	if(check == -1){
 		printf("File is not an ELF file.\n");
 		return h;
@@ -106,12 +104,12 @@ Elf_Ehdr read_elf_header(Elf_Ehdr h) {
 	h.e_shstrndx = get_value(2, h);			// section header string table index
 
 	print_elf_header(h);
-	while(i < h.e_phnum) {
-		read_program_header_table(h);
-		i++;
-	}
 	
-	return h;
+
+	skip = h.e_shoff;
+	filePointer = startPointer + skip;
+	read_section_header_table(h);
+	return h;	
 }
 
 /* Don't use this unless we have printf functionality */
@@ -250,41 +248,63 @@ void print_program_header_table(Elf_Phdr ph) {
 }	
 
 void read_program_header_table(Elf_Ehdr eh) {
-	Elf_Phdr ph;
+	Elf_Phdr ph[eh.e_phnum];
+	filePointer = startPointer + eh.e_phoff;
+	int i = 0;
+	while(i < eh.e_phnum) {
+		ph[i].p_type = get_value(4, eh);
+		ph[i].p_offset = get_value(4, eh);
+		ph[i].p_vaddr = get_value(4, eh);
+		ph[i].p_paddr = get_value(4, eh);
+		ph[i].p_filesz = get_value(4, eh);
+		ph[i].p_memsz = get_value(4, eh);
 
-	ph.p_type = get_value(4, eh);
-	ph.p_offset = get_value(4, eh);
-	ph.p_vaddr = get_value(4, eh);
-	ph.p_paddr = get_value(4, eh);
-	ph.p_filesz = get_value(4, eh);
-	ph.p_memsz = get_value(4, eh);
+		ph[i].p_flags = get_value(4, eh);
+
+		ph[i].p_align = get_value(4, eh);
 	
-	ph.p_flags = get_value(4, eh);
-
-	ph.p_align = get_value(4, eh);
-	
-
-	print_program_header_table(ph);
+		print_program_header_table(ph[i]);
+		i++;
+	}
 }
-void read_section_header_table(int32_t fd, Elf_Ehdr h, Elf_Shdr sh_table[]) {
+void read_section_header_table(Elf_Ehdr eh) {
 	// reads section header
+	Elf_Shdr sh[eh.e_shnum];
+	int i = 0;
+	
+	filePointer = startPointer + eh.e_shoff;	
+	while(i < eh.e_shnum) {	
+		sh[i].sh_name = get_value(4, eh);
+		sh[i].sh_type = get_value(4, eh);
+		sh[i].sh_flags = get_value(4, eh);
+		sh[i].sh_addr = get_value(4, eh);
+		sh[i].sh_offset = get_value(4, eh);
+		sh[i].sh_size = get_value(4, eh);
+		sh[i].sh_link = get_value(4, eh);
+		sh[i].sh_info = get_value(4, eh);
+		sh[i].sh_addralign = get_value(4, eh);
+		sh[i].sh_entsize = get_value(4, eh);
+		print_section_header_table(sh[i]);	
+		i++;
+	}
+	
 }
 
-void print_section_headers(int32_t fd, Elf_Ehdr h, Elf_Shdr sh_table[]) {
+void print_section_header_table(Elf_Shdr sh) {
 	// print the section header
+	printf("SH_name = 0x%04X\n", sh.sh_name);
+	printf("SH_type = 0x%04X\n", sh.sh_type);
+	printf("SH_flags = 0x%04X\n", sh.sh_flags);
+	printf("SH_addr = 0x%04X\n", sh.sh_addr);
+	printf("SH_offset = 0x%04X\n", sh.sh_offset);
+	printf("SH_size = 0x%04X\n", sh.sh_size);
+	printf("SH_link = 0x%04X\n", sh.sh_link);
+	printf("SH_info = 0x%04X\n", sh.sh_info);
+	printf("SH_addralign = 0x%04X\n", sh.sh_addralign);
+	printf("SH_entsize = 0x%04X\n", sh.sh_entsize);
+	
 } 
 
-void print_symbol_table(int32_t fd, 
-			Elf_Ehdr h, 
-			Elf_Shdr sh_table, 
-			uint32_t symbol_table)
-{
-	// prints the symbol table
-}
-
-void print_symbols(int32_t fd, Elf_Ehdr eh, Elf_Shdr sh_table[]) {
-	// print symbols
-}
 
 unsigned get_file_size(char *file_name) {
 	struct stat sb;
@@ -297,10 +317,10 @@ unsigned get_file_size(char *file_name) {
 
 unsigned char* read_whole_file(char *file_name) {
 	unsigned s;
-    unsigned char * contents;
-    FILE * f;
-    size_t bytes_read;
-    int status;
+	unsigned char * contents;
+    	FILE * f;
+    	size_t bytes_read;
+    	int status;
 
     s = get_file_size (file_name);
     contents = malloc (s + 1);
@@ -328,13 +348,13 @@ unsigned char* read_whole_file(char *file_name) {
 }
 
 int main() {
-	unsigned char* file_contents;
+
 	//char* pointer;
-	file_contents = filePointer = read_whole_file("a.out");
+	startPointer = filePointer = read_whole_file("a.out");
 	Elf_Ehdr e;
 	//read_elf_header(e);
 	e = read_elf_header(e);
 	//print_elf_header(e);
-	free(file_contents);
+	free(startPointer);
 	return 0;
 }
