@@ -1,10 +1,25 @@
-#include "include/interrupt.h"
-
 /*
  *
  * Interrupts  
  *
  */
+#include "include/interrupt.h"
+
+
+/* enable IRQ and/or FIQ */
+inline void enable_interrupt(interrupt_t mask) {
+	switch(mask) {
+		case IRQ_MASK:
+			asm volatile("cpsie i");
+			break;
+		case FIQ_MASK:
+			asm volatile("cpsie f");
+			break;
+		case ALL_INTERRUPT_MASK:
+			asm volatile("cpsie if");
+			break;
+	}
+}
 
 
 /* disable IRQ and/or FIQ */
@@ -23,7 +38,7 @@ inline void disable_interrupt(interrupt_t mask) {
 }
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
-inline long disable_interrupt_save(interrupt_t mask) {
+inline int disable_interrupt_save(interrupt_t mask) {
 	/* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
@@ -33,7 +48,7 @@ inline long disable_interrupt_save(interrupt_t mask) {
 			asm volatile("cpsid i");
 			break;
 		case FIQ_MASK:
-			asm volatile("cpsid d");
+			asm volatile("cpsid f");
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsid if");
@@ -42,6 +57,19 @@ inline long disable_interrupt_save(interrupt_t mask) {
 	return cpsr;
 }
 
+/* return a full 32-bit copy of the current process status register */
+inline int get_proc_status(void) {
+	int cpsr;
+	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
+	return cpsr;
+}
+
+/* restore control status (interrupt, mode bits) of the cpsr */
+/* (e.g. when we return from a handler, restore value from 
+   disable_interrupt_save				     */
+inline void restore_proc_status(int cpsr) {
+	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
+}
 
 
 /* I commented this code out because it was throwing a weird

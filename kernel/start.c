@@ -16,12 +16,7 @@
  *	(others...)		
  */
 #include <stdint.h>
-
-inline unsigned long get_proc_status(void) {
-	int cpsr;
-	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	return cpsr;
-}
+// #include "include/interrupt.h"
 
 void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
@@ -32,4 +27,8 @@ void start(void *p_bootargs) {
 		""
 	);
 
+	int cpsr = get_proc_status();
+	print_word_bits(&cpsr);
+
+	md((uint32_t *)0x00);
 }
