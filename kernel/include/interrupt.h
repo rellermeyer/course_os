@@ -1,5 +1,5 @@
 #ifndef __INTERRUPT_H__
-#define __INTERRUPT_H__
+#define __INTERRUPT_H__	1
 /*
  *
  *  Interrupt handler four course_os
@@ -39,16 +39,21 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 /* these are what you should use to effect an
    interrupt status change! */
 
+#define enable_irq() \
+	enable_interrupt(IRQ)
+#define enable_fiq() \
+	enable_interrupt(FIQ)
+#define enable_interrupts() \
+	enable_interrupt(ALL)
+
 #define disable_irq() \
 	disable_interrupt(IRQ)
-#define disable_irq_save() \
-	disable_interrupt_save(IRQ)
-
 #define disable_fiq() \
 	disable_interrupt(FIQ)
+#define disable_irq_save() \
+	disable_interrupt_save(IRQ)
 #define disable_fiq_save() \
 	disable_interrupt_save(FIQ)
-
 #define disable_interrupts() \
 	disable_interrupt(ALL);
 #define disable_interrupts_save() \
@@ -56,13 +61,17 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 
 
 /* we don't really wan't others mucking around with the interrupt state
-   functions (e.g. passing a bad parameter, so we'll  
+   functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
-inline int	enableInterrupt(interrupt_t mask);
+inline int	enableInterrupt(interrupt_t); // deprecated
+inline void	enable_interrupt(interrupt_t);
+inline int	enable_interrupt_save(interrupt_t);
 	
-inline void	disable_interrupt(interrupt_t mask);
-inline long	disable_interrupt_save(interrupt_t mask);
+inline void	disable_interrupt(interrupt_t);
+inline int	disable_interrupt_save(interrupt_t);
 
+inline int 	get_proc_status(void);
+inline void	restore_proc_status(int);
 
 /* VIC Interrupt Mappings */
 	// Primary Interrupt Controller (PIC)
