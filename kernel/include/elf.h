@@ -143,4 +143,6 @@ typedef struct {
 
 void read_program_header_table(Elf_Ehdr h);
 void print_elf_header(Elf_Ehdr h);
+void print_section_header_table(Elf_Shdr sh);
+void read_section_header_table(Elf_Ehdr e);
 #endif
