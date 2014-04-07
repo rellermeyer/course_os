@@ -17,25 +17,27 @@ void start(void *p_bootargs) {
    //initialize GLOBAL_PID
    init_all_processes();
 
+   os_printf("%x\n", *pcb_table);
+
    //Testing and Debug Info
    pcb* test = process_create(0x20000, "TEST");
-   print_uart0(test->name);
-   print_uart0("\n");
-   os_printf("%d\n", test->PID);
-   os_printf("%x\n", test);
+   //os_printf("test: %x\n", test);
 
    pcb* test2 = process_create(0x20000, "TEST2");
-   print_uart0(test2->name);
-   print_uart0("\n");
-   os_printf("%d\n", test2->PID);
+   //os_printf("tst2: %x\n", test2);
+  
+   pcb* test3 = process_create(0x20000, "TEST3");
+   //os_printf("test3: %x\n", test3);
 
-   os_printf("%d\n", test->PID);
+   pcb* test4 = process_create(0x20000, "TEST4");
+   //os_printf("test4: %x\n", test4);
 
-   os_printf("%x\n", test2);
-
-   int *x = mem_alloc(1);
-   os_printf("%x\n", x);
-   int *y = mem_alloc(1);
-   os_printf("%x\n", y);
+   os_printf("%x\n", *pcb_table);
+   print_pcb_table();
+   
+   // int *x = mem_alloc(1);
+   // os_printf("x: %x\n", x);
+   // int *y = mem_alloc(1);
+   // os_printf("y: %x\n", y);
 }
 

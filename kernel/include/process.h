@@ -56,7 +56,7 @@ static uint32_t MAX_PROCESSES = 32;
 static uint32_t GLOBAL_PID;
 
 typedef struct pcb{
-//ID data
+  //ID data
   char* name; /* for debugging purposes */
   uint32_t PID;
   uint32_t starting_address;
@@ -65,35 +65,35 @@ typedef struct pcb{
   //uint32_t group_id;
   //uint32_t parent_id;
 
-//CPU state data
+  //CPU state data
   PROCESS_STATE current_state;
 
-// WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
-// uint32_t PC;
-// uint32_t SP;
+  // WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
+  // uint32_t PC;
+  // uint32_t SP;
   // 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
-// uint32_t CPSR; //current prog status register
-// uint32_t SPSR; //saved prog status register when execption occurs
+  // uint32_t CPSR; //current prog status register
+  // uint32_t SPSR; //saved prog status register when execption occurs
   //unbanked register
-// uint32_t R0;
-// uint32_t R1;
-// uint32_t R2;
- // uint32_t R3;
-// uint32_t R4;
-// uint32_t R5;
-// uint32_t R6;
-// uint32_t R7;
+  // uint32_t R0;
+  // uint32_t R1;
+  // uint32_t R2;
+  // uint32_t R3;
+  // uint32_t R4;
+  // uint32_t R5;
+  // uint32_t R6;
+  // uint32_t R7;
   //banked registers
-// uint32_t R8;
-// uint32_t R9;
-// uint32_t R10;
-// uint32_t R11;
-// uint32_t R12;
-// uint32_t R13; //corresponds to the SP; do we need both?
-// uint32_t R14;
-// uint32_t R15; //corresponds to the PC; do we need both?
+  // uint32_t R8;
+  // uint32_t R9;
+  // uint32_t R10;
+  // uint32_t R11;
+  // uint32_t R12;
+  // uint32_t R13; //corresponds to the SP; do we need both?
+  // uint32_t R14;
+  // uint32_t R15; //corresponds to the PC; do we need both?
 
-//Control data
+  //Control data
   //int priority_value;
   //uint32_t elapsed_time;
   //uint32_t EFLAG;
@@ -104,7 +104,8 @@ typedef struct pcb{
 
 uint32_t* pcb_table; //Table showing all initialized processes.
 
-uint32_t * next_free_slot_in_pcb_table();
+uint32_t* next_free_slot_in_pcb_table();
+void print_pcb_table();
 
 
 /* interface
@@ -128,7 +129,7 @@ be resumed
 
 int init_all_processes();
 int process_create(uint32_t starting_address, char* process_name);
-
+int process_destroy(int PID);
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
 // int process_suspend(process p);
