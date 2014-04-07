@@ -2,117 +2,11 @@
 #include "elf.h"
 #include <stdio.h>		// Going to be changed or removed
 #include <stdlib.h>		// Probably going to be removed
-#include <sys/stat.h>		// will be removed
+
 
 unsigned char* filePointer;
 unsigned char* startPointer;
-/* Gets value of bytes given a size of bytes */
-uint32_t do_big_endian(uint32_t size) {
-	uint32_t value = 0;
-	while(size > 0) {
-		value = value << 8;
-		value = value + *filePointer;
-		filePointer++;
-		size--;
-	}
-	return value;
-}
 
-uint32_t do_little_endian(uint32_t size) {
-	uint32_t value = 0;
-	uint32_t num = 0;
-	int i = 0;
-	while(i < size) {
-		num = *filePointer;
-		num = num << (8 * i);
-		value = value + num;
-		filePointer++;
-		i++;
-	}
-	return value;
-
-}
-
-uint32_t get_value(uint32_t size, Elf_Ehdr h)
-{
-	if(h.e_ident[EI_DATA] == 1)
-		return do_little_endian(size);
-	else
-		return do_big_endian(size);
-}
-
-int32_t isElf(Elf_Ehdr h) {
-	// checks if elf file
-	char ELFMAG0 = get_value(1, h);	// 0x7f
-	char ELFMAG1 = get_value(1, h);	// 'E'
-	char ELFMAG2 = get_value(1, h);	// 'L'
-	char ELFMAG3 = get_value(1, h);	// 'F'
-	if(ELFMAG0 != 127 || ELFMAG1 != 'E' || ELFMAG2 != 'L' || ELFMAG3 != 'F')
-		return -1;
-	h.e_ident[EI_MAG0] = ELFMAG1;
-	h.e_ident[EI_MAG1] = ELFMAG2;
-	h.e_ident[EI_MAG2] = ELFMAG3;
-	return 1;
-}
-
-Elf_Ehdr read_elf_header(Elf_Ehdr h) {
-	int32_t check = isElf(h);
-	if(check == -1){
-		printf("File is not an ELF file.\n");
-		return h;
-	}
-	
-	h.e_ident[EI_CLASS] = get_value(1, h);		// get class
-	h.e_ident[EI_DATA] = get_value(1, h);		// endian
-	h.e_ident[EI_VERSION] = get_value(1, h);	// original version of ELF
-	h.e_ident[EI_OSABI] = get_value(1, h);		// Target operating system ABI
-	h.e_ident[EI_ABIVERSION] = get_value(1, h); 	// Don't really know?
-	
-	
-	int32_t skip = 0;				// skips the padding
-	while(skip < 7) {
-		get_value(1, h);
-		skip++;
-	}
-	
-
-	h.e_type = get_value(2, h);			// get type of file
-	h.e_machine = get_value(2, h);
-	h.e_version = get_value(4, h);
-	
-	if(h.e_ident[EI_CLASS] == 1)			// get entry point
-		h.e_entry = get_value(4, h);
-	else
-		h.e_entry = get_value(8, h);
-	
-	if(h.e_ident[EI_CLASS] == 1)			// get program header offset
-		h.e_phoff = get_value(4, h);
-	else
-		h.e_phoff = get_value(8, h);
-	
-	if(h.e_ident[EI_CLASS] == 1)			// get section header offset
-		h.e_shoff = get_value(4, h);
-	else
-		h.e_shoff = get_value(8, h);
-
-	h.e_flags = get_value(4, h);			// get flag number
-	h.e_ehsize = get_value(2, h);			// get elf header size
-	h.e_phentsize = get_value(2, h);		// get program header size
-	h.e_phnum = get_value(2, h);			// number of program headers
-	h.e_shentsize = get_value(2, h);		// section header size
-	h.e_shnum = get_value(2, h);			// number of section headers
-	h.e_shstrndx = get_value(2, h);			// section header string table index
-
-	print_elf_header(h);
-	
-
-	skip = h.e_shoff;
-	filePointer = startPointer + skip;
-	read_section_header_table(h);
-	return h;	
-}
-
-/* Don't use this unless we have printf functionality */
 void print_elf_header(Elf_Ehdr h) {
 
 	printf("ELF Header:\n");
@@ -213,6 +107,7 @@ void print_elf_header(Elf_Ehdr h) {
 
 }
 
+/* Don't use this unless we have printf functionality */
 void print_program_header_table(Elf_Phdr ph) {
 	printf("--------------------------------------\n");
 
@@ -245,10 +140,124 @@ void print_program_header_table(Elf_Phdr ph) {
 
 	printf("Alignment:		 0x%08X\n", ph.p_align);
 	printf("--------------------------------------\n");
-}	
+}
 
-void read_program_header_table(Elf_Ehdr eh) {
-	Elf_Phdr ph[eh.e_phnum];
+void print_section_header_table(Elf_Shdr sh) {
+	printf("SH_name = 0x%04X\n", sh.sh_name);
+	printf("SH_type = 0x%04X\n", sh.sh_type);
+	printf("SH_flags = 0x%04X\n", sh.sh_flags);
+	printf("SH_addr = 0x%04X\n", sh.sh_addr);
+	printf("SH_offset = 0x%04X\n", sh.sh_offset);
+	printf("SH_size = 0x%04X\n", sh.sh_size);
+	printf("SH_link = 0x%04X\n", sh.sh_link);
+	printf("SH_info = 0x%04X\n", sh.sh_info);
+	printf("SH_addralign = 0x%04X\n", sh.sh_addralign);
+	printf("SH_entsize = 0x%04X\n", sh.sh_entsize);	
+} 
+
+/* Gets the value of the bytes on a big endian system */
+uint32_t do_big_endian(uint32_t size) {
+	uint32_t value = 0;
+	while(size > 0) {
+		value = value << 8;
+		value = value + *filePointer;
+		filePointer++;
+		size--;
+	}
+	return value;
+}
+
+/* Gets the value of the bytes on a little endian system */
+uint32_t do_little_endian(uint32_t size) {
+	uint32_t value = 0;
+	uint32_t num = 0;
+	int i = 0;
+	while(i < size) {
+		num = *filePointer;
+		num = num << (8 * i);
+		value = value + num;
+		filePointer++;
+		i++;
+	}
+	return value;
+
+}
+
+/* Gets value of bytes given a size of bytes */
+uint32_t get_value(uint32_t size, Elf_Ehdr h)
+{
+	if(h.e_ident[EI_DATA] == 1)
+		return do_little_endian(size);
+	else
+		return do_big_endian(size);
+}
+
+int32_t isElf(Elf_Ehdr h) {
+	// checks if elf file
+	char ELFMAG0 = get_value(1, h);	// 0x7f
+	char ELFMAG1 = get_value(1, h);	// 'E'
+	char ELFMAG2 = get_value(1, h);	// 'L'
+	char ELFMAG3 = get_value(1, h);	// 'F'
+	if(ELFMAG0 != 127 || ELFMAG1 != 'E' || ELFMAG2 != 'L' || ELFMAG3 != 'F')
+		return -1;
+	h.e_ident[EI_MAG0] = ELFMAG1;
+	h.e_ident[EI_MAG1] = ELFMAG2;
+	h.e_ident[EI_MAG2] = ELFMAG3;
+	return 1;
+}
+
+Elf_Ehdr read_elf_header(Elf_Ehdr h) {
+	int32_t check = isElf(h);
+	if(check == -1){
+		printf("File is not an ELF file.\n");
+		return h;
+	}
+	
+	h.e_ident[EI_CLASS] = get_value(1, h);		// get class
+	h.e_ident[EI_DATA] = get_value(1, h);		// endian
+	h.e_ident[EI_VERSION] = get_value(1, h);	// original version of ELF
+	h.e_ident[EI_OSABI] = get_value(1, h);		// Target operating system ABI
+	h.e_ident[EI_ABIVERSION] = get_value(1, h); 	// Don't really know?
+	
+	int32_t skip = 0;				// skips the padding
+	while(skip < 7) {
+		get_value(1, h);
+		skip++;
+	}
+	
+	h.e_type = get_value(2, h);			// get type of file
+	h.e_machine = get_value(2, h);
+	h.e_version = get_value(4, h);
+	
+	if(h.e_ident[EI_CLASS] == 1)			// get entry point
+		h.e_entry = get_value(4, h);
+	else
+		h.e_entry = get_value(8, h);
+	
+	if(h.e_ident[EI_CLASS] == 1)			// get program header offset
+		h.e_phoff = get_value(4, h);
+	else
+		h.e_phoff = get_value(8, h);
+	
+	if(h.e_ident[EI_CLASS] == 1)			// get section header offset
+		h.e_shoff = get_value(4, h);
+	else
+		h.e_shoff = get_value(8, h);
+
+	h.e_flags = get_value(4, h);			// get flag number
+	h.e_ehsize = get_value(2, h);			// get elf header size
+	h.e_phentsize = get_value(2, h);		// get program header size
+	h.e_phnum = get_value(2, h);			// number of program headers
+	h.e_shentsize = get_value(2, h);		// section header size
+	h.e_shnum = get_value(2, h);			// number of section headers
+	h.e_shstrndx = get_value(2, h);			// section header string table index
+
+
+	return h;	
+}
+
+
+void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[]) {
 	filePointer = startPointer + eh.e_phoff;
 	int i = 0;
 	while(i < eh.e_phnum) {
@@ -258,20 +267,15 @@ void read_program_header_table(Elf_Ehdr eh) {
 		ph[i].p_paddr = get_value(4, eh);
 		ph[i].p_filesz = get_value(4, eh);
 		ph[i].p_memsz = get_value(4, eh);
-
 		ph[i].p_flags = get_value(4, eh);
-
 		ph[i].p_align = get_value(4, eh);
-	
-		print_program_header_table(ph[i]);
 		i++;
 	}
 }
-void read_section_header_table(Elf_Ehdr eh) {
+
+void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[]) {
 	// reads section header
-	Elf_Shdr sh[eh.e_shnum];
 	int i = 0;
-	
 	filePointer = startPointer + eh.e_shoff;	
 	while(i < eh.e_shnum) {	
 		sh[i].sh_name = get_value(4, eh);
@@ -284,77 +288,12 @@ void read_section_header_table(Elf_Ehdr eh) {
 		sh[i].sh_info = get_value(4, eh);
 		sh[i].sh_addralign = get_value(4, eh);
 		sh[i].sh_entsize = get_value(4, eh);
-		print_section_header_table(sh[i]);	
 		i++;
 	}
-	
 }
 
-void print_section_header_table(Elf_Shdr sh) {
-	// print the section header
-	printf("SH_name = 0x%04X\n", sh.sh_name);
-	printf("SH_type = 0x%04X\n", sh.sh_type);
-	printf("SH_flags = 0x%04X\n", sh.sh_flags);
-	printf("SH_addr = 0x%04X\n", sh.sh_addr);
-	printf("SH_offset = 0x%04X\n", sh.sh_offset);
-	printf("SH_size = 0x%04X\n", sh.sh_size);
-	printf("SH_link = 0x%04X\n", sh.sh_link);
-	printf("SH_info = 0x%04X\n", sh.sh_info);
-	printf("SH_addralign = 0x%04X\n", sh.sh_addralign);
-	printf("SH_entsize = 0x%04X\n", sh.sh_entsize);
-	
-} 
-
-
-unsigned get_file_size(char *file_name) {
-	struct stat sb;
-	if(stat(file_name, & sb) != 0) {
-		fprintf(stderr, "Stat failed for file");
-		exit(-1);
-	}
-	return sb.st_size;
-}
-
-unsigned char* read_whole_file(char *file_name) {
-	unsigned s;
-	unsigned char * contents;
-    	FILE * f;
-    	size_t bytes_read;
-    	int status;
-
-    s = get_file_size (file_name);
-    contents = malloc (s + 1);
-    if (contents == NULL) {
-        fprintf (stderr, "Not enough memory.\n");
-        exit(-1);
-    }
-
-    f = fopen (file_name, "r");
-    if (f == NULL) {
-        fprintf (stderr, "Could not open File");
-        exit (-1);
-    }
-    bytes_read = fread (contents, sizeof (unsigned char), s, f);
-    if (bytes_read != s) {
-        fprintf (stderr, "Short read of ");
-        exit (-1);
-    }
-    status = fclose (f);
-    if (status != 0) {
-        fprintf (stderr, "Error closing ");
-        exit (-1);
-    }
-    return contents;
-}
 
 int main() {
-
-	//char* pointer;
-	startPointer = filePointer = read_whole_file("a.out");
-	Elf_Ehdr e;
-	//read_elf_header(e);
-	e = read_elf_header(e);
-	//print_elf_header(e);
-	free(startPointer);
+	
 	return 0;
 }
