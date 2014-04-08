@@ -7,4 +7,7 @@ typedef struct Test {
 // Run_tests takes an array of tests which it runs and prints the results.
 void run_tests(Test *test_group[], int num_tests);
 
+int test1();
+int test2();
+
 Test* create_test(char *name, int (*test_function)());

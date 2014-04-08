@@ -3,10 +3,12 @@
 
 #include "include/argparse.h"
 #include "include/global_defs.h"
+#include "include/tests.h"
+#include "include/mem_alloc.h"
 
 
 /* Parse the list of strings (argv) and process each argument */
-void parse_arguments(int argc, char **argv)
+void parse_args(int argc, char **argv)
 {
   char **argument_list = argv;
 
@@ -21,12 +23,15 @@ void parse_arguments(int argc, char **argv)
     argument_list += delta_args_read;
     i += delta_args_read;
   }
+
+//  free(argv); // Must free since argv was mem_alloc'd in split_string
 }
 
 
 /* Read arguments and do something based on the arguments.
    Return the number of arguments read.
    char **args: array of pointers to each argument
+   TODO: use argc to prevent reading too many arguments?
 */
 int analyze_args(char **argv)
 {
@@ -41,6 +46,16 @@ int analyze_args(char **argv)
   }
 
   */
+
+  // Run some tests
+  if (os_strcmp(argv[i], "TEST") == 0)
+  {
+    Test *tests[2];
+    tests[0] = create_test("This passes", &test1);
+    tests[0] = create_test("This fails", &test2);
+    run_tests(tests, 2);
+  }
+
 
   // Default case: read one argument
   return 1;
@@ -76,7 +91,9 @@ char* read_cmdline_tag(uint32_t *tag_base)
 
 
 /* Separate the string line based on whitespace. Return this array of strings.
-   TODO: Dynamically change the size of the result array.
+   TODO: Dynamically change the size of the result array. Might have to
+   pass an empty array as a parameter. Count the number of spaces in the
+   line to determine maximum number of entries.
 */
 char** split_string(char* line)
 {
