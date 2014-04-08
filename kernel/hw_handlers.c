@@ -57,8 +57,10 @@ void reserved_handler(void){
 
 void irq_handler(void){
 	print_uart0("IRQ HANDLER\n");
+	// Branch to the interrupt handler.
 }
 
 void fiq_handler(void){
 	print_uart0("FIQ HANDLER\n");
+	// Branch to the interrupt handler.
 }

@@ -5,6 +5,21 @@
  */
 #include "include/interrupt.h"
 
+// An interrupt occurs.
+void sendInterrupt(interrupt_t mask){
+                case IRQ_MASK:
+			// branch to IRQ interrupt vector
+			irq_handler();
+                        break;
+                case FIQ_MASK:
+			// branch to FIQ interrupt vector
+                        fiq_handler();
+			break;
+                default: // error
+                        break;
+        }
+}
+
 
 /* enable IRQ and/or FIQ */
 inline void enable_interrupt(interrupt_t mask) {
@@ -101,13 +116,13 @@ inline void restore_proc_status(int cpsr) {
 //  asm volatile
 //  (
 //        "XOR %[result], %[value], %[mask] \n\t"      /* set IRQ disable bit flag */
-//        "MSR CPSR_c, %[value] \n\t"                /* store updated program status */
-//                : [result]"=r"(my_cpsr)
-//                : [value]"r"(my_cpsr), [mask]"r"(interRequest)
-//                : // no clobber list needed
-//  );
-  
-  // END OF CRITICAL SECIION -- NEED TO IMPLEMTN MUTEX/LOCKS  
+		case FIQ_MASK:
+			asm volatile("cpsie f");
+			break;
+		case ALL_INTERRUPT_MASK:
+			asm volatile("cpsie if");
+			break;
+	}
+}
 
-//  return my_cpsr;
-//}
+
