@@ -82,7 +82,7 @@ char** split_string(char* line)
 {
   char *piece = NULL; // One null-terminated part of the string
   const char *delimiters = " \t"; // Space and tab
-  char **result = malloc(sizeof(char*) * 16);
+  char **result = mem_alloc(sizeof(char*) * 16);
 
   piece = strtok(line, delimiters);
   result[0] = piece;
