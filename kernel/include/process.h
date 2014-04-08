@@ -9,7 +9,7 @@
 3/21: More research and comments by Faseeh Akhter and Josh Guan
 3/31: Further research and beginning implementation of process initialization and creation by Faseeh Akhter, Taylor Smith, Sean Villars
 4/2:  Fixed mem_alloc and began initial pcb creation by Sean Villars, Faseeh Akhter, Josh Guan, Taylor Smith
-
+4/7:  Fixed mem_alloc and fixed pcb allocation. added a few utility functions as well. Sean V, Faseeh A, Taylor Smith
 /*******************
 a work in progress
 memory boundaries?
@@ -60,13 +60,13 @@ typedef struct pcb{
   char* name; /* for debugging purposes */
   uint32_t PID;
   uint32_t starting_address;
-  //uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
-  //uint32_t user_id;
-  //uint32_t group_id;
-  //uint32_t parent_id;
+  uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
+  uint32_t user_id;
+  uint32_t group_id;
+  uint32_t parent_id;
 
   //CPU state data
-  PROCESS_STATE current_state;
+  //PROCESS_STATE current_state;
 
   // WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
   // uint32_t PC;
@@ -130,6 +130,7 @@ be resumed
 int init_all_processes();
 int process_create(uint32_t starting_address, char* process_name);
 int process_destroy(int PID);
+void print_PID();
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
 // int process_suspend(process p);
