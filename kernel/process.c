@@ -1,15 +1,12 @@
 #include "include/process.h"
 #include "include/klibc.h"
 
-//process memory resides starting at 0X20000 
-
-
 int init_all_processes() {
     pcb_table = mem_alloc(MAX_PROCESSES);
 	GLOBAL_PID = 0;
 } 
 
-int process_create(uint32_t starting_address, char* process_name) {
+pcb* process_create(uint32_t starting_address, char* process_name) {
 
 	uint32_t* location_in_pcb_table = next_free_slot_in_pcb_table();
 	
@@ -21,10 +18,10 @@ int process_create(uint32_t starting_address, char* process_name) {
 		pcb_pointer->name = process_name;
 		pcb_pointer->PID = ++GLOBAL_PID;
 		//os_printf("addr PID: %x\n", &(new_pcb));
-		return (int) pcb_pointer;
+		return pcb_pointer;
 	} else {
 		print_uart0("Out of memory in pcb table");
-		return -1;
+		return 0;
 	}
 }
 
@@ -41,24 +38,38 @@ uint32_t* next_free_slot_in_pcb_table() {
 	return (uint32_t *) -1;
 }
 
-int process_destroy(int PID) {
+
+//destroys process with param PID by clearing the pcb struct
+//returns 1 upon success, 0 with failure
+uint32_t process_destroy(int PID) {
 	//search for process in pcb table
 	int i;
-	pcb* temp_pcb;
+	uint32_t* current_address = pcb_table;
+
 	for (i = 0; i < MAX_PROCESSES; ++i) {
 		
+		if((*current_address) != 0) {
+			pcb* temp_pcb = (pcb*) *current_address; 
+			
+			if(temp_pcb->PID == PID) {
+				temp_pcb->name = 0;
+				temp_pcb->PID = 0;
+				*current_address = 0;
+				return 1;
+			}	
+		}
+		current_address++;
 	}
-
-	return 1;
+	return 0;
 }
 
 //prints the addresses of the pcbs stored in the table
 void print_pcb_table() {
 	os_printf("printing pcb table\n");
-	uint32_t* current_address = (uint32_t)pcb_table;
+	uint32_t* current_address = (uint32_t*) pcb_table;
 	uint32_t i;
 	for(i = 0; i < MAX_PROCESSES; ++i) {
-		//os_printf("%x\n", current_address);
+		os_printf("%x\n", current_address);
 		current_address++;
 	}
 }
@@ -73,9 +84,10 @@ void print_PID() {
 			// os_printf("curr addr: %x\n", current_address);
 			// os_printf("contents: %x\n", *current_address);
 
-			pcb* temp_pcb = *current_address;
+			pcb* temp_pcb = (pcb*) *current_address;
 			os_printf("PID: %d\n", temp_pcb->PID);
 		}
 		current_address++;
 	}
 }
+
