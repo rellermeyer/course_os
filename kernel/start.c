@@ -32,9 +32,11 @@ void start(void *p_bootargs) {
    pcb* test4 = process_create(0x20000, "TEST4");
    //os_printf("test4: %x\n", test4);
 
-   //print_pcb_table();
-   
-   print_PID();
-  
+ 
+ 	process_destroy(2);
+
+  	pcb* test5 = process_create(0x2000, "TEST5");
+
+  	print_PID();
 }
 

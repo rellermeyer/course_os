@@ -128,8 +128,8 @@ be resumed
 //create a corresponding pcb ds
 
 int init_all_processes();
-int process_create(uint32_t starting_address, char* process_name);
-int process_destroy(int PID);
+pcb* process_create(uint32_t starting_address, char* process_name);
+uint32_t process_destroy(int PID);
 void print_PID();
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
