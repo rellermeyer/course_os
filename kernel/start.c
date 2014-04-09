@@ -17,7 +17,7 @@
  */
 #include <stdint.h>
 // #include "include/interrupt.h"
-#include "include/hw_handlers.h"
+// #include "include/hw_handlers.h"
 
 void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
