@@ -12,12 +12,12 @@
 // 
 // An interrupt occurs.
 inline void handle_interrupt(int interrupt_vector){
-	switch(interrupt_vector) {
-
-        	case :
-                default: // error
-                        break;
-        }
+// 	switch(interrupt_vector) {
+// 
+//         	case :
+//                 default: // error
+//                         break;
+//         }
 }
 
 
@@ -116,13 +116,11 @@ inline void restore_proc_status(int cpsr) {
 //  asm volatile
 //  (
 //        "XOR %[result], %[value], %[mask] \n\t"      /* set IRQ disable bit flag */
-		case FIQ_MASK:
-			asm volatile("cpsie f");
-			break;
-		case ALL_INTERRUPT_MASK:
-			asm volatile("cpsie if");
-			break;
-	}
-}
-
-
+// 		case FIQ_MASK:
+// 			asm volatile("cpsie f");
+// 			break;
+// 		case ALL_INTERRUPT_MASK:
+// 			asm volatile("cpsie if");
+// 			break;
+// 	}
+// }
