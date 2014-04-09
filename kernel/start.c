@@ -47,5 +47,7 @@ void start(void *p_bootargs) {
 	// PID: 3
 	// PID: 4
   	print_PID();
+
+  	execute_process(test6);
 }
 
