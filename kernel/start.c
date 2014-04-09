@@ -35,8 +35,17 @@ void start(void *p_bootargs) {
  
  	process_destroy(2);
 
-  	pcb* test5 = process_create(0x2000, "TEST5");
+  	pcb* test5 = process_create(0x20000, "TEST5");
 
+  	process_destroy(5);
+
+  	pcb* test6 = process_create(0x20000, "TEST6");
+
+  	//should print out 
+ 	// PID: 1
+	// PID: 6
+	// PID: 3
+	// PID: 4
   	print_PID();
 }
 

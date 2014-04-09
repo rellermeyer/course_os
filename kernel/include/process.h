@@ -68,12 +68,24 @@ typedef struct pcb{
   //CPU state data
   //PROCESS_STATE current_state;
 
+
+  
+
+  /*
+   * r0-r3 are the argument and scratch registers; r0-r1 are also the result registers
+   * r4-r8 are callee-save registers
+   * r9 might be a callee-save register or not (on some variants of AAPCS it is a special register)
+   * r10-r11 are callee-save registers
+   * r12-r15 are special registers
+   * 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
+  */
+  
   // WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
   // uint32_t PC;
-  // uint32_t SP;
-  // 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
+  // uint32_t SP; 
   // uint32_t CPSR; //current prog status register
   // uint32_t SPSR; //saved prog status register when execption occurs
+ 
   //unbanked register
   // uint32_t R0;
   // uint32_t R1;
@@ -83,6 +95,7 @@ typedef struct pcb{
   // uint32_t R5;
   // uint32_t R6;
   // uint32_t R7;
+ 
   //banked registers
   // uint32_t R8;
   // uint32_t R9;
@@ -131,6 +144,9 @@ int init_all_processes();
 pcb* process_create(uint32_t starting_address, char* process_name);
 uint32_t process_destroy(int PID);
 void print_PID();
+pcb* get_PCB(uint32_t PID);
+uint32_t free_PCB(pcb* pcb_p);
+uint32_t* get_address_of_PCB(uint32_t PID);
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
 // int process_suspend(process p);
