@@ -50,6 +50,7 @@ int analyze_args(char **argv)
   // Run some tests
   if (os_strcmp(argv[i], "TEST") == 0)
   {
+    os_printf("Running tests...\n");
     Test *tests[2];
     tests[0] = create_test("This passes", &test1);
     tests[0] = create_test("This fails", &test2);
