@@ -6,18 +6,21 @@ int init_all_processes() {
 	GLOBAL_PID = 0;
 } 
 
+//creates a process and initializes the PCB
+//returns pcb pointer upon success
+//returns 0 if there is no more room in pcb table
 pcb* process_create(uint32_t starting_address, char* process_name) {
 
-	uint32_t* location_in_pcb_table = next_free_slot_in_pcb_table();
+	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
-	if(*location_in_pcb_table == 0) {
+	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) mem_alloc(sizeof(pcb));
-		*location_in_pcb_table = (uint32_t) pcb_pointer;
-		// os_printf("PCBP: %x\n", pcb_pointer);
-		// os_printf("locaPCB: %x\n", location_in_pcb_table);
+		*free_space_in_pcb_table = (uint32_t) pcb_pointer; //fill the free space with a pcb pointer
+
+		//initialize PCB		
 		pcb_pointer->name = process_name;
 		pcb_pointer->PID = ++GLOBAL_PID;
-		//os_printf("addr PID: %x\n", &(new_pcb));
+		
 		return pcb_pointer;
 	} else {
 		print_uart0("Out of memory in pcb table");
@@ -45,31 +48,17 @@ uint32_t* next_free_slot_in_pcb_table() {
 //destroys process with param PID by clearing the pcb struct
 //returns 1 upon success, 0 with failure
 uint32_t process_destroy(int PID) {
-	//search for process in pcb table
-	
-	
 	uint32_t* addressToClear = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
-	free_PCB(pcb_p);
-	*addressToClear = 0;
+	uint32_t free_success = free_PCB(pcb_p);
+	*addressToClear = 0; //clears the pointer to the PCB
 	
-	//int i
-	//uint32_t* current_address = pcb_table;
-	// for (i = 0; i < MAX_PROCESSES; ++i) {
-		
-	// 	if((*current_address) != 0) {
-	// 		pcb* temp_pcb = (pcb*) *current_address; 
-			
-	// 		if(temp_pcb->PID == PID) {
-	// 			temp_pcb->name = 0;
-	// 			temp_pcb->PID = 0;
-	// 			*current_address = 0;
-	// 			return 1;
-	// 		}	
-	// 	}
-	// 	current_address++;
-	// }
-	return 0;
+	if(free_success){
+		return 1;
+	} else {
+		return 0;
+	}
+
 }
 
 //prints the addresses of the pcbs stored in the table
@@ -90,6 +79,7 @@ void print_PID() {
 	uint32_t i;
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if((*current_address) != 0) {
+			// debug
 			// os_printf("curr addr: %x\n", current_address);
 			// os_printf("contents: %x\n", *current_address);
 

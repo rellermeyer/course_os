@@ -116,12 +116,6 @@ typedef struct pcb{
 
 } pcb;
 
-uint32_t* pcb_table; //Table showing all initialized processes.
-
-uint32_t* next_free_slot_in_pcb_table();
-void print_pcb_table();
-
-
 /* interface
 processes can
 be made (initialized)
@@ -141,6 +135,9 @@ be resumed
 //output
 //create a corresponding pcb ds
 
+uint32_t* pcb_table; //Table showing all initialized processes.
+uint32_t* next_free_slot_in_pcb_table();
+void print_pcb_table();
 int init_all_processes();
 pcb* process_create(uint32_t starting_address, char* process_name);
 uint32_t process_destroy(int PID);
@@ -148,6 +145,7 @@ void print_PID();
 pcb* get_PCB(uint32_t PID);
 uint32_t free_PCB(pcb* pcb_p);
 uint32_t* get_address_of_PCB(uint32_t PID);
+
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
 // int process_suspend(process p);
