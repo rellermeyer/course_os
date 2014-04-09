@@ -14,7 +14,7 @@ void start(void *p_bootargs) {
    // os_printf("test %X %X %X %X\n", 7, 4, 42, -123);
 
 
-   //initialize GLOBAL_PID
+   //initialize GLOBAL_PID and PCB table
    init_all_processes();
 
 
