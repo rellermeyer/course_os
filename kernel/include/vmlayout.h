@@ -6,30 +6,30 @@
  *
  *			+-----------------------+ 	0xffff ffff
  *			|vectors & other kernel |
- *			|	branch locations	|	(?? 1MB)
- *			|	_________________ 	|	0xffef ffff
- *			|						|
- *			|		KERNEL 			|	(255 MB)
+ *			|branch locations	|	(?? 1MB)
+ *			|  _________________ 	|	0xffef ffff
+ *			|			|
+ *			|	KERNEL 		|	(255 MB)
  *			+-----------------------+	0xf000 0000 			
- *			|	6 kernel stacks	w/	|
- *			|	6 invalid mem in btw|	(12*4K=48K)
+ *			|6 kernel stacks w/	|
+ *			|6 invalid mem in btw	|	(12*4K=48K)
  *			+-----------------------+	0xefff ffff
- *			|						|
- *			|	reserved for		|
- *			:	kernel data			:	(1038 MB)
- *			:	structures			:
- *			|						|
+ *			|			|
+ *			|	reserved for	|
+ *			:	kernel data	:	(1038 MB)
+ *			:	structures	:
+ *			|			|
  *			+-----------------------+	0xaf20 0000
- *			|	 PCI Interface		|	(752MB)
+ *			|	 PCI Interface	|	(752MB)
  *			+-----------------------+	0x8020 0000
- *			|	Peripheral Registers|	
- *			|	(UART etc)			|	(2MB)
+ *			|Peripheral Registers	|	
+ *			|	(UART etc)	|	(2MB)
  *			+-----------------------+	0x8000 0000
- *			|						|
- *			|						|
- *			:		User Space		:	(2GB)
- *			:						:
- *			|						|
+ *			|			|
+ *			|			|
+ *			:	User Space	:	(2GB)
+ *			:			:
+ *			|			|
  *			|_______________________|	0x0000 0000
  */
 
@@ -52,7 +52,7 @@
 #define USER_LIM		CREGSTART
 
 //Use this macro to get virtual address of peripherals
-#define peri_p2v(pa)	(pa+PREGSTART)
+#define peri_p2v(pa)		(pa+PREGSTART)
 
 
 #endif
