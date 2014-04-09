@@ -20,6 +20,7 @@ pcb* process_create(uint32_t starting_address, char* process_name) {
 		//initialize PCB		
 		pcb_pointer->name = process_name;
 		pcb_pointer->PID = ++GLOBAL_PID;
+		pcb_pointer->function = sample_func;
 		
 		return pcb_pointer;
 	} else {
@@ -150,4 +151,21 @@ uint32_t free_PCB(pcb* pcb_p) {
 	return 1;
 }
 
+
+//executes a process function
+//return 1 upon success
+//return 0 upon failure
+uint32_t execute_process(pcb* pcb_p) {
+	if(!pcb_p) {
+		os_printf("Cannot execute process. Exiting.\n");
+		return 0;
+	}
+	pcb_p->function(pcb_p->PID);
+	return 1;
+}
+
+//test function to see if execute process works correctly.
+void sample_func(uint32_t x) {
+	os_printf("Sample function!! From process with PID: %d\n", x);
+}
 
