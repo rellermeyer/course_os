@@ -57,10 +57,26 @@ void reserved_handler(void){
 
 void irq_handler(void){
 	print_uart0("IRQ HANDLER\n");
-	// Branch to the interrupt handler.
+// Entering exception handler
+// 1. Save the address of the next instruction in the appropriate Link Register LR.
+// 2. Copy CPSR to the SPSR of new mode.
+// 3. Change the mode by modifying bits in CPSR.
+// 4. Fetch next instruction from the vector table.
+//  
+   int interrupt_vector;
+   handle_interrupt(interrupt_vector);
+// 
+// Leaving exception handler
+// 1. Move the Link Register LR (minus an offset) to the PC.
+// 2. Copy SPSR back to CPSR, this will automatically changes the mode back to the previous one.
+// 3. Clear the interrupt disable flags (if they were set).
+
+// an IRQ handler returns from the interrupt by executing:
+// SUBS PC, R14_irq, #4
 }
 
 void fiq_handler(void){
 	print_uart0("FIQ HANDLER\n");
-	// Branch to the interrupt handler.
+// FIQ handler returns from the interrupt by executing:
+// SUBS PC, R14_fiq, #4
 }
