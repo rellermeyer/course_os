@@ -53,7 +53,7 @@ int analyze_args(char **argv)
     os_printf("Running tests...\n");
     Test *tests[2];
     tests[0] = create_test("This passes", &test1);
-    tests[0] = create_test("This fails", &test2);
+    tests[1] = create_test("This fails", &test2);
     run_tests(tests, 2);
   }
 
