@@ -1,7 +1,7 @@
 /********************************************************************
 *	libc.c
 *
-*	Author: Jared McArthur	// any collaborators, please add name
+*	Author: Jared McArthur, Taylor Smith	// any collaborators, please add name
 *
 *	Date last edit: 28 March 2014
 *
@@ -15,7 +15,7 @@
 *	Notes:	memcmp and strcmp adapted directly from musl-libc
 ********************************************************************/
 
-#include "include/libc.h"
+#include "include/klibc.h"
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -42,36 +42,58 @@ int os_strcmp ( const char *left, const char *right)
 
 /* TODO: create print function for kernel debugging purposes */
 
-/*
-void print_number_using_base(int num, int base, int letter_case, int use_sign){
-  int temp = num;
+void print_hex(int val, int CASE)
+{
+  int temp = val;
   int count_digits = 0;
   char buf[100];
+  int CHAR_MASK = 0xF;
   if (temp == 0){
-    print_uart0('0');
-  } else if (use_sign && temp < 0) {
-    print_uart0('-');
-    temp = -temp;
-  }
-  while(temp != 0){
-    if(letter_case == UPPER_CASE){
-      buf[count_digits] = upper_case_digits[(unsigned long) temp % (unsigned) base];
+    //printf("0");
+    print_char_uart0('0');
+  } 
+  while((temp != 0) && (count_digits < 8))
+  {
+    int index = temp & CHAR_MASK;
+    if(CASE == UPPER_CASE){
+      buf[count_digits] = upper_case_digits[index];
     } else {
-      buf[count_digits] = lower_case_digits[(unsigned long) temp % (signed) base];
+      buf[count_digits] = lower_case_digits[index];
     }
-    temp = ((unsigned long) temp / (unsigned) base);
-    count_digits++;
+    temp = temp >> 4;
+    count_digits += 1;
   }
   while(count_digits > 0){
-    char tmp_str[2] = "";
-    tmp_str[0] = buf[count_digits-1]; 
-    tmp_str[1] = '\0';
-    print_uart0(tmp_str);
+    //printf("%c", buf[count_digits-1]);
+    print_char_uart0(buf[count_digits - 1]);
     count_digits--;
   }
 }
 
-
+print_dec(int val){
+  int temp = val;
+  int count_digits = 0;
+  char buf[100];
+  if (temp == 0){
+    //printf("0");
+    print_uart0("0");
+  } else if (temp < 0) {
+    //printf("-");
+    print_uart0("-");
+    temp = -temp;
+  }
+  while(temp != 0){
+    int index = temp % 10;
+    buf[count_digits] = upper_case_digits[index];
+    temp = temp / 10;
+    count_digits += 1;
+  }
+  while(count_digits > 0){
+    //printf("%c", buf[count_digits-1]);
+    print_char_uart0(buf[count_digits - 1]);
+    count_digits--;
+  }
+}
 
 int os_printf(const char *str_buf, ...) {
   va_list args;
@@ -83,37 +105,35 @@ int os_printf(const char *str_buf, ...) {
       str_buf++;
       switch (*str_buf) {
         case 'X':
-          print_number_using_base(va_arg(args, int), 16, UPPER_CASE, 0);
+          t_arg = va_arg(args,int);
+          print_hex(t_arg, UPPER_CASE);
           break;
         case 'x':
           t_arg = va_arg(args,int);
-          print_number_using_base(t_arg, 16, LOWER_CASE, 0);
+          print_hex(t_arg, LOWER_CASE);
           break;
         case 'd':
-          print_number_using_base(va_arg(args, int), 10, NO_CASE, 1);
+          t_arg = va_arg(args,int);
+          print_dec(t_arg);
           break;
         case 'c':
           t_arg = va_arg(args,int);
-          char tmp_str[2] = "";
-          tmp_str[0] = t_arg; 
-          tmp_str[1] = '\0';
-          print_uart0(tmp_str);
+          print_char_uart0(t_arg);
+          //printf("%c", t_arg);
           break;
         case '%':
           print_uart0("%");
+          //printf("%%");
           break;
       }
     } else {
-      char tmp_str[2] = "";
-      tmp_str[0] = (uint32_t) *str_buf; 
-      tmp_str[1] = '\0';
-      print_uart0(tmp_str);
+      print_char_uart0(*str_buf);
+      //printf("%c", *str_buf);
     }
     str_buf++;
   }
   va_end(args);
 }
-*/
 
 int main()
 { return 0; }
