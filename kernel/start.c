@@ -17,6 +17,7 @@
  */
 #include <stdint.h>
 // #include "include/interrupt.h"
+#include "include/hw_handlers.h"
 
 void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
@@ -31,4 +32,7 @@ void start(void *p_bootargs) {
 	print_word_bits(&cpsr);
 
 	md((uint32_t *)0x00);
+	
+	// testing
+	irq_handler();
 }
