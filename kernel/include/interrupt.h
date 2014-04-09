@@ -45,7 +45,6 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 	enable_interrupt(FIQ)
 #define enable_interrupts() \
 	enable_interrupt(ALL)
-
 #define disable_irq() \
 	disable_interrupt(IRQ)
 #define disable_fiq() \
@@ -64,6 +63,7 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
    functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
 inline int	enableInterrupt(interrupt_t); // deprecated
+inline void 	handle_interrupt(int);
 inline void	enable_interrupt(interrupt_t);
 inline int	enable_interrupt_save(interrupt_t);
 	
