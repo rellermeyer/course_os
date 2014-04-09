@@ -1,5 +1,5 @@
 /********************************************************************
-*	libc.c
+*	klibc.c
 *
 *	Author: Jared McArthur, Taylor Smith	// any collaborators, please add name
 *
@@ -39,8 +39,6 @@ int os_strcmp ( const char *left, const char *right)
 	for (; *left == *right && *left; left++, right++);
 	return *(unsigned char *)left - *(unsigned char *)right;
 }
-
-/* TODO: create print function for kernel debugging purposes */
 
 void print_hex(int val, int CASE)
 {
