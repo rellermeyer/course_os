@@ -11,34 +11,40 @@ SECTIONS
  *.bss : { *(.bss COMMON) }
  *. = ALIGN(8);
 */
-	. = 0x10000;
+	. = 0x00100000;
+
+	_kernstart = .;
 
 	.startup . : {
-		initvm.o(.text .data .bss)
-		startup.o(.text .data .bss)
+		startup.o(.text)
 	}
 
-	.text BLOCK(4k) : {
-		_kstart = ABSOLUTE(.);
+	.text BLOCK(8) : {
+		_ktextstart = ABSOLUTE(.);
 		*(.text)
-		_kend = ABSOLUTE(.);
+		_ktextend = ABSOLUTE(.);
 	}
 
-	.data BLOCK(4k) : {
-		_datastart = ABSOLUTE(.);
+	.data BLOCK(8) : {
+		_kdatastart = ABSOLUTE(.);
 		*(.data)
-		_dataend = ABSOLUTE(.);
+		_kdataend = ABSOLUTE(.);
 	}
 
-	.bss BLOCK(4k) : {
-		_bssstart = ABSOLUTE(.);
+	.bss BLOCK(8) : {
+		_kbssstart = ABSOLUTE(.);
 		*(.bss COMMON)
-		_bssend = ABSOLUTE(.);
+		_kbssend = ABSOLUTE(.);
 	} 
 	
-	system_stack = 0x3c00;
-	irq_stack = 0x2c00;
-	abort_stack = 0x2800;
-	svc_stack = 0x2400;
+	_kernend = .;
+
+	. = ALIGN(4k);
+
+	_transtable = .;
+
+	. = . + 16K;
+
+	_lowused = .;
 
 }
