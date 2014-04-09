@@ -5,16 +5,16 @@
  */
 #include "include/interrupt.h"
 
+// In a system with an interrupt controller with these features, software is still required to:
+// determine from the interrupt controller which interrupt source is requesting service
+// determine where the service routine for that interrupt source is loaded
+// mask or clear that interrupt source, before re-enabling processor interrupts to permit another interrupt to be taken.
+// 
 // An interrupt occurs.
-void sendInterrupt(interrupt_t mask){
-                case IRQ_MASK:
-			// branch to IRQ interrupt vector
-			irq_handler();
-                        break;
-                case FIQ_MASK:
-			// branch to FIQ interrupt vector
-                        fiq_handler();
-			break;
+inline void handle_interrupt(int interrupt_vector){
+	switch(interrupt_vector) {
+
+        	case :
                 default: // error
                         break;
         }
