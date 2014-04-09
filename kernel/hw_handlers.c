@@ -5,6 +5,8 @@
  */
 #include "include/hw_handlers.h"
 #include "include/mmap.h"
+#include "include/interrupt.h"
+
 
 void init_vector_table(void) {
 
@@ -60,19 +62,21 @@ void irq_handler(void){
 	// disable interrupts
 	disable_interrupt(ALL);
 	// Save the address of the next instruction in the appropriate Link Register LR.
-	asm volatile ("MOV lr, pc \n\t"	); 
+	asm volatile ("MOV lr, pc \n\t"); 
 	// Copy CPSR to the SPSR of new mode.
 	int spsr;
 	spsr = get_proc_status();
 	// Change the mode by modifying bits in CPSR.
-	
+	asm volatile ("CPS 18 \n\t"); /* 18 = IRQ Interrupt Processor Mode*/
 	// Fetch next instruction from the vector table.  
    	int interrupt_vector;
-   	// handle_interrupt(interrupt_vector);
+   	handle_interrupt(interrupt_vector);
 
 	// Leaving exception handler
 	// Move the Link Register LR (minus an offset) to the PC.
+	asm volatile ("MOV pc, lr \n\t");
 	// Copy SPSR back to CPSR, this will automatically changes the mode back to the previous one.
+	restore_proc_status(spsr);
 	// Clear the interrupt disable flags (if they were set).
 	enable_interrupt(ALL);
 	// an IRQ handler returns from the interrupt by executing:

@@ -1,5 +1,5 @@
 #ifndef __INTERRUPT_H__
-#define __INTERRUPT_H__	1
+#define __INTERRUPT_H__ 1
 /*
  *
  *  Interrupt handler four course_os
