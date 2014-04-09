@@ -13,6 +13,7 @@ int test2()
   return 0;
 }
 
+/*
 main()
 {
   //This is the array of test functions that we pass to the test runner.
@@ -25,3 +26,4 @@ main()
 
   run_tests(tests, NUMTESTS);
 }
+*/
