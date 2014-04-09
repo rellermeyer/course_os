@@ -5,9 +5,10 @@
 /qemu/
 !/qemu/build.sh
 /kernel/boot-commands
-
+/kernel/flash.bin
 #always exclude these from being pushed
 *.o
 *.img
 *.map
 *.elf
+*~
