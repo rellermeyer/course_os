@@ -5,6 +5,11 @@
  */
 #include "include/interrupt.h"
 
+
+interrupt_t IRQ = IRQ_MASK;
+interrupt_t FIQ = FIQ_MASK;
+interrupt_t ALL = ALL_INTERRUPT_MASK;
+
 // In a system with an interrupt controller with these features, software is still required to:
 // determine from the interrupt controller which interrupt source is requesting service
 // determine where the service routine for that interrupt source is loaded
@@ -32,6 +37,7 @@ inline void enable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsie if");
+			print_uart0("Enable All Interrupts\n");
 			break;
 	}
 }
@@ -48,6 +54,7 @@ inline void disable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsid if");
+			print_uart0("Disable All Interrupts\n");
 			break;
 	}
 }
