@@ -3,30 +3,31 @@
  * Harware Handler Interface  
  *
  */
-#include "include/hw_handlers.h"
-#include "include/mmap.h"
+#include "hw_handlers.h"
+#include "mmap.h"
+#include "vmlayout.h"
 
 void init_vector_table(void) {
 
 	/* Primary Vector Table */
-	mmio_write(0x00, BRANCH_INSTRUCTION);
-	mmio_write(0x04, BRANCH_INSTRUCTION);
-	mmio_write(0x08, BRANCH_INSTRUCTION);
-	mmio_write(0x0C, BRANCH_INSTRUCTION);
-	mmio_write(0x10, BRANCH_INSTRUCTION);
-	mmio_write(0x14, BRANCH_INSTRUCTION);
-	mmio_write(0x18, BRANCH_INSTRUCTION);
-	mmio_write(0x1C, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x04, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x0C, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
 
 	/* Secondary Vector Table */
-	mmio_write(0x20, reset_handler);
-	mmio_write(0x24, undef_instruction_handler);
-	mmio_write(0x28, software_interrupt_handler);
-	mmio_write(0x2C, prefetch_abort_handler);
-	mmio_write(0x30, data_abort_handler);
-	mmio_write(0x34, reserved_handler);
-	mmio_write(0x38, irq_handler);
-	mmio_write(0x3C, fiq_handler);
+	mmio_write(HIVECTABLE | 0x20, reset_handler);
+	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler);
+	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler);
+	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler);
+	mmio_write(HIVECTABLE | 0x30, data_abort_handler);
+	mmio_write(HIVECTABLE | 0x34, reserved_handler);
+	mmio_write(HIVECTABLE | 0x38, irq_handler);
+	mmio_write(HIVECTABLE | 0x3C, fiq_handler);
 }
 
 
