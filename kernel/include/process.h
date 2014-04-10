@@ -9,7 +9,8 @@
 3/21: More research and comments by Faseeh Akhter and Josh Guan
 3/31: Further research and beginning implementation of process initialization and creation by Faseeh Akhter, Taylor Smith, Sean Villars
 4/2:  Fixed mem_alloc and began initial pcb creation by Sean Villars, Faseeh Akhter, Josh Guan, Taylor Smith
-
+4/7:  Fixed mem_alloc and fixed pcb allocation. added a few utility functions as well. Sean V, Faseeh A, Taylor Smith
+4/9:  Added some more utility functions and changed process destroy. Sean V
 /*******************
 a work in progress
 memory boundaries?
@@ -56,44 +57,57 @@ static uint32_t MAX_PROCESSES = 32;
 static uint32_t GLOBAL_PID;
 
 typedef struct pcb{
-//ID data
+  //ID data
   char* name; /* for debugging purposes */
   uint32_t PID;
   uint32_t starting_address;
-  //uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
-  //uint32_t user_id;
-  //uint32_t group_id;
-  //uint32_t parent_id;
+  uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
+  uint32_t user_id;
+  uint32_t group_id;
+  uint32_t parent_id;
+  uint32_t (*function)(uint32_t);
+  //CPU state data
+  //PROCESS_STATE current_state;
 
-//CPU state data
-  PROCESS_STATE current_state;
 
-// WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
-// uint32_t PC;
-// uint32_t SP;
-  // 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
-// uint32_t CPSR; //current prog status register
-// uint32_t SPSR; //saved prog status register when execption occurs
+  
+
+  /*
+   * r0-r3 are the argument and scratch registers; r0-r1 are also the result registers
+   * r4-r8 are callee-save registers
+   * r9 might be a callee-save register or not (on some variants of AAPCS it is a special register)
+   * r10-r11 are callee-save registers
+   * r12-r15 are special registers
+   * 37 REGISTERS IN TOTAL: 31 GPRs, 6 SRs
+  */
+  
+  // WE ARE GOING TO TRY TO IMPLEMENT SETJMP/LONGJMP INSTEAD OF MANUALLY DEALING WITH THESE VALUES
+  // uint32_t PC;
+  // uint32_t SP; 
+  // uint32_t CPSR; //current prog status register
+  // uint32_t SPSR; //saved prog status register when execption occurs
+ 
   //unbanked register
-// uint32_t R0;
-// uint32_t R1;
-// uint32_t R2;
- // uint32_t R3;
-// uint32_t R4;
-// uint32_t R5;
-// uint32_t R6;
-// uint32_t R7;
+  // uint32_t R0;
+  // uint32_t R1;
+  // uint32_t R2;
+  // uint32_t R3;
+  // uint32_t R4;
+  // uint32_t R5;
+  // uint32_t R6;
+  // uint32_t R7;
+ 
   //banked registers
-// uint32_t R8;
-// uint32_t R9;
-// uint32_t R10;
-// uint32_t R11;
-// uint32_t R12;
-// uint32_t R13; //corresponds to the SP; do we need both?
-// uint32_t R14;
-// uint32_t R15; //corresponds to the PC; do we need both?
+  // uint32_t R8;
+  // uint32_t R9;
+  // uint32_t R10;
+  // uint32_t R11;
+  // uint32_t R12;
+  // uint32_t R13; //corresponds to the SP; do we need both?
+  // uint32_t R14;
+  // uint32_t R15; //corresponds to the PC; do we need both?
 
-//Control data
+  //Control data
   //int priority_value;
   //uint32_t elapsed_time;
   //uint32_t EFLAG;
@@ -101,11 +115,6 @@ typedef struct pcb{
   //uint32_t total_cpu_time;
 
 } pcb;
-
-uint32_t* pcb_table; //Table showing all initialized processes.
-
-uint32_t * next_free_slot_in_pcb_table();
-
 
 /* interface
 processes can
@@ -126,8 +135,18 @@ be resumed
 //output
 //create a corresponding pcb ds
 
+uint32_t* pcb_table; //Table showing all initialized processes.
+uint32_t* next_free_slot_in_pcb_table();
+void print_pcb_table();
 int init_all_processes();
-int process_create(uint32_t starting_address, char* process_name);
+pcb* process_create(uint32_t starting_address, char* process_name);
+uint32_t process_destroy(int PID);
+void print_PID();
+pcb* get_PCB(uint32_t PID);
+uint32_t free_PCB(pcb* pcb_p);
+uint32_t* get_address_of_PCB(uint32_t PID);
+uint32_t execute_process(pcb* pcb_p);
+void sample_func(uint32_t x);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
