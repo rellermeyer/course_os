@@ -1,10 +1,10 @@
 #ifndef __INTERRUPT_H__
-#define __INTERRUPT_H__ 1
+#define __INTERRUPT_H__
 /*
  *
  *  Interrupt handler four course_os
  *
- *  A bit of background:
+ *  A bit of backgroundf:
  *  - The ARM architecture has 7 modes of operation:
  * 	+ USR - user mode
  *	+ FIQ - processing "fast" interrupts
@@ -32,9 +32,9 @@ typedef enum {
         ALL_INTERRUPT_MASK
 } interrupt_t;
 
-interrupt_t IRQ = IRQ_MASK;
-interrupt_t FIQ = FIQ_MASK;
-interrupt_t ALL = ALL_INTERRUPT_MASK;
+extern interrupt_t IRQ;
+extern interrupt_t FIQ;
+extern interrupt_t ALL;
 
 /* these are what you should use to effect an
    interrupt status change! */
