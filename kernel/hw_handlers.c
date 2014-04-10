@@ -68,10 +68,16 @@ void irq_handler(void){
 	spsr = get_proc_status();
 	// Change the mode by modifying bits in CPSR.
 	asm volatile ("CPS 18 \n\t"); /* 18 = IRQ Interrupt Processor Mode*/
-	// Fetch next instruction from the vector table.  
+	// Fetch next instruction from the vector table. (VICVECTADDR should be at 0x030 in memory, assuming the VIC was loaded at 0x0)  
    	int interrupt_vector;
+	asm volatile
+        (
+                "MOV %[result], #0x030 \n\t"
+                : [result]"=r"(interrupt_vector)
+                :
+                :
+        );
    	handle_interrupt(interrupt_vector);
-
 	// Leaving exception handler
 	// Move the Link Register LR (minus an offset) to the PC.
 	asm volatile ("MOV pc, lr \n\t");
