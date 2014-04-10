@@ -7,11 +7,15 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o startup.o klibc.o argparse.o memory/mem_alloc.o
+OBJS=start.o uart.o startup.o klibc.o argparse.o process.o elf.o memory/mem_alloc.o
+
+
+all: course_os.img
 
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
+#boots the kernel at 0x210000
 flash.bin: kernel.img
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
