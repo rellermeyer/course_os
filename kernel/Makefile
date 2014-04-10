@@ -9,33 +9,36 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 OBJS=start.o uart.o startup.o klibc.o argparse.o memory/mem_alloc.o
 
-all: course_os.img
+run: flash.bin
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
-run: course_os.img
-./offset.sh $(UBOOT_VERSION)
-${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
+flash.bin: kernel.img
+	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
+	dd if=/dev/zero of=flash.bin bs=4k count=1536
+	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
+	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 
 kernel.elf: $(OBJS)
-$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
+	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
 
 kernel.bin: kernel.elf
-$(OBJCOPY) -O binary kernel.elf kernel.bin
+	$(OBJCOPY) -O binary kernel.elf kernel.bin
 
 kernel.img: kernel.bin
-$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
+	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
 
 course_os.img: kernel.img
-cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
+	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
 
 startup.o: startup.s
-$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
+	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
-$(CC) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
-rm -f *.o
-rm -f *.img
-rm -f *.elf
-rm -f *.bin
-rm -f *.map
+	rm -f *.o
+	rm -f *.img
+	rm -f *.elf
+	rm -f *.bin
+	rm -f *.map
