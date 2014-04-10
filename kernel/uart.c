@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+/* Contributors: David Denton, Michael Brennan */
 
 enum {
 /* UART inter: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0224i/I1042232.html */
@@ -11,7 +12,6 @@ UART2INT_BIT = 0x2000
 
 
 typedef volatile struct {
-// Needs some sort of locking mechanism
 uint32_t uart0_inter_val = *PICINTENABLE | UART0INT_BIT;
 uint32_t uart1_inter_val = *PICINTENABLE | UART1INT_BIT;
 uint32_t uart2_inter_val = *PICINTENABLE | UART2INT_BIT;
