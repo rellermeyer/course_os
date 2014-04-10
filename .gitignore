@@ -12,5 +12,7 @@
 *.map
 *.elf
 *.bin
+*~
+*.swp
 
 NOTES
