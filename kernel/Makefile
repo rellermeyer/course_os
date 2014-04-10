@@ -7,13 +7,18 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o startup.o elf.o
+OBJS=start.o uart.o startup.o libc.o argparse.o elf.o
 
 all: course_os.img
 
-run: course_os.img
-	./offset.sh $(UBOOT_VERSION)
-	${QEMU} -M versatilepb -m 128M -nographic -kernel course_os.img
+run: flash.bin
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
+
+flash.bin: kernel.img
+	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
+	dd if=/dev/zero of=flash.bin bs=4k count=1536
+	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
+	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
