@@ -16,7 +16,9 @@
 ********************************************************************/
 
 #include "include/klibc.h"
+#include "include/global_defs.h"
 #include "include/mem_alloc.h"
+#include "uart.c"
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -134,7 +136,26 @@ int os_printf(const char *str_buf, ...) {
   va_end(args);
 }
 
-char** string_slice(char *inputs, char delimitter)
+char* strtok(char *str, const char *delimeters) {
+  char* token = NULL;
+  //const char* temp_del;
+
+  while(*str != NULL) {
+    //temp_del = delimeters;
+
+    //while(*str != *temp_del || *temp_del != NULL) {
+    //  *token = *str;
+    //  ++token;
+    //  ++temp_del;
+    //}
+    printf("%c", *str);
+    ++str;
+  }
+  printf("\n");
+  return token;
+}
+
+/*char** string_slice(char *inputs, char delimitter)
 {
   char **results = mem_alloc(sizeof(char*) * 16);
   int i = 0;
@@ -155,12 +176,22 @@ char** string_slice(char *inputs, char delimitter)
   }
   return results;
 
-}
+}*/
 
 int main()
 { 
-  char * test = "does this work";
+  /* char * test = "does this work";
   char delim = "\t";
   char** sliced = string_slice(test, delim);
+  return 0; */
+  char str[] ="- This, a sample string.";
+  char * pch;
+  printf ("Splitting string \"%s\" into tokens:\n",str);
+  pch = strtok (str," ,.-");
+  while (pch != NULL)
+  {
+    printf ("%s\n",pch);
+    pch = strtok (NULL, " ,.-");
+  }
   return 0;
 }
