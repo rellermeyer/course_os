@@ -1,7 +1,20 @@
 #include <stdint.h>
 
+
+enum {
+/* UART inter: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0224i/I1042232.html */
+PICINTENABLE = 0x10140010,
+UART0INT_BIT = 0x0800,
+UART1INT_BIT = 0x1000,
+UART2INT_BIT = 0x2000
+};
+
+
 typedef volatile struct {
 // Needs some sort of locking mechanism
+uint32_t uart0_inter_val = *PICINTENABLE | UART0INT_BIT;
+uint32_t uart1_inter_val = *PICINTENABLE | UART1INT_BIT;
+uint32_t uart2_inter_val = *PICINTENABLE | UART2INT_BIT;
 } device_driver;
 
 typedef volatile struct {
@@ -41,8 +54,11 @@ uart * const UART1 = (uart *)0x101f2000;
 uart * const UART2 = (uart *)0x101f3000;
 
 void stdout_uart0(const char *s) {
-	if(uart.UARTCR & RXE > 0) {
-		while(*s != '\0') {
+	while (uart->dd->uart0_inter_val == 0) {}
+	if(uart.UARTCR & RXE > 0) 
+	{
+		while(*s != '\0') 
+		{
 			*UART0 = (uint32_t)(*s);
 			s++;
 		}
@@ -50,17 +66,23 @@ void stdout_uart0(const char *s) {
 }
 
 #define STD_IN_BUFFER_SIZE 4096
-char *stdin_uart0() {
+char *stdin_uart0() 
+{
+	while (uart->dd->uart0_inter_val == 0) {}
 	uint32_t *buffer = malloc(sizeof(uart.UARTDR) * STD_IN_BUFFER_SIZE);
 	uint32_t *iterator = buffer;
-	do {
-		if(uart.UARTCR & TXE > 0) {
+	do 
+	{
+		if(uart.UARTCR & TXE > 0) 
+		{
 			break;
-		} else {
+		} 
+		else 
+		{
 			*iterator = uart.UARTDR;
 			iterator++;
 		}
-	} while (*iterator != '\0');
-
+	} 
+	while (*iterator != '\0');
 	return buffer;
 }
