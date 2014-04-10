@@ -17,12 +17,7 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // 
 // An interrupt occurs.
 inline void handle_interrupt(int interrupt_vector){
-// 	switch(interrupt_vector) {
-// 
-//         	case :
-//                 default: // error
-//                         break;
-//         }
+ 	// branch to interrupt routine and handle
 }
 
 
