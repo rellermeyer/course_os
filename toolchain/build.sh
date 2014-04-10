@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PREFIX=`pwd`/arm-none-eabi
+#TARGET=`pwd`/target
 TARGET=/tmp/course_os/target
 URL=ftp://ftp.gnu.org/gnu
 
