@@ -16,6 +16,7 @@
 ********************************************************************/
 
 #include "include/klibc.h"
+#include "include/mem_alloc.h"
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -133,5 +134,33 @@ int os_printf(const char *str_buf, ...) {
   va_end(args);
 }
 
+char** string_slice(char *inputs, char delimitter)
+{
+  char **results = mem_alloc(sizeof(char*) * 16);
+  int i = 0;
+  int args = 0;
+  while(inputs[i] != 0)
+  {
+    char *argument = mem_alloc(sizeof(char*) * 50);
+    int j = 0;
+    while(inputs[i] != delimitter)
+    {
+      argument[j] = inputs[i];
+      i++;
+      j++;
+    }
+    i++;//move past delimitter
+    results[args] = argument;
+    args++;
+  }
+  return results;
+
+}
+
 int main()
-{ return 0; }
+{ 
+  char * test = "does this work";
+  char delim = "\t";
+  char** sliced = string_slice(test, delim);
+  return 0;
+}
