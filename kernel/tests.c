@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "include/tests.h"
 
 //This function executes and displays results of test set given to it.
