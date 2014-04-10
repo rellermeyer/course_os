@@ -142,8 +142,3 @@ void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[]) {
 	}
 }
 
-
-int main() {
-	
-	return 0;
-}
