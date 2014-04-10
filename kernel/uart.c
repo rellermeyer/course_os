@@ -60,9 +60,6 @@ uart * const UART1 = (uart *)0x101f2000;
 uart * const UART2 = (uart *)0x101f3000;
 
 void print_uart0(const char *s) {
-	if(uart.UARTCR & RXE > 0) {
-		while(*s != '\0') {
-void stdout_uart0(const char *s) {
 	while (uart->dd->uart0_inter_val == 0) {}
 	if(uart.UARTCR & RXE > 0) 
 	{
@@ -77,15 +74,11 @@ void stdout_uart0(const char *s) {
 /*  We need to implement a lock here.  klibc will be implementing the buffer
  *    we just need to ensure the FIFO isn't read out of order.
  */
-char *read_uart0() {
-        // set lock
-
-        uint32_t buffer[STD_IN_BUFFER_SIZE] = {0};
-char *stdin_uart0() 
+char *read_uart0() 
 {
-	while (uart->dd->uart0_inter_val == 0) {}
-	uint32_t *buffer = malloc(sizeof(uart.UARTDR) * STD_IN_BUFFER_SIZE);
-	uint32_t *iterator = buffer;
+uint32_t buffer[STD_IN_BUFFER_SIZE] = {0};
+while (uart->dd->uart0_inter_val == 0) {}
+uint32_t *iterator = buffer;
 	do 
 	{
 		if(uart.UARTCR & TXE > 0) 
@@ -98,10 +91,5 @@ char *stdin_uart0()
 			iterator++;
 		}
 	} while (*iterator != '\0');
-        
-        // release lock
-
-	} 
-	while (*iterator != '\0');
-	return buffer;
+return buffer;
 }
