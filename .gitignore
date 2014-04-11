@@ -12,5 +12,6 @@
 *.map
 *.elf
 *.bin
+*~
 
 NOTES
