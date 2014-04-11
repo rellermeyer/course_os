@@ -11,7 +11,7 @@ SECTIONS
  *.bss : { *(.bss COMMON) }
  *. = ALIGN(8);
 */
-	. = 0x00100000;
+	. = 0x10000;
 
 	_kernstart = .;
 
@@ -44,6 +44,14 @@ SECTIONS
 	_transtable = .;
 
 	. = . + 16K;
+
+	svc_stack = .;
+
+	. = . + 4K;
+
+	abort_stack = .;
+
+	. = . + 4K;
 
 	_lowused = .;
 
