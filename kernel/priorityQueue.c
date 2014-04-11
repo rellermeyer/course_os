@@ -18,24 +18,24 @@ Node *currentNode;
 
 /* Initializes all the global variables */
 void init() {
-    head = malloc(sizeof(Node));
+    head = mem_alloc(sizeof(Node)); //need to change to mem_alloc
     head->next = NULL;
     head->prev = NULL;
-    head->task = NULL;
+    head->PCB = NULL;
     head->priority = NOT_SET;
     currentNode = head;
 }
 
-/* Add a task to the queue with a given priority */
-int add(void* task, int priority) {
+/* Add a PCB to the queue with a given priority */
+int add(void *PCB, int priority) {
 	if(head == NULL) {
 		init();
 	}
 
-    Node *newTask = malloc(sizeof(Node));
+    Node *newTask = mem_alloc(sizeof(Node)); //need to change to mem_alloc
     newTask->next = NULL;
     newTask->prev = NULL;
-    newTask->task = task;
+    newTask->PCB = PCB;
     newTask->priority = priority;
 
     if(head->next == NULL) {
@@ -55,22 +55,26 @@ int add(void* task, int priority) {
         currentNode->next = newTask;
     }
 
-    return 1; // Change if there should be a condition for not adding a task to the priority queue.
+    return 1; // Change if there should be a condition for not adding a PCB to the priority queue.
 }
 
-void* remove(void *task) { //PCB abstraction will change the parameters, can search for processes by PID.
+void* remove(void *PCB) { //PCB abstraction will change the parameters, can search for processes by PID.
 	currentNode = head;
-	while(currentNode->next != task) {
+	while(currentNode->next->PCB->PID != PCB->PID) {
 		currentNode = currentNode->next;
 	}
 	Node *nodeToRemove = currentNode->next;
 	currentNode->next = nodeToRemove->next;
 	currentNode->next->prev = currentNode;
 	nodeToRemove->next = nodeToRemove->prev = NULL;
-	return nodeToRemove->task;
+	return nodeToRemove->PCB;
 }
 
-void dispatch(void *task) { //requires free-standing ASM code
+void join(void* TCB) { //future implementation for threads.
+}
+
+void dispatch(void *PCB) { //requires free-standing ASM code
+//Might have to switch modes to user mode? We want restore the PC,SP, and saved registers
 }
 
 void schedule() {
