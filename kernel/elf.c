@@ -57,12 +57,13 @@ int32_t isElf(Elf_Ehdr h) {
 	return 1;
 }
 
-Elf_Ehdr read_elf_header(Elf_Ehdr h, uint32_t pointer) {
+int read_elf_header(Elf_Ehdr h, uint32_t pointer) {
 	filePointer = startPointer = pointer;
 	int32_t check = isElf(h);
 	if(check == -1){
-		return h;
+		return -1;
 	}
+	
 	
 	h.e_ident[EI_CLASS] = get_value(1, h);		// get class
 	h.e_ident[EI_DATA] = get_value(1, h);		// endian
@@ -104,7 +105,7 @@ Elf_Ehdr read_elf_header(Elf_Ehdr h, uint32_t pointer) {
 	h.e_shstrndx = get_value(2, h);			// section header string table index
 
 
-	return h;	
+	return 1;	
 }
 
 
