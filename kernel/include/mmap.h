@@ -11,4 +11,6 @@
 #define PIC_ADDRESS	(volatile uint32_t *const) 0x10140000	/* interrupt controller peripheral */
 #define UART_ADDRESS	(volatile uint32_t *const) 0x101f1000	/* UART 0 base address */
 
+static unsigned int* first_level_pt = (unsigned int* const)0x700000;
+
 #endif // __MMAP_H_
