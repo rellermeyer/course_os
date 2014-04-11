@@ -1,3 +1,4 @@
+.globl _Reset
 bal _Reset
 
 _Reset:
