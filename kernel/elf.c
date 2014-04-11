@@ -1,10 +1,10 @@
 /* Worked on by Jeremy Wenzel and Sam Allen */
 #include "include/elf.h"
-#include <stdlib.h>		// Probably going to be removed
+#include <stdint.h>		// Probably going to be removed
 
 
-unsigned char* filePointer;
-unsigned char* startPointer;
+uint32_t* filePointer;
+uint32_t* startPointer;
 
 /* Gets the value of the bytes on a big endian system */
 uint32_t do_big_endian(uint32_t size) {
@@ -57,7 +57,8 @@ int32_t isElf(Elf_Ehdr h) {
 	return 1;
 }
 
-Elf_Ehdr read_elf_header(Elf_Ehdr h) {
+Elf_Ehdr read_elf_header(Elf_Ehdr h, uint32_t pointer) {
+	filePointer = startPointer = pointer;
 	int32_t check = isElf(h);
 	if(check == -1){
 		return h;
@@ -107,7 +108,8 @@ Elf_Ehdr read_elf_header(Elf_Ehdr h) {
 }
 
 
-void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[]) {
+void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], uint32_t pointer) {
+	filePointer = startPointer = pointer;
 	filePointer = startPointer + eh.e_phoff;
 	int i = 0;
 	while(i < eh.e_phnum) {
@@ -123,8 +125,8 @@ void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[]) {
 	}
 }
 
-void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[]) {
-	// reads section header
+void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t pointer) {
+	filePointer = startPointer = pointer;
 	int i = 0;
 	filePointer = startPointer + eh.e_shoff;	
 	while(i < eh.e_shnum) {	
