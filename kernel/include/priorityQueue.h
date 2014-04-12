@@ -1,17 +1,13 @@
-#define NOT_SET -1
+#include "process.h"
 
-// Process statuses
-#define READY 1
-#define BLOCKED 2
-#define RUNNING 3
+#define NOT_SET -1
 
 /* Data Structure: Doubly Linked List */
 typedef struct {
     struct node *next;
     struct node *prev;
-    void *PCB; //Pointer PCB
+    pcb *PCB; // Pointer to the process control block
     int priority;
-    int status; // Blocked, running, ready, etc.
 } Node;
 
 
