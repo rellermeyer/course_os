@@ -13,8 +13,8 @@ typedef struct {
 
 void init();
 int add(void *PCB, int priority);
-void* remove(void *PCB);
-void join(void* TCB);
+pcb* remove(pcb *PCB);
+void join(pcb* other_PCB);
 void dispatch(void *PCB);
 void schedule();
 void task_yield();
