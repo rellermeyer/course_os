@@ -30,7 +30,7 @@ int add(void *PCB, int priority) {
     newTask->prev = NULL;
     newTask->PCB = PCB;
     newTask->priority = priority;
-    newTask->priority = READY;
+    newTask->priority = PROCESS_READY;
 
     if(head->next == NULL) {
         head->next = (struct node *)newTask;
@@ -60,20 +60,21 @@ int add(void *PCB, int priority) {
 
    Return a pointer to the PCB removed.
 */
-void* remove(void *PCB) { //PCB abstraction will change the parameters, can search for processes by PID.
-	currentNode = head;
-	while(currentNode->next->PCB->PID != PCB->PID) {
-		currentNode = (Node *)currentNode->next;
-	}
-	Node *nodeToRemove = (Node *)currentNode->next;
-	currentNode->next = nodeToRemove->next;
-	currentNode->next->prev = currentNode;
-	nodeToRemove->next = nodeToRemove->prev = NULL;
-	return nodeToRemove->PCB;
+pcb* remove(pcb *PCB) {
+  //PCB abstraction will change the parameters, can search for processes by PID.
+  currentNode = head;
+  while(currentNode->next->PCB->PID != PCB->PID) {
+    currentNode = (Node *)currentNode->next;
+  }
+  Node *nodeToRemove = (Node *)currentNode->next;
+  currentNode->next = nodeToRemove->next;
+  currentNode->next->prev = currentNode;
+  nodeToRemove->next = nodeToRemove->prev = NULL;
+  return nodeToRemove->PCB;
 }
 
 /* Wait for a task to finish. Then set the current task's state to READY */
-void join(void* other_PCB) {
+void join(pcb* other_PCB) {
   // TODO: Do we need to store which task(s) we are blocked on?
   currentNode->PCB->current_state = PROCESS_BLOCKED;
 
@@ -107,7 +108,7 @@ void schedule() {
 
     if (nodeToDispatch->PCB->current_state = PROCESS_READY)
     {
-      remove(nodeToDispatch);
+      remove(nodeToDispatch->PCB);
       nodeToDispatch->PCB->current_state = PROCESS_RUNNING;
       dispatch(nodeToDispatch);
     }
@@ -132,7 +133,7 @@ void task_yield()
      Jeffrey Tang is working on a state-saving function in the ulibc branch.
      These arguments may not be correct
   */
-  has_jumped = proc_yield(currentNode->PCB); // TODO: implement state-saving
+  int has_jumped = proc_yield(currentNode->PCB); // TODO: implement state-saving
 
   if (has_jumped == FALSE)
   {
