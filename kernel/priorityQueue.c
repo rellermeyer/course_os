@@ -13,7 +13,7 @@ void init() {
     head->prev = NULL;
     head->PCB = NULL;
     head->priority = NOT_SET;
-    head->status = NOT_SET;
+    head->PCB->current_state = NOT_SET;
     currentNode = head;
 }
 
@@ -33,20 +33,23 @@ int add(void *PCB, int priority) {
     newTask->priority = READY;
 
     if(head->next == NULL) {
-        head->next = newTask;
-        newTask->next = head;
-        newTask->prev = head;
-        head->prev = newTask;
+        head->next = (struct node *)newTask;
+        newTask->next = (struct node *)head;
+        newTask->prev = (struct node *)head;
+        head->prev = (struct node *)newTask;
     }
     else {
+        // Add the new task into the correct position based on priority
         currentNode = head;
-        while(currentNode->next != head && currentNode->next->priority > newTask->priority) {
-            currentNode = currentNode->next;
+        while((currentNode->next != (struct node *)head) &&
+          (currentNode->next->priority > newTask->priority))
+        {
+            currentNode = (Node *)currentNode->next;
         }
         newTask->next = currentNode->next;
-        newTask->prev = currentNode;
+        newTask->prev = (struct node *)currentNode;
         currentNode->next->prev = newTask;
-        currentNode->next = newTask;
+        currentNode->next = (struct node *)newTask;
     }
 
     return 1; // Change if there should be a condition for not adding a PCB to the priority queue.
@@ -60,16 +63,27 @@ int add(void *PCB, int priority) {
 void* remove(void *PCB) { //PCB abstraction will change the parameters, can search for processes by PID.
 	currentNode = head;
 	while(currentNode->next->PCB->PID != PCB->PID) {
-		currentNode = currentNode->next;
+		currentNode = (Node *)currentNode->next;
 	}
-	Node *nodeToRemove = currentNode->next;
+	Node *nodeToRemove = (Node *)currentNode->next;
 	currentNode->next = nodeToRemove->next;
 	currentNode->next->prev = currentNode;
 	nodeToRemove->next = nodeToRemove->prev = NULL;
 	return nodeToRemove->PCB;
 }
 
-void join(void* TCB) { //future implementation for threads.
+/* Wait for a task to finish. Then set the current task's state to READY */
+void join(void* other_PCB) {
+  // TODO: Do we need to store which task(s) we are blocked on?
+  currentNode->PCB->current_state = PROCESS_BLOCKED;
+
+  // Wait for the other thread to exit
+  while (other_PCB->current_state != PROCESS_DYING)
+  {
+    task_yield();
+  }
+
+  currentNode->PCB->current_state = PROCESS_RUNNING;
 }
 
 void dispatch(void *PCB) { //requires free-standing ASM code
@@ -88,19 +102,19 @@ void schedule() {
   // When dispatch() returns, we must schedule again, so we have use "while"
   while (head->next != NULL)
   {
-    head->status = READY; // TODO: implement task blocking
-    Node *nodeToDispatch = head->next;
+    head->PCB->current_state = PROCESS_READY; // TODO: implement task blocking
+    Node *nodeToDispatch = (Node *)head->next;
 
-    if (nodeToDispatch->status = READY)
+    if (nodeToDispatch->PCB->current_state = PROCESS_READY)
     {
       remove(nodeToDispatch);
-      nodeToDispatch->status = RUNNING;
+      nodeToDispatch->PCB->current_state = PROCESS_RUNNING;
       dispatch(nodeToDispatch);
     }
     else
     {
       // If the task isn't ready, schedule another.
-      head = head->next;
+      head = (Node *)head->next;
     }
   }
 
