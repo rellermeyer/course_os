@@ -1,4 +1,6 @@
 #include "include/mmap.h"
+#include "include/pmap.h"
+#include "include/vmlayout.h"
 /*
  * APX AP            Privileged    Unprivileged
  *  1  11 (0x8c00) = read-only     read-only
@@ -12,10 +14,10 @@
  * 2 = section or supersection
  */	
 
-//need some way to read a label from linker script, currently in mmap.h
-//static unsigned int* first_level_pt = (unsigned int* const)0x300000;
+//static unsigned int* first_level_pt = L1PTBASE;
 
 void mmap(void){
+
 
 	//disable all interrupts
 	asm volatile("cpsid if");
@@ -24,34 +26,51 @@ void mmap(void){
 	//disable data cache
 	//disable mmu
 
-	//TEMPORARY: map first_level_pt where its at 
-	//TODO: Move pt above kernel in physical memory
-	//and then map with kernel image or somewhere after kernel stacks
-	first_level_pt[0x700000>>20] = 0x700000 | 0x0800 | 2;
+
+	//initialize first_level_pt entires with second level coarse page tables
+	//reserved at 0x07b000000 - 0x07f00000
+
+	register int pte asm("r4");
+	register unsigned int l2pt_addr = L2PTREGBASE;
+
+	for(pte = 0; pte < 4096; pte++){
+		first_level_pt[pte] = l2pt_addr | 1;
+		//each level 2 pt has 256 entires (256*4B=1024B)
+		l2pt_addr += 1024;
+	}
+
+	//Now map some regions as 1MB sections
+
+	//1MB for static kernel data structures (stacks and l1 pt)
+	first_level_pt[V_KDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
+
+	//4 1M sections for second level coarse page table region
+	first_level_pt[V_L2PTREGBASE>>20] = L2PTREGBASE | 0x0400 | 2;
+	first_level_pt[(V_L2PTREGBASE+0x100000)>>20] = (L2PTREGBASE+0x100000) | 0x0400 | 2;
+	first_level_pt[(V_L2PTREGBASE+0x200000)>>20] = (L2PTREGBASE+0x200000) | 0x0400 | 2;
+	first_level_pt[(V_L2PTREGBASE+0x300000)>>20] = (L2PTREGBASE+0x300000) | 0x0400 | 2;
 
 	//map the kernel where its currently loaded in the same location temporarily
 	//should be less than a MB
-	first_level_pt[0x10000>>20] = 0<<20 | 0x0400 | 2;
+	first_level_pt[PKERNBASE>>20] = 0<<20 | 0x0400 | 2;
 
 	//also map it to high memory at 0xf0000000 (vpn = 3840)
-	first_level_pt[0xf0000000>>20] = 0<<20 | 0x0400 | 2;
+	first_level_pt[KERNSTART>>20] = 0<<20 | 0x0400 | 2;
+	//first_level_pt[0xf0000000>>20] = 0x210000 | 0x0400 | 2;
 
 	//map ~2MB of peripheral registers from 0x10000000-0x101f5000
 	//to two 1MB sections at 0x80000000 and 0x80100000
-	first_level_pt[0x80000000>>20] = 0x10000000 | 0x0400 | 2;
-	first_level_pt[0x80100000>>20] = 0x10100000 | 0x0400 | 2;
+	first_level_pt[PREGSTART>>20] = 0x10000000 | 0x0400 | 2;
+	first_level_pt[(PREGSTART+0x100000)>>20] = 0x10100000 | 0x0400 | 2;
 
 	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
 	//752 MB sections at 0x80200000-0xaf200000
-	int i;
-	for(i = (0x80200000>>20); i < (0xaf200000>>20); i+=0x100000){
+	register int i asm ("r4");
+	for(i = (PCISTART>>20); i < (PCIEND>>20); i++){
 		first_level_pt[i] = ((i - 1010)<<20) | 0x0400 | 2;
 	}
 
-	//test
-	//first_level_pt[0xf0100000>>20] = 0x400000 | 0x0800 | 2;
-
-	unsigned int pt_addr = (unsigned int)first_level_pt;
+	register unsigned int pt_addr asm ("r4") = (unsigned int)first_level_pt;
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -71,7 +90,7 @@ void mmap(void){
 	 *	I-cache bit 12
 	 *	V bit 13 (1=high vectors 0xffff0000)
 	 */
-	unsigned int control;
+	register unsigned int control asm ("r4");
 
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
@@ -88,13 +107,11 @@ void mmap(void){
 	//where the kernel is also loaded in high vm 
 	asm volatile("mov pc, r4");
 
+	//add kernel offset to lr so that we return into high kernel start
+	asm volatile("eor r4, r4");
+	asm volatile("add r4, lr, #0xf0000000");
+	asm volatile("mov lr, r4");
+
 	//enable interrupts
 	asm volatile("cpsie fi");
-}
-
-void unmap(){
-	asm volatile("cpsid fi");
-	first_level_pt[0] = 0;
-	asm volatile("cpsie fi");
-
 }
