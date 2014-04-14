@@ -11,8 +11,10 @@ void start(void *p_bootargs) {
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-   char** arg_list = split_string(cmdline_args);
+   char** arg_list = (char **)mem_alloc(number_of_words(cmdline_args));
+   split_string(cmdline_args, arg_list);
    int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
    parse_args(arg_count, arg_list);
+   free(arg_list);
 }
 
