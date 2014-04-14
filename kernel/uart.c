@@ -71,6 +71,10 @@ void print_uart0(const char *s) {
 	}
 }
 
+void print_char_uart0(char c) {
+	*UART_ADDRESS = (uint32_t)c;
+}
+
 /*  We need to implement a lock here.  klibc will be implementing the buffer
  *    we just need to ensure the FIFO isn't read out of order.
  */
