@@ -61,13 +61,15 @@ void irq_handler(void){
 	print_uart0("IRQ HANDLER\n");
 	// disable interrupts
 	disable_interrupt(ALL);
-	// Save the address of the next instruction in the appropriate Link Register LR.
-	asm volatile ("MOV lr, pc \n\t"); 
-	// Copy CPSR to the SPSR of new mode.
+	// Grab a copy of CPSR for the SPSR of new mode
 	int spsr;
 	spsr = get_proc_status();
 	// Change the mode by modifying bits in CPSR.
-	asm volatile ("CPS 18 \n\t"); /* 18 = IRQ Interrupt Processor Mode*/
+	asm volatile ("CPS #18 \n\t"); /* 18 = IRQ Interrupt Processor Mode*/
+	// Copy CPSR to the SPSR of new mode.
+        asm volatile ("MRS spsr, %[value] \n\t" ::[value]"r"(spsr):);
+	// Save the address of the next instruction in the appropriate Link Register LR.
+        asm volatile ("MOV lr, pc \n\t");
 	// Fetch next instruction from the vector table. (VICVECTADDR should be at 0x030 in memory, assuming the VIC was loaded at 0x0)  
    	int interrupt_vector;
 	asm volatile
