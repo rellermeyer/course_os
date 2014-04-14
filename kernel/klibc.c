@@ -135,5 +135,3 @@ int os_printf(const char *str_buf, ...) {
   va_end(args);
 }
 
-int main()
-{ return 0; }
