@@ -3,7 +3,7 @@
 
 //All level 2 pages are in this region
 //4096 1K tables = 4MB
-#define L2PTREGBASE		0x07b00000	
+#define L2PTSBASE		0x07b00000	
 
 //All static kernel data structures
 //Total space=1MB, currently used=44kB	
