@@ -31,7 +31,7 @@ void mmap(void){
 	//reserved at 0x07b000000 - 0x07f00000
 
 	register int pte asm("r4");
-	register unsigned int l2pt_addr = L2PTREGBASE;
+	register unsigned int l2pt_addr = L2PTSBASE;
 
 	for(pte = 0; pte < 4096; pte++){
 		first_level_pt[pte] = l2pt_addr | 1;
@@ -45,10 +45,10 @@ void mmap(void){
 	first_level_pt[V_KDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
 
 	//4 1M sections for second level coarse page table region
-	first_level_pt[V_L2PTREGBASE>>20] = L2PTREGBASE | 0x0400 | 2;
-	first_level_pt[(V_L2PTREGBASE+0x100000)>>20] = (L2PTREGBASE+0x100000) | 0x0400 | 2;
-	first_level_pt[(V_L2PTREGBASE+0x200000)>>20] = (L2PTREGBASE+0x200000) | 0x0400 | 2;
-	first_level_pt[(V_L2PTREGBASE+0x300000)>>20] = (L2PTREGBASE+0x300000) | 0x0400 | 2;
+	first_level_pt[V_L2PTSBASE>>20] = L2PTSBASE | 0x0400 | 2;
+	first_level_pt[(V_L2PTSBASE+0x100000)>>20] = (L2PTSBASE+0x100000) | 0x0400 | 2;
+	first_level_pt[(V_L2PTSBASE+0x200000)>>20] = (L2PTSBASE+0x200000) | 0x0400 | 2;
+	first_level_pt[(V_L2PTSBASE+0x300000)>>20] = (L2PTSBASE+0x300000) | 0x0400 | 2;
 
 	//map the kernel where its currently loaded in the same location temporarily
 	//should be less than a MB
