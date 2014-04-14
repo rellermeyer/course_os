@@ -7,6 +7,7 @@
 #define _ELF_H_
 
 #include <stdint.h>
+#include "libc.h"
 
 typedef uint32_t Elf_Addr;	// Program Address
 typedef uint16_t Elf_Half;	// 16 bit 
@@ -66,6 +67,9 @@ typedef uint32_t Elf_Word;	// Unsigned 32 bit int
 // 5:			Read, execute only
 // 6:			Read, write only
 // 7:			Read, Write, and Execute
+
+typedef enum {TEXT, RODATA, DATA, SYMTAB, STRTAB, SHSTRTAB, BSS, COMMENT} Section;
+
 typedef struct {
 	unsigned char 	e_ident[EI_NIDENT];	// How to interpret file
 	Elf_Half 	e_type;
@@ -102,6 +106,7 @@ typedef struct {
 	Elf_Word	sh_flags;
 	Elf_Addr	sh_addr;
 	Elf_Off		sh_offset;
+	Section 	sh_numname;
 	Elf_Word	sh_size;
 	Elf_Word	sh_link;
 	Elf_Word	sh_info;
@@ -141,4 +146,8 @@ typedef struct {
 	}d_un;
 } Elf_Dyn;
 
+int read_elf_header(Elf_Ehdr h, uint32_t *pointer);
+void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], uint32_t *pointer);
+void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer);
+void parse_section_header_names(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer);
 #endif
