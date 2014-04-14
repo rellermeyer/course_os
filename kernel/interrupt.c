@@ -18,6 +18,7 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // An interrupt occurs.
 inline void handle_interrupt(int interrupt_vector){
  	// branch to interrupt routine and handle
+	print_uart0("handling interrupt\n");
 }
 
 
@@ -78,6 +79,7 @@ inline int disable_interrupt_save(interrupt_t mask) {
 inline int get_proc_status(void) {
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
+	print_uart0("Getting Process Status\n");
 	return cpsr;
 }
 
