@@ -79,7 +79,8 @@ void join(pcb* other_PCB) {
   currentNode->PCB->current_state = PROCESS_BLOCKED;
 
   // Wait for the other thread to exit
-  while (other_PCB->current_state != PROCESS_DYING)
+  while (other_PCB->current_state != PROCESS_DYING ||
+    is_in_queue(other_PCB->PID))
   {
     task_yield();
   }
@@ -145,4 +146,25 @@ void task_yield()
     // If the jump has happened, return to the task
     return;
   }
+}
+
+/* Return TRUE if a process with a PID of pid is in the queue.
+   Return FALSE otherwise.
+*/
+Boolean is_in_queue(int pid)
+{
+  Node *node_ptr = head;
+
+  // Iterate through the list
+  while ((Node *)node_ptr->next != head)
+  {
+    if (node_ptr->PCB->PID == pid)
+    {
+      return TRUE;
+    }
+
+    node_ptr = (Node *)node_ptr->next;
+  }
+
+  return FALSE;
 }

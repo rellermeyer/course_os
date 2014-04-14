@@ -1,4 +1,5 @@
 #include "process.h"
+#include "global_defs.h"
 
 #define NOT_SET -1
 
@@ -18,3 +19,4 @@ void join(pcb* other_PCB);
 void dispatch(void *PCB);
 void schedule();
 void task_yield();
+Boolean is_in_queue(int pid);
