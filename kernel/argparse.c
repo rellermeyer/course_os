@@ -23,8 +23,6 @@ void parse_args(int argc, char **argv)
     argument_list += delta_args_read;
     i += delta_args_read;
   }
-
-//  free(argv); // Must free since argv was mem_alloc'd in split_string
 }
 
 
@@ -56,7 +54,6 @@ int analyze_args(char **argv)
     tests[1] = create_test("This fails", &test2);
     run_tests(tests, 2);
   }
-
 
   // Default case: read one argument
   return 1;
@@ -96,22 +93,39 @@ char* read_cmdline_tag(uint32_t *tag_base)
    pass an empty array as a parameter. Count the number of spaces in the
    line to determine maximum number of entries.
 */
-char** split_string(char* line)
+char** split_string(char* line, char** list)
 {
   char *piece = NULL; // One null-terminated part of the string
   const char *delimiters = " \t"; // Space and tab
-  char **result = mem_alloc(sizeof(char*) * 16);
 
   piece = strtok(line, delimiters);
-  result[0] = piece;
+  list[0] = piece;
   int i = 1;
 
   while (piece != NULL)
   {
-    piece = strtok(NULL, delimiters);
-    result[i] = piece;
+    piece = (char *)strtok(NULL, delimiters); // Advances pointer to the next token
+    list[i] = piece;
     i++;
   }
 
-  return result;
+  return list;
+}
+
+
+/* Return the number of whitespace-delimited words in String line. */
+int number_of_words(char *line)
+{
+  const char *delimiters = " \t"; // Space and tab
+  char *pos = strtok(line, delimiters);
+  int count = 0;
+
+  // Count the number of words
+  while (pos != NULL)
+  {
+    pos = (char *)strtok(NULL, delimiters); // Advance to the next word
+    count++;
+  }
+
+  return count;
 }
