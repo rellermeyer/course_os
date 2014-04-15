@@ -37,7 +37,7 @@ void reset_handler(void){
 	print_uart0("RESET HANDLER\n");
 }
 
-void undef_instruction_handler(void){
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 	print_uart0("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
@@ -45,11 +45,11 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
 }
 
-void prefetch_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
 	print_uart0("PREFETCH ABORT HANDLER\n");
 }
 
-void data_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	print_uart0("DATA ABORT HANDLER\n");
 }
 
@@ -57,6 +57,7 @@ void reserved_handler(void){
 	print_uart0("RESERVED HANDLER\n");
 }
 
+// the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void){		
 	volatile unsigned int *base = (unsigned int *) 0x80000000;
 	if (*base == 1)       // which interrupt was it?
