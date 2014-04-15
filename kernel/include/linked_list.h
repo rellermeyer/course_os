@@ -1,38 +1,43 @@
 /********************************************************************
-*	linked_list.h
-*
-*	Author: Brandon Olivier	// any collaborators, please add name
-*
-*	Date: 28 March 2014
-*
-*	Purpose:	Provide basic data structures for CourseOS
-*				This header provides function skeletons
-*				for structures.c
-*
-********************************************************************/
+ *      linked_list.h
+ *
+ *      Author: Brandon Olivier // any collaborators, please add name
+ *
+ *      Date: 14 April 2014
+ *
+ *      Purpose:        Provide linked lists for CourseOS
+ *                              This header provides function skeletons
+ *                              for linked_list.c
+ *
+ ********************************************************************/
 
 #ifndef __llist_h
 #define __llist_h
 
-typedef struct {
-    struct ll_node *next;
+#define NULL (void*) 0
+typedef struct ll_node ll_node;
+ struct ll_node
+{
+    ll_node *next;
     void *data;
-} ll_node;
+};
 
-typedef struct {
+typedef struct
+{
     ll_node *head;
+    ll_node *tail;
     int size;
 } list;
 
-/* prepend (because of speed) to the list. Return 0 if fails */
-ll_node* create(void *data);
+/* prepend (because of speed) to the list. */
+list* create_list(void *data);
+ll_node* create_node(void *data);
 void free_list(list *l);
-int prepend(list *l, void *data); 
-int insert(list *l, void *data, int index);
-int delete_at(list *l, int index); 
-void* get(list *l, int index);
-int size(list *l);
-int set_data(list *l, void *data);
-int resize(list *l);
+void free_node(ll_node *node);
+void insert(list *l, void *data, int index);
+void delete_at(list *l, int index);
+void* get_data(list *l, int index);
+ll_node* get_node(list *l, int index);
+void set_data(ll_node *l, void *data);
 
 #endif
