@@ -18,9 +18,10 @@
 
 void mmap(void){
 
-
+	asm volatile("push {r0-r11}");
 	//disable all interrupts
 	asm volatile("cpsid if");
+
 
 	//disable instruction cache
 	//disable data cache
@@ -40,6 +41,9 @@ void mmap(void){
 	}
 
 	//Now map some regions as 1MB sections
+	
+	//temporarily map where it is until we copy it in VAS
+	first_level_pt[KERNDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
 
 	//1MB for static kernel data structures (stacks and l1 pt)
 	first_level_pt[V_KDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
@@ -100,6 +104,8 @@ void mmap(void){
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
 
+
+
    	//add kernel offest to pc and store in r4
 	asm volatile("eor r4, r4");
 	asm volatile("add r4, pc, #0xf0000000");
@@ -114,4 +120,5 @@ void mmap(void){
 
 	//enable interrupts
 	asm volatile("cpsie fi");
+	asm volatile("pop {r0-r11}");
 }
