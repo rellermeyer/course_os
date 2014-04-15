@@ -4,7 +4,7 @@
 #include "include/process.h"
 #include <stdint.h>
 
-void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[]. uint32_t * file_pointer)
+void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[], uint32_t * file_pointer)
 {
 
 }
