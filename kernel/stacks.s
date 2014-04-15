@@ -10,10 +10,7 @@
 .equ Mode_UND, 0x1B
 .equ Mode_SYS, 0x1F
 
-.globl _stacks
-
-_stacks:
-
+ 
  LDR     R0, =stack_base
  MSR     CPSR_c, #Mode_FIQ
  MOV     sp, R0
@@ -43,5 +40,3 @@ _stacks:
  MOV     sp, R0
 
  MSR     CPSR_c, #Mode_SVC
-
- B 		 main
