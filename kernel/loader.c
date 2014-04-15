@@ -4,6 +4,9 @@
 #include "include/process.h"
 #include <stdint.h>
 
+#define USER_PROC_STACK_SIZE 0x100000 //1 MB
+#define KERNEL_PROC_STACK_SIZE 0x1000 //4k
+
 void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[]. uint32_t * file_pointer)
 {
 
@@ -11,7 +14,6 @@ void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[]. uint32_t * file_pointer)
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-
 void load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)mem_alloc(sizeof(Elf_ehdr));
@@ -26,3 +28,11 @@ void load_file(pcb * process_control_block, uint32_t * file_pointer)
 	parse_section_header_names(h, *sh, file_pointer);	
 }
 
+//this will allocate memory for the entire process
+//including the pcb 
+void allocate_process_memory(pcb* pcb_p)
+{
+	//determine sizes for each section in ELF
+	//sum dem digitz
+	//determine which stack size to use	
+}

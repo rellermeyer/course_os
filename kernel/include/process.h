@@ -141,7 +141,7 @@ uint32_t* pcb_table; //Table showing all initialized processes.
 uint32_t* next_free_slot_in_pcb_table();
 void print_pcb_table();
 int init_all_processes();
-pcb* process_create(uint32_t starting_address, char* process_name);
+pcb* process_create(uint32_t* file_p);
 uint32_t process_destroy(int PID);
 void print_PID();
 pcb* get_PCB(uint32_t PID);
