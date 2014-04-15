@@ -88,10 +88,10 @@ typedef struct pcb{
   // uint32_t SPSR; //saved prog status register when execption occurs
  
   //unbanked register
-  // uint32_t R0;
-  // uint32_t R1;
-  // uint32_t R2;
-  // uint32_t R3;
+   uint32_t R0;
+   uint32_t R1;
+   uint32_t R2;
+   uint32_t R3;
   // uint32_t R4;
   // uint32_t R5;
   // uint32_t R6;

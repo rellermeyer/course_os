@@ -45,6 +45,26 @@ uint32_t* next_free_slot_in_pcb_table() {
 	return -1;
 }
 
+void save_process_state(int PID){
+	uint32_t* process_to_save = get_address_of_PCB(PID);
+	pcb* pcb_p = get_PCB(PID);
+	uint32_t reg_0 = 0;
+	os_printf("reg 0 = %x\n", reg_0);
+	uint32_t reg_1;
+	uint32_t reg_2;
+	uint32_t reg_3;
+	uint32_t reg_15;
+	asm("MOV %0, r0":"=r"(reg_0)::);
+	asm("MOV %0, r1":"=r"(reg_1)::);
+	asm("MOV %0, r2":"=r"(reg_2)::);
+	asm("MOV %0, r3":"=r"(reg_3)::);
+	asm("MOV %0, r15":"=r"(reg_15)::);
+	os_printf("reg 0 = %x\n", reg_0);
+	os_printf("reg 1 = %x\n", reg_1);
+	os_printf("reg 2 = %x\n", reg_2);
+	os_printf("reg 3 = %x\n", reg_3);
+	os_printf("reg 15 = %x\n", reg_15);
+}
 
 //destroys process with param PID by clearing the pcb struct
 //returns 1 upon success, 0 with failure
