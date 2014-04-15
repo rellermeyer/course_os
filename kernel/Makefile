@@ -36,7 +36,7 @@ startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
-	$(CC) -save-temps -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
 clean: 
 	rm -f *.o
