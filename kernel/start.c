@@ -41,6 +41,7 @@ void start(void *p_bootargs) {
 
   	pcb* test6 = process_create(0x20000, "TEST6");
 
+    save_process_state(6);
   	//should print out 
  	// PID: 1
 	// PID: 6

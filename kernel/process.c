@@ -45,6 +45,48 @@ uint32_t* next_free_slot_in_pcb_table() {
 	return -1;
 }
 
+void save_process_state(int PID){
+	uint32_t* process_to_save = get_address_of_PCB(PID);
+	pcb* pcb_p = get_PCB(PID);
+	uint32_t reg_0 = 0;
+	os_printf("reg 0 = %x\n", reg_0);
+	uint32_t reg_1;
+	uint32_t reg_2;
+	uint32_t reg_3;
+	uint32_t reg_15;
+	asm("MOV %0, r0":"=r"(pcb_p->R0)::);
+	asm("MOV %0, r1":"=r"(pcb_p->R1)::);
+	asm("MOV %0, r2":"=r"(pcb_p->R2)::);
+	asm("MOV %0, r3":"=r"(pcb_p->R3)::);
+	asm("MOV %0, r4":"=r"(pcb_p->R4)::);
+	asm("MOV %0, r5":"=r"(pcb_p->R5)::);
+	asm("MOV %0, r6":"=r"(pcb_p->R6)::);
+	asm("MOV %0, r7":"=r"(pcb_p->R7)::);
+	asm("MOV %0, r8":"=r"(pcb_p->R8)::);
+	asm("MOV %0, r9":"=r"(pcb_p->R9)::);
+	asm("MOV %0, r10":"=r"(pcb_p->R10)::);
+	asm("MOV %0, r11":"=r"(pcb_p->R11)::);
+	asm("MOV %0, r12":"=r"(pcb_p->R12)::);
+	asm("MOV %0, r13":"=r"(pcb_p->R13)::);
+	asm("MOV %0, r14":"=r"(pcb_p->R14)::);
+	asm("MOV %0, r15":"=r"(pcb_p->R15)::);
+	os_printf("reg 0 = %x\n", pcb_p->R0);
+	os_printf("reg 1 = %x\n", pcb_p->R1);
+	os_printf("reg 2 = %x\n", pcb_p->R2);
+	os_printf("reg 3 = %x\n", pcb_p->R3);
+	os_printf("reg 4 = %x\n", pcb_p->R4);
+	os_printf("reg 5 = %x\n", pcb_p->R5);
+	os_printf("reg 6 = %x\n", pcb_p->R6);
+	os_printf("reg 7 = %x\n", pcb_p->R7);
+	os_printf("reg 8 = %x\n", pcb_p->R8);
+	os_printf("reg 9 = %x\n", pcb_p->R9);
+	os_printf("reg 10 = %x\n", pcb_p->R10);
+	os_printf("reg 11 = %x\n", pcb_p->R11);
+	os_printf("reg 12 = %x\n", pcb_p->R12);
+	os_printf("reg 13 = %x\n", pcb_p->R13);
+	os_printf("reg 14 = %x\n", pcb_p->R14);
+	os_printf("reg 15 = %x\n", pcb_p->R15);
+}
 
 //destroys process with param PID by clearing the pcb struct
 //returns 1 upon success, 0 with failure
