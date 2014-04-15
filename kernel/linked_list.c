@@ -22,15 +22,14 @@
 
 list* create_list(void *data)
 {   /* create more space than needed -- less resizing */
-    //list *result = malloc(sizeof(ll_node));
-    list *result = (list *) mem_alloc(sizeof(list));
+    list *result = (list *) malloc(sizeof(ll_node));
     result->size = 0;
     insert(result, create_node(data), 0);
     return result;
 }
 
 ll_node* create_node(void *data) {
-    ll_node *node = (ll_node*) mem_alloc(sizeof(ll_node));
+    ll_node *node = (ll_node*) malloc(sizeof(ll_node));
     node->data = data;
     return node;
 }
