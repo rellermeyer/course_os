@@ -3,9 +3,9 @@
  * Harware Handler Interface  
  *
  */
-#include "hw_handlers.h"
-#include "mmap.h"
-#include "vmlayout.h"
+#include "include/hw_handlers.h"
+#include "include/mmap.h"
+#include "include/interrupt.h"
 
 void init_vector_table(void) {
 
@@ -36,11 +36,11 @@ void reset_handler(void){
 	print_uart0("RESET HANDLER\n");
 }
 
-void undef_instruction_handler(void){
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 	print_uart0("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
-void software_interrupt_handler(void){
+void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int i, callNumber;
 
 	// the link register currently holds the address of the instruction immediately
@@ -59,11 +59,11 @@ void software_interrupt_handler(void){
 	print_uart0("\n");
 }
 
-void prefetch_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
 	print_uart0("PREFETCH ABORT HANDLER\n");
 }
 
-void data_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	print_uart0("DATA ABORT HANDLER\n");
 }
 
@@ -71,10 +71,18 @@ void reserved_handler(void){
 	print_uart0("RESERVED HANDLER\n");
 }
 
-void irq_handler(void){
-	print_uart0("IRQ HANDLER\n");
+// the attribute automatically saves and restores state
+void __attribute__((interrupt("IRQ"))) irq_handler(void){		
+	volatile unsigned int *base = (unsigned int *) 0x80000000;
+	if (*base == 1)       // which interrupt was it?
+	{
+		handle_interrupt(1);  // process the interrupt
+	}
+	*(base+1) = *base;    // clear the interrupt
 }
 
-void fiq_handler(void){
+void __attribute__((interrupt("FIQ"))) fiq_handler(void){
 	print_uart0("FIQ HANDLER\n");
+// FIQ handler returns from the interrupt by executing:
+// SUBS PC, R14_fiq, #4
 }

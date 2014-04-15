@@ -1,8 +1,10 @@
+#ifndef __INTERRUPT_H__
+#define __INTERRUPT_H__
 /*
  *
  *  Interrupt handler four course_os
  *
- *  A bit of background:
+ *  A bit of backgroundf:
  *  - The ARM architecture has 7 modes of operation:
  * 	+ USR - user mode
  *	+ FIQ - processing "fast" interrupts
@@ -20,27 +22,59 @@
  *		handler interfaces with VIC to determine source of interrupt -> branch to service routine \
  *
  */
+
 #include <stdint.h>
 #include "mmap.h"
-
-#define IRQ_DISABLED	0x80	/* IRQs are masked when bit 7 of CPSR is pulled high */
-#define FIQ_DISABLED	0x40	/* FIQs are masked when bit 6 of CPSR is pulled high */
-#define NO_INTERRUPTS	0xC0
 
 // general syscall function
 extern int syscall(int number);
 
-// these prototypes aren't complete
-void irq_enable(void);
-void irq_disable(void);
-void irq_handle(void);
-void irq_register_handler(void);
-// etc. etc.
+typedef enum {
+        IRQ_MASK,		// (this is bit 0x8 on the CPSR)
+        FIQ_MASK,		// (this is bit 0x4 on the CPSR)
+        ALL_INTERRUPT_MASK
+} interrupt_t;
+
+extern interrupt_t IRQ;
+extern interrupt_t FIQ;
+extern interrupt_t ALL;
+
+/* these are what you should use to effect an
+   interrupt status change! */
+
+#define enable_irq() \
+	enable_interrupt(IRQ)
+#define enable_fiq() \
+	enable_interrupt(FIQ)
+#define enable_interrupts() \
+	enable_interrupt(ALL)
+#define disable_irq() \
+	disable_interrupt(IRQ)
+#define disable_fiq() \
+	disable_interrupt(FIQ)
+#define disable_irq_save() \
+	disable_interrupt_save(IRQ)
+#define disable_fiq_save() \
+	disable_interrupt_save(FIQ)
+#define disable_interrupts() \
+	disable_interrupt(ALL);
+#define disable_interrupts_save() \
+	disable_interrupt_save(ALL);
 
 
+/* we don't really wan't others mucking around with the interrupt state
+   functions (e.g. passing a bad parameter), so we'll  
+   refer to the macros above for adjusting specific interrupt status */
+inline int	enableInterrupt(interrupt_t); // deprecated
+inline void 	handle_interrupt(int);
+inline void	enable_interrupt(interrupt_t);
+inline int	enable_interrupt_save(interrupt_t);
+	
+inline void	disable_interrupt(interrupt_t);
+inline int	disable_interrupt_save(interrupt_t);
 
-inline uint32_t get_proc_status(void); 
-
+inline int 	get_proc_status(void);
+inline void	restore_proc_status(int);
 
 /* VIC Interrupt Mappings */
 	// Primary Interrupt Controller (PIC)
@@ -78,3 +112,4 @@ inline uint32_t get_proc_status(void);
 #define VICINTSOURCE_31	(1 << 31)	/* secondary interrupt controller (SIC) */
 
 	// Secondary Interrupt Controller
+#endif //__INTERRUPT_H__

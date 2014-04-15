@@ -53,4 +53,3 @@ void md(uint32_t * start){
 		print_uart0("\n");
 	}
 }
-
