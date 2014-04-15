@@ -7,7 +7,7 @@
 #define _ELF_H_
 
 #include <stdint.h>
-#include "libc.h"
+#include "klibc.h"
 
 typedef uint32_t Elf_Addr;	// Program Address
 typedef uint16_t Elf_Half;	// 16 bit 

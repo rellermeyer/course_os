@@ -1,5 +1,6 @@
 #include "include/process.h"
 #include "include/klibc.h"
+#include "include/global_defs.h"
 
 int init_all_processes() {
     pcb_table = mem_alloc(MAX_PROCESSES);
@@ -9,20 +10,29 @@ int init_all_processes() {
 //creates a process and initializes the PCB
 //returns pcb pointer upon success
 //returns 0 if there is no more room in pcb table
-pcb* process_create(uint32_t starting_address, char* process_name) {
+//file_p is a file pointer that we will create the process with
+pcb* process_create(uint32_t* file_p) {
 
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) mem_alloc(sizeof(pcb));
-		*free_space_in_pcb_table = (uint32_t) pcb_pointer; //fill the free space with a pcb pointer
-
-		//initialize PCB		
-		pcb_pointer->name = process_name;
-		pcb_pointer->PID = ++GLOBAL_PID;
-		pcb_pointer->function = sample_func;
 		
-		return pcb_pointer;
+		//pass pcb to loader
+		//will return -1 if not an ELF file or other error
+		Boolean success = load_file(pcb_pointer, file_p);
+		if(!success) {
+			return -1;
+		} else {
+			//fill the free space with a pcb pointer
+			*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+			//initialize PCB		
+			pcb_pointer->PID = ++GLOBAL_PID;
+			pcb_pointer->function = sample_func;
+
+			return pcb_pointer;
+		}
+
 	} else {
 		print_uart0("Out of memory in pcb table");
 		return 0;

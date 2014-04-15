@@ -1,6 +1,6 @@
 /* Worked on by Jeremy Wenzel and Sam Allen */
 #include "include/elf.h"
-#include "include/libc.h"
+#include "include/klibc.h"
 #include <stdint.h>		// Probably going to be removed
 
 
