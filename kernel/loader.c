@@ -7,7 +7,7 @@
 #define USER_PROC_STACK_SIZE 0x100000 //1 MB
 #define KERNEL_PROC_STACK_SIZE 0x1000 //4k
 
-void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[]. uint32_t * file_pointer)
+void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[], uint32_t * file_pointer)
 {
 
 }
