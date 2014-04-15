@@ -17,3 +17,8 @@ uint32_t* mem_alloc(uint32_t size) {
    
     return allocBlock;
 }
+
+/* not implemented */
+void* free(void *ptr) {
+    return;
+}
