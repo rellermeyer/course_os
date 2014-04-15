@@ -36,9 +36,12 @@ void start(void *p_bootargs) {
 
    //setup new stack pointers
    asm volatile (".include \"stacks.s\"");
-   
+  
    print_vuart0("New supervisor stack at 0xefffd000\n");
-   
+   //Confirm new stack by push test value
+   asm volatile(
+      "ldr r0, =0x313  \n"
+      "push {r0}");   
+   //main();
    asm volatile("wfi");
-
 }
