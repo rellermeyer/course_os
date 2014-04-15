@@ -35,10 +35,10 @@ void init_vector_table(void);
 
 // vector table handlers, should be loaded at 0x00 in this order!
 void reset_handler(void);		// 0x00
-void undef_instruction_handler(void);	// 0x04
-void software_interrupt_handler(void);	// 0x08
-void prefetch_abort_handler(void);	// 0x0c
-void data_abort_handler(void);		// 0x10
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void);	// 0x04
+void __attribute__((interrupt("SWI"))) software_interrupt_handler(void);	// 0x08
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void);	// 0x0c
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void);		// 0x10
 void reserved_handler(void);		// 0x14
-void irq_handler(void);			// 0x18
-void fiq_handler(void);			// 0x1c
+void __attribute__((interrupt("IRQ"))) irq_handler(void);			// 0x18
+void __attribute__((interrupt("FIQ"))) fiq_handler(void);			// 0x1c
