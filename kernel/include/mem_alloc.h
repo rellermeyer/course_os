@@ -8,3 +8,4 @@ Log
 #include <stdint.h> 
 
 uint32_t *mem_alloc(uint32_t size);
+void* free(void *ptr);
