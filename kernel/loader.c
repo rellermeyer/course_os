@@ -17,15 +17,15 @@ void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[]. uint32_t * file_pointer)
 void load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)mem_alloc(sizeof(Elf_ehdr));
-	read_elf_header(h, file_pointer);
+	read_elf_header(*h, file_pointer);
 	
 	Elf_Phdr ph[h->e_phnum];
-	read_program_header_table(h, *ph);
+	read_program_header_table(h, ph);
 
 	Elf_Shdr sh[h->e_shnum];
-	read_section_header_table(h, *sh);
+	read_section_header_table(h, sh);
 	
-	parse_section_header_names(h, *sh, file_pointer);	
+	parse_section_header_names(h, sh, file_pointer);	
 }
 
 //this will allocate memory for the entire process
