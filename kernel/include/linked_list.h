@@ -15,19 +15,22 @@
 #define __llist_h
 
 #define NULL (void*) 0
+
 typedef struct ll_node ll_node;
- struct ll_node
+typedef struct list list;
+
+
+struct ll_node
 {
     ll_node *next;
     void *data;
-};
-
-typedef struct
+}; 
+struct list
 {
     ll_node *head;
     ll_node *tail;
     int size;
-} list;
+};
 
 /* prepend (because of speed) to the list. */
 list* create_list(void *data);

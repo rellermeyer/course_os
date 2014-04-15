@@ -67,6 +67,9 @@ void insert(list *l, void *data, int index)
     ll_node *new_node = create_node(data);
     prev->next = prev? new_node : NULL;
     next->next = next? new_node : NULL;
+    if(l->tail->next) {
+	l->tail = l->tail->next;
+    }
 }
 
 void delete_at(list *l, int index) {
