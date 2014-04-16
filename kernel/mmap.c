@@ -16,7 +16,7 @@
 
 //static unsigned int* first_level_pt = L1PTBASE;
 
-void mmap(void){
+void mmap(unsigned int * first_level_pt){
 
 	asm volatile("push {r0-r11}");
 	//disable all interrupts

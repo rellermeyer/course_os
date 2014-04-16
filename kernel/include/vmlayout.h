@@ -25,7 +25,7 @@
 //Use this macro to get virtual address of peripherals
 #define peri_p2v(pa)		(pa+PREGSTART)
 
-static unsigned int * v_first_level_pt = V_L1PTBASE;
+//static unsigned int * v_first_level_pt = V_L1PTBASE;
 
 
 

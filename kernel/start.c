@@ -5,15 +5,16 @@
 #include "include/pmap.h"
 #include "include/vmlayout.h"
 
-//extern void setup_stacks(void);
-
 void start(void *p_bootargs) {
    print_uart0("arguments: ");
    print_uart0(read_cmdline_tag(p_bootargs));
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-   mmap();
+   static unsigned int * first_level_pt = L1PTBASE;
+   static unsigned int * v_first_level_pt = V_L1PTBASE;
+
+   mmap(first_level_pt);
    //Test: UART0 mapped to the correct virtual address   
    print_vuart0("Virtual Memory!!!\n");
 
@@ -42,6 +43,6 @@ void start(void *p_bootargs) {
    asm volatile(
       "ldr r0, =0x313  \n"
       "push {r0}");   
-   //main();
+
    asm volatile("wfi");
 }
