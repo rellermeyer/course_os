@@ -6,6 +6,7 @@
 #include "include/hw_handlers.h"
 #include "include/mmap.h"
 #include "include/interrupt.h"
+#include "include/vmlayout.h"
 
 void init_vector_table(void) {
 
@@ -73,12 +74,11 @@ void reserved_handler(void){
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void){		
-	volatile unsigned int *base = (unsigned int *) 0x80000000;
-	if (*base == 1)       // which interrupt was it?
+	if (*PIC_ADDRESS == 1)       // which interrupt was it?
 	{
-		handle_interrupt(1);  // process the interrupt
+		handle_interrupt(*PIC_ADDRESS);  // process the interrupt
 	}
-	*(base+1) = *base;    // clear the interrupt
+	*(PIC_ADDRESS+1) = *PIC_ADDRESS;    // clear the interrupt
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
