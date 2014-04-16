@@ -16,6 +16,6 @@
 #define PMEND 			L2PTSBASE
 #define FRAMESIZE		4096
 
-static unsigned int * first_level_pt = L1PTBASE;
+//static unsigned int * first_level_pt = L1PTBASE;
 
 unsigned int get_frame(unsigned int num_frames);
