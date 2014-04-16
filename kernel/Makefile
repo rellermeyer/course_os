@@ -7,7 +7,7 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o startup.o libc.o argparse.o
+OBJS=start.o uart.o startup.o klibc.o argparse.o
 
 CFLAGS = -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc

@@ -14,11 +14,12 @@
 ********************************************************************/
 
 /* LOG:
- * 4/30 added os_printf function - Taylor Smith
+ * 3/30 added os_printf function - Taylor Smith
+ * 4/1 working more on os_printf - Taylor Smith
  */
 
-#ifndef __libc_h
-#define __libc_h
+#ifndef __klibc_h
+#define __klibc_h
 typedef unsigned int size_t;
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, size_t num );
