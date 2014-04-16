@@ -11,5 +11,6 @@ void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
    initialize_timers();
    timer_start();
+   get_time();
 }
 
