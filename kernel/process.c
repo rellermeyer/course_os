@@ -58,12 +58,6 @@ uint32_t* next_free_slot_in_pcb_table() {
 void save_process_state(int PID){
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
-	uint32_t reg_0 = 0;
-	os_printf("reg 0 = %x\n", reg_0);
-	uint32_t reg_1;
-	uint32_t reg_2;
-	uint32_t reg_3;
-	uint32_t reg_15;
 	asm("MOV %0, r0":"=r"(pcb_p->R0)::);
 	asm("MOV %0, r1":"=r"(pcb_p->R1)::);
 	asm("MOV %0, r2":"=r"(pcb_p->R2)::);
