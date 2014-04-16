@@ -16,7 +16,8 @@ void start(void *p_bootargs) {
 
    //initialize GLOBAL_PID and PCB table
    init_all_processes();
-
+	
+	load_process_state();
 
 
  
