@@ -76,7 +76,12 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){		
 	if (*PIC_ADDRESS == 1)       // which interrupt was it?
 	{
+	    /* Commenting this call out until it actually gets defined;
+	     * otherwise compiling fails with new Makefile 
+
 		handle_interrupt(*PIC_ADDRESS);  // process the interrupt
+
+	    */
 	}
 	*(PIC_ADDRESS+1) = *PIC_ADDRESS;    // clear the interrupt
 }
