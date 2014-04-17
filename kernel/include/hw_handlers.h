@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 #define BRANCH_INSTRUCTION	0xe59ff018	// ldr pc, pc+offset
+#define HIVECTABLE 0x0
 
 void init_vector_table(void); 
 
