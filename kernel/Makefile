@@ -10,7 +10,7 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 OBJS=start.o uart.o startup.o klibc.o argparse.o
 
 CFLAGS = -pipe
-CFLAGS += -std=c99 -ffreestanding -nostdinc
+CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 
 all: course_os.img
 
