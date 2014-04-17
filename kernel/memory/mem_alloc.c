@@ -3,7 +3,7 @@
 
 static const uint32_t MEM_START = 0x500000;
 
-uint32_t *nextBlock = 0x500000;  
+uint32_t* nextBlock = 0x500000;  
 
 //bump pointer allocation
 uint32_t* mem_alloc(uint32_t size) {

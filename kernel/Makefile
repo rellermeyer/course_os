@@ -7,13 +7,14 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o startup.o klibc.o argparse.o memory/mem_alloc.o tests.o tests/test_example.o
+OBJS=start.o uart.o startup.o klibc.o argparse.o process.o elf.o memory/mem_alloc.o loader.o tests.o
 
-all: course_os.img
+all: kernel.img
 
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
+#boots the kernel at 0x210000
 flash.bin: kernel.img
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
@@ -29,8 +30,8 @@ kernel.bin: kernel.elf
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
 
-course_os.img: kernel.img 
-	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
+# course_os.img: kernel.img
+# 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
 
 startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
@@ -38,7 +39,7 @@ startup.o: startup.s
 %.o: %.c
 	$(CC) -nostdinc -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
-clean: 
+clean:
 	rm -f *.o
 	rm -f *.img
 	rm -f *.elf
