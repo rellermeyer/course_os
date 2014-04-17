@@ -9,7 +9,7 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 OBJS=start.o uart.o startup.o klibc.o argparse.o process.o elf.o memory/mem_alloc.o loader.o 
 
-all: course_os.img
+all: kernel.img
 
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
@@ -30,8 +30,8 @@ kernel.bin: kernel.elf
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00100000 -e 0x00100000 kernel.img
 
-course_os.img: kernel.img
-	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
+# course_os.img: kernel.img
+# 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
 
 startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
