@@ -7,4 +7,9 @@ void print_uart0(const char *s) {
     *UART_ADDRESS = (uint32_t)(*s);
     s++;
   }
+
+}
+
+void print_char_uart0(char c) {
+  *UART_ADDRESS = (uint32_t) c;
 }
