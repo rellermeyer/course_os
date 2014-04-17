@@ -45,6 +45,16 @@ int analyze_args(char **argv)
 
   */
 
+  /*
+  if (os_strcmp(argv[i], "PROC_TEST") == 0)
+  {
+    // TODO: load process(es) and run them
+    init_all_processes();
+    pcb *testing_pcb = process_create(insert_filename_here);
+    execute_process(testing_pcb);
+  }
+  */
+
   // Run some tests
   if (os_strcmp(argv[i], "TEST") == 0)
   {
@@ -98,7 +108,7 @@ char** split_string(char* line, char** list)
   char *piece = NULL; // One null-terminated part of the string
   const char *delimiters = " \t"; // Space and tab
 
-  piece = strtok(line, delimiters);
+  piece = (char *)strtok(line, delimiters);
   list[0] = piece;
   int i = 1;
 
@@ -117,7 +127,7 @@ char** split_string(char* line, char** list)
 int number_of_words(char *line)
 {
   const char *delimiters = " \t"; // Space and tab
-  char *pos = strtok(line, delimiters);
+  char *pos = (char *)strtok(line, delimiters);
   int count = 0;
 
   // Count the number of words

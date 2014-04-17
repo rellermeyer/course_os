@@ -12,15 +12,15 @@ void start(void *p_bootargs) {
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-   // Parse the command-line arguments
+   // Separate the command-line arguments into separate Strings
    char** arg_list = (char **)mem_alloc(number_of_words(cmdline_args));
    split_string(cmdline_args, arg_list);
    int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+   // Parse and analyze each String
    parse_args(arg_count, arg_list);
+
    free(arg_list);
 
-   //initialize GLOBAL_PID and PCB table
-   init_all_processes();
-   load_process_state();
+   // TODO: initialize GLOBAL_PID and PCB table
 }
-
