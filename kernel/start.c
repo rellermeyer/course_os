@@ -16,38 +16,11 @@ void start(void *p_bootargs) {
 
    //initialize GLOBAL_PID and PCB table
    init_all_processes();
+	
+	load_process_state();
 
-
-
-   //Testing and Debug Info
-   pcb* test = process_create(0x20000, "TEST");
-   //os_printf("test: %x\n", test);
-
-   pcb* test2 = process_create(0x20000, "TEST2");
-   //os_printf("tst2: %x\n", test2);
-  
-   pcb* test3 = process_create(0x20000, "TEST3");
-   //os_printf("test3: %x\n", test3);
-
-   pcb* test4 = process_create(0x20000, "TEST4");
-   //os_printf("test4: %x\n", test4);
 
  
- 	process_destroy(2);
 
-  	pcb* test5 = process_create(0x20000, "TEST5");
-
-  	process_destroy(5);
-
-  	pcb* test6 = process_create(0x20000, "TEST6");
-
-  	//should print out 
- 	// PID: 1
-	// PID: 6
-	// PID: 3
-	// PID: 4
-  	print_PID();
-
-  	execute_process(test6);
 }
 

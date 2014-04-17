@@ -11,6 +11,9 @@
 4/2:  Fixed mem_alloc and began initial pcb creation by Sean Villars, Faseeh Akhter, Josh Guan, Taylor Smith
 4/7:  Fixed mem_alloc and fixed pcb allocation. added a few utility functions as well. Sean V, Faseeh A, Taylor Smith
 4/9:  Added some more utility functions and changed process destroy. Sean V
+4/14: Worked on save process state. Sean V, Faseeh A, Taylor Smith
+4/15: Save state inline asm works, working on saving to pcb. Taylor s
+4/16: Load state with inline asm, Sean V, Faseeh A, Taylor Smith
 /*******************
 a work in progress
 memory boundaries?
@@ -88,24 +91,24 @@ typedef struct pcb{
   // uint32_t SPSR; //saved prog status register when execption occurs
  
   //unbanked register
-  // uint32_t R0;
-  // uint32_t R1;
-  // uint32_t R2;
-  // uint32_t R3;
-  // uint32_t R4;
-  // uint32_t R5;
-  // uint32_t R6;
-  // uint32_t R7;
+   uint32_t R0;
+   uint32_t R1;
+   uint32_t R2;
+   uint32_t R3;
+   uint32_t R4;
+   uint32_t R5;
+   uint32_t R6;
+   uint32_t R7;
  
   //banked registers
-  // uint32_t R8;
-  // uint32_t R9;
-  // uint32_t R10;
-  // uint32_t R11;
-  // uint32_t R12;
-  // uint32_t R13; //corresponds to the SP; do we need both?
-  // uint32_t R14;
-  // uint32_t R15; //corresponds to the PC; do we need both?
+   uint32_t R8;
+   uint32_t R9;
+   uint32_t R10;
+   uint32_t R11;
+   uint32_t R12;
+   uint32_t R13; //corresponds to the SP; do we need both?
+   uint32_t R14;
+   uint32_t R15; //corresponds to the PC; do we need both?
 
   //Control data
   //int priority_value;
@@ -139,7 +142,7 @@ uint32_t* pcb_table; //Table showing all initialized processes.
 uint32_t* next_free_slot_in_pcb_table();
 void print_pcb_table();
 int init_all_processes();
-pcb* process_create(uint32_t starting_address, char* process_name);
+pcb* process_create(uint32_t* file_p);
 uint32_t process_destroy(int PID);
 void print_PID();
 pcb* get_PCB(uint32_t PID);
