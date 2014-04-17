@@ -69,6 +69,7 @@ typedef struct pcb{
   uint32_t group_id;
   uint32_t parent_id;
   uint32_t (*function)(uint32_t);
+  uint32_t has_executed;
   //CPU state data
   //PROCESS_STATE current_state;
 
@@ -152,6 +153,7 @@ uint32_t execute_process(pcb* pcb_p);
 void sample_func(uint32_t x);
 uint32_t load_process_state(uint32_t PID);
 uint32_t save_process_state(uint32_t PID);
+uint32_t print_process_state(uint32_t PID);
 
 
 // static void process_exit(process p); //harder because we have to clean up
