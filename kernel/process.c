@@ -92,6 +92,9 @@ void save_process_state(uint32_t PID){
 	os_printf("reg 15 = %x\n", pcb_p->R15);
 }
 
+//R15 is the Program Counter
+//R14 is the Link Register
+//The last register to be loaded is the PC
 void load_process_state(uint32_t PID) {
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
@@ -111,8 +114,6 @@ void load_process_state(uint32_t PID) {
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
-		
-		
 }
 
 //destroys process with param PID by clearing the pcb struct
