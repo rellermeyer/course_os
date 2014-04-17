@@ -150,6 +150,9 @@ uint32_t free_PCB(pcb* pcb_p);
 uint32_t* get_address_of_PCB(uint32_t PID);
 uint32_t execute_process(pcb* pcb_p);
 void sample_func(uint32_t x);
+uint32_t load_process_state(uint32_t PID);
+uint32_t save_process_state(uint32_t PID);
+
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
