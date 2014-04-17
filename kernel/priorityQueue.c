@@ -74,7 +74,7 @@ pcb* remove(pcb *PCB) {
 }
 
 /* Wait for a task to finish. Then set the current task's state to READY */
-void join(pcb* other_PCB) {
+void join(pcb *other_PCB) {
   // TODO: Do we need to store which task(s) we are blocked on?
   currentNode->PCB->current_state = PROCESS_BLOCKED;
 
@@ -88,15 +88,19 @@ void join(pcb* other_PCB) {
   currentNode->PCB->current_state = PROCESS_RUNNING;
 }
 
-void dispatch(void *PCB) { //requires free-standing ASM code
-  /* If the task has not been started yet, start it.
-     To start a task, we need to call its main() function.
-
-     Else if the task was previously started, restore its state.
-     State-saving should be done in yield() or ulibc's proc_yield() (not sure)
-  */
-
-
+/* If the task has not been started yet, start it.
+   Else if the task was previously started, restore its state.
+*/
+void dispatch(pcb *PCB) { //requires free-standing ASM code
+  if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
+  {
+    PCB->current_state = PROCESS_RUNNING;
+    execute_process(PCB); // Found in process.c
+  }
+  else
+  {
+    load_process_state(PCB->PID); // Found in process.c
+  }
 }
 
 /* Schedule a new task and call dispatch() to run it. */
@@ -104,20 +108,21 @@ void schedule() {
   // When dispatch() returns, we must schedule again, so we have use "while"
   while (head->next != NULL)
   {
-    head->PCB->current_state = PROCESS_READY; // TODO: implement task blocking
     Node *nodeToDispatch = (Node *)head->next;
 
-    if (nodeToDispatch->PCB->current_state = PROCESS_READY)
+    if (nodeToDispatch->PCB->current_state == PROCESS_READY)
     {
       remove(nodeToDispatch->PCB);
       nodeToDispatch->PCB->current_state = PROCESS_RUNNING;
-      dispatch(nodeToDispatch);
+      dispatch(nodeToDispatch->PCB);
     }
     else
     {
       // If the task isn't ready, schedule another.
       head = (Node *)head->next;
     }
+
+    head = head->next;
   }
 
   // If we ever reach this part, we are out of things to schedule
@@ -128,13 +133,10 @@ void schedule() {
 */
 void task_yield()
 {
-  /* TODO: Save the state of the task that is currently running. We'll jump
+  /* Save the state of the task that is currently running. We'll jump
      back to here later.
-
-     Jeffrey Tang is working on a state-saving function in the ulibc branch.
-     These arguments may not be correct
   */
-  int has_jumped = proc_yield(currentNode->PCB); // TODO: implement state-saving
+  int has_jumped = save_process_state(currentNode->PCB->PID);
 
   if (has_jumped == FALSE)
   {
