@@ -22,4 +22,4 @@
 
 static unsigned int * first_level_pt = L1PTBASE;
 
-unsigned int get_frame(unsigned int num_frames);
+unsigned int get_page(unsigned int num_frames);
