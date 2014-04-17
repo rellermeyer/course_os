@@ -12,10 +12,14 @@
 	#define	L1PTBASE		0x07ff4000	//16K (16K boundary required also)
 	//reserve more DS below
 
+#define PERIPHBASE		0x10000000
+#define PCIBASE			0x41000000
+#define PCITOP			0x70000000
+
 #define PMSTART 		PKERNTOP
 #define PMEND 			L2PTSBASE
 #define FRAMESIZE		4096
 
-//static unsigned int * first_level_pt = L1PTBASE;
+static unsigned int * first_level_pt = L1PTBASE;
 
 unsigned int get_frame(unsigned int num_frames);

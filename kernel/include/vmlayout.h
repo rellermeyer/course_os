@@ -11,7 +11,7 @@
 #define	KSTACKSIZE		0x1000	//size of a stack
 #define KSTACKGAP		0x1000	//size of stack guard
 #define V_KDSBASE		0xeff00000
- 	#define V_L1PTBASE		0xefff2000
+ 	#define V_L1PTBASE		0xefff4000
 
 #define	V_L2PTSBASE		0xefb00000
 
@@ -25,7 +25,7 @@
 //Use this macro to get virtual address of peripherals
 #define peri_p2v(pa)		(pa+PREGSTART)
 
-//static unsigned int * v_first_level_pt = V_L1PTBASE;
+static unsigned int * v_first_level_pt = V_L1PTBASE;
 
 
 
