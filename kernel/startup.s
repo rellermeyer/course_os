@@ -10,6 +10,7 @@
 .equ Mode_UND, 0x1B
 .equ Mode_SYS, 0x1F
 
+.globl _Reset
 bal _Reset
 
 _Reset:
