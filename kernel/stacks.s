@@ -41,3 +41,4 @@
 
  MSR     CPSR_c, #Mode_SVC
  ADD 	 fp, sp, #0
+ BL 	 main

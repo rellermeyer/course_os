@@ -1,6 +1,7 @@
 #include "include/mmap.h"
 #include "include/pmap.h"
 #include "include/vmlayout.h"
+#include "include/klibc.h"
 /*
  * APX AP            Privileged    Unprivileged
  *  1  11 (0x8c00) = read-only     read-only
@@ -16,12 +17,13 @@
 
 //static unsigned int* first_level_pt = L1PTBASE;
 
-void mmap(unsigned int * first_level_pt){
+void mmap(){//unsigned int * first_level_pt){
 
 	asm volatile("push {r0-r11}");
 	//disable all interrupts
 	asm volatile("cpsid if");
-
+	//os_printf("first_level_pt=%x\n", *first_level_pt);
+	//asm volatile("wfi");
 
 	//disable instruction cache
 	//disable data cache
@@ -31,15 +33,20 @@ void mmap(unsigned int * first_level_pt){
 	//initialize first_level_pt entires with second level coarse page tables
 	//reserved at 0x07b000000 - 0x07f00000
 
-	register int pte asm("r4");
-	register unsigned int l2pt_addr = L2PTSBASE;
+	register int pte;
+	
+	register unsigned int mb_addr = 0;
+	register unsigned int l2pt_addr = V_L2PTSBASE;
 
 	for(pte = 0; pte < 4096; pte++){
-		first_level_pt[pte] = l2pt_addr | 1;
 		//each level 2 pt has 256 entires (256*4B=1024B)
+		first_level_pt[pte] = l2pt_addr | 0x400 | 2;
 		l2pt_addr += 1024;
-	}
 
+		//one-to-one mapping
+		//first_level_pt[pte] = mb_addr | 0x0400 | 2;
+		//mb_addr += (1024*1024);
+	}
 	//Now map some regions as 1MB sections
 	
 	//temporarily map where it is until we copy it in VAS
@@ -64,15 +71,21 @@ void mmap(unsigned int * first_level_pt){
 
 	//map ~2MB of peripheral registers from 0x10000000-0x101f5000
 	//to two 1MB sections at 0x80000000 and 0x80100000
-	first_level_pt[PREGSTART>>20] = 0x10000000 | 0x0400 | 2;
-	first_level_pt[(PREGSTART+0x100000)>>20] = 0x10100000 | 0x0400 | 2;
+	first_level_pt[PREGSTART>>20] = PERIPHBASE | 0x0400 | 2;
+	first_level_pt[(PREGSTART+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
 
 	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
 	//752 MB sections at 0x80200000-0xaf200000
+	register unsigned int pci_bus_addr = PCIBASE;
 	register int i asm ("r4");
-	for(i = (PCISTART>>20); i < (PCIEND>>20); i++){
-		first_level_pt[i] = ((i - 1010)<<20) | 0x0400 | 2;
+	for(i = (PCISTART>>20); i < (PCIEND>>20) && pci_bus_addr < PCITOP; i++){
+		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
+		//os_printf("i= %d\n",i);
+   	   	//os_printf("l1pt= %x\n", first_level_pt[i]);  
+		pci_bus_addr += (1024*1024);
 	}
+
+	//asm volatile("wfi");
 
 	register unsigned int pt_addr asm ("r4") = (unsigned int)first_level_pt;
 
@@ -99,7 +112,7 @@ void mmap(unsigned int * first_level_pt){
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
-	control |= 0x3007; //0b11000000000111
+	control |= 0x1007; //0b11000000000111
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
