@@ -5,7 +5,6 @@
 #ifndef __MMAP_H__
 #define __MMAP_H__
 
-
 #define mmio_read(address)		(*((volatile uint32_t *)(address)))
 #define mmio_write(address, value)	(*((volatile uint32_t *)(address)) = (volatile uint32_t)(value))
 

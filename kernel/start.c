@@ -10,6 +10,7 @@ void start(void *p_bootargs) {
    print_uart0(read_cmdline_tag(p_bootargs));
    print_uart0("\n");
    print_uart0("CourseOS!\n");
+   //init_vector_table();
 
    //static unsigned int * first_level_pt = L1PTBASE;
 
