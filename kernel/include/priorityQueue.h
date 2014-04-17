@@ -15,8 +15,8 @@ typedef struct {
 void init();
 int add(void *PCB, int priority);
 pcb* remove(pcb *PCB);
-void join(pcb* other_PCB);
-void dispatch(void *PCB);
+void join(pcb *other_PCB);
+void dispatch(pcb *PCB);
 void schedule();
 void task_yield();
 Boolean is_in_queue(int pid);
