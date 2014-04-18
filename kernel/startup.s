@@ -10,7 +10,7 @@
 .equ Mode_UND, 0x1B
 .equ Mode_SYS, 0x1F
 
-bal _Reset
+.globl _Reset
 
 _Reset:
  CPS #0x13

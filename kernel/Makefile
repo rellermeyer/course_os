@@ -11,6 +11,9 @@ OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o 
 
 
 
+CFLAGS = -pipe
+CFLAGS += -std=gnu99 -ffreestanding -nostdinc
+
 all: course_os.img
 
 run: flash.bin
@@ -38,7 +41,7 @@ startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
-	$(CC) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
 clean: 
 	rm -f *.o

@@ -59,3 +59,4 @@ void md(uint32_t * start){
 void print_char_uart0(char c) {
   *UART_ADDRESS = (uint32_t) c;
 }
+
