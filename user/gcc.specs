@@ -1,0 +1,5 @@
+*startfile:
+../lib/crt1.o ../lib/crti.o
+
+*endfile:
+../lib/crtn.o
