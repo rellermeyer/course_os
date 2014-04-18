@@ -36,8 +36,17 @@ void start(void *p_bootargs) {
    //Test: UART0 mapped to the correct virtual address   
    print_vuart0("Virtual Memory!!!\n");
 
-   //setup new stack pointers
+   //setup new stack pointers and jump to main
    asm volatile (".include \"stacks.s\"");
   
-   asm volatile("wfi");
+   /* NOTHING EXECUTED BEYOND THIS POINT
+    *
+    *
+    * Anything that needs to be setup right after
+    * booting the kernel should go before mmap()
+    *
+    * Any setup, heap allocation or stack allocation
+    * goes in main
+    *
+    */
 }
