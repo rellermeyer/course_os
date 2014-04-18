@@ -18,6 +18,7 @@ uint32_t* mem_alloc(uint32_t size) {
     return allocBlock;
 }
 
+/* posix compliance */
 uint32_t* malloc(uint32_t size) {
     return mem_alloc(size);
 }
