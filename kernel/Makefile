@@ -7,7 +7,9 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o
+OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o memory/mem_alloc.o
+
+
 
 all: course_os.img
 
