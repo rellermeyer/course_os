@@ -65,18 +65,22 @@ extern interrupt_t ALL;
 /* we don't really wan't others mucking around with the interrupt state
    functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
-inline void	enable_interrupt(interrupt_t);
-inline int	enable_interrupt_save(interrupt_t);
+void	enable_interrupt(interrupt_t);
+int	enable_interrupt_save(interrupt_t);
 	
-inline void	disable_interrupt(interrupt_t);
-inline int	disable_interrupt_save(interrupt_t);
+void	disable_interrupt(interrupt_t);
+int	disable_interrupt_save(interrupt_t);
 
-inline int 	get_proc_status(void);
-inline void	restore_proc_status(int);
+int 	get_proc_status(void);
+void	restore_proc_status(int);
 
-inline void	handle_interrupt(int);
+void	handle_interrupt(int);
 
 /* VIC Interrupt Mappings */
+#define PIC_RAW_INTR_STATUS_REGISTER	PIC_ADDRESS+0x008
+#define PIC_INTR_SELECT_REGISTER	PIC_ADDRESS+0x00C
+#define PIC_INTR_ENABLE_REGISTER	PIC_ADDRESS+0x010
+
 	// Primary Interrupt Controller (PIC)
 #define WATCHDOG_IRQ	0	/* watchdog controller */
 #define SWI_IRQ		1	/* software interrupt */
