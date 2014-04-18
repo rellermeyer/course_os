@@ -74,7 +74,7 @@ void mmap(){//unsigned int * first_level_pt){
 	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
 	//752 MB sections at 0x80200000-0xaf200000
 	unsigned int pci_bus_addr = PCIBASE;
-	int i asm ("r4");
+	int i;
 	for(i = (PCISTART>>20); i < (PCIEND>>20); i++){
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
 		//os_printf("i= %d\n",i);
@@ -107,7 +107,7 @@ void mmap(){//unsigned int * first_level_pt){
 	}
 
 
-	unsigned int pt_addr asm ("r4") = (unsigned int)first_level_pt;
+	unsigned int pt_addr = (unsigned int)first_level_pt;
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -127,7 +127,7 @@ void mmap(){//unsigned int * first_level_pt){
 	 *	I-cache bit 12
 	 *	V bit 13 (1=high vectors 0xffff0000)
 	 */
-	unsigned int control asm ("r4");
+	unsigned int control;
 
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));

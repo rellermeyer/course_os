@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <mmap.h>
 
-#define UART_ADDRESS	(uint32_t *const) 0x101f1000	/* UART 0 base address */
 volatile uint32_t *const UART = UART_ADDRESS;
 
  
