@@ -14,5 +14,6 @@
 *.elf
 *.bin
 *~
+*.swp
 
 NOTES
