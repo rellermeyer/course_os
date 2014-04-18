@@ -22,6 +22,7 @@
 
 #define KMALLOCPM		22*0x100000  //22MB for kernel
 #define MALLOCPM 		100*0x100000 //100MB for user programs
+		
 
 static unsigned int * first_level_pt = L1PTBASE;
 

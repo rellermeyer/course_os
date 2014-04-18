@@ -7,4 +7,5 @@ Log
 
 #include <stdint.h> 
 
-uint32_t *mem_alloc(uint32_t size);
+uint32_t * umalloc(size);
+uint32_t * kmalloc(size);

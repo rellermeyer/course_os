@@ -23,6 +23,8 @@
 
 #define USER_LIM		PREGSTART
 
+#define UHEAPSTART		0x100000
+#define	KHEAPSTART		PCIEND
 
 //Use this macro to get virtual address of peripherals
 #define peri_p2v(pa)		(pa+PREGSTART)

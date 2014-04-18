@@ -88,7 +88,7 @@ void mmap(){//unsigned int * first_level_pt){
 	unsigned int pm_end = L2PTSBASE;
 	unsigned int avail_pm = pm_start - pm_end;
 
-	unsigned int u_vm_start = 0x100000;
+	unsigned int u_vm_start = UHEAPSTART;
 	unsigned int u_vm_end = u_vm_start + MALLOCPM;
 
 	unsigned int k_vm_start = PCIEND;
