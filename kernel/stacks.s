@@ -41,4 +41,13 @@
 
  MSR     CPSR_c, #Mode_SVC
  ADD 	 fp, sp, #0
+
+ EOR 	 R0, R0
+ ADD 	 R0, pc, #0xf0000000
+ MOV 	 pc, R0
+
+ EOR 	 R0, R0
+ ADD 	 R0, lr, #0xf0000000
+ MOV 	 lr, R0
+
  BL 	 main

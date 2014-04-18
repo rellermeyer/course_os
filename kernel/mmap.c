@@ -25,29 +25,26 @@ void mmap(){//unsigned int * first_level_pt){
 	//os_printf("first_level_pt=%x\n", *first_level_pt);
 	//asm volatile("wfi");
 
-	//disable instruction cache
-	//disable data cache
-	//disable mmu
-
-
 	//initialize first_level_pt entires with second level coarse page tables
 	//reserved at 0x07b000000 - 0x07f00000
-
-	register int pte;
+/*
+	int pte;
 	
-	register unsigned int mb_addr = 0;
-	register unsigned int l2pt_addr = V_L2PTSBASE;
+	unsigned int mb_addr = 0;
+	unsigned int l2pt_addr = L2PTSBASE;
 
 	for(pte = 0; pte < 4096; pte++){
+
 		//each level 2 pt has 256 entires (256*4B=1024B)
-		first_level_pt[pte] = l2pt_addr | 0x400 | 2;
-		l2pt_addr += 1024;
+		//first_level_pt[pte] = l2pt_addr | 0x400 | 2;
+		//l2pt_addr += 1024;
 
 		//one-to-one mapping
-		//first_level_pt[pte] = mb_addr | 0x0400 | 2;
-		//mb_addr += (1024*1024);
+		first_level_pt[pte] = mb_addr | 0x0400 | 2;
+		mb_addr += (1024*1024);
+
 	}
-	//Now map some regions as 1MB sections
+*/
 	
 	//temporarily map where it is until we copy it in VAS
 	first_level_pt[KERNDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
@@ -76,18 +73,41 @@ void mmap(){//unsigned int * first_level_pt){
 
 	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
 	//752 MB sections at 0x80200000-0xaf200000
-	register unsigned int pci_bus_addr = PCIBASE;
-	register int i asm ("r4");
-	for(i = (PCISTART>>20); i < (PCIEND>>20) && pci_bus_addr < PCITOP; i++){
+	unsigned int pci_bus_addr = PCIBASE;
+	int i asm ("r4");
+	for(i = (PCISTART>>20); i < (PCIEND>>20); i++){
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
 		//os_printf("i= %d\n",i);
    	   	//os_printf("l1pt= %x\n", first_level_pt[i]);  
 		pci_bus_addr += (1024*1024);
 	}
 
-	//asm volatile("wfi");
 
-	register unsigned int pt_addr asm ("r4") = (unsigned int)first_level_pt;
+	//map remaining physical memory as 1MB section for bump pointer malloc and kmalloc
+	unsigned int pm_start = PKERNTOP;
+	unsigned int pm_end = L2PTSBASE;
+	unsigned int avail_pm = pm_start - pm_end;
+
+	unsigned int u_vm_start = 0x100000;
+	unsigned int u_vm_end = u_vm_start + MALLOCPM;
+
+	unsigned int k_vm_start = PCIEND;
+	unsigned int k_vm_end = k_vm_start + KMALLOCPM;
+
+	//map 22MB for kmalloc
+	for(i = (k_vm_start>>20); i < (k_vm_end>>20) && pm_start < pm_end; i++){
+		first_level_pt[i] = pm_start | 0x0400 | 2;
+		pm_start += 0x100000;
+	}
+
+	//map remaining 100MB for malloc
+	for(i = (u_vm_start>>20); i < (u_vm_end>>20) && pm_start < pm_end; i++){
+		first_level_pt[i] = pm_start | 0x0400 | 2;
+		pm_start += 0x100000;
+	}
+
+
+	unsigned int pt_addr asm ("r4") = (unsigned int)first_level_pt;
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -95,7 +115,7 @@ void mmap(){//unsigned int * first_level_pt){
 	//asm volatile("mcr p15, 0, %[addr], c2, c0, 1" : : [addr] "r" (pt_addr));
 	//asm volatile("mcr p15, 0, %[n], c2, c0, 2" : : [n] "r" (0));
 
-	//Set Domain Access Control Register to enforce out permissions
+	//Set Domain Access Control to enforce out permissions
 	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
 	asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
 	
@@ -107,7 +127,7 @@ void mmap(){//unsigned int * first_level_pt){
 	 *	I-cache bit 12
 	 *	V bit 13 (1=high vectors 0xffff0000)
 	 */
-	register unsigned int control asm ("r4");
+	unsigned int control asm ("r4");
 
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
@@ -115,21 +135,6 @@ void mmap(){//unsigned int * first_level_pt){
 	control |= 0x1007; //0b11000000000111
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
-
-
-
-
-   	//add kernel offest to pc and store in r4
-	asm volatile("eor r4, r4");
-	asm volatile("add r4, pc, #0xf0000000");
-	//jump to the same code running at the address 
-	//where the kernel is also loaded in high vm 
-	asm volatile("mov pc, r4");
-
-	//add kernel offset to lr so that we return into high kernel start
-	asm volatile("eor r4, r4");
-	asm volatile("add r4, lr, #0xf0000000");
-	asm volatile("mov lr, r4");
 
 	//enable interrupts
 	asm volatile("cpsie fi");
