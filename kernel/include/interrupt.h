@@ -2,20 +2,10 @@
 #define __INTERRUPT_H__
 /*
  *
- *  Interrupt handler four course_os
+ *  Interrupt handler for course_os
  *
- *  A bit of backgroundf:
- *  - The ARM architecture has 7 modes of operation:
- * 	+ USR - user mode
- *	+ FIQ - processing "fast" interrupts
- *	+ IRQ - processing "normal" interrupts
- *	+ SVC - proctected mode for OS
- *	+ UND - processing an undefined instruction exception
- *	+ SYS - also protecteed mode for OS --if anyone wants to clarify, feel free--
- *	These modes can be entered or exited by modifying the CPSR (status register)
- *  - When an interrupt occurs, the apropriate bits are pulled 
  *
- *  - ARM has two interrupt lines: FIQ (fast interrupt), IRQ (normal interrupt)
+ *  - ARM has two interrupt lines to the core: FIQ (fast interrupt), IRQ (normal interrupt)
  *  - Our VIC multiplexes intterupts from multiple sources and feeds them to the processor as either FIQ or IRQ
  *  Basic interrupt control flow (no vectored interrupts, no nested interrupts) is as follows:
  *	Interrupt Occurs -> Core branches to FIQ or IRQ vector -> vector branches to hanlder \
@@ -77,9 +67,12 @@ void	restore_proc_status(int);
 void	handle_interrupt(int);
 
 /* VIC Interrupt Mappings */
-#define PIC_RAW_INTR_STATUS_REGISTER	PIC_ADDRESS+0x008
-#define PIC_INTR_SELECT_REGISTER	PIC_ADDRESS+0x00C
-#define PIC_INTR_ENABLE_REGISTER	PIC_ADDRESS+0x010
+#define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
+#define VIC_FIQ_STATUS		PIC_ADDRESS+0x004 // status of pending fiqs after masking (R)
+#define VIC_RAW_STATUS		PIC_ADDRESS+0x008 // status of pending irqs before masking by the enable register (R)
+#define VIC_INT_SELECT		PIC_ADDRESS+0x00C // select whether source generates an IRQ or FIQ (R/W)
+#define VIC_INT_ENABLE		PIC_ADDRESS+0x010 // enable interrupt lines (1 = YES) (R/W)
+#define VIC_INT_ENCLEAR		PIC_ADDRESS+0x014 // clear enabled lines in VICINTENABLE (1=clear)
 
 	// Primary Interrupt Controller (PIC)
 #define WATCHDOG_IRQ	0	/* watchdog controller */
@@ -116,4 +109,6 @@ void	handle_interrupt(int);
 #define VICINTSOURCE_31	31	/* secondary interrupt controller (SIC) */
 
 	// Secondary Interrupt Controller
+
+
 #endif //__INTERRUPT_H__

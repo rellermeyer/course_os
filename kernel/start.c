@@ -31,12 +31,4 @@ void start(void *p_bootargs) {
 	/* we boot into SVC mode with FIQ and IRQ masked */
 	/* TODO: intialize the vector table, stack space, etc. */
 	init_vector_table();
-	md((uint32_t *)0x00);
-	disable_interrupts();
-	int cpsr = get_proc_status();
-	print_word_bits(&cpsr);
-	asm volatile("SWI 7");	
-	enable_interrupts();
-	cpsr = get_proc_status();
-	print_word_bits(&cpsr);
 }
