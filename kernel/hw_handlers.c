@@ -60,11 +60,11 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
-	print_vuart0("PREFETCH ABORT HANDLER\n");
+	v_printf("PREFETCH ABORT HANDLER\n");
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
-	print_vuart0("DATA ABORT HANDLER\n");
+	v_printf("DATA ABORT HANDLER\n");
 }
 
 void reserved_handler(void){
