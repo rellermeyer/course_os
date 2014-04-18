@@ -11,22 +11,13 @@
 .equ Mode_SYS, 0x1F
 
 .globl _Reset
-bal _Reset
 
 _Reset:
- @ LDR sp, =stack_top
- 
- LDR     R0, =stack_base
- MSR     CPSR_c, #Mode_FIQ
- MOV     sp, R0
- SUB     R0, R0, #stack_size
- MSR     CPSR_c, #Mode_IRQ
- MOV     sp, R0
- SUB     R0, R0, #stack_size
- MSR     CPSR_c, #Mode_SVC
- MOV     sp, R0
- 
+ CPS #0x13
+ LDR sp, =svc_stack
+ CPS #0x17
+ LDR sp, =abort_stack
  MOV R0, R2
  BL start
-
  WFI
+

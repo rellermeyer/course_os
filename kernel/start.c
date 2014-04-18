@@ -15,31 +15,29 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)		
  */
+
+#include "include/global_defs.h"
 #include <stdint.h>
-#include "hw_handlers.h"
-#include "global_defs.h"
-#include "argparse.h"
-#include "klibc.h"
-#include "process.h"
+#include "include/argparse.h"
+#include "include/mmap.h"
+#include "include/pmap.h"
+#include "include/vmlayout.h"
 
 void start(void *p_bootargs) {
    print_uart0("arguments: ");
    print_uart0(read_cmdline_tag(p_bootargs));
    print_uart0("\n");
    print_uart0("CourseOS!\n");
-   // os_printf("test %d %d %d %d\n", 7, 4, 42, -123);
-   // os_printf("test %x %x %x %x\n", 7, 4, 42, -123);
-   // os_printf("test %X %X %X %X\n", 7, 4, 42, -123);
+   
+   init_vector_table();
 
+   mmap();
 
-   //initialize GLOBAL_PID and PCB table
-   init_all_processes();
+   //Test: UART0 mapped to the correct virtual address   
+   print_vuart0("Virtual Memory!!!\n");
 
-
-
- 
-
-    /* we boot into SVC mode with FIQ and IRQ masked */
-    /* TODO: intialize the vector table, stack space, etc. */
-    init_vector_table();
+   //setup new stack pointers
+   asm volatile (".include \"stacks.s\"");
+  
+   asm volatile("wfi");
 }
