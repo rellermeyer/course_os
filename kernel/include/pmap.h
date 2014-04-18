@@ -24,6 +24,6 @@
 #define MALLOCPM 		100*0x100000 //100MB for user programs
 		
 
-static unsigned int * first_level_pt = L1PTBASE;
+static unsigned int * first_level_pt = (unsigned int*) L1PTBASE;
 
 unsigned int get_page(unsigned int num_frames);

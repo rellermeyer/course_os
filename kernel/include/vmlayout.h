@@ -4,7 +4,7 @@
 #define VMLAYOUT_H_
 
 //High vectors are enabled by setting V bit in the control register
-#define HIVECTABLE		0xffff0000
+#define HIVECTABLE		0x0
 
 #define KERNSTART		0xf0000000
 
@@ -29,7 +29,7 @@
 //Use this macro to get virtual address of peripherals
 #define peri_p2v(pa)		(pa+PREGSTART)
 
-static unsigned int * v_first_level_pt = V_L1PTBASE;
+static unsigned int * v_first_level_pt = (unsigned int*)V_L1PTBASE;
 
 
 #endif

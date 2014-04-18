@@ -45,7 +45,7 @@ unsigned int get_page(unsigned int num_pages){
 
 
 	unsigned int l2pt_addr = v_first_level_pt[l1_idx];
-	unsigned int * l2pt = l2pt_addr;
+	unsigned int * l2pt = (unsigned int*)l2pt_addr;
 	v_printf("l2addr= %x\n", l2pt_addr);
 
    asm volatile("mov r0, %0" : : "r" (l2pt_addr));

@@ -5,6 +5,8 @@
  */
 #include "include/hw_handlers.h"
 #include "include/mmap.h"
+#include "include/pmap.h"
+#include "include/vmlayout.h" 
 #include "include/interrupt.h"
 
 void init_vector_table(void) {
