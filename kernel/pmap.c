@@ -31,25 +31,29 @@ unsigned int get_page(unsigned int num_pages){
 	else
 		return 0;
 
-	os_printf("\npage= %x", page);
+	v_printf("\npage= %x", page);
 	unsigned int l1_idx = page>>20;
-	os_printf("\nl1_idx= %d\n", l1_idx);
+	v_printf("\nl1_idx= %d\n", l1_idx);
 	unsigned int mb = l1_idx<<20;
-	os_printf("mb= %x\n", mb);
+	v_printf("mb= %x\n", mb);
 
 	unsigned int l2_idx_s = (page-mb)>>12;
-	os_printf("l2_idx_s= %d\n", l2_idx_s);
+	v_printf("l2_idx_s= %d\n", l2_idx_s);
 
 	int l2_idx_e = l2_idx_s + num_pages;
 
-	unsigned int * l2pt_addr = v_first_level_pt[l1_idx];
-	os_printf("l2addr= %x\n", l2pt_addr);
 
 
+	unsigned int l2pt_addr = v_first_level_pt[l1_idx];
+	unsigned int * l2pt = l2pt_addr;
+	v_printf("l2addr= %x\n", l2pt_addr);
+
+   asm volatile("mov r0, %0" : : "r" (l2pt_addr));
+   //asm volatile("wfi");
 	int i;
 	for(i = l2_idx_s; i<l2_idx_e; i++){
-		l2pt_addr[i] = frame | 0x0010 | 2;
-		os_printf("%x\n", l2pt_addr[i]);
+		l2pt[i] = frame | 0x0010 | 2;
+		v_printf("%x\n", l2pt[i]);
 		frame += FRAMESIZE;
 	}
 
