@@ -15,6 +15,10 @@ void main(void){
   *(v_first_level_pt+KERNSTART+(KERNDSBASE>>20)) = 0;   
   *(v_first_level_pt+KERNSTART) = 0;
 
+  /* Allocate in kernel region using k_malloc()
+   * Allocate in user region using u_malloc()
+   */
+
   //initialize GLOBAL_PID and PCB table
   init_all_processes();
 
