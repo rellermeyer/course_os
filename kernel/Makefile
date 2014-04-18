@@ -7,7 +7,7 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o startup.o klibc.o argparse.o interrupt.o hw_handlers.o
+OBJS=start.o drivers/uart.o startup.o klibc.o argparse.o interrupt.o hw_handlers.o drivers/clock.o
 
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
@@ -47,3 +47,4 @@ clean:
 	rm -f *.elf
 	rm -f *.bin
 	rm -f *.map
+	rm -f drivers/*.o
