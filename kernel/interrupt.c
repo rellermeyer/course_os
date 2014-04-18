@@ -14,8 +14,7 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // determine from the interrupt controller which interrupt source is requesting service
 // determine where the service routine for that interrupt source is loaded
 // mask or clear that interrupt source, before re-enabling processor interrupts to permit another interrupt to be taken.
-// 
-// An interrupt occurs.
+
 void handle_interrupt(int interrupt_vector){
  	// branch to interrupt routine and handle
 	print_uart0("handling interrupt\n");
