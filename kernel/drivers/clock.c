@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include "include/clock.h"
 
-volatile uint32_t *CLOCK = (uint32_t *) 0x101e8000; 
-
 
 void get_time(){
   uint32_t temp_time = *CLOCK;

@@ -10,5 +10,6 @@
 
 #define PIC_ADDRESS	(volatile uint32_t *const) 0x10140000	/* interrupt controller peripheral */
 #define UART_ADDRESS	(volatile uint32_t *const) 0x101f1000	/* UART 0 base address */
+#define CLOCK_ADDRESS	(volatile uint32_t *const) 0x101e8000	/* RTC base address */
 
 #endif // __MMAP_H_
