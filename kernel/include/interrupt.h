@@ -65,8 +65,6 @@ extern interrupt_t ALL;
 /* we don't really wan't others mucking around with the interrupt state
    functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
-inline int	enableInterrupt(interrupt_t); // deprecated
-inline void 	handle_interrupt(int);
 inline void	enable_interrupt(interrupt_t);
 inline int	enable_interrupt_save(interrupt_t);
 	
@@ -76,40 +74,42 @@ inline int	disable_interrupt_save(interrupt_t);
 inline int 	get_proc_status(void);
 inline void	restore_proc_status(int);
 
+inline void	handle_interrupt(int);
+
 /* VIC Interrupt Mappings */
 	// Primary Interrupt Controller (PIC)
-#define WATCHDOG_IRQ	(1 << 0)	/* watchdog controller */
-#define SWI_IRQ		(1 << 1)	/* software interrupt */
-#define COMMS_RX_IRQ	(1 << 2)	/* debug comms receive intercept */
-#define COMMS_TX_IRQ	(1 << 3)	/* debug comms transmit intercept */
-#define TIMER_A_IRQ	(1 << 4)	/* timer 0 or 1 */
-#define TIMER_B_IRQ	(1 << 5) 	/* timer 2 or 3 */
-#define	GPIO_A_IRQ	(1 << 6)	/* GPIO 0 */
-#define GPIO_B_IRQ	(1 << 7)	/* GPIO 1 */
-#define GPIO_C_IRQ	(1 << 8)	/* GPIO 2 */
-#define GPIO_D_IRQ	(1 << 9)	/* GPIO 3 */
-#define RTC_IRQ		(1 << 10)	/* Real Time Clock (RTC) */
-#define SSP_IRQ		(1 << 11)	/* synchronous serial port */
-#define UART_A_IRQ	(1 << 12)	/* UART 0 */
-#define UART_B_IRQ	(1 << 13)	/* UART 1 */
-#define UART_C_IRQ	(1 << 14)	/* UART 2 */
-#define SCIO_IRQ	(1 << 15)	/* smart card interface */
-#define CLCD_IRQ	(1 << 16)	/* CLCD controller */
-#define DMA_IRQ		(1 << 17)	/* DMA controller */
-#define PWRFAIL_IRQ	(1 << 18)	/* power failure from FPGA */
-#define MBX_IRQ		(1 << 19)	/* graphics processor */
+#define WATCHDOG_IRQ	0	/* watchdog controller */
+#define SWI_IRQ		1	/* software interrupt */
+#define COMMS_RX_IRQ	2	/* debug comms receive intercept */
+#define COMMS_TX_IRQ	3	/* debug comms transmit intercept */
+#define TIMER_A_IRQ	4	/* timer 0 or 1 */
+#define TIMER_B_IRQ	5	/* timer 2 or 3 */
+#define	GPIO_A_IRQ	6	/* GPIO 0 */
+#define GPIO_B_IRQ	7	/* GPIO 1 */
+#define GPIO_C_IRQ	8	/* GPIO 2 */
+#define GPIO_D_IRQ	9	/* GPIO 3 */
+#define RTC_IRQ		10	/* Real Time Clock (RTC) */
+#define SSP_IRQ		11	/* synchronous serial port */
+#define UART_A_IRQ	12	/* UART 0 */
+#define UART_B_IRQ	13	/* UART 1 */
+#define UART_C_IRQ	14	/* UART 2 */
+#define SCIO_IRQ	15	/* smart card interface */
+#define CLCD_IRQ	16	/* CLCD controller */
+#define DMA_IRQ		17	/* DMA controller */
+#define PWRFAIL_IRQ	18	/* power failure from FPGA */
+#define MBX_IRQ		19	/* graphics processor */
 // IRQ 20 is reserved by the architecture
-#define VICINTSOURCE_21	(1 << 21)	/* external interrupt signal from DiskOnChip flash device */
-#define VICINTSOURCE_22	(1 << 22)	/* external interrupt signal from MCIO A */
+#define VICINTSOURCE_21	21	/* external interrupt signal from DiskOnChip flash device */
+#define VICINTSOURCE_22	22	/* external interrupt signal from MCIO A */
 // IRQ 23 is reserved by the architecture
-#define VICINTSOURCE_24	(1 << 23)	/* external interrupt signal from AACI */
-#define VICINTSOURCE_25	(1 << 24)	/* Ethernet */
-#define VICINTSOURCE_26	(1 << 25)	/* USB */
-#define VICINTSOURCE_27	(1 << 26)	/* external interrupt signal from expansion connector */
-#define VICINTSOURCE_28	(1 << 27)	/* external interrupt signal from expansion connector */
+#define VICINTSOURCE_24	23	/* external interrupt signal from AACI */
+#define VICINTSOURCE_25	24	/* Ethernet */
+#define VICINTSOURCE_26	25	/* USB */
+#define VICINTSOURCE_27	26	/* external interrupt signal from expansion connector */
+#define VICINTSOURCE_28	27	/* external interrupt signal from expansion connector */
 // IRQ 29 is reserved by the architecture
 // IRQ 30 is reserved by the architecture
-#define VICINTSOURCE_31	(1 << 31)	/* secondary interrupt controller (SIC) */
+#define VICINTSOURCE_31	31	/* secondary interrupt controller (SIC) */
 
 	// Secondary Interrupt Controller
 #endif //__INTERRUPT_H__
