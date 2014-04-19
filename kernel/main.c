@@ -25,8 +25,8 @@ void main(void){
   v_printf("MAIN1: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);  
 
   //Unmap one-to-one kernel and pt mappings
-  *(first_level_pt+(KERNDSBASE>>20)) = 0;   
-  *(first_level_pt) = 0;
+  *(first_level_pt+KERNSTART+(KERNDSBASE>>20)) = 0;   
+  *(first_level_pt+KERNSTART) = 0;
 
   asm volatile("mov %0, pc" : "=r" (pc));
   asm volatile("mov %0, lr" : "=r" (lr));
