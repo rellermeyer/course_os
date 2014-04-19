@@ -23,7 +23,10 @@
 #include "include/pmap.h"
 #include "include/vmlayout.h"
 
+void *bootargs;
+
 void start(void *p_bootargs) {
+  bootargs = p_bootargs;
    print_uart0("arguments: ");
    print_uart0(read_cmdline_tag(p_bootargs));
    print_uart0("\n");

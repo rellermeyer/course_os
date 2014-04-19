@@ -27,7 +27,8 @@ uint32_t* mem_alloc(uint32_t size, uint32_t priv) {
 		alloc_block = next_ublock;
 		next_ublock += temp;
 	}
-
+	v_printf("returning block=%x\n", alloc_block);	
+	//asm volatile("wfi");
 	return alloc_block;
 }
 
@@ -36,5 +37,11 @@ uint32_t* u_malloc(uint32_t size){
 }
 
 uint32_t* k_malloc(uint32_t size){
+  int pc, lr, sp, fp;
+  asm volatile("mov %0, pc" : "=r" (pc));
+  asm volatile("mov %0, lr" : "=r" (lr));
+  asm volatile("mov %0, sp" : "=r" (sp));
+  asm volatile("mov %0, fp" : "=r" (fp));
+  v_printf("k_malloc: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
 	return mem_alloc(size, 1);
 }
