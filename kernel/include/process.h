@@ -2,7 +2,6 @@
 #define PROCESS_H
 #include "global_defs.h"
 #include <stdint.h>
-#include "mem_alloc.h"
 
 /*LOG:
 3/15: Initial skeleton and comments by Josh Guan.
