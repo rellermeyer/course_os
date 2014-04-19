@@ -34,12 +34,6 @@ void v_md(uint32_t * start){
 
 /* Call this function after MMU is enabled to use UART0 */
 void print_vuart0(const char *s) {
-   //[BUG?]:
-   //Arg copied in r0 after function prologue
-   //but finds it from .rodata at low memory
-   //which is eventually unmapped so doesn't print
-   //fixed by adding high kernel offset to s
-   //s = s + 0xf0000000;
    while(*s != '\0') { 
       *VUART = (uint32_t)(*s); 
       s++;
