@@ -39,7 +39,7 @@ void print_vuart0(const char *s) {
    //but finds it from .rodata at low memory
    //which is eventually unmapped so doesn't print
    //fixed by adding high kernel offset to s
-   s = s + 0xf0000000;
+   //s = s + 0xf0000000;
    while(*s != '\0') { 
       *VUART = (uint32_t)(*s); 
       s++;

@@ -4,6 +4,7 @@
 
 int init_all_processes() {
     pcb_table = k_malloc(MAX_PROCESSES);
+    v_printf("&pcb_table=%x", pcb_table);
 	GLOBAL_PID = 0;
 } 
 
