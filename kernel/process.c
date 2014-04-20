@@ -3,6 +3,9 @@
 #include "include/global_defs.h"
 
 int init_all_processes() {
+	int pc;
+	asm volatile("mov %0, pc" : "=r" (pc));
+    v_printf("init_all_processes: pc=%x\n",pc);
     pcb_table = k_malloc(MAX_PROCESSES);
     v_printf("&pcb_table=%x\n", pcb_table);
 	GLOBAL_PID = 0;

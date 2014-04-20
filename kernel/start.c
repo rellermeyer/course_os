@@ -22,6 +22,7 @@
 #include "include/mmap.h"
 #include "include/pmap.h"
 #include "include/vmlayout.h"
+#include "include/interrupt.h"
 
 void *bootargs;
 
@@ -32,9 +33,13 @@ void start(void *p_bootargs) {
   print_uart0("\n");
   print_uart0("CourseOS!\n");
 
+  //don't allow interrpts messing with memory
+  disable_interrupts();
+  //register handlers
   init_vector_table();
-
+  //setup page table and enable MMU
   mmap();
+  enable_interrupts();
 
   //Test: UART0 mapped to the correct virtual address   
   print_vuart0("MMU enabled\n");
