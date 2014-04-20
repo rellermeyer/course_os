@@ -17,8 +17,8 @@
 /* LOG:
  * 3/30 added os_printf function - Taylor Smith
  * 4/1 working more on os_printf - Taylor Smith
- * 4/20 Added os_memset, os_strchrnul, os_strlen, os_strtok, os_strspn,
-        os_strcspn, from MUSL - Sheldon
+ * 4/20 Added os_memset, os_strchrnul, os_strcpy, os_strlen, os_strtok,
+ *      os_strspn, and os_strcspn from MUSL - Sheldon
  */
 
 #ifndef __klibc_h
@@ -32,11 +32,12 @@ int os_strcmp ( const char *left, const char *right);
 int os_printf (const char *str_buf, ...);
 
 void *os_memset(void *dest, int c, size_t n);
+char *__strchrnul(const char *s, int c);
+char *strcpy(char *dest, const char *src);
 size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
 size_t os_strspn(const char *s, const char *c);
 size_t os_strcspn(const char *s, const char *c);
-char *__strchrnul(const char *s, int c);
 
 /* TODO: create print function for kernel debugging purposes */
 
