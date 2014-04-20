@@ -27,7 +27,7 @@ uint32_t* mem_alloc(uint32_t size, priv_t priv) {
 		alloc_block = next_ublock;
 		next_ublock += temp;
 	}
-	v_printf("returning block %x\n", alloc_block);
+	//v_printf("returning block %x\n", alloc_block);
 	return alloc_block;
 }
 

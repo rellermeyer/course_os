@@ -20,10 +20,9 @@
 void mmap(){//unsigned int * first_level_pt){
 
 	asm volatile("push {r0-r11}");
+	
 	//disable all interrupts
 	asm volatile("cpsid if");
-	//os_printf("first_level_pt=%x\n", *first_level_pt);
-	//asm volatile("wfi");
 
 	//initialize first_level_pt entires with second level coarse page tables
 	//reserved at 0x07b000000 - 0x07f00000
