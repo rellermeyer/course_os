@@ -33,7 +33,7 @@ int os_printf (const char *str_buf, ...);
 
 void *os_memset(void *dest, int c, size_t n);
 char *__strchrnul(const char *s, int c);
-char *strcpy(char *dest, const char *src);
+char *os_strcpy(char *dest, const char *src);
 size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
 size_t os_strspn(const char *s, const char *c);

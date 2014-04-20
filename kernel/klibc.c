@@ -252,7 +252,7 @@ char *__strchrnul(const char *s, int c)
 
 
 /* Copies the String src to dest */
-char *strcpy(char *dest, const char *src)
+char *os_strcpy(char *dest, const char *src)
 {
         const unsigned char *s = src;
         unsigned char *d = dest;
