@@ -1,6 +1,7 @@
 #include "include/global_defs.h"
 #include <stdint.h>
 #include "include/argparse.h"
+#include "data_structures/tests/linked_list_test.c"
 
 
 void start(void *p_bootargs) {
@@ -11,6 +12,7 @@ void start(void *p_bootargs) {
    os_printf("test %d %d %d %d\n", 7, 4, 42, -123);
    os_printf("test %x %x %x %x\n", 7, 4, 42, -123);
    os_printf("test %X %X %X %X\n", 7, 4, 42, -123);
+   linked_list_test();
 
 }
 
