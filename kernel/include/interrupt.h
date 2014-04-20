@@ -6,7 +6,7 @@
  *
  *
  *  - ARM has two interrupt lines to the core: FIQ (fast interrupt), IRQ (normal interrupt)
- *  - Our VIC multiplexes intterupts from multiple sources and feeds them to the processor as either FIQ or IRQ
+ *  - Our VIC multiplexes intterupts and feeds them to the processor as either FIQ or IRQ
  *  Basic interrupt control flow (no vectored interrupts, no nested interrupts) is as follows:
  *	Interrupt Occurs -> Core branches to FIQ or IRQ vector -> vector branches to hanlder \
  *		handler interfaces with VIC to determine source of interrupt -> branch to service routine \
@@ -28,6 +28,18 @@ typedef enum {
 extern interrupt_t IRQ;
 extern interrupt_t FIQ;
 extern interrupt_t ALL;
+
+typedef struct {
+	void *(handler)(void *args);
+	// more may need to be added
+} interrupt_handler_t;
+
+// the VIC has 32 bits to indicate a type of interrupt
+// currently we just pull a bit off the VIC and jump to that number handler
+// in the handler array
+// this may need to be expanded if we use the secondary controller
+#define MAX_NUM_INTERRUPTS	32
+	
 
 /* these are what you should use to effect an
    interrupt status change! */
@@ -107,8 +119,5 @@ void	handle_interrupt(int);
 // IRQ 29 is reserved by the architecture
 // IRQ 30 is reserved by the architecture
 #define VICINTSOURCE_31	31	/* secondary interrupt controller (SIC) */
-
-	// Secondary Interrupt Controller
-
 
 #endif //__INTERRUPT_H__
