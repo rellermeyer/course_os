@@ -27,29 +27,29 @@ void *bootargs;
 
 void start(void *p_bootargs) {
   bootargs = p_bootargs;
-   print_uart0("arguments: ");
-   print_uart0(read_cmdline_tag(p_bootargs));
-   print_uart0("\n");
-   print_uart0("CourseOS!\n");
-   
-   init_vector_table();
+  print_uart0("arguments: ");
+  print_uart0(read_cmdline_tag(p_bootargs));
+  print_uart0("\n");
+  print_uart0("CourseOS!\n");
 
-   mmap();
+  init_vector_table();
 
-   //Test: UART0 mapped to the correct virtual address   
-   print_vuart0("Virtual Memory!!!\n");
+  mmap();
 
-   //setup new stack pointers and jump to main
-   asm volatile (".include \"stacks.s\"");
-  
-   /* NOTHING EXECUTED BEYOND THIS POINT
-    *
-    *
-    * Anything that needs to be setup right after
-    * booting the kernel should go before mmap()
-    *
-    * Any setup, heap allocation or stack allocation
-    * goes in main
-    *
-    */
+  //Test: UART0 mapped to the correct virtual address   
+  print_vuart0("MMU enabled\n");
+
+  //setup new stack pointers and jump to main
+  asm volatile (".include \"stacks.s\"");
+
+  /* NOTHING EXECUTED BEYOND THIS POINT
+  *
+  *
+  * Anything that needs to be setup right after
+  * booting the kernel should go before mmap()
+  *
+  * Any setup, heap allocation or stack allocation
+  * goes in main
+  *
+  */
 }
