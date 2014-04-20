@@ -39,9 +39,8 @@ uint32_t* k_malloc(uint32_t size){
 	return mem_alloc(size, 1);
 }
 
-/* posix compliance */
 uint32_t* malloc(uint32_t size) {
-    return mem_alloc(size);
+    return u_malloc(size);
 }
 
 /* not implemented */
