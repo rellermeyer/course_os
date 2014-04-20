@@ -14,8 +14,6 @@
 #ifndef __llist_h
 #define __llist_h
 
-#define NULL (void*) 0
-
 typedef struct ll_node ll_node;
 typedef struct list list;
 
@@ -38,6 +36,7 @@ ll_node* create_node(void *data);
 void free_list(list *l);
 void free_node(ll_node *node);
 void insert(list *l, void *data, int index);
+void append(list *l, void *data);
 void delete_at(list *l, int index);
 void* get_data(list *l, int index);
 ll_node* get_node(list *l, int index);
