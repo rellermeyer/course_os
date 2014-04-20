@@ -10,3 +10,5 @@ Log
 uint32_t *mem_alloc(uint32_t size);
 void* free(void *ptr);
 uint32_t *malloc(uint32_t size);
+uint32_t * u_malloc(size);
+uint32_t * k_malloc(size);
