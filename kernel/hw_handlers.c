@@ -73,17 +73,11 @@ void reserved_handler(void){
 }
 
 // the attribute automatically saves and restores state
-void __attribute__((interrupt("IRQ"))) irq_handler(void){		
-	if (*PIC_ADDRESS == 1)       // which interrupt was it?
-	{
-	    /* Commenting this call out until it actually gets defined;
-	     * otherwise compiling fails with new Makefile 
+void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
-		handle_interrupt(*PIC_ADDRESS);  // process the interrupt
-
-	    */
-	}
-	*(PIC_ADDRESS+1) = *PIC_ADDRESS;    // clear the interrupt
+	disable_interrupts();
+	print_uart0("IRQ HANDLER\n");
+	enable_interrupts();
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){

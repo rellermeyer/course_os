@@ -6,6 +6,11 @@
 #include "include/interrupt.h"
 
 
+
+// there are 32 kinds of interrupts on the VIC
+// this structure may need to be expanded if the secondary controller is incorporated
+static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
+
 interrupt_t IRQ = IRQ_MASK;
 interrupt_t FIQ = FIQ_MASK;
 interrupt_t ALL = ALL_INTERRUPT_MASK;
@@ -20,9 +25,31 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // (2) the VIC (interrupt controller)
 // (3) (sometimes) in the device (this should be done in the device driver)
 
+// when you register an interrupt handler it's line will be enabled in the VIC
+// telling the device itself to fire interrupts should be done in the driver
+//
+// also, since we don't really have a working malloc, the handler structure will
+// have to be built in the driver and passed to register_
+int register_interrupt_handler(int num, interrupt_handler_t *handler){
+
+	if(num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
+		return -1;
+	else if(handlers[num] != 0) // something has already been registered there
+		return -1;
+	else if(handler == NULL)
+		return -1;
+
+	// put the handler in the array
+	handlers[num] = handler;
+		
+}
+
+// handle_interrupt takes a number (the interrupt from the VIC), looks into
+// the table of registered handlers, and calls the appropriate handler
 void handle_interrupt(int interrupt_vector){
- 	// branch to interrupt routine and handle
-	print_uart0("handling interrupt\n");
+
+	os_printf("handling interrupt %d\n", interrupt_vector);
+	
 }
 
 
@@ -93,3 +120,5 @@ int get_proc_status(void) {
 void restore_proc_status(int cpsr) {
 	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }
+
+
