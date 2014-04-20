@@ -35,10 +35,10 @@ void start(void *p_bootargs) {
 
   //don't allow interrpts messing with memory
   disable_interrupts();
-  //register handlers
-  init_vector_table();
   //setup page table and enable MMU
   mmap();
+  //register handlers
+  init_vector_table();
   enable_interrupts();
 
   //Test: UART0 mapped to the correct virtual address   

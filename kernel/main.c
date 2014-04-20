@@ -26,8 +26,7 @@ void main(void){
   disable_interrupts();
   //Unmap one-to-one kernel and pt mappings
   *(v_first_level_pt+(KERNDSBASE>>20)) = 0;   
-  //*(v_first_level_pt) = 0;
-  //asm volatile("wfi");
+  *(v_first_level_pt) = 0;
   enable_interrupts();
 
   //initialize GLOBAL_PID and PCB table
@@ -37,8 +36,14 @@ void main(void){
 
   init_all_processes();
 
+  void(*handler_ptr)(void);
+  handler_ptr = &data_abort_handler;
+  v_printf("&handler=%x\n", handler_ptr);
+
+  data_abort_handler();
+
   uint32_t* abt = 0xefb00000; 
-  *abt = 0x786;
+  //*abt = 0x786;
 
   asm volatile("wfi");
 
