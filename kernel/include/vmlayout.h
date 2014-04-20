@@ -4,7 +4,7 @@
 #define VMLAYOUT_H_
 
 //High vectors are enabled by setting V bit in the control register
-#define HIVECTABLE		0x0//ffff0000
+#define HIVECTABLE		0xffff0000
 
 #define KERNSTART		0xf0000000
 
