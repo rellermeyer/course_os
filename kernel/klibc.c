@@ -14,8 +14,8 @@
 *		can be used by prepending os_ suffix.
 *
 *	Notes:	The following were adapted directly from musl-libc:
-*               memcmp, memset, strcmp, strchrnul, strlen, strtok, strspn,
-*               strcspn
+*               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok,
+*               strspn, and strcspn
 ********************************************************************/
 
 #include "include/klibc.h"
@@ -231,18 +231,6 @@ void *os_memset(void *dest, int c, size_t n)
 }
 
 
-/* Return the length of s */
-size_t os_strlen(const char *s)
-{
-	const char *a = s;
-	const size_t *w;
-	for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
-	for (w = (const void *)s; !HASZERO(*w); w++);
-	for (s = (const void *)w; *s; s++);
-	return s-a;
-}
-
-
 /* Returns a pointer to the first instance of c in s, like indexOf().
    If c is not found, then return a pointer to the NULL character at
    the end of String s.
@@ -260,6 +248,28 @@ char *__strchrnul(const char *s, int c)
 	for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w^k); w++);
 	for (s = (void *)w; *s && *(unsigned char *)s != c; s++);
 	return (char *)s;
+}
+
+
+/* Copies the String src to dest */
+char *strcpy(char *dest, const char *src)
+{
+        const unsigned char *s = src;
+        unsigned char *d = dest;
+        while ((*d++ = *s++));
+        return dest;
+}
+
+
+/* Return the length of s */
+size_t os_strlen(const char *s)
+{
+	const char *a = s;
+	const size_t *w;
+	for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
+	for (w = (const void *)s; !HASZERO(*w); w++);
+	for (s = (const void *)w; *s; s++);
+	return s-a;
 }
 
 
