@@ -18,7 +18,7 @@ void start(void *p_bootargs) {
    int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
    // Parse and analyze each String
-   parse_args(arg_count, arg_list);
+   parse_arguments(arg_count, arg_list);
 
    free(arg_list);
 

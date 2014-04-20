@@ -1,14 +1,15 @@
 #include <stdint.h>
 
 
-#include "include/argparse.h"
 #include "include/global_defs.h"
+#include "include/argparse.h"
+#include "include/klibc.h"
 #include "include/tests.h"
 #include "include/mem_alloc.h"
 
 
 /* Parse the list of strings (argv) and process each argument */
-void parse_args(int argc, char **argv)
+void parse_arguments(int argc, char **argv)
 {
   char **argument_list = argv;
 
@@ -29,9 +30,8 @@ void parse_args(int argc, char **argv)
 /* Read arguments and do something based on the arguments.
    Return the number of arguments read.
    char **args: array of pointers to each argument
-   TODO: use argc to prevent reading too many arguments?
 */
-int analyze_args(char **argv)
+int analyze_arguments(char **argv)
 {
   int i = 0;
 
@@ -45,24 +45,45 @@ int analyze_args(char **argv)
 
   */
 
-  /*
-  if (os_strcmp(argv[i], "PROC_TEST") == 0)
+  
+  // TODO: load process(es) and run them
+  if (os_strcmp(argv[i], "-load") == 0)
   {
-    // TODO: load process(es) and run them
-    init_all_processes();
-    pcb *testing_pcb = process_create(insert_filename_here);
-    execute_process(testing_pcb);
+    /* Format:
+       -load position, size
+       -load 0x1234, 0xabcd
+       position and size can be separated by commas, spaces, or both
+    */
+    char prgm_pos_and_size[sizeof(argv[i+1])];
+    strcpy(&prgm_pos_and_size, argv[i + 1]);
+
+    // Comma and space delimiters used to separate position and size
+    char *delimeters = ", ";
+    char *position = (char *)strtok(prgm_pos_and_size, delimeters);
+    char *size = (char *)strtok(NULL, delimeters);
+
+    // Check that we have valid input
+    if (position != NULL && size != NULL)
+    {
+      // TODO: load program into memory using position and size
+      return 2; // Read 2 arguments
+    }
+    else
+    {
+      os_printf("Error loading process via qemu arguments.\n");
+      os_printf("USAGE: -load position, size");
+    }
   }
-  */
 
   // Run some tests
-  if (os_strcmp(argv[i], "TEST") == 0)
+  if (os_strcmp(argv[i], "-test") == 0)
   {
     os_printf("Running tests...\n");
     Test *tests[2];
     tests[0] = create_test("This passes", &test1);
     tests[1] = create_test("This fails", &test2);
     run_tests(tests, 2);
+    return 1; // Read 1 argument
   }
 
   // Default case: read one argument
@@ -70,7 +91,6 @@ int analyze_args(char **argv)
 }
 
 
-/* Read the cmdline tag to get the kernel arguments */
 char* read_cmdline_tag(uint32_t *tag_base)
 {
   uint32_t *tag_pointer = tag_base;
@@ -98,10 +118,8 @@ char* read_cmdline_tag(uint32_t *tag_base)
 }
 
 
-/* Separate the string line based on whitespace. Return this array of strings.
-   TODO: Dynamically change the size of the result array. Might have to
-   pass an empty array as a parameter. Count the number of spaces in the
-   line to determine maximum number of entries.
+/* Separate the string line based on whitespace.
+   Return this array of strings.
 */
 char** split_string(char* line, char** list)
 {
@@ -114,7 +132,8 @@ char** split_string(char* line, char** list)
 
   while (piece != NULL)
   {
-    piece = (char *)strtok(NULL, delimiters); // Advances pointer to the next token
+    // strtok() advances pointer to the next whitespace delimiter
+    piece = (char *)strtok(NULL, delimiters);
     list[i] = piece;
     i++;
   }
