@@ -55,12 +55,12 @@ int analyze_arguments(char **argv)
        position and size can be separated by commas, spaces, or both
     */
     char prgm_pos_and_size[sizeof(argv[i+1])];
-    strcpy(&prgm_pos_and_size, argv[i + 1]);
+    os_strcpy(&prgm_pos_and_size, argv[i + 1]);
 
     // Comma and space delimiters used to separate position and size
     char *delimeters = ", ";
-    char *position = (char *)strtok(prgm_pos_and_size, delimeters);
-    char *size = (char *)strtok(NULL, delimeters);
+    char *position = (char *)os_strtok(prgm_pos_and_size, delimeters);
+    char *size = (char *)os_strtok(NULL, delimeters);
 
     // Check that we have valid input
     if (position != NULL && size != NULL)
@@ -126,14 +126,14 @@ char** split_string(char* line, char** list)
   char *piece = NULL; // One null-terminated part of the string
   const char *delimiters = " \t"; // Space and tab
 
-  piece = (char *)strtok(line, delimiters);
+  piece = (char *)os_strtok(line, delimiters);
   list[0] = piece;
   int i = 1;
 
   while (piece != NULL)
   {
-    // strtok() advances pointer to the next whitespace delimiter
-    piece = (char *)strtok(NULL, delimiters);
+    // os_strtok() advances pointer to the next whitespace delimiter
+    piece = (char *)os_strtok(NULL, delimiters);
     list[i] = piece;
     i++;
   }
@@ -146,13 +146,13 @@ char** split_string(char* line, char** list)
 int number_of_words(char *line)
 {
   const char *delimiters = " \t"; // Space and tab
-  char *pos = (char *)strtok(line, delimiters);
+  char *pos = (char *)os_strtok(line, delimiters);
   int count = 0;
 
   // Count the number of words
   while (pos != NULL)
   {
-    pos = (char *)strtok(NULL, delimiters); // Advance to the next word
+    pos = (char *)os_strtok(NULL, delimiters); // Advance to the next word
     count++;
   }
 
