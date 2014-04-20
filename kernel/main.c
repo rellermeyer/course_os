@@ -5,6 +5,7 @@
 #include "include/mem_alloc.h"
 #include "include/interrupt.h"
 #include "include/process.h"
+#include "include/hw_handlers.h"
 #include <stdint.h>
 
 extern void* bootargs;
@@ -25,7 +26,7 @@ void main(void){
   disable_interrupts();
   //Unmap one-to-one kernel and pt mappings
   *(v_first_level_pt+(KERNDSBASE>>20)) = 0;   
-  *(v_first_level_pt) = 0;
+  //*(v_first_level_pt) = 0;
   //asm volatile("wfi");
   enable_interrupts();
 
@@ -35,6 +36,9 @@ void main(void){
   v_printf("&init_all_processes=%x\n", iproc);
 
   init_all_processes();
+
+  uint32_t* abt = 0xefb00000; 
+  *abt = 0x786;
 
   asm volatile("wfi");
 
