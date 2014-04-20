@@ -1,0 +1,36 @@
+/********************************************************************
+ *      bin_tree.h
+ *
+ *      Author: Brandon Olivier // any collaborators, please add name
+ *
+ *      Date: 19 April 2014
+ *
+ *      Purpose: Implement binary search trees for addresses
+ *
+ ********************************************************************/
+
+#ifndef __bin_tree_
+#define __bin_tree_
+
+typedef struct tree tree;
+typedef struct node node;
+
+struct tree
+{
+    node *root;
+    int size;
+    int depth;
+};
+
+struct node
+{
+    node *left;
+    node *right;
+    void *address;
+};
+
+void init_tree(tree *t);
+void  t, void *d);
+void remove_node(tree *t, node *n);
+
+#endif
