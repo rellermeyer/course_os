@@ -1,5 +1,5 @@
 .equ stack_size, 0x1000
-.equ stack_base, 0xf0000000
+.equ stack_base, 0xfffff000
 
 .equ Mode_USR, 0x10
 .equ Mode_FIQ, 0x11

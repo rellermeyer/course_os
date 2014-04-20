@@ -29,6 +29,17 @@ void main(void){
   *(v_first_level_pt) = 0;
   enable_interrupts();
 
+ /* 
+  * NOTE: All function addresses need KERNSTART offset
+  * otherwise, they will be the same as when they were
+  * loaded, which is now unmapped. == ABORT
+  * However, if you call them, then it seems to go to the
+  * correct location.
+  * 
+  * Working on a fix.
+  * 
+  */
+
   //initialize GLOBAL_PID and PCB table
   int (*iproc)();
   iproc = &init_all_processes;
@@ -40,10 +51,10 @@ void main(void){
   handler_ptr = &data_abort_handler;
   v_printf("&handler=%x\n", handler_ptr);
 
-  data_abort_handler();
+  //data_abort_handler();
 
   uint32_t* abt = 0xefb00000; 
-  //*abt = 0x786;
+  *abt = 0x786;
 
   asm volatile("wfi");
 
