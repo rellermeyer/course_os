@@ -24,11 +24,17 @@
 
 void start(void *p_bootargs) {
 	print_uart0("CourseOS!\n");
-	print_uart0("arguments: ");
-	print_uart0(read_cmdline_tag(p_bootargs));
-	print_uart0("\n");
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
-	/* TODO: intialize the vector table, stack space, etc. */
+	disable_interrupts();
 	init_vector_table();
+	print_uart0("low vector memory:\n");
+	md((uint32_t *)0x00);
+	print_uart0("\n\n\n");
+
+	int cpsr = get_proc_status();
+	print_uart0("cpsr: "); print_word_bits(&cpsr);
+	print_uart0("enabling interrupts...\n"); enable_interrupts();
+	cpsr = get_proc_status();
+	print_uart0("cpsr: "); print_word_bits(&cpsr);
 }

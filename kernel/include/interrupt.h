@@ -30,7 +30,7 @@ extern interrupt_t FIQ;
 extern interrupt_t ALL;
 
 typedef struct {
-	void *(handler)(void *args);
+	void (*handler)(void *args);
 	// more may need to be added
 } interrupt_handler_t;
 

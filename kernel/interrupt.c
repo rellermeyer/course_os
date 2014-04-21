@@ -36,12 +36,14 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 		return -1;
 	else if(handlers[num] != 0) // something has already been registered there
 		return -1;
-	else if(handler == NULL)
+	else if(handler == 0) // we need a NULL macro
 		return -1;
 
 	// put the handler in the array
 	handlers[num] = handler;
-		
+
+	// enable the specific interrupt in hardware on the VIC
+
 }
 
 // handle_interrupt takes a number (the interrupt from the VIC), looks into
@@ -49,7 +51,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 void handle_interrupt(int interrupt_vector){
 
 	os_printf("handling interrupt %d\n", interrupt_vector);
-	
+
 }
 
 
@@ -64,7 +66,6 @@ void enable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsie if");
-			print_uart0("Enable All Interrupts\n");
 			break;
 	}
 }
@@ -81,7 +82,6 @@ void disable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsid if");
-			print_uart0("Disable All Interrupts\n");
 			break;
 	}
 }
@@ -110,7 +110,6 @@ int disable_interrupt_save(interrupt_t mask) {
 int get_proc_status(void) {
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	print_uart0("Getting Process Status\n");
 	return cpsr;
 }
 
