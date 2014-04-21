@@ -23,21 +23,21 @@
 
 #ifndef __klibc_h
 #define __klibc_h
-typedef unsigned int size_t;
+typedef unsigned int os_size_t;
 
 /* string.h type functionality for comparing strings or mem blocks */
-int os_memcmp ( const void *left, const void *right, size_t num );
+int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
 
 int os_printf (const char *str_buf, ...);
 
-void *os_memset(void *dest, int c, size_t n);
+void *os_memset(void *dest, int c, os_size_t n);
 char *__strchrnul(const char *s, int c);
 char *os_strcpy(char *dest, const char *src);
-size_t os_strlen(const char *s);
+os_size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
-size_t os_strspn(const char *s, const char *c);
-size_t os_strcspn(const char *s, const char *c);
+os_size_t os_strspn(const char *s, const char *accept);
+os_size_t os_strcspn(const char *s, const char *reject);
 
 /* TODO: create print function for kernel debugging purposes */
 
