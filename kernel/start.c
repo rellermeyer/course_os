@@ -26,11 +26,16 @@ void start(void *p_bootargs) {
 	print_uart0("CourseOS!\n");
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
-	disable_interrupts();
-	init_vector_table();
-	print_uart0("low vector memory:\n");
+	print_uart0("initial low vector memory:\n");
 	md((uint32_t *)0x00);
 	print_uart0("\n\n\n");
+
+	disable_interrupts();
+	init_vector_table();
+	print_uart0("copied low vector memory:\n");
+	md((uint32_t *)0x00);
+	print_uart0("\n\n\nthrowing SWI to test initialization...\n");
+	asm volatile("SWI 7");
 
 	int cpsr = get_proc_status();
 	print_uart0("cpsr: "); print_word_bits(&cpsr);
