@@ -137,7 +137,7 @@ int os_printf(const char *str_buf, ...) {
 }
 
 char* strtok(char *str, const char *delimeters) {
-  char* token = NULL;
+  char* token = str;
   //const char* temp_del;
 
   while(*str != NULL) {
