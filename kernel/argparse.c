@@ -1,6 +1,3 @@
-#include <stdint.h>
-
-
 #include "include/global_defs.h"
 #include "include/argparse.h"
 #include "include/klibc.h"
@@ -19,7 +16,7 @@ void parse_arguments(int argc, char **argv)
     int delta_args_read = 0;
 
     // Read argument(s) and process them
-    delta_args_read += analyze_args(argument_list);
+    delta_args_read += analyze_arguments(argument_list);
 
     argument_list += delta_args_read;
     i += delta_args_read;
@@ -33,6 +30,7 @@ void parse_arguments(int argc, char **argv)
 */
 int analyze_arguments(char **argv)
 {
+  os_printf("Starting analyze_arguments\n");
   int i = 0;
 
   /* This is where we test argv[0] to be some option. Example:
@@ -55,7 +53,9 @@ int analyze_arguments(char **argv)
        position and size can be separated by commas, spaces, or both
     */
     char prgm_pos_and_size[sizeof(argv[i+1])];
-    os_strcpy(&prgm_pos_and_size, argv[i + 1]);
+    os_strcpy(prgm_pos_and_size, argv[i + 1]);
+
+    print_uart0(prgm_pos_and_size); // TODO: remove
 
     // Comma and space delimiters used to separate position and size
     char *delimeters = ", ";
@@ -71,7 +71,7 @@ int analyze_arguments(char **argv)
     else
     {
       os_printf("Error loading process via qemu arguments.\n");
-      os_printf("USAGE: -load position, size");
+      os_printf("USAGE: -load position, size\n");
     }
   }
 
@@ -145,11 +145,14 @@ char** split_string(char* line, char** list)
 /* Return the number of whitespace-delimited words in String line. */
 int number_of_words(char *line)
 {
+  char line_copy[os_strlen(line)];
+  os_strcpy(line_copy, line);
   const char *delimiters = " \t"; // Space and tab
-  char *pos = (char *)os_strtok(line, delimiters);
-  int count = 0;
+
+  char *pos = (char *)os_strtok(line_copy, delimiters);
 
   // Count the number of words
+  int count = 0;
   while (pos != NULL)
   {
     pos = (char *)os_strtok(NULL, delimiters); // Advance to the next word
