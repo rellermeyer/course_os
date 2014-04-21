@@ -74,7 +74,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[])
 //Take a process control block and pointer to the start of an ELF file in memory.
 void load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
-	Elf_Ehdr *h = (Elf_Ehdr *)mem_alloc(sizeof(Elf_Ehdr));
+	Elf_Ehdr *h = (Elf_Ehdr *)k_malloc(sizeof(Elf_Ehdr));
 	read_elf_header(*h, file_pointer);
 	
 	Elf_Phdr ph[h->e_phnum];
