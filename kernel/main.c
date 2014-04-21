@@ -53,8 +53,19 @@ void main(void){
 
   //data_abort_handler();
 
-  uint32_t* abt = 0xefb00000; 
-  *abt = 0x786;
+  // uint32_t* abt = 0xefb00000; 
+  // *abt = 0x786;
+
+  init_heap(4096);
+  uint32_t* test = allocate(sizeof(uint32_t*));
+  v_printf("&test=%x\n", test);
+
+  uint32_t* test2 = allocate(40);
+  v_printf("&test2=%x\n", test2);
+
+  deallocate(test);
+  uint32_t* test3 = allocate(sizeof(uint32_t*));
+  v_printf("&test3=%x\n", test);
 
   asm volatile("wfi");
 
