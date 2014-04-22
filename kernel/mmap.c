@@ -18,6 +18,8 @@
 
 void mmap(){
 
+	asm volatile("cpsid if");
+
 	//stash register state on the stack
 	asm volatile("push {r0-r11}");
 
@@ -134,4 +136,7 @@ void mmap(){
 
 	//restore register state
 	asm volatile("pop {r0-r11}");
+
+	asm volatile("cpsie if");
+
 }

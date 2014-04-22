@@ -23,14 +23,14 @@ void init_vector_table(void) {
 	mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
 
 	/* Secondary Vector Table */
-	mmio_write(HIVECTABLE | 0x20, reset_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x30, data_abort_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x34, reserved_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x38, irq_handler + KERNSTART);
-	mmio_write(HIVECTABLE | 0x3C, fiq_handler + KERNSTART);
+	mmio_write(HIVECTABLE | 0x20, reset_handler ); 
+	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler ); 
+	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler ); 
+	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler ); 
+	mmio_write(HIVECTABLE | 0x30, data_abort_handler ); 
+	mmio_write(HIVECTABLE | 0x34, reserved_handler ); 
+	mmio_write(HIVECTABLE | 0x38, irq_handler ); 
+	mmio_write(HIVECTABLE | 0x3C, fiq_handler ); 
 }
 
 
