@@ -2,9 +2,9 @@
 *	klibc.c
 *
 *	(Any collaborators, please add your name)
-*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug
+*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
 *
-*	Last edited: 20 April 2014
+*	Last edited: 21 April 2014
 *
 *	Purpose:	Provide basic libc funtionality for CourseOS
 *			This file provides function implementations
@@ -50,6 +50,17 @@ int os_strcmp ( const char *left, const char *right)
 {
 	for (; *left == *right && *left; left++, right++);
 	return *(unsigned char *)left - *(unsigned char *)right;
+}
+
+//memory copy
+//Responsibility is on the programmer to copy safely 
+void os_memcpy(void * source, void * dest, os_size_t size)
+{
+	int i = 0;
+	for(; i < size; i++)
+	{
+		*(dest + i) = *(source + i);
+	}
 }
 
 void print_hex(int val, int CASE)
