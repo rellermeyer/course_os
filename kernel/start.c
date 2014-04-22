@@ -27,19 +27,23 @@
 void *bootargs;
 
 void start(void *p_bootargs) {
+
+  //setup page table and enable MMU
+  mmap();
+
   bootargs = p_bootargs;
-  print_uart0("arguments: ");
-  print_uart0(read_cmdline_tag(p_bootargs));
-  print_uart0("\n");
-  print_uart0("CourseOS!\n");
+  // print_vuart0("arguments: ");
+  // print_vuart0(read_cmdline_tag(p_bootargs));
+  // print_vuart0("\n");
+  print_vuart0("CourseOS!\n");
 
   //don't allow interrpts messing with memory
   disable_interrupts();
-  //setup page table and enable MMU
-  mmap();
   //register handlers
   init_vector_table();
   enable_interrupts();
+
+  //asm volatile("wfi");
 
   //Test: UART0 mapped to the correct virtual address   
   print_vuart0("MMU enabled\n");
