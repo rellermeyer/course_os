@@ -1,7 +1,6 @@
 #include "../include/mem_alloc.h"
 #include "../include/klibc.h"
 
-static const uint32_t MEM_START = 0x500000;
 
 uint32_t *nextBlock = (uint32_t *)0x500000;
 
@@ -16,6 +15,7 @@ uint32_t* mem_alloc(uint32_t size) {
     nextBlock = nextBlock + size;
 
     return allocBlock;
+
 }
 
 /* posix compliance */
