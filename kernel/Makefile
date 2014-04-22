@@ -9,7 +9,7 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 all: kernel.img
 
-OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o
+OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o sampleFile.o
 
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
@@ -21,7 +21,8 @@ run: flash.bin
 flash.bin: kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
-	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
+	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512	
+	dd if=sampleFile.o of=flash.bin conv=notrunc bs=4k seek=2048
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
