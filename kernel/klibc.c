@@ -2,9 +2,9 @@
 *	klibc.c
 *
 *	(Any collaborators, please add your name)
-*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug
+*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
 *
-*	Last edited: 20 April 2014
+*	Last edited: 21 April 2014
 *
 *	Purpose:	Provide basic libc funtionality for CourseOS
 *			This file provides function implementations
@@ -29,8 +29,8 @@
 
 // Helpers for MUSL String functions
 #define UCHAR_MAX 0xFF
-#define ALIGN (sizeof(size_t))
-#define ONES ((size_t)-1/UCHAR_MAX)
+#define ALIGN (sizeof(os_size_t))
+#define ONES ((os_size_t)-1/UCHAR_MAX)
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
@@ -39,7 +39,7 @@ static char lower_case_digits[16] = "0123456789abcdef";
 static char upper_case_digits[16] = "0123456789ABCDEF";
 
 /* string.h type functionality for comparing strings or mem blocks */
-int os_memcmp ( const void *left, const void *right, size_t num )
+int os_memcmp ( const void *left, const void *right, os_size_t num )
 {
 	const unsigned char *l = left, *r = right;
 	for ( ; num && *l == *r; num--, l++, r++ );
@@ -50,6 +50,17 @@ int os_strcmp ( const char *left, const char *right)
 {
 	for (; *left == *right && *left; left++, right++);
 	return *(unsigned char *)left - *(unsigned char *)right;
+}
+
+//memory copy
+//Responsibility is on the programmer to copy safely 
+void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
+{
+	int i = 0;
+	for(; i < size; i++)
+	{
+		*(dest + i) = *(source + i);
+	}
 }
 
 void print_hex(int val, int CASE)
@@ -146,10 +157,10 @@ int os_printf(const char *str_buf, ...) {
 }
 
 /* Set the first n bytes of dest to be the value c.*/
-void *os_memset(void *dest, int c, size_t n)
+void *os_memset(void *dest, int c, os_size_t n)
 {
 	unsigned char *s = dest;
-	size_t k;
+	os_size_t k;
 
 	/* Fill head and tail with minimal branching. Each
 	 * conditional ensures that all the subsequently used
@@ -237,7 +248,7 @@ void *os_memset(void *dest, int c, size_t n)
 */
 char *__strchrnul(const char *s, int c)
 {
-	size_t *w, k;
+	os_size_t *w, k;
 
 	c = (unsigned char)c;
 	if (!c) return (char *)s + os_strlen(s);
@@ -262,10 +273,10 @@ char *os_strcpy(char *dest, const char *src)
 
 
 /* Return the length of s */
-size_t os_strlen(const char *s)
+os_size_t os_strlen(const char *s)
 {
 	const char *a = s;
-	const size_t *w;
+	const os_size_t *w;
 	for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
 	for (w = (const void *)s; !HASZERO(*w); w++);
 	for (s = (const void *)w; *s; s++);
@@ -290,47 +301,74 @@ char *os_strtok(char *s, const char *sep)
 	return s;
 }
 
-// Helper for os_strspn and os_strcpsn
-#define BITOP(a,b,op) \
- ((a)[(size_t)(b)/(8*sizeof *(a))] op (size_t)1<<((size_t)(b)%(8*sizeof *(a))))
-
-
 /* Returns the length of the initial segment of s that only includes
    the characters in c.
 */
-size_t os_strspn(const char *s, const char *c)
+os_size_t os_strspn(const char *s, const char *accept)
 {
-	const char *a = s;
-	size_t byteset[32/sizeof(size_t)] = { 0 };
+  char c = s[0]; // The character in s being checked
+  int length = 0;
 
-	if (!c[0]) return 0;
-	if (!c[1]) {
-		for (; *s == *c; s++);
-		return s-a;
-	}
+  // Check each character in s
+  while (c != 0)
+  {
+    Boolean ok = FALSE;
 
-	for (; *c && BITOP(byteset, *(unsigned char *)c, |=); c++);
-	for (; *s && BITOP(byteset, *(unsigned char *)s, &); s++);
-	return s-a;
+    // Check against each character in accept
+    int i;
+    for (i = 0; i < os_strlen(accept); i++)
+    {
+      if (c == accept[i])
+      {
+        ok = TRUE;
+      }
+    }
+
+    if (ok == TRUE)
+    {
+      // If c matched any character in accept, continue
+      length++;
+      c = s[length];
+    }
+    else
+    {
+      // If did not match any character in accept, we are done
+      return length;
+    }
+  }
+  return length;
 }
 
 
 /* Returns the length of the initial segment of s that does not contain
    any characters in string c.
 */
-size_t os_strcspn(const char *s, const char *c)
+os_size_t os_strcspn(const char *s, const char *reject)
 {
-	const char *a = s;
-	size_t byteset[32/sizeof(size_t)];
+  char c = s[0]; // The character in s being checked
+  int length = 0;
 
-	if (!c[0] || !c[1]) return __strchrnul(s, *c)-a;
+  // Check each character in s
+  while (c != 0)
+  {
+    // Check against each character in reject
+    int i;
+    for (i = 0; i < os_strlen(reject); i++)
+    {
+      if (c == reject[i])
+      {
+        return length;
+      }
+    }
 
-	os_memset(byteset, 0, sizeof byteset);
-	for (; *c && BITOP(byteset, *(unsigned char *)c, |=); c++);
-	for (; *s && !BITOP(byteset, *(unsigned char *)s, &); s++);
-	return s-a;
+    // If c did not match any reject characters, continue
+    length++;
+    c = s[length];
+  }
+  return length;
 }
 
+/*
 int main()
 { return 0; }
-
+*/
