@@ -2,7 +2,7 @@
 #include "include/klibc.h"
 #include "include/global_defs.h"
 
-int init_all_processes() {
+int init_pcb_table() {
     pcb_table = k_malloc(MAX_PROCESSES);
 	GLOBAL_PID = 0;
 } 

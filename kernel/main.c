@@ -20,7 +20,7 @@ void main(void){
    */
 
   //initialize GLOBAL_PID and PCB table
-  init_all_processes();
+  init_pcb_table();
 
   asm volatile("wfi");
 

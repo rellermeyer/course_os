@@ -34,7 +34,7 @@ void start(void *p_bootargs) {
 
 
    // Separate the command-line arguments into separate Strings
-   //int num_args = number_of_words(cmdline_args);
+   int num_args = number_of_words(cmdline_args);
    // char* arg_list[num_args];
    // split_string(cmdline_args, arg_list);
    // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
