@@ -2,7 +2,7 @@
 *	libc.h
 *
 *       (Any collaborators, please add your name)
-*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug
+*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
 *
 *	Last edited: 20 April 2014
 *
@@ -19,6 +19,7 @@
  * 4/1 working more on os_printf - Taylor Smith
  * 4/20 Added os_memset, os_strchrnul, os_strcpy, os_strlen, os_strtok,
  *      os_strspn, and os_strcspn from MUSL - Sheldon
+ * 4/21 Added os_memcpy for loader - Kaelen
  */
 
 #ifndef __klibc_h
@@ -39,6 +40,7 @@ char *os_strtok(char *s, const char *sep);
 os_size_t os_strspn(const char *s, const char *accept);
 os_size_t os_strcspn(const char *s, const char *reject);
 
+void os_memcpy(void * source, void * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
 #endif
