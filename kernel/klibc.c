@@ -136,7 +136,7 @@ int os_printf(const char *str_buf, ...) {
   va_end(args);
 }
 
-char* strtok(char *str, const char *delimeters) {
+/*char* strtok(char *str, const char *delimeters) {
   char* token = str;
   //const char* temp_del;
 
@@ -183,7 +183,7 @@ int main()
   /* char * test = "does this work";
   char delim = "\t";
   char** sliced = string_slice(test, delim);
-  return 0; */
+  return 0; *
   char str[] ="- This, a sample string.";
   char * pch;
   printf ("Splitting string \"%s\" into tokens:\n",str);
@@ -192,6 +192,6 @@ int main()
   {
     printf ("%s\n",pch);
     pch = strtok (NULL, " ,.-");
-  }
+  }*/
   return 0;
 }
