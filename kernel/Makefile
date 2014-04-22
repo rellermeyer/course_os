@@ -8,12 +8,9 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 OBJS=start.o uart.o startup.o klibc.o argparse.o
-<<<<<<< HEAD
-=======
 
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
->>>>>>> master
 
 all: course_os.img
 

@@ -1,10 +1,6 @@
 #include "include/global_defs.h"
 #include <stdint.h>
-<<<<<<< HEAD
-#include "argparse.h"
-=======
 #include "include/argparse.h"
->>>>>>> master
 
 
 void start(void *p_bootargs) {

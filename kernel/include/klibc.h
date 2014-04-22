@@ -21,7 +21,7 @@
  *      os_strspn, and os_strcspn from MUSL - Sheldon
  * 4/21 Added os_memcpy for loader - Kaelen
  */
-
+#include <stdint.h>
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
@@ -40,7 +40,7 @@ char *os_strtok(char *s, const char *sep);
 os_size_t os_strspn(const char *s, const char *accept);
 os_size_t os_strcspn(const char *s, const char *reject);
 
-void os_memcpy(void * source, void * dest, os_size_t size);
+void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
 #endif

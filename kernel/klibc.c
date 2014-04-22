@@ -54,7 +54,7 @@ int os_strcmp ( const char *left, const char *right)
 
 //memory copy
 //Responsibility is on the programmer to copy safely 
-void os_memcpy(void * source, void * dest, os_size_t size)
+void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
 	int i = 0;
 	for(; i < size; i++)
