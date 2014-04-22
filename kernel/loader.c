@@ -8,9 +8,9 @@
 //We determine what the size of our process is going to be
 //Determine the size of the segments that need to be loaded in (has p_type == PT_LOAD)
 //Account for the other stuff we'll need (Stack, Heap, spacing)
-size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
+os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 {
-	size_t process_size = 0;
+	os_size_t process_size = 0;
 	int i = 0;
 	//Add up the size of all the necessary sections that 
 	for(; i < (h->e_phnum); i++)
@@ -34,19 +34,19 @@ size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 }
 
 //Temporary add this to somewhere relevant (klibc)
-void memcpy(uint32_t * source, uint32_t * dest, size_t size)
+/*void memcpy(uint32_t * source, uint32_t * dest, size_t size)
 {
 	size_t i = 0;
 	for(; i < size; i++)
 	{
 		*(source + size) = *(dest + size);
 	}
-}
+}*/
 
 
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * file_pointer)
 {
-	 size_t process_size = det_proc_size(h, ph);
+	os_size_t process_size = det_proc_size(h, ph);
 	uint32_t * process_mem = u_malloc(process_size);
 	uint32_t * current_pointer = process_mem;
 	//We're gonna copy each segment into memory at a position. Calculate what needs to done to change
@@ -81,7 +81,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
         {
 		if(ph[i].p_type == PT_LOAD)
 		{
-			memcpy(file_pointer + ph[i].p_offset, current_pointer, ph[i].p_memsz);
+			os_memcpy(file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz);
 			current_pointer = current_pointer + ph[i].p_memsz;
 		}
 	}
