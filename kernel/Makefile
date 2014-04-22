@@ -9,6 +9,9 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
 OBJS=start.o uart.o startup.o klibc.o argparse.o process.o elf.o memory/mem_alloc.o loader.o 
 
+CFLAGS = -pipe
+CFLAGS += -std=gnu99 -ffreestanding -nostdinc
+
 all: course_os.img
 
 run: flash.bin
@@ -37,7 +40,7 @@ startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
-	$(CC) -nostdinc -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
 	rm -f *.o
