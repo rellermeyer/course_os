@@ -32,7 +32,10 @@ void start(void *p_bootargs) {
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-
+   int addr = 0x810000;
+   int addr2 = 0x710000;
+   //os_printf(addr2);
+   os_printf(addr);
    // Separate the command-line arguments into separate Strings
    int num_args = number_of_words(cmdline_args);
    // char* arg_list[num_args];
