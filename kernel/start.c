@@ -13,7 +13,7 @@
  *	+ 0b10001 = FIQ (fast interrupt) mode
  *	+ 0b10010 = IRQ (normal interrupt) mode
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
- *	(others...)		
+ *	(others...)
  */
 
 #include "include/global_defs.h"
@@ -29,21 +29,9 @@ void start(void *p_bootargs) {
    print_uart0("\n");
    print_uart0("CourseOS!\n");
 
-   // os_printf("test %d %d %d %d\n", 7, 4, 42, -123);
-   // os_printf("test %x %x %x %x\n", 7, 4, 42, -123);
-   // os_printf("test %X %X %X %X\n", 7, 4, 42, -123);
-
-
    //initialize GLOBAL_PID and PCB table
    init_all_processes();
-	
-	load_process_state();
 
-
- 
-
-
-   
    init_vector_table();
 
    mmap();
@@ -64,5 +52,4 @@ void start(void *p_bootargs) {
     * goes in main
     *
     */
-
 }

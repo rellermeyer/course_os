@@ -5,8 +5,7 @@ Log
 
 */
 
-#include <stdint.h>
+#include <stdint.h> 
 
-uint32_t *mem_alloc(uint32_t size);
-void* free(void *ptr);
-uint32_t *malloc(uint32_t size);
+uint32_t * umalloc(size);
+uint32_t * kmalloc(size);

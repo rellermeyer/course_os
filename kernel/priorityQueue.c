@@ -91,7 +91,7 @@ void join(pcb *other_PCB) {
 /* If the task has not been started yet, start it.
    Else if the task was previously started, restore its state.
 */
-void dispatch(pcb *PCB) { //requires free-standing ASM code
+void dispatch(pcb *PCB) {
   if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
   {
     PCB->current_state = PROCESS_RUNNING;
@@ -99,6 +99,7 @@ void dispatch(pcb *PCB) { //requires free-standing ASM code
   }
   else
   {
+    // This will jump to the location the state was saved in task_yield()
     load_process_state(PCB->PID); // Found in process.c
   }
 }
@@ -112,7 +113,6 @@ void schedule() {
 
     if (nodeToDispatch->PCB->current_state == PROCESS_READY)
     {
-      remove(nodeToDispatch->PCB);
       nodeToDispatch->PCB->current_state = PROCESS_RUNNING;
       dispatch(nodeToDispatch->PCB);
     }
@@ -136,6 +136,7 @@ void task_yield()
   /* Save the state of the task that is currently running. We'll jump
      back to here later.
   */
+  currentNode->PCB->current_state = PROCESS_READY;
   int has_jumped = save_process_state(currentNode->PCB->PID);
 
   if (has_jumped == FALSE)
@@ -146,6 +147,7 @@ void task_yield()
   else
   {
     // If the jump has happened, return to the task
+    currentNode->PCB->current_state = PROCESS_RUNNING;
     return;
   }
 }
