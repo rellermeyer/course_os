@@ -17,26 +17,27 @@
  *
  ********************************************************************/
 
-#include "include/linked_list.h"
-#include "include/mem_alloc.h"
+#include "../include/locks.h"
+#include "../include/linked_list.h"
+#include "../include/mem_alloc.h"
 
 list* create_list(void *data)
-{   /* create more space than needed -- less resizing */
-    list *result = (list *) malloc(sizeof(ll_node));
-    result->size = 0;
+{
+    list *result = (list *) u_malloc(sizeof(list));
+    result->head = 0;
     insert(result, create_node(data), 0);
     return result;
 }
 
 ll_node* create_node(void *data) {
-    ll_node *node = (ll_node*) malloc(sizeof(ll_node));
+    ll_node *node = (ll_node*) u_malloc(sizeof(ll_node));
     node->data = data;
     return node;
 }
 
-/* TODO: implmement free */
 void free_list(list *l)
 {   /* since free isn't really implemented, it's not going to do anything */
+    lock(l->l);
     ll_node *tmp = l->head;
     ll_node *next = tmp->next;
     while(tmp->next) {
@@ -55,27 +56,41 @@ void free_node(ll_node *node)
 
 void insert(list *l, void *data, int index)
 {
+    lock(l->l);
     int i;
     ll_node *next = l->head;
     ll_node *prev;
     l->size++;
     for(i = 0; i < index; i++) {
         prev = next;
+        if(!next->next)
+            return;
         next = next->next;
     }
     ll_node *new_node = create_node(data);
-    prev->next = prev? new_node : NULL;
-    next->next = next? new_node : NULL;
-    if(l->tail->next) {
-	l->tail = l->tail->next;
+    prev->next = prev? new_node : (void *) 0; // null
+    next->next = next? new_node : (void *) 0;
+    while(l->tail->next) { // safer than if
+        l->tail = l->tail->next;
     }
+    unlock(l->l);
+}
+
+void append(list *l, void *data)
+{
+	lock(l->l);
+    l->tail->next = create_node(data);
+    l->tail = l->tail->next;
+	unlock(l->l);
 }
 
 void delete_at(list *l, int index) {
+	lock(l->l);
     ll_node *prev = get_node(l, index);
     ll_node *to_delete = prev->next;
     prev->next = to_delete->next;
     free_node(to_delete);
+	unlock(l->l);
 }
 
 void* get_data(list *l, int index)
