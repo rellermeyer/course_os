@@ -15,6 +15,8 @@
 
 	.global	vector_table_start
 	.global vector_table_end
+
+.global _Reset
 	
 	/* exception vector table */
 	/* will be copied over to 0x00 upon reset */
@@ -38,20 +40,10 @@
 		fiq_handler_addr:			.word	fiq_handler
 	vector_table_end:
 
-_Reset:
- @ LDR sp, =stack_top
- 
- LDR     R0, =stack_base
- MSR     CPSR_c, #Mode_FIQ
- MOV     sp, R0
- SUB     R0, R0, #stack_size
- MSR     CPSR_c, #Mode_IRQ
- MOV     sp, R0
- SUB     R0, R0, #stack_size
- MSR     CPSR_c, #Mode_SVC
- MOV     sp, R0
- 
- MOV R0, R2
- BL start
+bal _Reset
 
- WFI
+_Reset:
+ LDR sp, =stack_top
+	  MOV R0, R2
+	   BL start
+	   WFI

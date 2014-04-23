@@ -1,4 +1,5 @@
 #include "include/uart.h"
+#include "mmap.h" 
 
 void print_uart0(const char *s) {
 	while(*s != '\0') { 

@@ -49,9 +49,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 // handle_interrupt takes a number (the interrupt from the VIC), looks into
 // the table of registered handlers, and calls the appropriate handler
 void handle_interrupt(int interrupt_vector){
-
 	os_printf("handling interrupt %d\n", interrupt_vector);
-
 }
 
 
