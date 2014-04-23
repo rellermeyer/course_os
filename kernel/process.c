@@ -4,8 +4,7 @@
 
 int init_pcb_table() {
     pcb_table = k_malloc(MAX_PROCESSES);
-	GLOBAL_PID = 0;
-} 
+}
 
 //creates a process and initializes the PCB
 //returns pcb pointer upon success
@@ -16,7 +15,7 @@ pcb* process_create(uint32_t* file_p) {
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
 	if(*free_space_in_pcb_table == 0) {
-		pcb* pcb_pointer = (pcb*) k_malloc(sizeof(pcb));
+		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error

@@ -23,14 +23,14 @@ void init_vector_table(void) {
 	mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
 
 	/* Secondary Vector Table */
-	mmio_write(HIVECTABLE | 0x20, reset_handler);
-	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler);
-	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler);
-	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler);
-	mmio_write(HIVECTABLE | 0x30, data_abort_handler);
-	mmio_write(HIVECTABLE | 0x34, reserved_handler);
-	mmio_write(HIVECTABLE | 0x38, irq_handler);
-	mmio_write(HIVECTABLE | 0x3C, fiq_handler);
+	mmio_write(HIVECTABLE | 0x20, reset_handler ); 
+	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler ); 
+	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler ); 
+	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler ); 
+	mmio_write(HIVECTABLE | 0x30, data_abort_handler ); 
+	mmio_write(HIVECTABLE | 0x34, reserved_handler ); 
+	mmio_write(HIVECTABLE | 0x38, irq_handler ); 
+	mmio_write(HIVECTABLE | 0x3C, fiq_handler ); 
 }
 
 
@@ -40,26 +40,26 @@ void reset_handler(void){
 }
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
-	print_vuart0("UNDEFINED INSTRUCTION HANDLER\n");
+	v_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
 void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
-	int i, callNumber;
+	// int i, callNumber;
 
-	// the link register currently holds the address of the instruction immediately
-	// after the SVC call
-	// possible that syscall # passed directly in r7, not sure yet though
-	register int address asm("lr"); 
+	// // the link register currently holds the address of the instruction immediately
+	// // after the SVC call
+	// // possible that syscall # passed directly in r7, not sure yet though
+	// register int address asm("lr"); 
 	        
-	// load the SVC call and mask to get the number
-	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+	// // load the SVC call and mask to get the number
+	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
+	// print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
 
-	// Print out syscall # for debug purposes
-	print_vuart0("Syscall #: ");
-	print_word_hex(&callNumber);
-	print_vuart0("\n");
+	// // Print out syscall # for debug purposes
+	// print_vuart0("Syscall #: ");
+	// v_printf("%x", &callNumber);
+	// print_vuart0("\n");
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
@@ -68,6 +68,12 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	v_printf("DATA ABORT HANDLER\n");
+  int pc, lr, sp, fp;
+  asm volatile("mov %0, pc" : "=r" (pc));
+  asm volatile("mov %0, lr" : "=r" (lr));
+  asm volatile("mov %0, sp" : "=r" (sp));
+  asm volatile("mov %0, fp" : "=r" (fp));
+  v_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
 }
 
 void reserved_handler(void){
