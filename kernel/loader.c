@@ -16,7 +16,7 @@ void det_mem_block_size(Elf_Ehdr *h, Elf_Shdr *sh[], uint32_t * file_pointer)
 //Take a process control block and pointer to the start of an ELF file in memory.
 void load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
-	Elf_Ehdr *h = (Elf_Ehdr *)k_malloc(sizeof(Elf_Ehdr));
+	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr));
 	read_elf_header(*h, file_pointer);
 	
 	Elf_Phdr ph[h->e_phnum];

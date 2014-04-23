@@ -6,7 +6,7 @@ int init_all_processes() {
 	int pc;
 	asm volatile("mov %0, pc" : "=r" (pc));
     v_printf("init_all_processes: pc=%x\n",pc);
-    pcb_table = k_malloc(MAX_PROCESSES);
+    pcb_table = kmalloc(MAX_PROCESSES);
     v_printf("&pcb_table=%x\n", pcb_table);
 	GLOBAL_PID = 0;
 } 
@@ -20,7 +20,7 @@ pcb* process_create(uint32_t* file_p) {
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
 	if(*free_space_in_pcb_table == 0) {
-		pcb* pcb_pointer = (pcb*) k_malloc(sizeof(pcb));
+		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error

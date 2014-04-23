@@ -45,30 +45,42 @@ void main(void){
   iproc = &init_all_processes;
   v_printf("&init_all_processes=%x\n", iproc);
 
+  //NOTE: Make sure to init heap before
+  //calling any malloc functions
+  uint32_t* kheap = init_kheap(4096);
   init_all_processes();
 
   void(*handler_ptr)(void);
   handler_ptr = &data_abort_handler;
   v_printf("&handler=%x\n", handler_ptr);
 
+  test_heap_manager();
 
   //data_abort_handler();
 
   // uint32_t* abt = 0xefb00000; 
   // *abt = 0x786;
 
-  init_heap(4096);
-  uint32_t* test = allocate(sizeof(uint32_t*));
-  v_printf("&test=%x\n", test);
-  *test = 0x786;
-
-  // uint32_t* test2 = allocate(40);
-  // v_printf("&test2=%x\n", test2);
-
-  // deallocate(test);
-  // uint32_t* test3 = allocate(sizeof(uint32_t*));
-  // v_printf("&test3=%x\n", test);
-
   asm volatile("wfi");
+
+}
+
+void test_heap_manager(){
+  uint32_t* uheap1 = init_uheap(1024);
+
+  uint32_t* block0 = umalloc(8);
+  uint32_t* block1 = umalloc(10);
+  uint32_t* block2 = umalloc(13);
+  mcheck(uheap1, 1024);
+  v_printf("\n");
+  ufree(block0);
+  mcheck(uheap1, 1024);
+  v_printf("\n");
+  ufree(block2);
+  mcheck(uheap1, 1024);
+  v_printf("\n");
+  ufree(block1);
+  v_printf("\n");
+  mcheck(uheap1, 1024);
 
 }
