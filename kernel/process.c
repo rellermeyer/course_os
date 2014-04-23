@@ -24,18 +24,19 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		Boolean success = load_file(pcb_pointer, file_p);
-		if(!success) {
-			return -1;
-		} else {
-			//fill the free space with a pcb pointer
-			*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
-			//initialize PCB		
-			pcb_pointer->PID = ++GLOBAL_PID;
-			pcb_pointer->function = sample_func;
+		// Boolean success = load_file(pcb_pointer, file_p);
+		// if(!success) {
+		// 	return -1;
+		// } 
+		
+		//fill the free space with a pcb pointer
+		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+		//initialize PCB		
+		pcb_pointer->PID = ++GLOBAL_PID;
+		pcb_pointer->function = sample_func;
 
-			return pcb_pointer;
-		}
+		return pcb_pointer;
+		
 
 	} else {
 		print_uart0("Out of memory in pcb table");
@@ -45,7 +46,7 @@ pcb* process_create(uint32_t* file_p) {
 
 //Cycles through pcb table and returns next free space
 //If there is space, returns a pointer to the space
-//returns -1 if no free space is available
+//returns 0 if no free space is available
 uint32_t* next_free_slot_in_pcb_table() {
 	uint32_t* current_address = pcb_table;
 	uint32_t i;
@@ -56,18 +57,21 @@ uint32_t* next_free_slot_in_pcb_table() {
 		}
 		current_address += 1;
 	}
-	return -1;
+	return 0;
 }
 
-void save_process_state(int PID){
+//saves all the machine state of the process
+//returns 0 for failure
+//returns 1 for success
+uint32_t save_process_state(uint32_t PID){
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
-	uint32_t reg_0 = 0;
-	os_printf("reg 0 = %x\n", reg_0);
-	uint32_t reg_1;
-	uint32_t reg_2;
-	uint32_t reg_3;
-	uint32_t reg_15;
+
+	if(process_to_save == 0 || pcb_p == 0) {
+		os_printf("Invalid PID in load_process_state");
+		return 0;
+	}	
+
 	asm("MOV %0, r0":"=r"(pcb_p->R0)::);
 	asm("MOV %0, r1":"=r"(pcb_p->R1)::);
 	asm("MOV %0, r2":"=r"(pcb_p->R2)::);
@@ -100,6 +104,40 @@ void save_process_state(int PID){
 	os_printf("reg 13 = %x\n", pcb_p->R13);
 	os_printf("reg 14 = %x\n", pcb_p->R14);
 	os_printf("reg 15 = %x\n", pcb_p->R15);
+}
+
+//R15 is the Program Counter
+//R14 is the Link Register
+//The last register to be loaded is the PC
+//return 0 if fail
+//return 1 for success
+uint32_t load_process_state(uint32_t PID) {
+	uint32_t* process_to_load = get_address_of_PCB(PID);
+	pcb* pcb_p = get_PCB(PID);
+
+	if(process_to_load == 0 || pcb_p == 0) {
+		os_printf("Invalid PID in load_process_state");
+		return 0;
+	}
+
+	asm("MOV r0, %0"::"r"(pcb_p->R0):);
+	asm("MOV r1, %0"::"r"(pcb_p->R1):);
+	asm("MOV r2, %0"::"r"(pcb_p->R2):);
+	asm("MOV r3, %0"::"r"(pcb_p->R3):);
+	asm("MOV r4, %0"::"r"(pcb_p->R4):);
+	asm("MOV r5, %0"::"r"(pcb_p->R5):);
+	asm("MOV r6, %0"::"r"(pcb_p->R6):);
+	asm("MOV r7, %0"::"r"(pcb_p->R7):);
+	asm("MOV r8, %0"::"r"(pcb_p->R8):);
+	asm("MOV r9, %0"::"r"(pcb_p->R9):);
+	asm("MOV r10, %0"::"r"(pcb_p->R10):);
+	asm("MOV r11, %0"::"r"(pcb_p->R11):);
+	asm("MOV r12, %0"::"r"(pcb_p->R12):);
+	asm("MOV r13, %0"::"r"(pcb_p->R13):);
+	asm("MOV r14, %0"::"r"(pcb_p->R14):);
+	asm("MOV r15, %0"::"r"(pcb_p->R15):);
+
+	return 1;
 }
 
 //destroys process with param PID by clearing the pcb struct
