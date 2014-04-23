@@ -2,13 +2,13 @@
 
 void print_uart0(const char *s) {
 	while(*s != '\0') { 
-		mmio_write(UART_ADDRESS, *s);
+		mmio_write(UART0_ADDRESS, *s);
 		s++;
 	}
 }
 
 void print_char_uart0(char c) {
-	mmio_write(UART_ADDRESS, c);
+	mmio_write(UART0_ADDRESS, c);
 }
 
 /* print the full 32 bits of a word at the given address */
@@ -30,11 +30,11 @@ void print_word_hex(uint32_t * c){
 		a >>= (i*0x4);
 
 		if(a <= 9)
-			mmio_write(UART_ADDRESS, (uint32_t)(a + (uint32_t )'0'));
+			mmio_write(UART0_ADDRESS, (uint32_t)(a + (uint32_t )'0'));
 		else if(a <= 0xf)
-			mmio_write(UART_ADDRESS, (uint32_t)((a - 0xa) + (uint32_t )'a'));
+			mmio_write(UART0_ADDRESS, (uint32_t)((a - 0xa) + (uint32_t )'a'));
 		else
-			mmio_write(UART_ADDRESS, (uint32_t)('?'));
+			mmio_write(UART0_ADDRESS, (uint32_t)('?'));
 	}
 }
 

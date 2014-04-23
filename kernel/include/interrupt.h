@@ -76,15 +76,20 @@ int	disable_interrupt_save(interrupt_t);
 int 	get_proc_status(void);
 void	restore_proc_status(int);
 
+int 	register_interrupt_handler(int, interrupt_handler_t *);
 void	handle_interrupt(int);
 
 /* VIC Interrupt Mappings */
 #define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
-#define VIC_FIQ_STATUS		PIC_ADDRESS+0x004 // status of pending fiqs after masking (R)
-#define VIC_RAW_STATUS		PIC_ADDRESS+0x008 // status of pending irqs before masking by the enable register (R)
-#define VIC_INT_SELECT		PIC_ADDRESS+0x00C // select whether source generates an IRQ or FIQ (R/W)
-#define VIC_INT_ENABLE		PIC_ADDRESS+0x010 // enable interrupt lines (1 = YES) (R/W)
-#define VIC_INT_ENCLEAR		PIC_ADDRESS+0x014 // clear enabled lines in VICINTENABLE (1=clear)
+#define VIC_FIQ_STATUS		(*((volatile uint32_t *)(PIC_ADDRESS+0x004))) // status of pending fiqs after masking (R)
+#define VIC_RAW_STATUS		(*((volatile uint32_t *)(PIC_ADDRESS+0x008))) // pending irqs before masking by enable register (R)
+#define VIC_INT_SELECT		(*((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
+#define VIC_INT_ENABLE		(*((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
+#define VIC_INT_ENCLEAR		(*((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
+
+// these should be used in conjunction with the bit shift mappings below
+#define hw_interrupt_enable(n)	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | (1 << n))
+#define hw_interrupt_disable(n)	mmio_write(VIC_INT_ENCLEAR, (1 << n);
 
 	// Primary Interrupt Controller (PIC)
 #define WATCHDOG_IRQ	0	/* watchdog controller */
@@ -99,9 +104,9 @@ void	handle_interrupt(int);
 #define GPIO_D_IRQ	9	/* GPIO 3 */
 #define RTC_IRQ		10	/* Real Time Clock (RTC) */
 #define SSP_IRQ		11	/* synchronous serial port */
-#define UART_A_IRQ	12	/* UART 0 */
-#define UART_B_IRQ	13	/* UART 1 */
-#define UART_C_IRQ	14	/* UART 2 */
+#define UART0_IRQ	12	/* UART 0 */
+#define UART1_IRQ	13	/* UART 1 */
+#define UART2_IRQ	14	/* UART 2 */
 #define SCIO_IRQ	15	/* smart card interface */
 #define CLCD_IRQ	16	/* CLCD controller */
 #define DMA_IRQ		17	/* DMA controller */
