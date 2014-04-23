@@ -20,17 +20,18 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		// Boolean success = load_file(pcb_pointer, file_p);
-		// if(!success) {
-		// 	return -1;
-		// } 
+		Boolean success = load_file(pcb_pointer, file_p);
+		if(!success) {
+			return -1;
+		} 
+		os_printf("Success: %d\n", success);
 		
-		//fill the free space with a pcb pointer
-		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
-		//initialize PCB		
-		pcb_pointer->PID = ++GLOBAL_PID;
-		pcb_pointer->function = sample_func;
-		pcb_pointer->has_executed = 0;
+		// //fill the free space with a pcb pointer
+		// *free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+		// //initialize PCB		
+		// pcb_pointer->PID = ++GLOBAL_PID;
+		// pcb_pointer->function = sample_func;
+		// pcb_pointer->has_executed = 0;
 
 		return pcb_pointer;
 		

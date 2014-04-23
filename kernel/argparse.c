@@ -148,15 +148,15 @@ int number_of_words(char *line)
   const char *delimiters = " \t"; // Space and tab
   
   /*Comment this in + make run = infinite loop */
- //char *pos = (char *)os_strtok(line, delimiters);
+  char *pos = (char *)os_strtok(line, delimiters);
 
   // Count the number of words
   int count = 0;
-  // while (pos != NULL)
-  // {
-  //   pos = (char *)os_strtok(NULL, delimiters); // Advance to the next word
-  //   count++;
-  // }
+  while (pos != NULL)
+  {
+    pos = (char *)os_strtok(NULL, delimiters); // Advance to the next word
+    count++;
+  }
 
   return count;
 }

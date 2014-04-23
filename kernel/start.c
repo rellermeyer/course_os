@@ -33,30 +33,32 @@ void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
 
    int addr = 0x810000;
-   int addr2 = 0x710000;
-   //os_printf(addr2);
    os_printf(addr);
+   os_printf("\n");
+   
    // Separate the command-line arguments into separate Strings
    int num_args = number_of_words(cmdline_args);
-   // char* arg_list[num_args];
-   // split_string(cmdline_args, arg_list);
-   // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+   char* arg_list[num_args];
+   split_string(cmdline_args, arg_list);
+   int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
    // Parse and analyze each String
-   //parse_arguments(arg_count, arg_list);
+   parse_arguments(arg_count, arg_list);
 
 
-   // init_pcb_table();
+   init_pcb_table();
    
-   // init_vector_table();
+   process_create(addr);
 
-   // mmap();
+   init_vector_table();
+
+   mmap();
 
    // //Test: UART0 mapped to the correct virtual address   
-   // print_vuart0("Virtual Memory!!!\n");
+   print_vuart0("Virtual Memory!!!\n");
 
    // //setup new stack pointers and jump to main
-   // asm volatile (".include \"stacks.s\"");
+   asm volatile (".include \"stacks.s\"");
   
    // /* NOTHING EXECUTED BEYOND THIS POINT
    //  *
