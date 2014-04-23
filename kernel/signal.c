@@ -5,7 +5,7 @@ Signals
 SIGKILL
 SIGUSR
 SIGTERM
-SIGMAST
+SIGMASK
 SIGPRINT
 */
 
@@ -40,7 +40,7 @@ void term_signal (int PID)
 
 }
 
-void mast_signal (int PID)
+void mask_signal (int PID)
 {
 
 }
