@@ -22,24 +22,25 @@
 #include "interrupt.h"
 
 
+#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
+void uart_handler(void *null) {
+	print_uart0("uart0!\n");
+}
+
+
 void start(void *p_bootargs) {
 	print_uart0("CourseOS!\n");
 
 	/* we boot into SVC mode with FIQ and IRQ masked */
-	print_uart0("initial low vector memory:\n");
-	md((uint32_t *)0x00);
-	print_uart0("\n\n\n");
-
 	disable_interrupts();
-	init_vector_table();
-	print_uart0("copied low vector memory:\n");
-	md((uint32_t *)0x00);
-	print_uart0("\n\n\nthrowing SWI to test initialization...\n");
-	asm volatile("SWI 7");
 
-	int cpsr = get_proc_status();
-	print_uart0("cpsr: "); print_word_bits(&cpsr);
-	print_uart0("enabling interrupts...\n"); enable_interrupts();
-	cpsr = get_proc_status();
-	print_uart0("cpsr: "); print_word_bits(&cpsr);
+	interrupt_handler_t uart0_handler_struct = { &uart_handler };
+	register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
+
+	UART0_IMSC = 1<<4;
+	VIC_INT_ENABLE = 1<<12;
+	enable_interrupts();	
+	
+	for(;;);
+
 }

@@ -43,7 +43,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 	handlers[num] = handler;
 
 	// enable the specific interrupt in hardware on the VIC
-
+	hw_interrupt_enable(num);
 }
 
 // handle_interrupt takes a number (the interrupt from the VIC), looks into

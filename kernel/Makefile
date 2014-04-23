@@ -15,7 +15,7 @@ CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 all: course_os.img
 
 run: flash.bin
-	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
+	${QEMU} -M versatilepb -m 128M -serial stdio -nographic -kernel flash.bin
 
 flash.bin: kernel.img
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
