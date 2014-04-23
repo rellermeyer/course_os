@@ -12,16 +12,41 @@
 
 /* copy vector table from wherever the hell QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
-	extern uint32_t vector_table_start, vector_table_end;
+/*	extern uint32_t vector_table_start, vector_table_end;
 	uint32_t *src = &vector_table_start;
 	uint32_t *dst = (uint32_t *) HIVECTABLE;
 
 	while(src < &vector_table_end)
 		*dst++ = *src++;
+		*/
+
+    /* Primary Vector Table */
+mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x04, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x0C, BRANCH_INSTRUCTION);
+	mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
+	    mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
+		mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
+		    mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
+
+				/* Secondary Vector Table */
+	mmio_write(HIVECTABLE | 0x20, &reset_handler); 
+		    mmio_write(HIVECTABLE | 0x24, &undef_instruction_handler ); 
+		mmio_write(HIVECTABLE | 0x28, &software_interrupt_handler ); 
+	    mmio_write(HIVECTABLE | 0x2C, &prefetch_abort_handler ); 
+		mmio_write(HIVECTABLE | 0x30, &data_abort_handler ); 
+    mmio_write(HIVECTABLE | 0x34, &reserved_handler ); 
+		mmio_write(HIVECTABLE | 0x38, &irq_handler ); 
+	    mmio_write(HIVECTABLE | 0x3C, &fiq_handler ); 
 }
 
 
 /* handlers */
+void reset_handler(void) {
+    print_uart0("RESET HANDLER\n");
+    _Reset();
+}
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 	v_printf("UNDEFINED INSTRUCTION HANDLER\n");
@@ -38,7 +63,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// // load the SVC call and mask to get the number
 	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	// print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
+	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
 	// print_vuart0("Syscall #: ");
