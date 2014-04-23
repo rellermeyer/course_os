@@ -12,33 +12,35 @@
 
 /* copy vector table from wherever the hell QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
-/*	extern uint32_t vector_table_start, vector_table_end;
-	uint32_t *src = &vector_table_start;
-	uint32_t *dst = (uint32_t *) HIVECTABLE;
+    /* This doesn't seem to work well with virtual memory; reverting
+     * to old method.       
+    extern uint32_t vector_table_start, vector_table_end;
+    uint32_t *src = &vector_table_start;
+    uint32_t *dst = (uint32_t *) HIVECTABLE;
 
-	while(src < &vector_table_end)
-		*dst++ = *src++;
-		*/
+    while(src < &vector_table_end)
+	*dst++ = *src++;
+    */
 
     /* Primary Vector Table */
-mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
     mmio_write(HIVECTABLE | 0x04, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
     mmio_write(HIVECTABLE | 0x0C, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
-	    mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
-		mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
-		    mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
 
-				/* Secondary Vector Table */
-	mmio_write(HIVECTABLE | 0x20, &reset_handler); 
-		    mmio_write(HIVECTABLE | 0x24, &undef_instruction_handler ); 
-		mmio_write(HIVECTABLE | 0x28, &software_interrupt_handler ); 
-	    mmio_write(HIVECTABLE | 0x2C, &prefetch_abort_handler ); 
-		mmio_write(HIVECTABLE | 0x30, &data_abort_handler ); 
+    /* Secondary Vector Table */
+    mmio_write(HIVECTABLE | 0x20, &reset_handler); 
+    mmio_write(HIVECTABLE | 0x24, &undef_instruction_handler ); 
+    mmio_write(HIVECTABLE | 0x28, &software_interrupt_handler ); 
+    mmio_write(HIVECTABLE | 0x2C, &prefetch_abort_handler ); 
+    mmio_write(HIVECTABLE | 0x30, &data_abort_handler ); 
     mmio_write(HIVECTABLE | 0x34, &reserved_handler ); 
-		mmio_write(HIVECTABLE | 0x38, &irq_handler ); 
-	    mmio_write(HIVECTABLE | 0x3C, &fiq_handler ); 
+    mmio_write(HIVECTABLE | 0x38, &irq_handler ); 
+    mmio_write(HIVECTABLE | 0x3C, &fiq_handler ); 
 }
 
 
