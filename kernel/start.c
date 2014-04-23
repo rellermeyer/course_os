@@ -24,32 +24,28 @@
 #include "include/vmlayout.h"
 #include "include/interrupt.h"
 
-void *bootargs;
-
 void start(void *p_bootargs) {
 
-  //setup page table and enable MMU
-  mmap();
+  char *cmdline_args = read_cmdline_tag(p_bootargs);
 
-  // bootargs = p_bootargs;
-  // char *cmdline_args = read_cmdline_tag(p_bootargs);
+  print_uart0("arguments: ");
+  print_uart0(cmdline_args);
+  print_uart0("\n");
+  print_uart0("CourseOS!\n");
 
-  // print_vuart0("arguments: ");
-  // print_vuart0(cmdline_args);
-  // print_vuart0("\n");
-  // print_vuart0("CourseOS!\n");
+  // Separate the command-line arguments into separate Strings
+  int num_args = number_of_words(cmdline_args);
+  char* arg_list[num_args];
+  split_string(cmdline_args, arg_list);
+  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
-  // // Separate the command-line arguments into separate Strings
-  // int num_args = number_of_words(cmdline_args);
-  // char* arg_list[num_args];
-  // split_string(cmdline_args, arg_list);
-  // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
-
-  // // Parse and analyze each String
-  // parse_arguments(arg_count, arg_list);
+  // Parse and analyze each String
+  parse_arguments(arg_count, arg_list);
 
   //don't allow interrpts messing with memory
   disable_interrupts();
+  //setup page table and enable MMU
+  mmap();  
   //register handlers
   init_vector_table();
   enable_interrupts();
