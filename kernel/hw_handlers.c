@@ -10,33 +10,44 @@
 #include "include/interrupt.h"
 #include "include/vmlayout.h"
 
+/* copy vector table from wherever the hell QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
+    /* This doesn't seem to work well with virtual memory; reverting
+     * to old method.       
+    extern uint32_t vector_table_start, vector_table_end;
+    uint32_t *src = &vector_table_start;
+    uint32_t *dst = (uint32_t *) HIVECTABLE;
 
-	/* Primary Vector Table */
-	mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x04, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x0C, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
-	mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
+    while(src < &vector_table_end)
+	*dst++ = *src++;
+    */
 
-	/* Secondary Vector Table */
-	mmio_write(HIVECTABLE | 0x20, reset_handler ); 
-	mmio_write(HIVECTABLE | 0x24, undef_instruction_handler ); 
-	mmio_write(HIVECTABLE | 0x28, software_interrupt_handler ); 
-	mmio_write(HIVECTABLE | 0x2C, prefetch_abort_handler ); 
-	mmio_write(HIVECTABLE | 0x30, data_abort_handler ); 
-	mmio_write(HIVECTABLE | 0x34, reserved_handler ); 
-	mmio_write(HIVECTABLE | 0x38, irq_handler ); 
-	mmio_write(HIVECTABLE | 0x3C, fiq_handler ); 
+    /* Primary Vector Table */
+    mmio_write(HIVECTABLE | 0x00, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x04, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x08, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x0C, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x10, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x14, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x18, BRANCH_INSTRUCTION);
+    mmio_write(HIVECTABLE | 0x1C, BRANCH_INSTRUCTION);
+
+    /* Secondary Vector Table */
+    mmio_write(HIVECTABLE | 0x20, &reset_handler); 
+    mmio_write(HIVECTABLE | 0x24, &undef_instruction_handler ); 
+    mmio_write(HIVECTABLE | 0x28, &software_interrupt_handler ); 
+    mmio_write(HIVECTABLE | 0x2C, &prefetch_abort_handler ); 
+    mmio_write(HIVECTABLE | 0x30, &data_abort_handler ); 
+    mmio_write(HIVECTABLE | 0x34, &reserved_handler ); 
+    mmio_write(HIVECTABLE | 0x38, &irq_handler ); 
+    mmio_write(HIVECTABLE | 0x3C, &fiq_handler ); 
 }
 
 
 /* handlers */
-void reset_handler(void){
-	print_vuart0("RESET HANDLER\n");
+void reset_handler(void) {
+    print_uart0("RESET HANDLER\n");
+    _Reset();
 }
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
@@ -54,7 +65,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// // load the SVC call and mask to get the number
 	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	// print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
+	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
 	// print_vuart0("Syscall #: ");
@@ -81,17 +92,11 @@ void reserved_handler(void){
 }
 
 // the attribute automatically saves and restores state
-void __attribute__((interrupt("IRQ"))) irq_handler(void){		
-	if (*PIC_ADDRESS == 1)       // which interrupt was it?
-	{
-	    /* Commenting this call out until it actually gets defined;
-	     * otherwise compiling fails with new Makefile 
+void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
-		handle_interrupt(*PIC_ADDRESS);  // process the interrupt
-
-	    */
-	}
-	*(PIC_ADDRESS+1) = *PIC_ADDRESS;    // clear the interrupt
+	disable_interrupts();
+	print_uart0("IRQ HANDLER\n");
+	enable_interrupts();
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
