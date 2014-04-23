@@ -57,6 +57,9 @@ void handle_interrupt(int interrupt_vector){
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
+	// enable interrupt on the VIC
+	*(uint32_t volatile *)(VIC_INT_ENABLE) = 1;
+	// enable interrupt on the core
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsie i");
@@ -73,6 +76,9 @@ void enable_interrupt(interrupt_t mask) {
 
 /* disable IRQ and/or FIQ */
 void disable_interrupt(interrupt_t mask) {
+	// disable interrupts on the VIC
+	*(uint32_t volatile *)(VIC_INT_ENABLE) = 0;
+	// disable interrupts on the core
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsid i");
@@ -91,7 +97,9 @@ int disable_interrupt_save(interrupt_t mask) {
 	/* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-
+	// disable interrupts on the VIC
+	*(uint32_t volatile *)(VIC_INT_ENABLE) = 0;
+	// disable interrupts on the core
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsid i");
