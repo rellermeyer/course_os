@@ -53,7 +53,7 @@ void start(void *p_bootargs) {
   //setup page table and enable MMU
   mmap();  
   //register handlers
-//  init_vector_table();
+  init_vector_table();
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
   register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
