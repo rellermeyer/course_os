@@ -14,5 +14,7 @@
 *.elf
 *.bin
 *~
+/user/hello/hello
+/user/libc/libc.a
 
 NOTES
