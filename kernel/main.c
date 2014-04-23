@@ -39,6 +39,8 @@ void main(void){
 
   uint32_t* abt = 0xefb00000; 
   *abt = 0x786;
+  
+  asm volatile("svc 11");
 
   v_printf("\nEnd Test\n");
 

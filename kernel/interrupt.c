@@ -6,19 +6,50 @@
 #include "include/interrupt.h"
 
 
+
+// there are 32 kinds of interrupts on the VIC
+// this structure may need to be expanded if the secondary controller is incorporated
+static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
+
 interrupt_t IRQ = IRQ_MASK;
 interrupt_t FIQ = FIQ_MASK;
 interrupt_t ALL = ALL_INTERRUPT_MASK;
 
-// In a system with an interrupt controller with these features, software is still required to:
+// In a system with an interrupt controller, software is required to:
 // determine from the interrupt controller which interrupt source is requesting service
 // determine where the service routine for that interrupt source is loaded
 // mask or clear that interrupt source, before re-enabling processor interrupts to permit another interrupt to be taken.
-// 
-// An interrupt occurs.
+
+// Interrupts must be enabled in three places:
+// (1) the core (CPSR)
+// (2) the VIC (interrupt controller)
+// (3) (sometimes) in the device (this should be done in the device driver)
+
+// when you register an interrupt handler it's line will be enabled in the VIC
+// telling the device itself to fire interrupts should be done in the driver
+//
+// also, since we don't really have a working malloc, the handler structure will
+// have to be built in the driver and passed to register_
+int register_interrupt_handler(int num, interrupt_handler_t *handler){
+
+	if(num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
+		return -1;
+	else if(handlers[num] != 0) // something has already been registered there
+		return -1;
+	else if(handler == 0) // we need a NULL macro
+		return -1;
+
+	// put the handler in the array
+	handlers[num] = handler;
+
+	// enable the specific interrupt in hardware on the VIC
+	hw_interrupt_enable(num);
+}
+
+// handle_interrupt takes a number (the interrupt from the VIC), looks into
+// the table of registered handlers, and calls the appropriate handler
 void handle_interrupt(int interrupt_vector){
- 	// branch to interrupt routine and handle
-	//print_uart0("handling interrupt\n");
+	os_printf("handling interrupt %d\n", interrupt_vector);
 }
 
 
@@ -33,7 +64,6 @@ void enable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsie if");
-			//print_uart0("Enable All Interrupts\n");
 			break;
 	}
 }
@@ -50,7 +80,6 @@ void disable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsid if");
-			//print_uart0("Disable All Interrupts\n");
 			break;
 	}
 }
@@ -79,7 +108,6 @@ int disable_interrupt_save(interrupt_t mask) {
 int get_proc_status(void) {
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	//print_uart0("Getting Process Status\n");
 	return cpsr;
 }
 
@@ -91,40 +119,3 @@ void restore_proc_status(int cpsr) {
 }
 
 
-/* I commented this code out because it was throwing a weird
-   "bad instruction" error during assembly which I don't know 
-   how to debug */
-
-// returns -1 if error, else the final state of the CPSR
-//int enableInterrupt(interrupt_t interRequest){
-//  int my_cpsr; // stores the CPSR
-//  unsigned int newState; // mask for enabling IRQ and FIQ bits
-  
-  // CRITICAL SECIION -- NEED TO IMPLEMTN MUTEX/LOCKS
-
-  // get the current value in CPSR and store it into my_cpsr
-//  asm volatile
-//  (
-//	"MRS %[result], CPSR \n\t" /* get current program status */
-//                : [result]"=r"(my_cpsr)
-//                : // input is CPSR
-//                : // no clobber list needed
-//  );
-
-  /* checking for correctness (can't enable something that's already enabled, etc.) */
-//  if  ((interRequest == IRQ) && (((my_cpsr >> 7) & 1) == 0) || (interRequest == FIQ) && (((my_cpsr >> 6) & 1) == 0) || (interRequest == ALL) && ((((my_cpsr >> 6) & 11) != 11)))
-//  {
-//	return -1;
-//  }
-  
-//  asm volatile
-//  (
-//        "XOR %[result], %[value], %[mask] \n\t"      /* set IRQ disable bit flag */
-// 		case FIQ_MASK:
-// 			asm volatile("cpsie f");
-// 			break;
-// 		case ALL_INTERRUPT_MASK:
-// 			asm volatile("cpsie if");
-// 			break;
-// 	}
-// }

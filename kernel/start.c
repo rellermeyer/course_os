@@ -15,17 +15,21 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)		
  */
-
-#include "include/global_defs.h"
 #include <stdint.h>
-#include "include/argparse.h"
-#include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h"
-#include "include/interrupt.h"
+#include "hw_handlers.h"
+#include "global_defs.h"
+#include "argparse.h"
+#include "interrupt.h"
+#include "mmap.h"
+#include "pmap.h"
+#include "vmlayout.h"
+
+#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
+void uart_handler(void *null) {
+	print_uart0("uart0!\n");
+}
 
 void start(void *p_bootargs) {
-
   char *cmdline_args = read_cmdline_tag(p_bootargs);
 
   print_uart0("arguments: ");
@@ -48,6 +52,11 @@ void start(void *p_bootargs) {
   mmap();  
   //register handlers
   init_vector_table();
+  interrupt_handler_t uart0_handler_struct = { &uart_handler };
+  register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
+
+  UART0_IMSC = 1<<4;
+  VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
 
   //asm volatile("wfi");
