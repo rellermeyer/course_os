@@ -65,16 +65,16 @@ extern interrupt_t ALL;
 /* we don't really wan't others mucking around with the interrupt state
    functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
-inline int	enableInterrupt(interrupt_t); // deprecated
-inline void 	handle_interrupt(int);
-inline void	enable_interrupt(interrupt_t);
-inline int	enable_interrupt_save(interrupt_t);
+int	enableInterrupt(interrupt_t); // deprecated
+void 	handle_interrupt(int);
+void	enable_interrupt(interrupt_t);
+int	enable_interrupt_save(interrupt_t);
 	
-inline void	disable_interrupt(interrupt_t);
-inline int	disable_interrupt_save(interrupt_t);
+void	disable_interrupt(interrupt_t);
+int	disable_interrupt_save(interrupt_t);
 
-inline int 	get_proc_status(void);
-inline void	restore_proc_status(int);
+int 	get_proc_status(void);
+void	restore_proc_status(int);
 
 /* VIC Interrupt Mappings */
 	// Primary Interrupt Controller (PIC)

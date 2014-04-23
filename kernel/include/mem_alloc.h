@@ -7,5 +7,11 @@ Log
 
 #include <stdint.h> 
 
-uint32_t * u_malloc(size);
-uint32_t * k_malloc(size);
+typedef enum{
+	KERN,
+	USER,
+} priv_t;
+
+uint32_t* mem_alloc(uint32_t, priv_t);
+uint32_t* k_malloc(uint32_t);
+uint32_t* u_malloc(uint32_t);
