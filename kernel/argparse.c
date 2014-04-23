@@ -30,7 +30,6 @@ void parse_arguments(int argc, char **argv)
 */
 int analyze_arguments(char **argv)
 {
-  os_printf("Starting analyze_arguments\n");
   int i = 0;
 
   /* This is where we test argv[0] to be some option. Example:
@@ -48,30 +47,29 @@ int analyze_arguments(char **argv)
   if (os_strcmp(argv[i], "-load") == 0)
   {
     /* Format:
-       -load position, size
-       -load 0x1234, 0xabcd
-       position and size can be separated by commas, spaces, or both
+       -load position size
+       -load 0x1234 0xabcd
+       position and size must be separated by spaces
+       position is the location in memory of the program
+       size is te size of the program
     */
-    char prgm_pos_and_size[sizeof(argv[i+1])];
-    os_strcpy(prgm_pos_and_size, argv[i + 1]);
-
-    print_uart0(prgm_pos_and_size); // TODO: remove
-
-    // Comma and space delimiters used to separate position and size
-    char *delimeters = ", ";
-    char *position = (char *)os_strtok(prgm_pos_and_size, delimeters);
-    char *size = (char *)os_strtok(NULL, delimeters);
+    char *position = argv[i + 1];
+    char *size = argv[i + 2];
 
     // Check that we have valid input
     if (position != NULL && size != NULL)
     {
-      // TODO: load program into memory using position and size
-      return 2; // Read 2 arguments
+      // TODO: load and run process
+      return 3; // Consumed 3 arguments
     }
     else
     {
       os_printf("Error loading process via qemu arguments.\n");
-      os_printf("USAGE: -load position, size\n");
+      os_printf("USAGE: -load position size\n");
+      if (argv[i + 1] == NULL)
+        return 1; // Consumed 1 argument
+      else
+        return 2; // Consumed 2 arguments
     }
   }
 
