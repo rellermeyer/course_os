@@ -33,6 +33,7 @@ struct list
     int size;
 };
 
+list* empty_create_list();
 list* create_list(void *data);
 ll_node* create_node(void *data);
 void free_list(list *l);

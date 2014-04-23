@@ -21,10 +21,21 @@
 #include "../include/linked_list.h"
 #include "../include/mem_alloc.h"
 
+list* empty_create_list()
+{
+    list *result = (list *) u_malloc(sizeof(list));
+	result->size = 0;
+    result->head = 0;
+	result->tail =  0;
+    return result;
+}
 list* create_list(void *data)
 {
     list *result = (list *) u_malloc(sizeof(list));
+	result->l->lock = 0;
     result->head = 0;
+	result->tail = 0;
+	result->size = 0;
     insert(result, create_node(data), 0);
     return result;
 }
@@ -76,6 +87,7 @@ void insert(list *l, void *data, int index)
     unlock(l->l);
 }
 
+// this is what's broken
 void append(list *l, void *data)
 {
 	lock(l->l);
