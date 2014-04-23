@@ -11,6 +11,7 @@ all: kernel.img
 
 OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o sampleFile.o
 
+
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 

@@ -23,7 +23,6 @@
 #include "include/pmap.h"
 #include "include/vmlayout.h"
 
-
 void start(void *p_bootargs) {
    char *cmdline_args = read_cmdline_tag(p_bootargs);
 
@@ -31,6 +30,7 @@ void start(void *p_bootargs) {
    print_uart0(cmdline_args);
    print_uart0("\n");
    print_uart0("CourseOS!\n");
+
 
    int addr = 0x810000;
    os_printf(addr);
@@ -47,7 +47,7 @@ void start(void *p_bootargs) {
 
 
    init_pcb_table();
-   
+
    process_create(addr);
 
    init_vector_table();
@@ -60,6 +60,7 @@ void start(void *p_bootargs) {
    // //setup new stack pointers and jump to main
    asm volatile (".include \"stacks.s\"");
   
+
    // /* NOTHING EXECUTED BEYOND THIS POINT
    //  *
    //  *
@@ -70,7 +71,5 @@ void start(void *p_bootargs) {
    //  * goes in main
    //  *
    //  */
-
-
 
 }
