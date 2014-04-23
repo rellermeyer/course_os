@@ -16,14 +16,14 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // mask or clear that interrupt source, before re-enabling processor interrupts to permit another interrupt to be taken.
 // 
 // An interrupt occurs.
-inline void handle_interrupt(int interrupt_vector){
+void handle_interrupt(int interrupt_vector){
  	// branch to interrupt routine and handle
-	print_uart0("handling interrupt\n");
+	//print_uart0("handling interrupt\n");
 }
 
 
 /* enable IRQ and/or FIQ */
-inline void enable_interrupt(interrupt_t mask) {
+void enable_interrupt(interrupt_t mask) {
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsie i");
@@ -33,14 +33,14 @@ inline void enable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsie if");
-			print_uart0("Enable All Interrupts\n");
+			//print_uart0("Enable All Interrupts\n");
 			break;
 	}
 }
 
 
 /* disable IRQ and/or FIQ */
-inline void disable_interrupt(interrupt_t mask) {
+void disable_interrupt(interrupt_t mask) {
 	switch(mask) {
 		case IRQ_MASK:
 			asm volatile("cpsid i");
@@ -50,13 +50,13 @@ inline void disable_interrupt(interrupt_t mask) {
 			break;
 		case ALL_INTERRUPT_MASK:
 			asm volatile("cpsid if");
-			print_uart0("Disable All Interrupts\n");
+			//print_uart0("Disable All Interrupts\n");
 			break;
 	}
 }
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
-inline int disable_interrupt_save(interrupt_t mask) {
+int disable_interrupt_save(interrupt_t mask) {
 	/* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
@@ -76,17 +76,17 @@ inline int disable_interrupt_save(interrupt_t mask) {
 }
 
 /* return a full 32-bit copy of the current process status register */
-inline int get_proc_status(void) {
+int get_proc_status(void) {
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	print_uart0("Getting Process Status\n");
+	//print_uart0("Getting Process Status\n");
 	return cpsr;
 }
 
 /* restore control status (interrupt, mode bits) of the cpsr */
 /* (e.g. when we return from a handler, restore value from 
    disable_interrupt_save				     */
-inline void restore_proc_status(int cpsr) {
+void restore_proc_status(int cpsr) {
 	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }
 

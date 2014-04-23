@@ -22,31 +22,50 @@
 #include "include/mmap.h"
 #include "include/pmap.h"
 #include "include/vmlayout.h"
+#include "include/interrupt.h"
 
 void start(void *p_bootargs) {
-   print_uart0("arguments: ");
-   print_uart0(read_cmdline_tag(p_bootargs));
-   print_uart0("\n");
-   print_uart0("CourseOS!\n");
-   
-   init_vector_table();
 
-   mmap();
+  char *cmdline_args = read_cmdline_tag(p_bootargs);
 
-   //Test: UART0 mapped to the correct virtual address   
-   print_vuart0("Virtual Memory!!!\n");
+  print_uart0("arguments: ");
+  print_uart0(cmdline_args);
+  print_uart0("\n");
+  print_uart0("CourseOS!\n");
 
-   //setup new stack pointers and jump to main
-   asm volatile (".include \"stacks.s\"");
-  
-   /* NOTHING EXECUTED BEYOND THIS POINT
-    *
-    *
-    * Anything that needs to be setup right after
-    * booting the kernel should go before mmap()
-    *
-    * Any setup, heap allocation or stack allocation
-    * goes in main
-    *
-    */
+  // Separate the command-line arguments into separate Strings
+  int num_args = number_of_words(cmdline_args);
+  char* arg_list[num_args];
+  split_string(cmdline_args, arg_list);
+  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+  // Parse and analyze each String
+  parse_arguments(arg_count, arg_list);
+
+  //don't allow interrpts messing with memory
+  disable_interrupts();
+  //setup page table and enable MMU
+  mmap();  
+  //register handlers
+  init_vector_table();
+  enable_interrupts();
+
+  //asm volatile("wfi");
+
+  //Test: UART0 mapped to the correct virtual address   
+  print_vuart0("MMU enabled\n");
+
+  //setup new stack pointers and jump to main
+  asm volatile (".include \"stacks.s\"");
+
+  /* NOTHING EXECUTED BEYOND THIS POINT
+  *
+  *
+  * Anything that needs to be setup right after
+  * booting the kernel should go before mmap()
+  *
+  * Any setup, heap allocation or stack allocation
+  * goes in main
+  *
+  */
 }
