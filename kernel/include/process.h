@@ -2,7 +2,6 @@
 #define PROCESS_H
 #include "global_defs.h"
 #include <stdint.h>
-#include "mem_alloc.h"
 
 /*LOG:
 3/15: Initial skeleton and comments by Josh Guan.
@@ -13,6 +12,7 @@
 4/9:  Added some more utility functions and changed process destroy. Sean V
 4/14: Worked on save process state. Sean V, Faseeh A, Taylor Smith
 4/15: Save state inline asm works, working on saving to pcb. Taylor s
+4/16: Load state with inline asm, Sean V, Faseeh A, Taylor Smith
 /*******************
 a work in progress
 memory boundaries?
@@ -47,9 +47,7 @@ process privileges*
 accounting info
 last run?, total CPU time accumulation
 */
-
 /* what are the bare essentials for a PCB
-
 */
 typedef
 enum PROCESS_STATE {PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING}
@@ -68,6 +66,7 @@ typedef struct pcb{
   uint32_t group_id;
   uint32_t parent_id;
   uint32_t (*function)(uint32_t);
+  uint32_t has_executed;
   //CPU state data
   //PROCESS_STATE current_state;
 
@@ -116,6 +115,18 @@ typedef struct pcb{
   //uint32_t* process_relations
   //uint32_t total_cpu_time;
 
+//CPU state data
+  uint32_t SPSR;
+  uint32_t PC;
+
+//Control data
+  int priority_value;
+  uint32_t elapsed_time;
+  uint32_t EFLAG;
+  uint32_t* process_relations;
+
+  uint32_t total_cpu_time;
+
 } pcb;
 
 /* interface
@@ -149,6 +160,10 @@ uint32_t free_PCB(pcb* pcb_p);
 uint32_t* get_address_of_PCB(uint32_t PID);
 uint32_t execute_process(pcb* pcb_p);
 void sample_func(uint32_t x);
+uint32_t load_process_state(uint32_t PID);
+uint32_t save_process_state(uint32_t PID);
+uint32_t print_process_state(uint32_t PID);
+
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();

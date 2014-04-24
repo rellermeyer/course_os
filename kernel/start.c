@@ -13,40 +13,63 @@
  *	+ 0b10001 = FIQ (fast interrupt) mode
  *	+ 0b10010 = IRQ (normal interrupt) mode
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
- *	(others...)		
+ *	(others...)
  */
-
-#include "include/global_defs.h"
 #include <stdint.h>
-#include "include/argparse.h"
-#include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h"
+#include "hw_handlers.h"
+#include "global_defs.h"
+#include "argparse.h"
+#include "interrupt.h"
+#include "mmap.h"
+#include "pmap.h"
+#include "vmlayout.h"
+
+#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
+void uart_handler(void *null) {
+	print_uart0("uart0!\n");
+}
 
 void start(void *p_bootargs) {
-   print_uart0("arguments: ");
-   print_uart0(read_cmdline_tag(p_bootargs));
-   print_uart0("\n");
-   print_uart0("CourseOS!\n");
-   
-   init_vector_table();
+    print_uart0("Init...\n");
+    /*
+  char *cmdline_args = read_cmdline_tag(p_bootargs);
 
-   mmap();
+  print_uart0("arguments: ");
+  print_uart0(cmdline_args);
+  print_uart0("\n");
+  print_uart0("CourseOS!\n");
+  */
 
-   //Test: UART0 mapped to the correct virtual address   
-   print_vuart0("Virtual Memory!!!\n");
+  //don't allow interrpts messing with memory
+  disable_interrupts();
+  //setup page table and enable MMU
+  mmap();  
+  //register handlers
+  init_vector_table();
+  interrupt_handler_t uart0_handler_struct = { &uart_handler };
+  register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
-   //setup new stack pointers and jump to main
-   asm volatile (".include \"stacks.s\"");
-  
-   /* NOTHING EXECUTED BEYOND THIS POINT
-    *
-    *
-    * Anything that needs to be setup right after
-    * booting the kernel should go before mmap()
-    *
-    * Any setup, heap allocation or stack allocation
-    * goes in main
-    *
-    */
+  UART0_IMSC = 1<<4;
+  VIC_INT_ENABLE = 1<<12;
+  enable_interrupts();
+
+   //initialize GLOBAL_PID and PCB table
+   init_all_processes();
+
+  //Test: UART0 mapped to the correct virtual address   
+  print_vuart0("MMU enabled\n");
+
+  //setup new stack pointers and jump to main
+  asm volatile (".include \"stacks.s\"");
+
+  /* NOTHING EXECUTED BEYOND THIS POINT
+  *
+  *
+  * Anything that needs to be setup right after
+  * booting the kernel should go before mmap()
+  *
+  * Any setup, heap allocation or stack allocation
+  * goes in main
+  *
+  */
 }
