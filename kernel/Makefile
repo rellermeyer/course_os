@@ -16,7 +16,7 @@ CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 
 
 run: flash.bin
-	${QEMU} -M versatilepb -m 128M -serial stdio -nographic -kernel flash.bin
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
 #boots the kernel at 0x210000
 flash.bin: kernel.img
