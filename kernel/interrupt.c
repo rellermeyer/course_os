@@ -11,6 +11,10 @@
 // this structure may need to be expanded if the secondary controller is incorporated
 static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
 
+// holds defined fiq interrupts
+static int check_if_fiq[MAX_NUM_INTERRUPTS];
+
+// define interrupt types
 interrupt_t IRQ = IRQ_MASK;
 interrupt_t FIQ = FIQ_MASK;
 interrupt_t ALL = ALL_INTERRUPT_MASK;
@@ -25,6 +29,12 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // (2) the VIC (interrupt controller)
 // (3) (sometimes) in the device (this should be done in the device driver)
 
+// Setup FIQ interrupts
+void init_fiqs(){
+	check_if_fiq[11] = 1; // synchronous serial port
+	check_if_fiq[17] = 1; // DMA controller  
+}
+
 // when you register an interrupt handler it's line will be enabled in the VIC
 // telling the device itself to fire interrupts should be done in the driver
 //
@@ -38,12 +48,22 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 		return -1;
 	else if(handler == 0) // we need a NULL macro
 		return -1;
-
+	
 	// put the handler in the array
 	handlers[num] = handler;
 
 	// enable the specific interrupt in hardware on the VIC
 	hw_interrupt_enable(num);
+
+	// check to see if this is an FIQ
+	if (check_if_fiq[num])
+		// update the "select" register on the VIC
+		vic_select_fiq(num);
+
+	
+	
+	
+	
 }
 
 // handle_interrupt takes a number (the interrupt from the VIC), looks into
@@ -55,8 +75,6 @@ void handle_interrupt(int interrupt_vector){
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
-	// enable interrupt on the VIC
-	*(uint32_t volatile *)(VIC_INT_ENABLE) = 1;
 	// enable interrupt on the core
 	switch(mask) {
 		case IRQ_MASK:
@@ -74,8 +92,6 @@ void enable_interrupt(interrupt_t mask) {
 
 /* disable IRQ and/or FIQ */
 void disable_interrupt(interrupt_t mask) {
-	// disable interrupts on the VIC
-	*(uint32_t volatile *)(VIC_INT_ENABLE) = 0;
 	// disable interrupts on the core
 	switch(mask) {
 		case IRQ_MASK:
@@ -95,8 +111,6 @@ int disable_interrupt_save(interrupt_t mask) {
 	/* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	// disable interrupts on the VIC
-	*(uint32_t volatile *)(VIC_INT_ENABLE) = 0;
 	// disable interrupts on the core
 	switch(mask) {
 		case IRQ_MASK:
