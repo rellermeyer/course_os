@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  *  A bit of background:
  *  - The ARM architecture has 7 modes of operation:
@@ -15,6 +16,9 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)
  */
+=======
+#include "global_defs.h"
+>>>>>>> origin/system_calls
 #include <stdint.h>
 #include "hw_handlers.h"
 #include "global_defs.h"
@@ -37,11 +41,41 @@ void start(void *p_bootargs) {
   print_uart0("\n");
   print_uart0("CourseOS!\n");
 
+<<<<<<< HEAD
   // Separate the command-line arguments into separate Strings
   int num_args = number_of_words(cmdline_args);
   char* arg_list[num_args];
   split_string(cmdline_args, arg_list);
   int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+=======
+    for (i = 0; i < callNumber; i++) {
+        print_uart0("success!\n");
+    }
+}
+
+void start() {
+    print_uart0("CourseOS!\n");
+
+    /* Setup primary vector table */
+    *(uint32_t volatile *)(0x00) = (LDR_PC_PC | 0x18); // Reset
+    *(uint32_t volatile *)(0x04) = (LDR_PC_PC | 0x18); // Undefined instruction
+    *(uint32_t volatile *)(0x08) = (LDR_PC_PC | 0x18); // Software interrupt (SWI)
+    *(uint32_t volatile *)(0x0C) = (LDR_PC_PC | 0x18); // Abort (prefetch)
+    *(uint32_t volatile *)(0x10) = (LDR_PC_PC | 0x18); // Abort (data)
+    *(uint32_t volatile *)(0x14) = (LDR_PC_PC | 0x18); // Address exception
+    *(uint32_t volatile *)(0x18) = (LDR_PC_PC | 0x18); // IRQ
+    *(uint32_t volatile *)(0x1C) = (LDR_PC_PC | 0x18); // FIQ
+
+    /* Setup secondary vector table */
+    *(uint32_t volatile *)(0x20) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x24) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x28) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x2C) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x30) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x34) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x38) = (uint32_t)test_handler;
+    *(uint32_t volatile *)(0x3C) = (uint32_t)test_handler;
+>>>>>>> origin/system_calls
 
   // Parse and analyze each String
   parse_arguments(arg_count, arg_list);
