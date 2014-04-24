@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*
  *  A bit of background:
  *  - The ARM architecture has 7 modes of operation:
@@ -16,9 +15,6 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)
  */
-=======
-#include "global_defs.h"
->>>>>>> origin/system_calls
 #include <stdint.h>
 #include "hw_handlers.h"
 #include "global_defs.h"
@@ -41,13 +37,11 @@ void start(void *p_bootargs) {
   print_uart0("\n");
   print_uart0("CourseOS!\n");
 
-<<<<<<< HEAD
   // Separate the command-line arguments into separate Strings
   int num_args = number_of_words(cmdline_args);
   char* arg_list[num_args];
   split_string(cmdline_args, arg_list);
   int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
-=======
     for (i = 0; i < callNumber; i++) {
         print_uart0("success!\n");
     }
@@ -75,7 +69,6 @@ void start() {
     *(uint32_t volatile *)(0x34) = (uint32_t)test_handler;
     *(uint32_t volatile *)(0x38) = (uint32_t)test_handler;
     *(uint32_t volatile *)(0x3C) = (uint32_t)test_handler;
->>>>>>> origin/system_calls
 
   // Parse and analyze each String
   parse_arguments(arg_count, arg_list);
@@ -101,7 +94,7 @@ void start() {
 
    //initialize GLOBAL_PID and PCB table
    init_all_processes();
-
+   
    init_vector_table();
 
   //Test: UART0 mapped to the correct virtual address   
