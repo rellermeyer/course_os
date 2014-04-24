@@ -246,12 +246,12 @@ void deallocate(void* ptr, char* heap, int32_t heap_size){
 }
 
 
-void* umalloc(uint32_t size){
+uint32_t* umalloc(uint32_t size){
 	void* block = (void*)allocate(size, uheap, uheap_size);
 	return block;
 }
 
-void* kmalloc(uint32_t size){
+uint32_t* kmalloc(uint32_t size){
 	void* block = (void*)allocate(size, kheap, kheap_size);
 	return block;
 }

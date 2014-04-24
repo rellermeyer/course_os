@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "include/timer.h"
+#include "../include/timer.h"
 
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
