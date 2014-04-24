@@ -4,8 +4,8 @@
 #include <stdint.h>		// Probably going to be removed
 
 
-uint32_t* filePointer;
-uint32_t* startPointer;
+unsigned char* filePointer;
+unsigned char* startPointer;
 
 /* Gets the value of the bytes on a big endian system */
 uint32_t do_big_endian(uint32_t size) {
@@ -63,7 +63,7 @@ int32_t isElf(Elf_Ehdr h) {
 /* Parses elf header of ELF file and places into ELF struct header */
 /* CRITICAL: It is important to initialize the elf header before
 	sending it into the function. Makes sure no data is lost */
-int read_elf_header(Elf_Ehdr h, uint32_t *pointer) {
+int read_elf_header(Elf_Ehdr h, unsigned char *pointer) {
 	filePointer = startPointer = pointer;
 	int32_t check = isElf(h);
 	if(check == -1){
@@ -115,7 +115,7 @@ int read_elf_header(Elf_Ehdr h, uint32_t *pointer) {
 }
 
 
-void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], uint32_t *pointer) {
+void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], unsigned char *pointer) {
 	filePointer = startPointer = pointer;
 	filePointer = startPointer + eh.e_phoff;
 	int i = 0;
@@ -135,7 +135,7 @@ void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], uint32_t *pointer) {
 /* Reads the section header table and places it into the the section header array */
 /* CRITICAL: The section header must be initalized with the correct size,
 	 before put into the function */
-void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer) {
+void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], unsigned char*pointer) {
 	filePointer = startPointer = pointer;
 	int i = 0;
 	filePointer = startPointer + eh.e_shoff;	
@@ -157,7 +157,7 @@ void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer) {
 /* Goes to the Section header that contains the section header string table */
 /* It then analyzes the table and puts them into each section header */
 /* This makes it easier to differentiate between sections when put into loader */
-void parse_section_header_names(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer) {
+void parse_section_header_names(Elf_Ehdr eh, Elf_Shdr sh[], unsigned char* pointer) {
 	filePointer = startPointer = pointer;
 	filePointer = startPointer + sh[eh.e_shstrndx].sh_offset;	// This pointer iterates through the section header
 	int i = 1;
