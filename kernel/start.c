@@ -13,7 +13,7 @@
  *	+ 0b10001 = FIQ (fast interrupt) mode
  *	+ 0b10010 = IRQ (normal interrupt) mode
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
- *	(others...)		
+ *	(others...)
  */
 #include <stdint.h>
 #include "hw_handlers.h"
@@ -60,6 +60,15 @@ void start(void *p_bootargs) {
   enable_interrupts();
 
   //asm volatile("wfi");
+   print_uart0("arguments: ");
+   print_uart0(read_cmdline_tag(p_bootargs));
+   print_uart0("\n");
+   print_uart0("CourseOS!\n");
+
+   //initialize GLOBAL_PID and PCB table
+   init_all_processes();
+
+   init_vector_table();
 
   //Test: UART0 mapped to the correct virtual address   
   print_vuart0("MMU enabled\n");
@@ -77,4 +86,17 @@ void start(void *p_bootargs) {
   * goes in main
   *
   */
+   //setup new stack pointers and jump to main
+   asm volatile (".include \"stacks.s\"");
+  
+   /* NOTHING EXECUTED BEYOND THIS POINT
+    *
+    *
+    * Anything that needs to be setup right after
+    * booting the kernel should go before mmap()
+    *
+    * Any setup, heap allocation or stack allocation
+    * goes in main
+    *
+    */
 }
