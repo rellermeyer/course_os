@@ -1,9 +1,9 @@
 #include "mem_alloc.h"
 #include "../include/klibc.h"
 
-static const uint32_t MEM_START = 0x500000;
+static const uint32_t MEM_START = 0x04000000;
 
-uint32_t *nextBlock = 0x500000;  
+uint32_t *nextBlock = 0x04000000;  
 
 //bump pointer allocation
 uint32_t* mem_alloc(uint32_t size) {
