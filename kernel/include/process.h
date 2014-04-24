@@ -123,7 +123,7 @@ typedef struct pcb{
   int priority_value;
   uint32_t elapsed_time;
   uint32_t EFLAG;
-  uint32_t* process_relations
+  uint32_t* process_relations;
 
   uint32_t total_cpu_time;
 
