@@ -11,8 +11,6 @@ OBJS=start.o drivers/uart.o vuart.o startup.o argparse.o klibc.o mmap.o stacks.o
 
 all: kernel.img
 
-
-
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 

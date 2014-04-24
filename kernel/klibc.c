@@ -368,3 +368,7 @@ os_size_t os_strcspn(const char *s, const char *reject)
   return length;
 }
 
+/*
+int main()
+{ return 0; }
+*/
