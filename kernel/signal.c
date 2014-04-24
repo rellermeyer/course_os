@@ -1,3 +1,5 @@
+//Contributors: Andrew Stepek, Michael Brennen, and Matthew Stromberg
+
 /*
 Signals
 */
