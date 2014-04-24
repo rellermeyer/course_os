@@ -62,6 +62,9 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
 	disable_interrupts();
+	// get that VIC Statusa1a0
+	// handle the interrupt
+	// clear the VIC status
 	print_uart0("IRQ HANDLER\n");
 	enable_interrupts();
 }
