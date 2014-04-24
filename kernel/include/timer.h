@@ -14,7 +14,13 @@ typedef struct {
 } rasp_pi_timer;
 
 void initialize_timers();
-void timer_start();
+//void timer_start();
+int set_load_value(int timer_index, int value);
+int get_current_value(int timer_index);
+int set_background_load_value(int timer_index, int value);
+int clear_interupt(int timer_index);
+int set_32_bit_mode(int timer_index);
+int start_timer(int timer_index);
 
 rasp_pi_timer *timer_pointers[4];
 
