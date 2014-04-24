@@ -26,6 +26,7 @@
 #define __klibc_h
 typedef unsigned int os_size_t;
 
+
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
@@ -44,3 +45,4 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
 #endif
+
