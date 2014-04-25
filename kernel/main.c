@@ -32,10 +32,9 @@ void main(void){
    */
 
   //initialize GLOBAL_PID and PCB table
-  init_pcb_table();
- 
-
   v_printf("\nBegin Test\n");
+
+  init_pcb_table();
 
   test_heap_manager();
 
@@ -45,6 +44,8 @@ void main(void){
 
   uint32_t* abt = 0xefb00000; 
   *abt = 0x786;
+  
+  asm volatile("svc 11");
 
   v_printf("\nEnd Test\n");
 

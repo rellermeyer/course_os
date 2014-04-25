@@ -47,7 +47,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	uint32_t * process_mem = u_malloc(process_size);
+	uint32_t * process_mem = umalloc(process_size);
 	uint32_t * current_pointer = process_mem;
 	//We're gonna copy each segment into memory at a position. Calculate what needs to done to change
 	//the entry_point to account for where we've placed something in memory

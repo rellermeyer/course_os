@@ -13,5 +13,5 @@ typedef enum{
 } priv_t;
 
 uint32_t* mem_alloc(uint32_t, priv_t);
-uint32_t* k_malloc(uint32_t);
-uint32_t* u_malloc(uint32_t);
+uint32_t * umalloc(uint32_t size);
+uint32_t * kmalloc(uint32_t size);
