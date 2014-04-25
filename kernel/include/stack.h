@@ -29,7 +29,7 @@ typedef struct stack {
 }
 
 stack* create_stack(void *data);
-int empty(stack* stack);
+int is_empty(stack* stack);
 int size(stack* stack);
 stack_elem peek(stack* stack);
 void push(stack* stack, stack_elem* elem);
