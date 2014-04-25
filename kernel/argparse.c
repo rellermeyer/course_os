@@ -59,7 +59,14 @@ int analyze_arguments(char **argv)
     // Check that we have valid input
     if (position != NULL && size != NULL)
     {
+      int BASE = 16;
+      int position_i = string_to_unsigned_int(position, BASE);
+      int size_i = string_to_unsigned_int(size, BASE);
+
+      os_printf("Ready to load program at position 0x%x of size 0x%x\n",
+        position_i, size_i);
       // TODO: load and run process
+
       return 3; // Consumed 3 arguments
     }
     else
@@ -158,4 +165,66 @@ int number_of_words(char *line)
   }
 
   return count;
+}
+
+
+/* We return a signed integer because we need a way to detect errors.
+
+   Read a string of characters and interpret them as an unsigned integer.
+   Return -1 if the string cannot be read as an unsigned integer.
+   Return an integer representing the value of the string otherwise.
+*/
+int string_to_unsigned_int(char *input, int base)
+{
+  int i = os_strlen(input) - 1; // Index in the string
+
+  if (hex_value_of_character(input[i]) == -1)
+  {
+    // Return -1 if the string cannot be read as an unsigned integer
+    return -1;
+  }
+
+  int n = 0; // Number of digits
+  int result = 0;
+
+  // Starting from the end of the string, read each character
+  while (i >= 0)
+  {
+    // Get the value of one character
+    int digit = hex_value_of_character(input[i]);
+
+    if (digit == -1)
+    {
+      // If we hit a non-digit character such as 'x', return
+      return result;
+    }
+
+    // Add the digit's value to the integer
+    result = result | (digit << (n * 4));
+
+    i--;
+    n++;
+  }
+  return result;
+}
+
+
+/* Return the hexidecimal value of the single character c */
+int hex_value_of_character(char c)
+{
+  if (c >= '0' && c <= '9')
+  {
+    return (int)(c - '0');
+  }
+  else if (c >= 'A' && c <= 'F')
+  {
+    return (int)(c - 'A' + 10);
+  }
+  else if (c >= 'a' && c <= 'f')
+  {
+    return (int)(c - 'a' + 10);
+  }
+
+  // Return -1 if c was not a hex digit
+  return -1;
 }
