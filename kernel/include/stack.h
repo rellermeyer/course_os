@@ -11,6 +11,8 @@
  *
  ******************************************************/
 
+#include <stdlib.h>
+
 #ifndef __stack_h
 #define __stack_h
 
@@ -21,12 +23,12 @@ typedef struct stack stack;
 
 struct stack_elem {
   void *data;
-}
+};
 
 typedef struct stack {
   stack_elem data[MAX_SIZE];
   int ptr;
-}
+};
 
 stack* create_stack(void *data);
 int is_empty(stack* stack);
