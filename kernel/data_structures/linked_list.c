@@ -17,8 +17,8 @@
  *
  ********************************************************************/
 
-#include "include/linked_list.h"
-#include "include/mem_alloc.h"
+#include "../include/linked_list.h"
+#include "../include/mem_alloc.h"
 
 list* create_list(void *data)
 {   /* create more space than needed -- less resizing */
