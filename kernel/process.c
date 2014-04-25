@@ -3,7 +3,7 @@
 #include "include/global_defs.h"
 
 int init_all_processes() {
-    pcb_table = mem_alloc(MAX_PROCESSES);
+    pcb_table = kmalloc(MAX_PROCESSES);
 	GLOBAL_PID = 0;
 } 
 
@@ -16,7 +16,7 @@ pcb* process_create(uint32_t* file_p) {
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
 	if(*free_space_in_pcb_table == 0) {
-		pcb* pcb_pointer = (pcb*) mem_alloc(sizeof(pcb));
+		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
@@ -30,6 +30,7 @@ pcb* process_create(uint32_t* file_p) {
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
 		pcb_pointer->function = sample_func;
+		pcb_pointer->has_executed = 0;
 
 		return pcb_pointer;
 		
@@ -84,22 +85,8 @@ uint32_t save_process_state(uint32_t PID){
 	asm("MOV %0, r13":"=r"(pcb_p->R13)::);
 	asm("MOV %0, r14":"=r"(pcb_p->R14)::);
 	asm("MOV %0, r15":"=r"(pcb_p->R15)::);
-	os_printf("reg 0 = %x\n", pcb_p->R0);
-	os_printf("reg 1 = %x\n", pcb_p->R1);
-	os_printf("reg 2 = %x\n", pcb_p->R2);
-	os_printf("reg 3 = %x\n", pcb_p->R3);
-	os_printf("reg 4 = %x\n", pcb_p->R4);
-	os_printf("reg 5 = %x\n", pcb_p->R5);
-	os_printf("reg 6 = %x\n", pcb_p->R6);
-	os_printf("reg 7 = %x\n", pcb_p->R7);
-	os_printf("reg 8 = %x\n", pcb_p->R8);
-	os_printf("reg 9 = %x\n", pcb_p->R9);
-	os_printf("reg 10 = %x\n", pcb_p->R10);
-	os_printf("reg 11 = %x\n", pcb_p->R11);
-	os_printf("reg 12 = %x\n", pcb_p->R12);
-	os_printf("reg 13 = %x\n", pcb_p->R13);
-	os_printf("reg 14 = %x\n", pcb_p->R14);
-	os_printf("reg 15 = %x\n", pcb_p->R15);
+
+	return 1;
 }
 
 //R15 is the Program Counter
@@ -132,6 +119,34 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
+
+	return 1;
+}
+
+uint32_t print_process_state(uint32_t PID) {
+	pcb* pcb_p = get_PCB(PID);
+
+	if(pcb_p == 0) {
+		return 0;
+	}
+
+	os_printf("Process State of PID: %d\n", PID);
+	os_printf("reg 0 = %x\n", pcb_p->R0);
+	os_printf("reg 1 = %x\n", pcb_p->R1);
+	os_printf("reg 2 = %x\n", pcb_p->R2);
+	os_printf("reg 3 = %x\n", pcb_p->R3);
+	os_printf("reg 4 = %x\n", pcb_p->R4);
+	os_printf("reg 5 = %x\n", pcb_p->R5);
+	os_printf("reg 6 = %x\n", pcb_p->R6);
+	os_printf("reg 7 = %x\n", pcb_p->R7);
+	os_printf("reg 8 = %x\n", pcb_p->R8);
+	os_printf("reg 9 = %x\n", pcb_p->R9);
+	os_printf("reg 10 = %x\n", pcb_p->R10);
+	os_printf("reg 11 = %x\n", pcb_p->R11);
+	os_printf("reg 12 = %x\n", pcb_p->R12);
+	os_printf("reg 13 = %x\n", pcb_p->R13);
+	os_printf("reg 14 = %x\n", pcb_p->R14);
+	os_printf("reg 15 = %x\n", pcb_p->R15);
 
 	return 1;
 }
@@ -250,9 +265,11 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
+	pcb_p->has_executed = 1;
 	pcb_p->function(pcb_p->PID);
 	return 1;
 }
+
 
 //test function to see if execute process works correctly.
 void sample_func(uint32_t x) {
