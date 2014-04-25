@@ -9,10 +9,7 @@
 void start(void *p_bootargs) {
   char *cmdline_args = read_cmdline_tag(p_bootargs);
 
-  init_heap(32*0x100000);
-  test_heap_manager();
-
-  print_uart0("arguments: ");
+  print_uart0("\narguments: ");
   print_uart0(cmdline_args);
   print_uart0("\n");
   print_uart0("CourseOS!\n");
@@ -26,7 +23,10 @@ void start(void *p_bootargs) {
   // Parse and analyze each String
   parse_arguments(arg_count, arg_list);
 
-  // TODO: initialize GLOBAL_PID and PCB table
+  // TODO: initialize GLOBAL_PID and PCB table?
+
+  init_heap(32*0x100000);
+  test_heap_manager();
 }
 
 void test_heap_manager()
