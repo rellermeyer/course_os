@@ -42,7 +42,6 @@ int analyze_arguments(char **argv)
 
   */
 
-  
   // TODO: load process(es) and run them
   if (os_strcmp(argv[i], "-load") == 0)
   {
