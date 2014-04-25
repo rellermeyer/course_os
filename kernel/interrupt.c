@@ -60,16 +60,18 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 		// update the "select" register on the VIC
 		vic_select_fiq(num);
 
-	
-	
-	
-	
+	// the VIC will take it from here ...	
+	// return a success value
 }
 
 // handle_interrupt takes a number (the interrupt from the VIC), looks into
 // the table of registered handlers, and calls the appropriate handler
-void handle_interrupt(int interrupt_vector){
+void handle_irq_interrupt(int interrupt_vector){
 	os_printf("handling interrupt %d\n", interrupt_vector);
+	// go to handler routine
+	handlers[interrupt_vector];
+	// ok interrupt handled, clear it
+	hw_interrupt_disable(interrupt_vector);
 }
 
 

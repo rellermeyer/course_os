@@ -29,8 +29,8 @@ void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
-void start(void *p_bootargs) {
 
+void start(void *p_bootargs) {
 	// we're not using Virtual memory here
 	//	mmap();  
 	init_vector_table();
@@ -48,4 +48,24 @@ void start(void *p_bootargs) {
 	 * goes in main
 	 *
 	 */
+	
+	/* Simulating/Testing Interrupt Routines with UART */
+	
+	/* THIS PART IS  DONE IN THE DRIVER */
+	// Step 1: arm interrupts on device
+	/* enable RXIM interrupt */
+ 	UART0_IMSC = 1<<4;
+	
+	// Step 2: Create handler
+	interrupt_handler_t uartHandler;
+	uartHandler.handler = uart_handler;
+	
+	// Step 3: register the handler with interrupts 
+	// (12 = interrupt mapping for UART handler -- see interrupt.h)
+	register_interrupt_handler(12, &uartHandler);
+	// now we go off into interrupt land ...
+	// ... ok we're back from the interrupt
+	
+	// Step 4: disarm the interrupt on the device
+	
 }

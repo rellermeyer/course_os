@@ -70,12 +70,20 @@ void reserved_handler(void){
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
-
-	disable_interrupts();
-	// get that VIC Statusa1a0
-	// handle the interrupt
-	// clear the VIC status
 	print_uart0("IRQ HANDLER\n");
+	disable_interrupts();	
+	// Discover source of interrupt
+	uint32_t mask = 1;
+	int source = 0;
+	// this search will need to become round robbin, but this is good for now
+	while (source < MAX_NUM_INTERRUPTS){
+		mask = mask << source;
+		if (mask == VIC_IRQ_STATUS){
+			break;
+		}
+		source++;
+	}
+	handle_irq_interrupt(source);
 	enable_interrupts();
 }
 

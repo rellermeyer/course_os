@@ -39,7 +39,7 @@ extern interrupt_t ALL;
 // HIGH bits are FIQs
 // extern char check_if_fiq[MAX_NUM_INTERRUPTS];
 
-typedef struct {
+typedef struct interrupt_handler_t{
 	void (*handler)(void *args);
 	// more may need to be added
 } interrupt_handler_t;
@@ -81,7 +81,7 @@ int 	get_proc_status(void);
 void	restore_proc_status(int);
 
 int 	register_interrupt_handler(int, interrupt_handler_t *);
-void	handle_interrupt(int);
+void	handle_irq_interrupt(int);
 
 /* VIC Interrupt Mappings */
 #define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
@@ -90,6 +90,7 @@ void	handle_interrupt(int);
 #define VIC_INT_SELECT		(*((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
 #define VIC_INT_ENABLE		(*((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
 #define VIC_INT_ENCLEAR		(*((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
+//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030))) // contains the Interrupt Service Routine (ISR) of the currently active interrupt
 
 // these should be used in conjunction with the bit shift mappings below
 #define hw_interrupt_enable(n)	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | (1 << n))
