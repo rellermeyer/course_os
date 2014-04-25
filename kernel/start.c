@@ -23,6 +23,7 @@
 #include "mmap.h"
 #include "pmap.h"
 #include "vmlayout.h"
+#include "klibc.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 void uart_handler(void *null) {
@@ -30,20 +31,31 @@ void uart_handler(void *null) {
 }
 
 void start(void *p_bootargs) {
-    print_uart0("Init...\n");
-    /*
+  print_uart0("Init...\n");
+
+  //don't allow interrpts messing with memory
+  disable_interrupts();
+
   char *cmdline_args = read_cmdline_tag(p_bootargs);
 
   print_uart0("arguments: ");
   print_uart0(cmdline_args);
   print_uart0("\n");
   print_uart0("CourseOS!\n");
-  */
 
-  //don't allow interrpts messing with memory
-  disable_interrupts();
+  // Separate the command-line arguments into separate Strings
+  int num_args = number_of_words(cmdline_args);
+  char* arg_list[num_args];
+  split_string(cmdline_args, arg_list);
+  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+  // Parse and analyze each String
+  parse_arguments(arg_count, arg_list);
+
   //setup page table and enable MMU
-  mmap();  
+/*  mmap();
+
+
   //register handlers
   init_vector_table();
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
@@ -56,11 +68,12 @@ void start(void *p_bootargs) {
    //initialize GLOBAL_PID and PCB table
    init_all_processes();
 
-  //Test: UART0 mapped to the correct virtual address   
+  //Test: UART0 mapped to the correct virtual address
   print_vuart0("MMU enabled\n");
 
   //setup new stack pointers and jump to main
   asm volatile (".include \"stacks.s\"");
+
 
   /* NOTHING EXECUTED BEYOND THIS POINT
   *
