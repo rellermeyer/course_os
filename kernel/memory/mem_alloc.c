@@ -1,11 +1,10 @@
 #include "mem_alloc.h"
-#include "vmlayout.h"
-#include "pmap.h"
+#include "memory.h"
 #include "../include/klibc.h"
 
 
-uint32_t* next_ublock = UHEAPSTART;
-uint32_t* next_kblock = KHEAPSTART;
+uint32_t* next_ublock = V_UHEAPBASE;
+uint32_t* next_kblock = V_KHEAPBASE;
 
 char* kheap;
 int32_t kheap_size;
@@ -32,7 +31,7 @@ uint32_t* mem_alloc(uint32_t size, priv_t priv) {
 	}
 
 	if(priv == KERN){ 
-		if(next_kblock + temp > KHEAPLIM){
+		if(next_kblock + temp > V_KHEAPTOP){
 			return alloc_block;
 		}
 		alloc_block = next_kblock;
@@ -40,19 +39,19 @@ uint32_t* mem_alloc(uint32_t size, priv_t priv) {
 	}
 
 	if(priv == USER){
-		if(next_ublock + temp > UHEAPLIM){
+		if(next_ublock + temp > V_UHEAPTOP){
 			return alloc_block;
 		}
 		alloc_block = next_ublock;
 		next_ublock += temp;
 	}
-	v_printf("returning block %x\n", alloc_block);
+	os_printf("returning block %x\n", alloc_block);
 	return alloc_block;
 }
 
 void* init_kheap(uint32_t size){
 	kheap = (char*)mem_alloc(size, KERN);
-	//v_printf("&kheap=%x\n", kheap);
+	//os_printf("&kheap=%x\n", kheap);
 	kheap_size = size;
 
 	uint32_t* heap_header = kheap;
@@ -61,14 +60,14 @@ void* init_kheap(uint32_t size){
 	*heap_header = kheap_size;
 	*heap_footer = kheap_size;
 
-	//v_printf("heap_header=%x\n", heap_header);
-	//v_printf("heap_footer=%x\n", heap_footer);
+	//os_printf("heap_header=%x\n", heap_header);
+	//os_printf("heap_footer=%x\n", heap_footer);
 	return kheap;
 }
 
 void* init_uheap(uint32_t size){
 	uheap = (char*)mem_alloc(size, USER);
-	//v_printf("&uheap=%x\n", uheap);
+	//os_printf("&uheap=%x\n", uheap);
 	uheap_size = size;
 
 	uint32_t* heap_header = uheap;
@@ -77,8 +76,8 @@ void* init_uheap(uint32_t size){
 	*heap_header = uheap_size;
 	*heap_footer = uheap_size;
 
-	//v_printf("heap_header=%x\n", heap_header);
-	//v_printf("heap_footer=%x\n", heap_footer);
+	//os_printf("heap_header=%x\n", heap_header);
+	//os_printf("heap_footer=%x\n", heap_footer);
 	return uheap;
 }
 
@@ -88,12 +87,12 @@ char* allocate(uint32_t size, char* heap, int32_t heap_size){
 	int32_t i, ret_ptr;
 	for(i = 0; i < heap_size; i+=0){
 
-		//v_printf("byte=%d\n",i);
+		//os_printf("byte=%d\n",i);
 
 		uint32_t* header_addr = heap+i;
 		int32_t header = *header_addr;
 
-		//v_printf("&header=%x\n",header_addr);
+		//os_printf("&header=%x\n",header_addr);
 
 		uint32_t* footer_addr = heap+i+sizeof(int32_t)+size;
 
@@ -281,15 +280,15 @@ void mcheck(void* heap_ptr, int32_t heap_size){
 		int32_t block_footer = *footer_addr;
 
 		if(block_header == block_footer && block_header<0){
-			v_printf("Block %d Allocated:", block);
-			v_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+			os_printf("Block %d Allocated:", block);
+			os_printf("\tsize = %d, address = %x\n", block_size, block_addr);
 		}
 		else if(block_header == block_footer && block_header>0){
-			v_printf("Block %d Free:", block);
-			v_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+			os_printf("Block %d Free:", block);
+			os_printf("\tsize = %d, address = %x\n", block_size, block_addr);
 		}
 		else{
-			v_printf("INCONSISTENT HEAP");
+			os_printf("INCONSISTENT HEAP");
 			return;
 		}
 

@@ -1,12 +1,13 @@
 #include "include/process.h"
 #include "include/klibc.h"
 #include "include/global_defs.h"
-//#include "memory/mem_alloc.c"
+#include "include/mem_alloc.h"
 
-int init_pcb_table() {
-    v_printf("pcb_table initialized!");
-    pcb_table = kmalloc(MAX_PROCESSES);
-}
+
+int init_all_processes() {
+    pcb_table = kmalloc(MAX_PROCESSES*4);
+	GLOBAL_PID = 0;
+} 
 
 //creates a process and initializes the PCB
 //returns pcb pointer upon success

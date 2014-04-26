@@ -1,19 +1,19 @@
 /********************************************************************
-*	klibc.c
+* klibc.c
 *
-*	(Any collaborators, please add your name)
-*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
+* (Any collaborators, please add your name)
+* Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
 *
-*	Last edited: 21 April 2014
+* Last edited: 21 April 2014
 *
-*	Purpose:	Provide basic libc funtionality for CourseOS
-*			This file provides function implementations
-*			for skels in libc.h
+* Purpose:  Provide basic libc funtionality for CourseOS
+*     This file provides function implementations
+*     for skels in libc.h
 *
-*	Usage:	Compile into kernel. Adaptations of normal libc functions
-*		can be used by prepending os_ suffix.
+* Usage:  Compile into kernel. Adaptations of normal libc functions
+*   can be used by prepending os_ suffix.
 *
-*	Notes:	The following were adapted directly from musl-libc:
+* Notes:  The following were adapted directly from musl-libc:
 *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok,
 *               strspn, and strcspn
 ********************************************************************/
@@ -41,26 +41,26 @@ static char upper_case_digits[16] = "0123456789ABCDEF";
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, os_size_t num )
 {
-	const unsigned char *l = left, *r = right;
-	for ( ; num && *l == *r; num--, l++, r++ );
-	return num ? *l - *r : 0;
+  const unsigned char *l = left, *r = right;
+  for ( ; num && *l == *r; num--, l++, r++ );
+  return num ? *l - *r : 0;
 }
 
 int os_strcmp ( const char *left, const char *right)
 {
-	for (; *left == *right && *left; left++, right++);
-	return *(unsigned char *)left - *(unsigned char *)right;
+  for (; *left == *right && *left; left++, right++);
+  return *(unsigned char *)left - *(unsigned char *)right;
 }
 
 //memory copy
 //Responsibility is on the programmer to copy safely 
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
-	int i = 0;
-	for(; i < size; i++)
-	{
-		*(dest + i) = *(source + i);
-	}
+  int i = 0;
+  for(; i < size; i++)
+  {
+    *(dest + i) = *(source + i);
+  }
 }
 
 void print_hex(int val, int CASE)
@@ -160,86 +160,86 @@ int os_printf(const char *str_buf, ...) {
 /* Set the first n bytes of dest to be the value c.*/
 void *os_memset(void *dest, int c, os_size_t n)
 {
-	unsigned char *s = dest;
-	os_size_t k;
+  unsigned char *s = dest;
+  os_size_t k;
 
-	/* Fill head and tail with minimal branching. Each
-	 * conditional ensures that all the subsequently used
-	 * offsets are well-defined and in the dest region. */
+  /* Fill head and tail with minimal branching. Each
+   * conditional ensures that all the subsequently used
+   * offsets are well-defined and in the dest region. */
 
-	if (!n) return dest;
-	s[0] = s[n-1] = c;
-	if (n <= 2) return dest;
-	s[1] = s[n-2] = c;
-	s[2] = s[n-3] = c;
-	if (n <= 6) return dest;
-	s[3] = s[n-4] = c;
-	if (n <= 8) return dest;
+  if (!n) return dest;
+  s[0] = s[n-1] = c;
+  if (n <= 2) return dest;
+  s[1] = s[n-2] = c;
+  s[2] = s[n-3] = c;
+  if (n <= 6) return dest;
+  s[3] = s[n-4] = c;
+  if (n <= 8) return dest;
 
-	/* Advance pointer to align it at a 4-byte boundary,
-	 * and truncate n to a multiple of 4. The previous code
-	 * already took care of any head/tail that get cut off
-	 * by the alignment. */
+  /* Advance pointer to align it at a 4-byte boundary,
+   * and truncate n to a multiple of 4. The previous code
+   * already took care of any head/tail that get cut off
+   * by the alignment. */
 
-	k = -(uintptr_t)s & 3;
-	s += k;
-	n -= k;
-	n &= -4;
+  k = -(uintptr_t)s & 3;
+  s += k;
+  n -= k;
+  n &= -4;
 
 #ifdef __GNUC__
-	typedef uint32_t __attribute__((__may_alias__)) u32;
-	typedef uint64_t __attribute__((__may_alias__)) u64;
+  typedef uint32_t __attribute__((__may_alias__)) u32;
+  typedef uint64_t __attribute__((__may_alias__)) u64;
 
-	u32 c32 = ((u32)-1)/255 * (unsigned char)c;
+  u32 c32 = ((u32)-1)/255 * (unsigned char)c;
 
-	/* In preparation to copy 32 bytes at a time, aligned on
-	 * an 8-byte bounary, fill head/tail up to 28 bytes each.
-	 * As in the initial byte-based head/tail fill, each
-	 * conditional below ensures that the subsequent offsets
-	 * are valid (e.g. !(n<=24) implies n>=28). */
+  /* In preparation to copy 32 bytes at a time, aligned on
+   * an 8-byte bounary, fill head/tail up to 28 bytes each.
+   * As in the initial byte-based head/tail fill, each
+   * conditional below ensures that the subsequent offsets
+   * are valid (e.g. !(n<=24) implies n>=28). */
 
-	*(u32 *)(s+0) = c32;
-	*(u32 *)(s+n-4) = c32;
-	if (n <= 8) return dest;
-	*(u32 *)(s+4) = c32;
-	*(u32 *)(s+8) = c32;
-	*(u32 *)(s+n-12) = c32;
-	*(u32 *)(s+n-8) = c32;
-	if (n <= 24) return dest;
-	*(u32 *)(s+12) = c32;
-	*(u32 *)(s+16) = c32;
-	*(u32 *)(s+20) = c32;
-	*(u32 *)(s+24) = c32;
-	*(u32 *)(s+n-28) = c32;
-	*(u32 *)(s+n-24) = c32;
-	*(u32 *)(s+n-20) = c32;
-	*(u32 *)(s+n-16) = c32;
+  *(u32 *)(s+0) = c32;
+  *(u32 *)(s+n-4) = c32;
+  if (n <= 8) return dest;
+  *(u32 *)(s+4) = c32;
+  *(u32 *)(s+8) = c32;
+  *(u32 *)(s+n-12) = c32;
+  *(u32 *)(s+n-8) = c32;
+  if (n <= 24) return dest;
+  *(u32 *)(s+12) = c32;
+  *(u32 *)(s+16) = c32;
+  *(u32 *)(s+20) = c32;
+  *(u32 *)(s+24) = c32;
+  *(u32 *)(s+n-28) = c32;
+  *(u32 *)(s+n-24) = c32;
+  *(u32 *)(s+n-20) = c32;
+  *(u32 *)(s+n-16) = c32;
 
-	/* Align to a multiple of 8 so we can fill 64 bits at a time,
-	 * and avoid writing the same bytes twice as much as is
-	 * practical without introducing additional branching. */
+  /* Align to a multiple of 8 so we can fill 64 bits at a time,
+   * and avoid writing the same bytes twice as much as is
+   * practical without introducing additional branching. */
 
-	k = 24 + ((uintptr_t)s & 4);
-	s += k;
-	n -= k;
+  k = 24 + ((uintptr_t)s & 4);
+  s += k;
+  n -= k;
 
-	/* If this loop is reached, 28 tail bytes have already been
-	 * filled, so any remainder when n drops below 32 can be
-	 * safely ignored. */
+  /* If this loop is reached, 28 tail bytes have already been
+   * filled, so any remainder when n drops below 32 can be
+   * safely ignored. */
 
-	u64 c64 = c32 | ((u64)c32 << 32);
-	for (; n >= 32; n-=32, s+=32) {
-		*(u64 *)(s+0) = c64;
-		*(u64 *)(s+8) = c64;
-		*(u64 *)(s+16) = c64;
-		*(u64 *)(s+24) = c64;
-	}
+  u64 c64 = c32 | ((u64)c32 << 32);
+  for (; n >= 32; n-=32, s+=32) {
+    *(u64 *)(s+0) = c64;
+    *(u64 *)(s+8) = c64;
+    *(u64 *)(s+16) = c64;
+    *(u64 *)(s+24) = c64;
+  }
 #else
-	/* Pure C fallback with no aliasing violations. */
-	for (; n; n--, s++) *s = c;
+  /* Pure C fallback with no aliasing violations. */
+  for (; n; n--, s++) *s = c;
 #endif
 
-	return dest;
+  return dest;
 }
 
 
@@ -249,17 +249,17 @@ void *os_memset(void *dest, int c, os_size_t n)
 */
 char *__strchrnul(const char *s, int c)
 {
-	os_size_t *w, k;
+  os_size_t *w, k;
 
-	c = (unsigned char)c;
-	if (!c) return (char *)s + os_strlen(s);
+  c = (unsigned char)c;
+  if (!c) return (char *)s + os_strlen(s);
 
-	for (; (uintptr_t)s % ALIGN; s++)
-		if (!*s || *(unsigned char *)s == c) return (char *)s;
-	k = ONES * c;
-	for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w^k); w++);
-	for (s = (void *)w; *s && *(unsigned char *)s != c; s++);
-	return (char *)s;
+  for (; (uintptr_t)s % ALIGN; s++)
+    if (!*s || *(unsigned char *)s == c) return (char *)s;
+  k = ONES * c;
+  for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w^k); w++);
+  for (s = (void *)w; *s && *(unsigned char *)s != c; s++);
+  return (char *)s;
 }
 
 
@@ -276,12 +276,12 @@ char *os_strcpy(char *dest, const char *src)
 /* Return the length of s */
 os_size_t os_strlen(const char *s)
 {
-	const char *a = s;
-	const os_size_t *w;
-	for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
-	for (w = (const void *)s; !HASZERO(*w); w++);
-	for (s = (const void *)w; *s; s++);
-	return s-a;
+  const char *a = s;
+  const os_size_t *w;
+  for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
+  for (w = (const void *)s; !HASZERO(*w); w++);
+  for (s = (const void *)w; *s; s++);
+  return s-a;
 }
 
 
@@ -292,14 +292,14 @@ os_size_t os_strlen(const char *s)
 */
 char *os_strtok(char *s, const char *sep)
 {
-	static char *p;
-	if (!s && !(s = p)) return NULL;
-	s += os_strspn(s, sep);
-	if (!*s) return p = 0;
-	p = s + os_strcspn(s, sep);
-	if (*p) *p++ = 0;
-	else p = 0;
-	return s;
+  static char *p;
+  if (!s && !(s = p)) return NULL;
+  s += os_strspn(s, sep);
+  if (!*s) return p = 0;
+  p = s + os_strcspn(s, sep);
+  if (*p) *p++ = 0;
+  else p = 0;
+  return s;
 }
 
 /* Returns the length of the initial segment of s that only includes
@@ -368,3 +368,4 @@ os_size_t os_strcspn(const char *s, const char *reject)
   }
   return length;
 }
+

@@ -1,6 +1,5 @@
 #include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h"
+#include "include/memory.h"
 #include "include/klibc.h"
 /*
  * APX AP            Privileged    Unprivileged
@@ -16,8 +15,10 @@
  */	
 
 
-void mmap(){
-
+void mmap(void *p_bootargs) {
+	char *cmdline_args = read_cmdline_tag(p_bootargs);
+	print_uart0(cmdline_args);
+	print_uart0("\n");
 	asm volatile("cpsid if");
 
 	//stash register state on the stack
@@ -45,65 +46,51 @@ void mmap(){
 */
 	
 	//temporarily map where it is until we copy it in VAS
-	first_level_pt[KERNDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
+	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
 	//1MB for static kernel data structures (stacks and l1 pt)
-	first_level_pt[V_KDSBASE>>20] = KERNDSBASE | 0x0400 | 2;
-
-	//4 1M sections for second level coarse page table region
-	first_level_pt[V_L2PTSBASE>>20] = L2PTSBASE | 0x0400 | 2;
-	first_level_pt[(V_L2PTSBASE+0x100000)>>20] = (L2PTSBASE+0x100000) | 0x0400 | 2;
-	first_level_pt[(V_L2PTSBASE+0x200000)>>20] = (L2PTSBASE+0x200000) | 0x0400 | 2;
-	first_level_pt[(V_L2PTSBASE+0x300000)>>20] = (L2PTSBASE+0x300000) | 0x0400 | 2;
+	first_level_pt[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
 	//map the kernel where its currently loaded in the same location temporarily
 	//should be less than a MB
-	first_level_pt[PKERNBASE>>20] = 0<<20 | 0x0400 | 2;
+	first_level_pt[P_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
 
 	//also map it to high memory at 0xf0000000 (vpn = 3840)
-	first_level_pt[KERNSTART>>20] = 0<<20 | 0x0400 | 2;
-	//first_level_pt[0xf0000000>>20] = 0x210000 | 0x0400 | 2;
+	first_level_pt[V_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
+	first_level_pt[V_KERNBASE+0x100000>>20] = 0<<20+0x100000 | 0x0400 | 2;
 
-	//map ~2MB of peripheral registers from 0x10000000-0x101f5000
-	//to two 1MB sections at 0x80000000 and 0x80100000
-	first_level_pt[PREGSTART>>20] = PERIPHBASE | 0x0400 | 2;
-	first_level_pt[(PREGSTART+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
-
-	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
-	//752 MB sections at 0x80200000-0xaf200000
-	unsigned int pci_bus_addr = PCIBASE;
+	//map 31MB of phsyical memory managed by kmalloc
+	unsigned int p_kheap_addr = P_KHEAPBASE;
 	int i;
-	for(i = (PCISTART>>20); i < (PCIEND>>20); i++){
-		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
-		//os_printf("i= %d\n",i);
-   	   	//os_printf("l1pt= %x\n", first_level_pt[i]);  
-		pci_bus_addr += (1024*1024);
+	for(i = (V_KHEAPBASE>>20); i < (V_KHEAPTOP>>20); i++){
+		first_level_pt[i] = p_kheap_addr | 0x0400 | 2;
+		p_kheap_addr += 0x100000;
 	}
 
-
-	//map remaining physical memory as 1MB section for bump pointer u_malloc and k_malloc
-	unsigned int pm_start = PKERNTOP;
-	unsigned int pm_end = L2PTSBASE;
-	unsigned int avail_pm = pm_start - pm_end;
-
-	unsigned int u_vm_start = UHEAPSTART;
-	unsigned int u_vm_end = u_vm_start + MALLOCPM;
-
-	unsigned int k_vm_start = PCIEND;
-	unsigned int k_vm_end = k_vm_start + KMALLOCPM;
-
-	//map 22MB for k_malloc
-	for(i = (k_vm_start>>20); i < (k_vm_end>>20) && pm_start < pm_end; i++){
-		first_level_pt[i] = pm_start | 0x0400 | 2;
-		pm_start += 0x100000;
+	//map 32MB of physical memory manged by umalloc
+	unsigned int p_uheap_addr = P_UHEAPBASE;
+	for(i = (V_UHEAPBASE>>20); i < (V_UHEAPTOP>>20); i++){
+		first_level_pt[i] = p_uheap_addr | 0x0400 | 2;
+		p_uheap_addr += 0x100000;
 	}
 
-	//map remaining 100MB for u_malloc
-	for(i = (u_vm_start>>20); i < (u_vm_end>>20) && pm_start < pm_end; i++){
-		first_level_pt[i] = pm_start | 0x0400 | 2;
-		pm_start += 0x100000;
+	//map ~2MB of peripheral registers one-to-one
+	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
+	first_level_pt[(PERIPHBASE+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
+
+	//map 752MB of PCI interface one-to-one
+	unsigned int pci_bus_addr = PCIBASE;
+	for(i = (PCIBASE>>20); i < (PCITOP>>20); i++){
+		first_level_pt[i] = pci_bus_addr | 0x0400 | 2; 
+		pci_bus_addr += 0x100000;
 	}
 
+	//remap 62MB of physical memory after the kernel 
+	unsigned int phys_addr = P_KERNTOP;
+	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
+		first_level_pt[i] = phys_addr | 0x0400 | 2;
+		phys_addr += 0x100000;
+	}
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
 
@@ -138,5 +125,9 @@ void mmap(){
 	asm volatile("pop {r0-r11}");
 
 	asm volatile("cpsie if");
+  	asm volatile (".include \"stacks.s\"");
+
+  	//branch to proper kernel at start
+  	asm volatile("bl start");
 
 }
