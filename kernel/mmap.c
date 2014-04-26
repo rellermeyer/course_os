@@ -15,7 +15,10 @@
  */	
 
 
-void mmap(){
+void mmap(void *p_bootargs) {
+	char *cmdline_args = read_cmdline_tag(p_bootargs);
+	print_uart0(cmdline_args);
+	print_uart0("\n");
 	asm volatile("cpsid if");
 
 	//stash register state on the stack
