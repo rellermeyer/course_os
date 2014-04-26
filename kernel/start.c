@@ -22,31 +22,54 @@
 #include "include/mmap.h"
 #include "include/pmap.h"
 #include "include/vmlayout.h"
+#include "include/loader.h"
 
 void start(void *p_bootargs) {
+   char *cmdline_args = read_cmdline_tag(p_bootargs);
+
    print_uart0("arguments: ");
-   print_uart0(read_cmdline_tag(p_bootargs));
+   print_uart0(cmdline_args);
    print_uart0("\n");
    print_uart0("CourseOS!\n");
+
+   int addr = 0x810000;
+   int addr2 = 0x710000;
+   //os_printf(addr2);
+   os_printf(addr);
+   load_file((uint32_t *) addr);
+   // Separate the command-line arguments into separate Strings
+   //int num_args = number_of_words(cmdline_args);
+   // char* arg_list[num_args];
+   // split_string(cmdline_args, arg_list);
+   // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+   // Parse and analyze each String
+   //parse_arguments(arg_count, arg_list);
+
+
+   // init_pcb_table();
    
-   init_vector_table();
+    /*init_vector_table();
 
-   mmap();
+    mmap();
 
-   //Test: UART0 mapped to the correct virtual address   
-   print_vuart0("Virtual Memory!!!\n");
+   // //Test: UART0 mapped to the correct virtual address   
+    print_vuart0("Virtual Memory!!!\n");
 
-   //setup new stack pointers and jump to main
-   asm volatile (".include \"stacks.s\"");
+   // //setup new stack pointers and jump to main
+    asm volatile (".include \"stacks.s\"");
   
-   /* NOTHING EXECUTED BEYOND THIS POINT
-    *
-    *
-    * Anything that needs to be setup right after
-    * booting the kernel should go before mmap()
-    *
-    * Any setup, heap allocation or stack allocation
-    * goes in main
-    *
-    */
+   //  * NOTHING EXECUTED BEYOND THIS POINT
+   //  *
+   //  *
+   //  * Anything that needs to be setup right after
+   //  * booting the kernel should go before mmap()
+   //  *
+   //  * Any setup, heap allocation or stack allocation
+   //  * goes in main
+   //  *
+   //  *
+   */	
+
+
 }
