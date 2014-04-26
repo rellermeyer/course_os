@@ -28,15 +28,32 @@ pcb* process_create(uint32_t* file_p) {
 		os_printf("Success: %d\n", success);
 		
 		// //fill the free space with a pcb pointer
-		// *free_space_in_pcb_table = (uint32_t) pcb_pointer; 
-		// //initialize PCB		
-		// pcb_pointer->PID = ++GLOBAL_PID;
-		// pcb_pointer->function = sample_func;
-		// pcb_pointer->has_executed = 0;
-
+		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+		
+		//initialize PCB		
+		pcb_pointer->PID = ++GLOBAL_PID;
+		pcb_pointer->function = sample_func;
+		pcb_pointer->has_executed = 0;
+		pcb_pointer->heap_p = kmalloc(4096); 
+		
+		pcb_pointer->R0 = 0;
+		pcb_pointer->R1 = 0; 
+		pcb_pointer->R2 = 0; 
+		pcb_pointer->R3 = 0; 
+		pcb_pointer->R4 = 0; 
+		pcb_pointer->R5 = 0; 
+		pcb_pointer->R6 = 0; 
+		pcb_pointer->R7 = 0; 
+		pcb_pointer->R8 = 0; 
+		pcb_pointer->R9 = 0; 
+		pcb_pointer->R10 = 0; 
+		pcb_pointer->R11 = pcb_pointer->heap_p + 4096; //initial frame pointer 
+		pcb_pointer->R12 = 0; 
+		pcb_pointer->R13 = pcb_pointer->heap_p + 4096; //stack pointer is top of heap
+		pcb_pointer->R14 = 0; 
+		pcb_pointer->R15 = 0; 
 		return pcb_pointer;
 		
-
 	} else {
 		print_uart0("Out of memory in pcb table");
 		return 0;

@@ -69,7 +69,7 @@ typedef struct pcb{
   uint32_t has_executed;
   //CPU state data
   //PROCESS_STATE current_state;
-
+  uint32_t* heap_p; //pointer to the heap
 
   
 
