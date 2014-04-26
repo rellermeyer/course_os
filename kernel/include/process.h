@@ -2,7 +2,6 @@
 #define PROCESS_H
 #include "global_defs.h"
 #include <stdint.h>
-#include "mem_alloc.h"
 
 /*LOG:
 3/15: Initial skeleton and comments by Josh Guan.
@@ -48,9 +47,7 @@ process privileges*
 accounting info
 last run?, total CPU time accumulation
 */
-
 /* what are the bare essentials for a PCB
-
 */
 typedef
 enum PROCESS_STATE {PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING}
@@ -117,6 +114,18 @@ typedef struct pcb{
   //uint32_t EFLAG;
   //uint32_t* process_relations
   //uint32_t total_cpu_time;
+
+//CPU state data
+  uint32_t SPSR;
+  uint32_t PC;
+
+//Control data
+  int priority_value;
+  uint32_t elapsed_time;
+  uint32_t EFLAG;
+  uint32_t* process_relations;
+
+  uint32_t total_cpu_time;
 
 } pcb;
 

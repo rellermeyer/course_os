@@ -2,8 +2,8 @@
 #include "include/klibc.h"
 #include "include/global_defs.h"
 
-int init_pcb_table() {
-    pcb_table = mem_alloc(MAX_PROCESSES);
+int init_all_processes() {
+    pcb_table = kmalloc(MAX_PROCESSES*4);
 	GLOBAL_PID = 0;
 } 
 
@@ -16,7 +16,7 @@ pcb* process_create(uint32_t* file_p) {
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 	
 	if(*free_space_in_pcb_table == 0) {
-		pcb* pcb_pointer = (pcb*) mem_alloc(sizeof(pcb));
+		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
