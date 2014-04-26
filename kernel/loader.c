@@ -48,7 +48,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	uint32_t * process_mem = mem_alloc(process_size);//u_malloc(process_size);
+	uint32_t * process_mem = kmalloc(process_size * 4);
 	uint32_t * current_pointer = process_mem;
 	//We're gonna copy each segment into memory at a position. Calculate what needs to done to change
 	//the entry_point to account for where we've placed something in memory
@@ -107,14 +107,10 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 //Take a process control block and pointer to the start of an ELF file in memory.
 void load_file(uint32_t * file_pointer)//pcb * process_control_block, uint32_t * file_pointer)
 {
-	Elf_Ehdr *h = (Elf_Ehdr *)mem_alloc( sizeof(Elf_Ehdr));
+	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr));
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 	
-	os_printf("\n%d\n", i);
-	os_printf("Entry point: %d\n", h->e_entry); 
-	os_printf("number of program headers: %d\n", h->e_phnum);
-	os_printf("Numober of section headers: %d\n", h->e_shnum);
-	Elf_Phdr * ph = (Elf_Phdr *) mem_alloc(h->e_phnum * sizeof(Elf_Phdr));
+	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
 	
 	
