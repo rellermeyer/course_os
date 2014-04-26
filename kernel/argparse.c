@@ -5,6 +5,22 @@
 #include "include/mem_alloc.h"
 
 
+/* Get the command-line arguments and run the functions to process them. */
+void run_argparse(uint32_t p_bootargs)
+{
+  char *cmdline_args = read_cmdline_tag(p_bootargs);
+
+  // Separate the command-line arguments into separate Strings
+  int num_args = number_of_words(cmdline_args);
+  char* arg_list[num_args];
+  split_string(cmdline_args, arg_list);
+  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+  // Examine each String and do something based on the argument
+  parse_arguments(arg_count, arg_list);
+}
+
+
 /* Parse the list of strings (argv) and process each argument */
 void parse_arguments(int argc, char **argv)
 {

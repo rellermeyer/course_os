@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+void run_argparse(uint32_t p_bootargs);
 void parse_arguments(int argc, char **argv);
 int analyze_args(char **argv);
 char* read_cmdline_tag(uint32_t *tag_base);
