@@ -104,8 +104,11 @@ void start() {
   //Test: UART0 mapped to the correct virtual address   
   print_uart0("MMU enabled\n");
   init_kheap(31 * 0x100000);
-  uint32_t * test = pa2va(0x810000);
-  os_printf(test);
+  uint32_t test = pa2va(0x810000);
+  os_printf("%x\n",test);
+  
   load_file(pa2va(0x810000));	
-  main();
+  
+  //main();
+  asm volatile("wfi");
 }

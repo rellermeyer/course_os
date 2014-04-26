@@ -108,10 +108,17 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 void load_file(uint32_t * file_pointer)//pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr));
+	os_printf("%x\n", h);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
+	os_printf("%d\n", i);
 	
-	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));
+	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
+	os_printf("%x\n", h);
+
+
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
+	os_printf("%d\n", i);
+	
 	
 	
 	/*os_printf("%d\n", h->e_machine);

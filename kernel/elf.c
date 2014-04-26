@@ -76,7 +76,7 @@ int32_t read_elf_header(Elf_Ehdr *h, unsigned char  *pointer) {
 	//os_printf("Size of char: %d\n", sizeof(char));
 	//os_printf("Size of get_value(1, h): %d\n", sizeof((char)get_value(1, h)));
 	char temp = get_value(1, h);
-	//os_printf("Size of temp: %d\n", sizeof(temp));	
+	os_printf("Size of temp: %d\n", sizeof(temp));	
 	h->e_ident[EI_CLASS] = temp; // get_value(1, h);		// get class
 
 	temp = get_value(1, h);
