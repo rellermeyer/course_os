@@ -2,7 +2,7 @@ ENTRY(_Reset)
 SECTIONS
 {
  . = 0xf0010000;
- .startup : AT(0x10000) { startup.o(.text) }
+ .startup : AT(0x10000) { startup.o(.text) mmap.o(.text)}
  .text : { *(.text) }
  .data : { *(.data) }
  .bss : { *(.bss COMMON) }
