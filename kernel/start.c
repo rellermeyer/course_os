@@ -21,24 +21,23 @@
 #include "argparse.h"
 #include "interrupt.h"
 #include "mmap.h"
-#include "pmap.h"
-#include "vmlayout.h"
+#include "memory.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
-void start(void *p_bootargs) {
-    print_uart0("Init...\n");
-    /*
-  char *cmdline_args = read_cmdline_tag(p_bootargs);
+void start(){//void *p_bootargs) {
+  print_uart0("Init...\n");
+    
+  // char *cmdline_args = read_cmdline_tag(p_bootargs);
 
-  print_uart0("arguments: ");
-  print_uart0(cmdline_args);
-  print_uart0("\n");
-  print_uart0("CourseOS!\n");
-  */
+  // print_uart0("arguments: ");
+  // print_uart0(cmdline_args);
+  // print_uart0("\n");
+  // print_uart0("CourseOS!\n");
+
 
   //don't allow interrpts messing with memory
   disable_interrupts();
@@ -54,22 +53,10 @@ void start(void *p_bootargs) {
   enable_interrupts();
 
   //initialize GLOBAL_PID and PCB table
-  init_all_processes();
+  // init_all_processes();
 
   //Test: UART0 mapped to the correct virtual address   
   print_uart0("MMU enabled\n");
 
-  //setup new stack pointers and jump to main
-  asm volatile (".include \"stacks.s\"");
-
-  /* NOTHING EXECUTED BEYOND THIS POINT
-  *
-  *
-  * Anything that needs to be setup right after
-  * booting the kernel should go before mmap()
-  *
-  * Any setup, heap allocation or stack allocation
-  * goes in main
-  *
-  */
+  main();
 }

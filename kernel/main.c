@@ -1,6 +1,5 @@
 #include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h"
+#include "include/memory.h"
 #include "include/klibc.h"
 #include "include/mem_alloc.h"
 #include "include/interrupt.h"
@@ -19,7 +18,7 @@ void main(void){
 
   disable_interrupts();
   //Unmap one-to-one kernel and pt mappings
-  *(v_first_level_pt+(KERNDSBASE>>20)) = 0;   
+  *(v_first_level_pt+(P_KDSBASE>>20)) = 0;   
   *(v_first_level_pt) = 0;
   enable_interrupts();
 
@@ -45,7 +44,7 @@ void main(void){
   os_printf("&test=%x\n", test);
   *test = 0x786;
 
-  uint32_t* abt = 0xefb00000; 
+  uint32_t* abt = 0x70000000; 
   *abt = 0x786;
   
   asm volatile("svc 11");
