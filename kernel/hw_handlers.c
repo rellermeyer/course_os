@@ -51,7 +51,7 @@ void reset_handler(void) {
 }
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
-	v_printf("UNDEFINED INSTRUCTION HANDLER\n");
+	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
 void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
@@ -65,30 +65,30 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// // load the SVC call and mask to get the number
 	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
+	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
-	// print_vuart0("Syscall #: ");
-	// v_printf("%x", &callNumber);
-	// print_vuart0("\n");
+	// print_uart0("Syscall #: ");
+	// os_printf("%x", &callNumber);
+	// print_uart0("\n");
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
-	v_printf("PREFETCH ABORT HANDLER\n");
+	os_printf("PREFETCH ABORT HANDLER\n");
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
-	v_printf("DATA ABORT HANDLER\n");
+	os_printf("DATA ABORT HANDLER\n");
   int pc, lr, sp, fp;
   asm volatile("mov %0, pc" : "=r" (pc));
   asm volatile("mov %0, lr" : "=r" (lr));
   asm volatile("mov %0, sp" : "=r" (sp));
   asm volatile("mov %0, fp" : "=r" (fp));
-  v_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
+  os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
 }
 
 void reserved_handler(void){
-	print_vuart0("RESERVED HANDLER\n");
+	print_uart0("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
@@ -100,7 +100,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
-	print_vuart0("FIQ HANDLER\n");
+	print_uart0("FIQ HANDLER\n");
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4
 }

@@ -66,8 +66,8 @@ void mmap(){
 
 	//map ~2MB of peripheral registers from 0x10000000-0x101f5000
 	//to two 1MB sections at 0x80000000 and 0x80100000
-	first_level_pt[PREGSTART>>20] = PERIPHBASE | 0x0400 | 2;
-	first_level_pt[(PREGSTART+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
+	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
+	first_level_pt[(PERIPHBASE+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
 
 	//map 752MB of PCI interface from 0x41000000-0x6fffffff to
 	//752 MB sections at 0x80200000-0xaf200000
@@ -138,5 +138,7 @@ void mmap(){
 	asm volatile("pop {r0-r11}");
 
 	asm volatile("cpsie if");
+
+	asm volatile("bl start");
 
 }
