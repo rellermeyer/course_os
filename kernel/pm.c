@@ -22,11 +22,22 @@ void save_registers(int *fp, int ptrsize, int sp, int *save_ptr)
 
 }
 
-//method to clear L1 and L2
-void clear_caches(int *fp, int ptrsize, int sp, int *save_ptr)
+//method to clear L1
+void clear_cache()
 {	
 	/* still need to push & pop the stack */
+	/* disable cache */
 	asm volatile("mrc p15, 0, r0, c1, c0, 0"); //mv control register to r0
-	asm volatile("bic r1, r0, #4"); //clear bit 4 - cache bit
-	asm volatile("mcr p15, 0, r1, c1, c0, 0"); //write r1 to control register
+	asm volatile("bic r0, #4"); //!& with 4 - clears bit 2, cache bit
+	asm volatile("mcr p15, 0, r0, c1, c0, 0"); //write r0 to control register
+	
+	/* clear cache */
+}
+
+void enable_cache()
+{
+	/* enable cache */
+	asm volatile("mrc p15, 0, r0, c1, c0, 0"); //mv control register to r0
+	asm volatile("bic r0, #4"); //!& with 4 - enables bit 2, cache bit
+	asm volatile("mcr p15, 0, r0, c1, c0, 0"); //write r0 to control register
 }
