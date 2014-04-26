@@ -1,11 +1,10 @@
 #include "mem_alloc.h"
-#include "vmlayout.h"
-#include "pmap.h"
+#include "memory.h"
 #include "../include/klibc.h"
 
 
-uint32_t* next_ublock = UHEAPSTART;
-uint32_t* next_kblock = KHEAPSTART;
+uint32_t* next_ublock = V_UHEAPBASE;
+uint32_t* next_kblock = V_KHEAPBASE;
 
 char* kheap;
 int32_t kheap_size;
@@ -32,7 +31,7 @@ uint32_t* mem_alloc(uint32_t size, priv_t priv) {
 	}
 
 	if(priv == KERN){ 
-		if(next_kblock + temp > KHEAPLIM){
+		if(next_kblock + temp > V_KHEAPTOP){
 			return alloc_block;
 		}
 		alloc_block = next_kblock;
@@ -40,7 +39,7 @@ uint32_t* mem_alloc(uint32_t size, priv_t priv) {
 	}
 
 	if(priv == USER){
-		if(next_ublock + temp > UHEAPLIM){
+		if(next_ublock + temp > V_UHEAPTOP){
 			return alloc_block;
 		}
 		alloc_block = next_ublock;

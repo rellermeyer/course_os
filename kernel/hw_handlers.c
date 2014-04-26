@@ -5,10 +5,8 @@
  */
 #include "include/hw_handlers.h"
 #include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h" 
+#include "include/memory.h" 
 #include "include/interrupt.h"
-#include "include/vmlayout.h"
 
 /* copy vector table from wherever the hell QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
