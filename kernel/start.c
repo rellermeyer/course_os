@@ -28,21 +28,11 @@ void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
-void start(){//void *p_bootargs) {
-  print_uart0("Init...\n");
-    
-  // char *cmdline_args = read_cmdline_tag(p_bootargs);
-
-  // print_uart0("arguments: ");
-  // print_uart0(cmdline_args);
-  // print_uart0("\n");
-  // print_uart0("CourseOS!\n");
-
+void start() {
+  print_uart0("\nCourseOS!\n");
 
   //don't allow interrpts messing with memory
-  disable_interrupts();
-  //setup page table and enable MMU
-  //mmap();  
+  disable_interrupts(); 
   //register handlers
   init_vector_table();
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
@@ -51,9 +41,6 @@ void start(){//void *p_bootargs) {
   UART0_IMSC = 1<<4;
   VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
-
-  //initialize GLOBAL_PID and PCB table
-  // init_all_processes();
 
   //Test: UART0 mapped to the correct virtual address   
   print_uart0("MMU enabled\n");
