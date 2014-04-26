@@ -43,7 +43,7 @@ void start(void *p_bootargs) {
   //don't allow interrpts messing with memory
   disable_interrupts();
   //setup page table and enable MMU
-  mmap();  
+  //mmap();  
   //register handlers
   init_vector_table();
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
@@ -53,11 +53,11 @@ void start(void *p_bootargs) {
   VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
 
-   //initialize GLOBAL_PID and PCB table
-   init_all_processes();
+  //initialize GLOBAL_PID and PCB table
+  init_all_processes();
 
   //Test: UART0 mapped to the correct virtual address   
-  print_vuart0("MMU enabled\n");
+  print_uart0("MMU enabled\n");
 
   //setup new stack pointers and jump to main
   asm volatile (".include \"stacks.s\"");

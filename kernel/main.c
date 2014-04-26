@@ -15,7 +15,7 @@ void main(void){
     "eor r0, r0 \n\t"
     "MCR p15, 0, r0, c8, c7, 0 \n\t"); 
      
-  print_vuart0("Virtual Memory (no paging yet)\n");  
+  print_uart0("Virtual Memory (no paging yet)\n");  
 
   disable_interrupts();
   //Unmap one-to-one kernel and pt mappings
@@ -29,12 +29,20 @@ void main(void){
   //initialize GLOBAL_PID and PCB table  
   init_all_processes();
 
-  v_printf("\nBegin Test\n");
+  uint32_t* file1 = kmalloc(sizeof(uint32_t*));
+  pcb* p1 = process_create(file1);
+  execute_process(p1);
+
+  uint32_t* file2 = kmalloc(sizeof(uint32_t*));
+  pcb* p2 = process_create(file2);
+  execute_process(p2);  
+
+  os_printf("\nBegin Test\n");
 
   test_heap_manager();
 
   uint32_t* test = kmalloc(sizeof(uint32_t*));
-  v_printf("&test=%x\n", test);
+  os_printf("&test=%x\n", test);
   *test = 0x786;
 
   uint32_t* abt = 0xefb00000; 
@@ -42,7 +50,7 @@ void main(void){
   
   asm volatile("svc 11");
 
-  v_printf("\nEnd Test\n");
+  os_printf("\nEnd Test\n");
 
   asm volatile("wfi");
 
@@ -55,15 +63,15 @@ void test_heap_manager(){
   uint32_t* block1 = umalloc(10);
   uint32_t* block2 = umalloc(13);
   mcheck(uheap1, 1024);
-  v_printf("\n");
+  os_printf("\n");
   ufree(block0);
   mcheck(uheap1, 1024);
-  v_printf("\n");
+  os_printf("\n");
   ufree(block2);
   mcheck(uheap1, 1024);
-  v_printf("\n");
+  os_printf("\n");
   ufree(block1);
-  v_printf("\n");
+  os_printf("\n");
   mcheck(uheap1, 1024);
 
 }
