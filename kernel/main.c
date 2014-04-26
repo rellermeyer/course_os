@@ -5,7 +5,7 @@
 
 void main(void){
   print_vuart0("Running at virtual stack location\n");  
-
+  
   //flush TLB
   asm volatile(
     "eor r0, r0 \n\t"
@@ -18,9 +18,10 @@ void main(void){
   /* Allocate in kernel region using k_malloc()
    * Allocate in user region using u_malloc()
    */
-
+  
+  
   //initialize GLOBAL_PID and PCB table
-  init_all_processes();
+  init_pcb_table();
 
   asm volatile("wfi");
 
