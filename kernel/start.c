@@ -93,13 +93,13 @@ void start() {
   print_uart0("\nCourseOS!\n");
 
   // Separate the command-line arguments into separate Strings
-  int num_args = number_of_words(cmdline_args);
-  char* arg_list[num_args];
-  split_string(cmdline_args, arg_list);
-  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+//  int num_args = number_of_words(cmdline_args);
+ // char* arg_list[num_args];
+ // split_string(cmdline_args, arg_list);
+ // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
   // Parse and analyze each String
-  parse_arguments(arg_count, arg_list);
+ // parse_arguments(arg_count, arg_list);
 
   //don't allow interrpts messing with memory
   disable_interrupts(); 
@@ -117,11 +117,13 @@ void start() {
   //Test: UART0 mapped to the correct virtual address   
   print_uart0("MMU enabled\n");
   init_kheap(31 * 0x100000);
-  uint32_t test = pa2va(0x810000);
-  os_printf("%x\n",test);
   
-  load_file(pa2va(0x810000));	
+  init_all_processes();  
+  uint32_t* sampFile = pa2va(0x810000);  
+  pcb* p = process_create(sampFile); 
   
+  execute_process(p);
+
   //main();
   asm volatile("wfi");
 }

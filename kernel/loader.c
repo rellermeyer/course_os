@@ -105,36 +105,22 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-void load_file(uint32_t * file_pointer)//pcb * process_control_block, uint32_t * file_pointer)
+void load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr));
 	os_printf("%x\n", h);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
-	os_printf("%d\n", i);
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
-	os_printf("%x\n", h);
 
 
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
-	os_printf("%d\n", i);
 	
 	
-	
-	/*os_printf("%d\n", h->e_machine);
-	Elf_Shdr *sh = (Elf_Shdr *) mem_alloc(h->e_shnum * sizeof(Elf_Shdr));
+	Elf_Shdr *sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
 	read_section_header_table(h, sh, file_pointer);
-	os_printf("Shdr at 1 offset%d\n", sh[1].sh_offset);
-	//parse_section_header_names(*h, sh, file_pointer);
-	*/	
+	parse_section_header_names(h, sh, file_pointer);
+	
+	allocate_process_memory(process_control_block, h, ph, file_pointer);
 }
 
-//this will allocate memory for the entire process
-//including the pcb 
-//void allocate_process_memory(pcb* pcb_p)
-//{
-	//determine sizes for each section in ELF
-	//sum dem digitz
-	//determine which stack size to use	
-//	size_t process_mem = det_proc_size(
-//}

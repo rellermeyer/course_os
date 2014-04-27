@@ -9,6 +9,6 @@
 
 //typedef enum{TEXT, RODATA, DATA, RODATA, BSS, SYMTBL} Section;
 
-void load_file(uint32_t *);//pcb *, uint32_t *); //Needs to be of the type that's where ever our beginning of file is in mem
+void load_file(pcb *, uint32_t *); //Needs to be of the type that's where ever our beginning of file is in mem
 
 #endif

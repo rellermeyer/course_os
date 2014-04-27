@@ -26,14 +26,13 @@ pcb* process_create(uint32_t* file_p) {
 		if(!success) {
 			return -1;
 		} 
-		os_printf("Success: %d\n", success);
 		
 		// //fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
 		
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
-		pcb_pointer->function = sample_func;
+	//	pcb_pointer->function = sample_func;
 		pcb_pointer->has_executed = 0;
 		pcb_pointer->heap_p = kmalloc(4096); 
 		
@@ -285,8 +284,10 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
+        load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
-	pcb_p->function(pcb_p->PID);
+	//pcb_p->function(pcb_p->PID);
+	
 	return 1;
 }
 
