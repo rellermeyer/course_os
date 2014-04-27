@@ -1,4 +1,4 @@
-//Contributors: Andrew Stepek, Michael Brennen, and Matthew Stromberg
+//Contributors: Andrew Stepek, Michael Brennan, and Matthew Stromberg
 
 /*
 Signals: SIGKILL, SIGUSR, SIGTERM, SIGPRINT
