@@ -15,15 +15,13 @@
  * 2 = section or supersection
  */	
 
-//static unsigned int* first_level_pt = L1PTBASE;
 
-void mmap(){//unsigned int * first_level_pt){
+void mmap(){
 
-	asm volatile("push {r0-r11}");
-	//disable all interrupts
 	asm volatile("cpsid if");
-	//os_printf("first_level_pt=%x\n", *first_level_pt);
-	//asm volatile("wfi");
+
+	//stash register state on the stack
+	asm volatile("push {r0-r11}");
 
 	//initialize first_level_pt entires with second level coarse page tables
 	//reserved at 0x07b000000 - 0x07f00000
@@ -83,7 +81,7 @@ void mmap(){//unsigned int * first_level_pt){
 	}
 
 
-	//map remaining physical memory as 1MB section for bump pointer malloc and kmalloc
+	//map remaining physical memory as 1MB section for bump pointer u_malloc and k_malloc
 	unsigned int pm_start = PKERNTOP;
 	unsigned int pm_end = L2PTSBASE;
 	unsigned int avail_pm = pm_start - pm_end;
@@ -94,13 +92,13 @@ void mmap(){//unsigned int * first_level_pt){
 	unsigned int k_vm_start = PCIEND;
 	unsigned int k_vm_end = k_vm_start + KMALLOCPM;
 
-	//map 22MB for kmalloc
+	//map 22MB for k_malloc
 	for(i = (k_vm_start>>20); i < (k_vm_end>>20) && pm_start < pm_end; i++){
 		first_level_pt[i] = pm_start | 0x0400 | 2;
 		pm_start += 0x100000;
 	}
 
-	//map remaining 100MB for malloc
+	//map remaining 100MB for u_malloc
 	for(i = (u_vm_start>>20); i < (u_vm_end>>20) && pm_start < pm_end; i++){
 		first_level_pt[i] = pm_start | 0x0400 | 2;
 		pm_start += 0x100000;
@@ -132,11 +130,13 @@ void mmap(){//unsigned int * first_level_pt){
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
-	control |= 0x1007; //0b11000000000111
+	control |= 0x3007; //0b11000000000111
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
-	//enable interrupts
-	asm volatile("cpsie fi");
+	//restore register state
 	asm volatile("pop {r0-r11}");
+
+	asm volatile("cpsie if");
+
 }

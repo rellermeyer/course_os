@@ -8,8 +8,8 @@
 //All static kernel data structures
 //Total space=1MB, currently used=44kB	
 #define KERNDSBASE		0x07f00000
-	#define	KERNSTKBASE		0x07ff9000	//7 stacks 4K each = 28K
-	#define	L1PTBASE		0x07ff4000	//16K (16K boundary required also)
+	//#define	KERNSTKBASE		0x07ff9000	//7 stacks 4K each = 28K
+	#define	L1PTBASE		0x07f00000	//16K (16K boundary required also)
 	//reserve more DS below
 
 #define PERIPHBASE		0x10000000

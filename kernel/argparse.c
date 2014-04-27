@@ -1,7 +1,8 @@
-#include <stdint.h>
-
-
+#include "include/global_defs.h"
 #include "include/argparse.h"
+#include "include/klibc.h"
+#include "include/tests.h"
+#include "include/mem_alloc.h"
 
 
 /* Parse the list of strings (argv) and process each argument */
@@ -15,7 +16,7 @@ void parse_arguments(int argc, char **argv)
     int delta_args_read = 0;
 
     // Read argument(s) and process them
-    delta_args_read += analyze_args(argument_list);
+    delta_args_read += analyze_arguments(argument_list);
 
     argument_list += delta_args_read;
     i += delta_args_read;
@@ -27,7 +28,7 @@ void parse_arguments(int argc, char **argv)
    Return the number of arguments read.
    char **args: array of pointers to each argument
 */
-int analyze_args(char **argv)
+int analyze_arguments(char **argv)
 {
   int i = 0;
 
@@ -40,6 +41,48 @@ int analyze_args(char **argv)
   }
 
   */
+
+  
+  // TODO: load process(es) and run them
+  if (os_strcmp(argv[i], "-load") == 0)
+  {
+    /* Format:
+       -load position size
+       -load 0x1234 0xabcd
+       position and size must be separated by spaces
+       position is the location in memory of the program
+       size is te size of the program
+    */
+    char *position = argv[i + 1];
+    char *size = argv[i + 2];
+
+    // Check that we have valid input
+    if (position != NULL && size != NULL)
+    {
+      // TODO: load and run process
+      return 3; // Consumed 3 arguments
+    }
+    else
+    {
+      os_printf("Error loading process via qemu arguments.\n");
+      os_printf("USAGE: -load position size\n");
+      if (argv[i + 1] == NULL)
+        return 1; // Consumed 1 argument
+      else
+        return 2; // Consumed 2 arguments
+    }
+  }
+
+  // Run some tests
+  if (os_strcmp(argv[i], "-test") == 0)
+  {
+    os_printf("Running tests...\n");
+    Test *tests[2];
+    tests[0] = create_test("This passes", &test1);
+    tests[1] = create_test("This fails", &test2);
+    run_tests(tests, 2);
+    return 1; // Read 1 argument
+  }
 
   // Default case: read one argument
   return 1;
@@ -70,4 +113,49 @@ char* read_cmdline_tag(uint32_t *tag_base)
   char *command_line_args = (char *)tag_pointer;
 
   return command_line_args;
+}
+
+
+/* Separate the string line based on whitespace.
+   Return this array of strings.
+*/
+char** split_string(char* line, char** list)
+{
+  char *piece = NULL; // One null-terminated part of the string
+  const char *delimiters = " \t"; // Space and tab
+
+  piece = (char *)os_strtok(line, delimiters);
+  list[0] = piece;
+  int i = 1;
+
+  while (piece != NULL)
+  {
+    // os_strtok() advances pointer to the next whitespace delimiter
+    piece = (char *)os_strtok(NULL, delimiters);
+    list[i] = piece;
+    i++;
+  }
+
+  return list;
+}
+
+
+/* Return the number of whitespace-delimited words in String line. */
+int number_of_words(char *line)
+{
+  char line_copy[os_strlen(line)];
+  os_strcpy(line_copy, line);
+  const char *delimiters = " \t"; // Space and tab
+
+  char *pos = (char *)os_strtok(line_copy, delimiters);
+
+  // Count the number of words
+  int count = 0;
+  while (pos != NULL)
+  {
+    pos = (char *)os_strtok(NULL, delimiters); // Advance to the next word
+    count++;
+  }
+
+  return count;
 }
