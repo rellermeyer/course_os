@@ -1,4 +1,4 @@
-#include "test.h"
+#include "include/test.h"
 #include <stdlib.h>
 
 TEST create_test(char* name, int (*function_to_test)()) {
