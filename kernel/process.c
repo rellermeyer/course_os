@@ -32,9 +32,7 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
-	//	pcb_pointer->function = sample_func;
 		pcb_pointer->has_executed = 0;
-		pcb_pointer->heap_p = kmalloc(4096); 
 		
 		pcb_pointer->R0 = 0;
 		pcb_pointer->R1 = 0; 
@@ -284,7 +282,7 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
-        load_process_state(pcb_p->PID);
+    load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
 	//pcb_p->function(pcb_p->PID);
 	

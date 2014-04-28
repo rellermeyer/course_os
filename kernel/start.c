@@ -76,11 +76,11 @@ void start(void *p_bootargs) {
 
 =======*/
 #include <stdint.h>
-#include "hw_handlers.h"
-#include "global_defs.h"
-#include "argparse.h"
-#include "interrupt.h"
-#include "mmap.h"
+#include "include/hw_handlers.h"
+#include "include/global_defs.h"
+#include "include/argparse.h"
+#include "include/interrupt.h"
+#include "include/mmap.h"
 #include "include/process.h"
 #include "memory.h"
 
@@ -92,23 +92,24 @@ void uart_handler(void *null) {
 void start() {
   print_uart0("\nCourseOS!\n");
 
-  // Separate the command-line arguments into separate Strings
-//  int num_args = number_of_words(cmdline_args);
+ // Separate the command-line arguments into separate Strings
+ // int num_args = number_of_words(cmdline_args);
  // char* arg_list[num_args];
  // split_string(cmdline_args, arg_list);
  // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
-  // Parse and analyze each String
+ // // Parse and analyze each String
  // parse_arguments(arg_count, arg_list);
 
   //don't allow interrpts messing with memory
   disable_interrupts(); 
+ 
   //register handlers
   init_vector_table();
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
   register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
-  //asm volatile("wfi");
+ //asm volatile("wfi");
   UART0_IMSC = 1<<4;
   VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
@@ -118,11 +119,13 @@ void start() {
   print_uart0("MMU enabled\n");
   init_kheap(31 * 0x100000);
   
-  init_all_processes();  
-  uint32_t* sampFile = pa2va(0x810000);  
-  pcb* p = process_create(sampFile); 
+  //initialize pcb table and PID
+  init_all_processes(); 
+
+  uint32_t* hello = pa2va(0x810000);  
+  pcb* p = process_create(hello); 
   
-  execute_process(p);
+  //execute_process(p);
 
   //main();
   asm volatile("wfi");

@@ -19,11 +19,11 @@ run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
 #boots the kernel at 0x210000
-flash.bin: kernel.img sampleFile
+flash.bin: kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512	
-	dd if=sampleFile of=flash.bin conv=notrunc bs=4k seek=2048
+	dd if=../user/hello/hello of=flash.bin conv=notrunc bs=4k seek=2048
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
@@ -39,9 +39,6 @@ startup.o: startup.s
 
 %.o: %.c
 	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
-
-sampleFile: sampleFile.c
-	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s sampleFile.c -o sampleFile
 
 clean:
 	rm -f *.o

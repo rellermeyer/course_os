@@ -23,9 +23,9 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 	}
 	
 	process_size +=  USER_PROC_STACK_SIZE;
-	process_size += 0x10000; //This is going to be the heap size (need to determine what this should be
+	process_size +=  4096; //This is going to be the heap size (need to determine what this should be
 	
-	 //Padding we want to be able to have some padding between certain sections of the program 
+	//Padding we want to be able to have some padding between certain sections of the program 
 	//mainly the stack from the other parts
 	process_size += 0x1000;
 	
@@ -33,16 +33,6 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 	
 	
 }
-
-//Temporary add this to somewhere relevant (klibc)
-/*void memcpy(uint32_t * source, uint32_t * dest, size_t size)
-{
-	size_t i = 0;
-	for(; i < size; i++)
-	{
-		*(source + size) = *(dest + size);
-	}
-}*/
 
 
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * file_pointer)
@@ -94,7 +84,9 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 		}
 	}
 		
-	current_pointer += 0x10000;//Heap 
+	current_pointer += 4096;//Heap 
+	pcb_p->heap_p = current_pointer;
+
 	current_pointer += USER_PROC_STACK_SIZE + 0x1000; //Stack pointer	
 	
 	pcb_p->R13 = *current_pointer;
