@@ -12,10 +12,19 @@ struct sig
 	uint32_t signal_type;
 	uint32_t pid;
 	struct sig *next;
-};
+} *front = '\0', *rear = '\0';
 
-struct sig *front = '\0';
-struct sig *rear = '\0';
+int isEmpty()
+{
+	if (front == '\0')
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
 
 void insert(struct sig *new_sig)
 {
@@ -47,17 +56,7 @@ struct sig *remove()
 	}
 }
 
-int isEmpty()
-{
-	if (front == '\0')
-	{
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
+
 
 void signal_mask (char * type, int index, uint32_t PID)
 {
@@ -67,14 +66,25 @@ void signal_mask (char * type, int index, uint32_t PID)
 
 int raise(int sig)
 {
-	// raises the signal
+	// raises the signal (calls kill(), which hasn't been defined yet)
+	
 }
 
 void signal_handler(int sig_no)
 {
-/*
 	switch(sig_no)
 	{
-	}
-*/
+		case 9:
+			// SIGKILL
+			break;
+		case 10:
+			// SIGUSR
+			break;
+		case 11:
+			// SIGPRINT
+			break;
+		case 15:
+			// SIGTERM
+			break;
+		}
 }
