@@ -13,6 +13,18 @@ int test1() {
     }
 }
 
+int test2() {
+    int i = 2;
+    int j = 1;
+    if (i >= j) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+
 int test_os_memcmp_1() {
     char buffer1[] = "DWgaOtP12df0";
     char buffer2[] = "DWGAOTP12DF0";
