@@ -1,4 +1,4 @@
-#include "testing_suite.h"
+#include "include/testing_suite.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,7 +23,7 @@ void run_tests(TEST_SUITE tests) {
 
     for (i = 0; i < tests.NUM_OF_TESTS; ++i) {
         printf("[RUN       ] %s\n", (tests.TESTS[i]).test_name);
-        if (1) {
+        if ((tests.TESTS[i]).ptr_to_test() == 1) {
 	    printf("[        OK] %s\n", (tests.TESTS[i]).test_name);
         }
         else {
