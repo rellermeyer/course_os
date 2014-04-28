@@ -2,6 +2,7 @@
 #include <mmap.h>
 
 volatile uint32_t *const UART = UART_ADDRESS;
+
  
 void print_uart0(const char *s) {
    while(*s != '\0') { 
