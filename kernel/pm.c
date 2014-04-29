@@ -4,6 +4,8 @@
 #include "include/interrupt.h"
 #include "include/klibc.h"
 
+stack *stack = create_stack();
+
 //method to set CPU to idle
 int cpu_idle(int *fp)
 {
