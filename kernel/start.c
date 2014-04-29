@@ -1,49 +1,80 @@
-#include "include/global_defs.h"
-#include "include/argparse.h"
-#include "include/klibc.h"
-#include "include/process.h"
-
+/*
+ *  A bit of background:
+ *  - The ARM architecture has 7 modes of operation:
+ *      + USR - user mode
+ *      + FIQ - processing "fast" interrupts
+ *      + IRQ - processing "normal" interrupts
+ *      + SVC - proctected mode for OS
+ *      + UND - processing an undefined instruction exception
+ *      + SYS - also protecteed mode for OS --if anyone wants to clarify, feel free--
+ *
+ *  - These modes can be entered or exited by modifying the CPSR (status register), first 5 bits
+ *	+ 0b10000 = user mode
+ *	+ 0b10001 = FIQ (fast interrupt) mode
+ *	+ 0b10010 = IRQ (normal interrupt) mode
+ *	+ 0b10011 = SVC (supervisor, or, OS) mode
+ *	(others...)
+ */
 #include <stdint.h>
+#include "hw_handlers.h"
+#include "global_defs.h"
+#include "argparse.h"
+#include "interrupt.h"
+#include "mmap.h"
+#include "pmap.h"
+#include "vmlayout.h"
+#include "klibc.h"
+
+
+#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
+void uart_handler(void *null) {
+	print_uart0("uart0!\n");
+}
 
 
 void start(void *p_bootargs) {
-  char *cmdline_args = read_cmdline_tag(p_bootargs);
+  print_uart0("Init...\n");
 
-  print_uart0("\narguments: ");
-  print_uart0(cmdline_args);
-  print_uart0("\n");
-  print_uart0("CourseOS!\n");
+  //don't allow interrpts messing with memory
+  disable_interrupts();
 
-  // Separate the command-line arguments into separate Strings
-  int num_args = number_of_words(cmdline_args);
-  char* arg_list[num_args];
-  split_string(cmdline_args, arg_list);
-  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
-
-  // Parse and analyze each String
-  parse_arguments(arg_count, arg_list);
-
-  // TODO: initialize GLOBAL_PID and PCB table?
+  // Get command line boot arguments and process them
+  run_argparse(p_bootargs);
 
   init_heap(32*0x100000);
   test_heap_manager();
-}
 
-void test_heap_manager()
-{
-  uint32_t* block0 = kmalloc(8);
-  uint32_t* block1 = kmalloc(10);
-  uint32_t* block2 = kmalloc(13);
-  mcheck();
-  os_printf("\n");
-  kfree(block0);
-  mcheck();
-  os_printf("\n");
-  kfree(block2);
-  mcheck();
-  os_printf("\n");
-  kfree(block1);
-  os_printf("\n");
-  mcheck();
+  //setup page table and enable MMU
+/*  mmap();
 
+
+  //register handlers
+  init_vector_table();
+  interrupt_handler_t uart0_handler_struct = { &uart_handler };
+  register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
+
+  UART0_IMSC = 1<<4;
+  VIC_INT_ENABLE = 1<<12;
+  enable_interrupts();
+
+   //initialize GLOBAL_PID and PCB table
+   init_all_processes();
+
+  //Test: UART0 mapped to the correct virtual address
+  print_vuart0("MMU enabled\n");
+
+  //setup new stack pointers and jump to main
+  asm volatile (".include \"stacks.s\"");
+
+
+  /* NOTHING EXECUTED BEYOND THIS POINT
+  *
+  *
+  * Anything that needs to be setup right after
+  * booting the kernel should go before mmap()
+  *
+  * Any setup, heap allocation or stack allocation
+  * goes in main
+  *
+  */
 }
