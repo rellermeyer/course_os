@@ -19,7 +19,25 @@ int cpu_resume(int *fp)
 //method to save registers on stack
 void save_registers(int *fp, int ptrsize, int sp, int *save_ptr)
 {
-
+  push(stack, asm("r0"));
+  push(stack, asm("r1"));
+  push(stack, asm("r2"));
+  push(stack, asm("r3"));
+  push(stack, asm("r4"));
+  push(stack, asm("r5"));
+  push(stack, asm("r6"));
+  push(stack, asm("r7"));
+  push(stack, asm("r8"));
+  push(stack, asm("r9"));
+  push(stack, asm("r10"));
+  push(stack, asm("r11"));
+  push(stack, asm("r12"));
+		   
+ 
+  push(stack, asm("sp"));
+  push(stack, asm("lr"));
+  push(stack, asm("pc"));
+  push(stack, asm("ip"));
 }
 
 //method to clear L1
