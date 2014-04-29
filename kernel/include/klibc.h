@@ -44,5 +44,8 @@ os_size_t os_strcspn(const char *s, const char *reject);
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
+void* kmalloc(uint32_t);
+void kfree(void*);
+
 #endif
 

@@ -15,14 +15,13 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)
  */
+ 
 #include <stdint.h>
 #include "hw_handlers.h"
 #include "global_defs.h"
 #include "argparse.h"
 #include "interrupt.h"
 #include "mmap.h"
-#include "pmap.h"
-#include "vmlayout.h"
 #include "klibc.h"
 
 
@@ -35,46 +34,9 @@ void uart_handler(void *null) {
 void start(void *p_bootargs) {
   print_uart0("Init...\n");
 
-  //don't allow interrpts messing with memory
-  disable_interrupts();
-
   // Get command line boot arguments and process them
   run_argparse(p_bootargs);
 
   init_heap(32*0x100000);
-  test_heap_manager();
 
-  //setup page table and enable MMU
-/*  mmap();
-
-
-  //register handlers
-  init_vector_table();
-  interrupt_handler_t uart0_handler_struct = { &uart_handler };
-  register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
-
-  UART0_IMSC = 1<<4;
-  VIC_INT_ENABLE = 1<<12;
-  enable_interrupts();
-
-   //initialize GLOBAL_PID and PCB table
-   init_all_processes();
-
-  //Test: UART0 mapped to the correct virtual address
-  print_vuart0("MMU enabled\n");
-
-  //setup new stack pointers and jump to main
-  asm volatile (".include \"stacks.s\"");
-
-
-  /* NOTHING EXECUTED BEYOND THIS POINT
-  *
-  *
-  * Anything that needs to be setup right after
-  * booting the kernel should go before mmap()
-  *
-  * Any setup, heap allocation or stack allocation
-  * goes in main
-  *
-  */
 }

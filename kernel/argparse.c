@@ -2,7 +2,6 @@
 #include "include/argparse.h"
 #include "include/klibc.h"
 #include "include/tests.h"
-#include "include/mem_alloc.h"
 
 
 /* Get the command-line arguments and run the functions to process them. */

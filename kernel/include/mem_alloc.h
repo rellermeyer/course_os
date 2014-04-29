@@ -4,14 +4,20 @@ Log
 4/7: Fixed mem_alloc again works properly: Sean V, Faseeh A, Taylor S.
 
 */
+#ifndef __MEM_ALLOC_H__
+#define __MEM_ALLOC_H__
 
 #include <stdint.h> 
 
-typedef enum{
-	KERN,
-	USER,
-} priv_t;
+#define MEM_START 0x500000
 
-uint32_t* mem_alloc(uint32_t, priv_t);
-uint32_t * umalloc(uint32_t size);
-uint32_t * kmalloc(uint32_t size);
+char* heap;
+uint32_t heap_size;
+
+uint32_t* mem_alloc(uint32_t);
+void* init_heap(uint32_t);
+char* allocate(uint32_t, char*, int32_t);
+void deallocate(void*, char*, int32_t);
+void mcheck();
+
+#endif

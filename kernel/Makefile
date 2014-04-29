@@ -7,7 +7,7 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o drivers/uart.o vuart.o startup.o argparse.o klibc.o mmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o
+OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o tests.o
 
 all: kernel.img
 
@@ -16,7 +16,7 @@ CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 
 
 run: flash.bin
-	${QEMU} -M versatilepb -m 128M -serial stdio -nographic -kernel flash.bin
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
 
 #boots the kernel at 0x210000
 flash.bin: kernel.img
