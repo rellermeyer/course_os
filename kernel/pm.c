@@ -17,7 +17,7 @@ int cpu_resume(int *fp)
 }
 
 //method to save registers on stack
-void save_registers(int *fp, int ptrsize, int sp, int *save_ptr)
+void save_registers()
 {
   push(stack, asm("r0"));
   push(stack, asm("r1"));
