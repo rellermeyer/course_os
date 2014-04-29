@@ -15,7 +15,6 @@
 *
 *	Notes:	The following were adapted directly from musl-libc:
 *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok,
-*               strspn, and strcspn
 ********************************************************************/
 
 #include "include/klibc.h"
@@ -55,7 +54,7 @@ int os_strcmp ( const char *left, const char *right)
 }
 
 //memory copy
-//Responsibility is on the programmer to copy safely 
+//Responsibility is on the programmer to copy safely
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
 	int i = 0;
@@ -74,7 +73,7 @@ void print_hex(int val, int CASE)
   if (temp == 0){
     //printf("0");
     print_char_uart0('0');
-  } 
+  }
   while((temp != 0) && (count_digits < 8))
   {
     int index = temp & CHAR_MASK;
@@ -98,10 +97,8 @@ print_dec(int val){
   int count_digits = 0;
   char buf[100];
   if (temp == 0){
-    //printf("0");
     print_uart0("0");
   } else if (temp < 0) {
-    //printf("-");
     print_uart0("-");
     temp = -temp;
   }
@@ -112,7 +109,6 @@ print_dec(int val){
     count_digits += 1;
   }
   while(count_digits > 0){
-    //printf("%c", buf[count_digits-1]);
     print_char_uart0(buf[count_digits - 1]);
     count_digits--;
   }
@@ -142,16 +138,13 @@ int os_printf(const char *str_buf, ...) {
         case 'c':
           t_arg = va_arg(args,int);
           print_char_uart0(t_arg);
-          //printf("%c", t_arg);
           break;
         case '%':
           print_uart0("%");
-          //printf("%%");
           break;
       }
     } else {
       print_char_uart0(*str_buf);
-      //printf("%c", *str_buf);
     }
     str_buf++;
   }
@@ -373,7 +366,6 @@ os_size_t os_strcspn(const char *s, const char *reject)
 
 void* init_heap(uint32_t size){
   heap = (char*)mem_alloc(size);
-  //os_printf("&heap=%x\n", heap);
   heap_size = size;
 
   uint32_t* heap_header = heap;
@@ -382,8 +374,6 @@ void* init_heap(uint32_t size){
   *heap_header = heap_size;
   *heap_footer = heap_size;
 
-  //os_printf("heap_header=%x\n", heap_header);
-  //os_printf("heap_footer=%x\n", heap_footer);
   return heap;
 }
 
