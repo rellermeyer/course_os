@@ -3,6 +3,7 @@
 #include "include/stdarg.h"
 #include "include/interrupt.h"
 #include "include/klibc.h"
+#include "include/stack.h"
 
 stack *stack = create_stack();
 
