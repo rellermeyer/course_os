@@ -1,3 +1,6 @@
+#ifndef __ARGPARSE_H__
+#define __ARGPARSE_H__
+
 #include <stdint.h>
 
 void run_argparse(uint32_t p_bootargs);
@@ -8,3 +11,5 @@ char** split_string(char *line, char **list);
 int number_of_words(char *line);
 int string_to_unsigned_int(char *input, int base);
 int hex_value_of_character(char c);
+
+#endif 
