@@ -1,11 +1,12 @@
 #include "include/process.h"
 #include "include/klibc.h"
 #include "include/global_defs.h"
+//#include "memory/mem_alloc.c"
 
-int init_all_processes() {
+int init_pcb_table() {
+    v_printf("pcb_table initialized!\n");
     pcb_table = kmalloc(MAX_PROCESSES);
-	GLOBAL_PID = 0;
-} 
+}
 
 //creates a process and initializes the PCB
 //returns pcb pointer upon success
@@ -20,17 +21,18 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		// Boolean success = load_file(pcb_pointer, file_p);
-		// if(!success) {
-		// 	return -1;
-		// } 
+		Boolean success = load_file(pcb_pointer, file_p);
+		if(!success) {
+			return -1;
+		} 
+		os_printf("Success: %d\n", success);
 		
-		//fill the free space with a pcb pointer
-		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
-		//initialize PCB		
-		pcb_pointer->PID = ++GLOBAL_PID;
-		pcb_pointer->function = sample_func;
-		pcb_pointer->has_executed = 0;
+		// //fill the free space with a pcb pointer
+		// *free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+		// //initialize PCB		
+		// pcb_pointer->PID = ++GLOBAL_PID;
+		// pcb_pointer->function = sample_func;
+		// pcb_pointer->has_executed = 0;
 
 		return pcb_pointer;
 		

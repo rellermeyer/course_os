@@ -156,6 +156,7 @@ int os_printf(const char *str_buf, ...) {
   va_end(args);
 }
 
+
 /* Set the first n bytes of dest to be the value c.*/
 void *os_memset(void *dest, int c, os_size_t n)
 {
@@ -367,8 +368,3 @@ os_size_t os_strcspn(const char *s, const char *reject)
   }
   return length;
 }
-
-/*
-int main()
-{ return 0; }
-*/

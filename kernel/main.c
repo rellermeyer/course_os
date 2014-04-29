@@ -27,10 +27,18 @@ void main(void){
   //NOTE: Make sure to init heap before
   //calling any malloc functions
   uint32_t* kheap = init_kheap(4096);
-  //initialize GLOBAL_PID and PCB table  
-  init_all_processes();
 
+  /* Allocate in kernel region using k_malloc()
+   * Allocate in user region using u_malloc()
+   */
+
+  //initialize GLOBAL_PID and PCB table
   v_printf("\nBegin Test\n");
+
+  init_pcb_table();
+  v_printf("\n");
+
+  initialize_timers();
 
   test_heap_manager();
 

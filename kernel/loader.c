@@ -64,8 +64,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 	*      | ***** |
 	*      | *Pad* | //Separates stack from others so no overwriting is done
 	*      | ***** |
-        *      | ***** |
-        *      | ***** | } size = HEAP_SIZE NEED TO DECIDE
+    *      | ***** |
+    *      | ***** | } size = HEAP_SIZE NEED TO DECIDE
 	*      | Heap  |
 	*      | *Pad* |
 	*      |  R&W  |
@@ -85,10 +85,6 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 			current_pointer = current_pointer + ph[i].p_memsz;
 		}
 	}
-
-	
-	
-			
 		
 }
 

@@ -13,6 +13,7 @@ void initialize_timers(){
   timer_pointers[1] = TIMER_1;
   timer_pointers[2] = TIMER_2;
   timer_pointers[3] = TIMER_3;
+  v_printf("timers_initialized\n");
 }
 
 void timer_start() {

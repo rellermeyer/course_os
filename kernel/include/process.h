@@ -151,7 +151,7 @@ be resumed
 uint32_t* pcb_table; //Table showing all initialized processes.
 uint32_t* next_free_slot_in_pcb_table();
 void print_pcb_table();
-int init_all_processes();
+int init_pcb_table();
 pcb* process_create(uint32_t* file_p);
 uint32_t process_destroy(int PID);
 void print_PID();

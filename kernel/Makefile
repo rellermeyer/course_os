@@ -7,13 +7,12 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o drivers/uart.o vuart.o startup.o argparse.o klibc.o mmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o timer.o clock.o
+OBJS=start.o drivers/uart.o vuart.o startup.o argparse.o klibc.o mmap.o stacks.o pmap.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o drivers/timer.o drivers/clock.o sampleFile.o
 
 all: kernel.img
 
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
-
 
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -serial stdio -nographic -kernel flash.bin
@@ -22,7 +21,8 @@ run: flash.bin
 flash.bin: kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
-	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
+	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512	
+	dd if=sampleFile.o of=flash.bin conv=notrunc bs=4k seek=2048
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf

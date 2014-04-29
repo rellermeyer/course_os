@@ -143,11 +143,12 @@ char** split_string(char* line, char** list)
 /* Return the number of whitespace-delimited words in String line. */
 int number_of_words(char *line)
 {
-  char line_copy[os_strlen(line)];
+  char* line_copy[os_strlen(line)];
   os_strcpy(line_copy, line);
   const char *delimiters = " \t"; // Space and tab
-
-  char *pos = (char *)os_strtok(line_copy, delimiters);
+  
+  /*Comment this in + make run = infinite loop */
+  char *pos = (char *)os_strtok(line, delimiters);
 
   // Count the number of words
   int count = 0;

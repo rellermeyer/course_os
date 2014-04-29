@@ -15,6 +15,7 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)
  */
+
 #include <stdint.h>
 #include "hw_handlers.h"
 #include "global_defs.h"
@@ -23,6 +24,7 @@
 #include "mmap.h"
 #include "pmap.h"
 #include "vmlayout.h"
+#include "include/process.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 void uart_handler(void *null) {
@@ -31,14 +33,23 @@ void uart_handler(void *null) {
 
 void start(void *p_bootargs) {
     print_uart0("Init...\n");
-    /*
   char *cmdline_args = read_cmdline_tag(p_bootargs);
 
+    /*
   print_uart0("arguments: ");
   print_uart0(cmdline_args);
   print_uart0("\n");
   print_uart0("CourseOS!\n");
   */
+
+  // Separate the command-line arguments into separate Strings
+  int num_args = number_of_words(cmdline_args);
+  char* arg_list[num_args];
+  split_string(cmdline_args, arg_list);
+  int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
+
+  // Parse and analyze each String
+  parse_arguments(arg_count, arg_list);
 
   //don't allow interrpts messing with memory
   disable_interrupts();
@@ -49,18 +60,18 @@ void start(void *p_bootargs) {
   interrupt_handler_t uart0_handler_struct = { &uart_handler };
   register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
+  //asm volatile("wfi");
   UART0_IMSC = 1<<4;
   VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
 
-   //initialize GLOBAL_PID and PCB table
-   init_all_processes();
 
   //Test: UART0 mapped to the correct virtual address   
   print_vuart0("MMU enabled\n");
 
   //setup new stack pointers and jump to main
   asm volatile (".include \"stacks.s\"");
+
 
   /* NOTHING EXECUTED BEYOND THIS POINT
   *
