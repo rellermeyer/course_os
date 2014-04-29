@@ -6,8 +6,6 @@
 
 unsigned char* filePointer;
 unsigned char* startPointer;
-//OVERHAUL TO MAKE EVERYTHING PASSED BY REFERENCE RATHER THAN VALUE.
-//I THINK WE SHOULD JUST COMMENT OUT ALL THE SECTION HEADER STUFF BECAUSE IT'S NOT USED AND WILL BE A PAINTO MESS WITH. NEED TO MAKE PROGRAM HEADER ARRAY PASS BY VALUE AND NEED TO FIX get_value to take in refernce rather than value. DO TONIGHT OR TOMORROW - KAELEN 
 
 
 /* Gets the value of the bytes on a big endian system */
@@ -73,23 +71,20 @@ int32_t read_elf_header(Elf_Ehdr *h, unsigned char  *pointer) {
 	if(check == -1){
 		return -1;
 	}
-	//os_printf("Size of char: %d\n", sizeof(char));
-	//os_printf("Size of get_value(1, h): %d\n", sizeof((char)get_value(1, h)));
 	char temp = get_value(1, h);
-	os_printf("Size of temp: %d\n", sizeof(temp));	
-	h->e_ident[EI_CLASS] = temp; // get_value(1, h);		// get class
+	h->e_ident[EI_CLASS] = temp; 		// get class
 
 	temp = get_value(1, h);
-	h->e_ident[EI_DATA] = temp;//get_value(1, h);		// endian
+	h->e_ident[EI_DATA] = temp;		// endian
 
 	temp = get_value(1, h);
-	h->e_ident[EI_VERSION] = temp;//get_value(1, h);	// original version of ELF
+	h->e_ident[EI_VERSION] = temp;		// original version of ELF
 
 	temp = get_value(1, h);
-	h->e_ident[EI_OSABI] = temp;//get_value(1, h);		// Target operating system ABI
+	h->e_ident[EI_OSABI] = temp;		// Target operating system ABI
 
 	temp = get_value(1, h);
-	h->e_ident[EI_ABIVERSION] = temp; //get_value(1, h); 	// Don't really know?
+	h->e_ident[EI_ABIVERSION] = temp;  	// Don't really know?
 
 
 	int32_t skip = 0;				// skips the padding
@@ -98,54 +93,54 @@ int32_t read_elf_header(Elf_Ehdr *h, unsigned char  *pointer) {
 		skip++;
 	}
 	Elf_Half half_temp = get_value(2, h);
-	h->e_type = half_temp; //get_value(2, h);			// get type of file
+	h->e_type = half_temp; 			// get type of file
 
 	half_temp = get_value(2, h);
-	h->e_machine = half_temp; //get_value(2, h);			// gets machine type (should be arm in our case)
+	h->e_machine = half_temp; 		// gets machine type (should be arm in our case)
 
 	Elf_Word word_temp = get_value(4, h);
-	h->e_version = word_temp; //get_value(4, h);			// version number (should be 1)
-	if(h->e_ident[EI_CLASS] == 1)			// get entry point
+	h->e_version = word_temp; 		// version number (should be 1)
+	if(h->e_ident[EI_CLASS] == 1)		// get entry point
 	{	
 		word_temp = get_value(4, h);
-		h->e_entry = word_temp; //get_value(4, h);
+		h->e_entry = word_temp; 
 	}
-	else
+	else	// 64-bit
 		h->e_entry = get_value(8, h);
 	
-	if(h->e_ident[EI_CLASS] == 1)			// get program header offset
+	if(h->e_ident[EI_CLASS] == 1)		// get program header offset
 	{
 		word_temp = get_value(4, h);	
-		h->e_phoff = word_temp; //get_value(4, h);
+		h->e_phoff = word_temp; 
 	}
-	else
+	else	// 64-bit
 		h->e_phoff = get_value(8, h);
 	
-	if(h->e_ident[EI_CLASS] == 1)			// get section header offset
+	if(h->e_ident[EI_CLASS] == 1)		// get section header offset
 	{	
 		word_temp = get_value(4, h);
-		h->e_shoff = word_temp;//get_value(4, h);
+		h->e_shoff = word_temp;
 	}
 	else
 		h->e_shoff = get_value(8, h);
 
 	word_temp = get_value(4, h);
-	h->e_flags = word_temp; //get_value(4, h);			// get flag number
+	h->e_flags = word_temp; 		// get flag number
 	
 	half_temp = get_value(2, h);
-	h->e_ehsize = half_temp; //get_value(2, h);			// get elf header size
+	h->e_ehsize = half_temp; 		// get elf header size
 	
 	half_temp = get_value(2, h);
-	h->e_phentsize = half_temp; //get_value(2, h);		// get program header size
+	h->e_phentsize = half_temp; 		// get program header size
 	
 	half_temp = get_value(2, h);
-	h->e_phnum = half_temp; //get_value(2, h);			// number of program headers
+	h->e_phnum = half_temp; 		// number of program headers
 
 	half_temp = get_value(2, h);
-	h->e_shentsize = half_temp; //get_value(2, h);		// section header size
+	h->e_shentsize = half_temp;		// section header size
 
 	half_temp = get_value(2, h);
-	h->e_shnum = half_temp; //get_value(2, h);			// number of section headers
+	h->e_shnum = half_temp; 		// number of section headers
 	
 	half_temp = get_value(2, h);
 	h->e_shstrndx = half_temp; //get_value(2, h);			// section header string table index
@@ -162,7 +157,7 @@ void read_program_header_table(Elf_Ehdr *eh, Elf_Phdr ph[], unsigned char *point
 	Elf_Word word_temp = 0;
 	while(i < eh->e_phnum) {
 		word_temp = get_value(4, eh);
-		ph[i].p_type = word_temp; //get_value(4, eh);
+		ph[i].p_type = word_temp; 
 		ph[i].p_offset = get_value(4, eh);
 		ph[i].p_vaddr = get_value(4, eh);
 		ph[i].p_paddr = get_value(4, eh);

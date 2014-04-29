@@ -55,8 +55,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 	*      | ***** |
 	*      | *Pad* | //Separates stack from others so no overwriting is done
 	*      | ***** |
-    *      | ***** |
-    *      | ***** | } size = HEAP_SIZE NEED TO DECIDE
+	*      | ***** |
+	*      | ***** | } size = HEAP_SIZE NEED TO DECIDE
 	*      | Heap  |
 	*      | *Pad* |
 	*      |  R&W  |
@@ -74,13 +74,16 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
         {
 		if(ph[i].p_type == PT_LOAD)
 		{
+			// This is used to get the entry point since we do not
+			// have virtual memory in user space working, yet.
 			if(first_seg)
 			{
 				entry_point_offset = h->e_entry - ph[i].p_vaddr;
 				first_seg = FALSE;
 			}
-				os_memcpy(file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz);
-				current_pointer = current_pointer + ph[i].p_memsz;
+			// This copies the info from the elf file to memory
+			os_memcpy(file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
+			current_pointer = current_pointer + ph[i].p_memsz;
 		}
 	}
 		
@@ -90,29 +93,33 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 	current_pointer += USER_PROC_STACK_SIZE + 0x1000; //Stack pointer	
 	
 	pcb_p->R13 = *current_pointer;
-	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem);
+	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	
 }	
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-void load_file(pcb * process_control_block, uint32_t * file_pointer)
+uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
-	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr));
+	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr)); // Get elf header
 	os_printf("%x\n", h);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
+
+	if(i == -1) {
+		os_printf("File is Not an ELF File. Exiting");
+		return -1;
+	}
+
+	if(h->e_phnum == 0) {
+		os_printf("No Program headers in ELF file. Exiting");
+		return -1;
+	}
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
-
-
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
 	
-	
-	Elf_Shdr *sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
-	read_section_header_table(h, sh, file_pointer);
-	parse_section_header_names(h, sh, file_pointer);
-	
 	allocate_process_memory(process_control_block, h, ph, file_pointer);
+	return 1;
 }
 
