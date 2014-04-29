@@ -7,7 +7,7 @@
 /* Get the command-line arguments and run the functions to process them. */
 void run_argparse(uint32_t p_bootargs)
 {
-  char *cmdline_args = read_cmdline_tag(p_bootargs);
+  char *cmdline_args = read_cmdline_tag((uint32_t *)p_bootargs);
 
   // Separate the command-line arguments into separate Strings
   int num_args = number_of_words(cmdline_args);
