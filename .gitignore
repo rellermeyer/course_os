@@ -1,6 +1,7 @@
 #these were not originally apart of the repo -- appeared after build
 /kernel/kernel.bin
 /kernel/flash.bin
+/kernel/boot-commands
 /toolchain/target/
 /u-boot/u-boot-*
 /qemu/
@@ -13,5 +14,8 @@
 *.elf
 *.bin
 *~
+*.swp
+/user/hello/hello
+/user/libc/libc.a
 
 NOTES

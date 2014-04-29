@@ -38,6 +38,8 @@
 static char lower_case_digits[16] = "0123456789abcdef";
 static char upper_case_digits[16] = "0123456789ABCDEF";
 
+uint32_t* heap;
+uint32_t heap_size;
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, os_size_t num )
 {
@@ -368,7 +370,29 @@ os_size_t os_strcspn(const char *s, const char *reject)
   return length;
 }
 
-/*
-int main()
-{ return 0; }
-*/
+
+void* init_heap(uint32_t size){
+  heap = (char*)mem_alloc(size);
+  //os_printf("&heap=%x\n", heap);
+  heap_size = size;
+
+  uint32_t* heap_header = heap;
+  uint32_t* heap_footer = heap+heap_size-sizeof(int);
+
+  *heap_header = heap_size;
+  *heap_footer = heap_size;
+
+  //os_printf("heap_header=%x\n", heap_header);
+  //os_printf("heap_footer=%x\n", heap_footer);
+  return heap;
+}
+
+
+void* kmalloc(uint32_t size){
+  void* block = (void*)allocate(size, heap, heap_size);
+  return block;
+}
+
+void kfree(void* ptr){
+  deallocate((uint32_t*)ptr, heap, heap_size);
+}

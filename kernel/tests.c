@@ -1,4 +1,8 @@
+//#include <stdio.h>
+//#include <stdlib.h>
+#include "include/global_defs.h"
 #include "include/tests.h"
+#include "include/klibc.h"
 
 //This function executes and displays results of test set given to it.
 void run_tests(Test *tests[], int num_tests)
@@ -27,4 +31,14 @@ Test* create_test(char *name, int (*test_function)(void*))
   test->test_name = name;
   test->testptr = test_function;
   return test;
+}
+
+int test1()
+{
+  return TRUE;
+}
+
+int test2()
+{
+  return FALSE;
 }
