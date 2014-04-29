@@ -1,5 +1,5 @@
 /********************************************************************
- *      linked_list.c
+ *      stack.c
  *
  *      Authors: Kevin Hicks, Anthony Lopez // any collaborators, please add name
  *
@@ -17,11 +17,17 @@
  #include "../include/stack.h"
  #include "../include/mem_alloc.h"
 
- stack* create_stack(void *data) {
-   stack *result = (stack *) malloc(sizeof(stack_elem));
-   result->ptr = 0;
-   return result;
- }
+stack* create_stack() {
+  stack *result = (stack *) malloc(sizeof(stack_elem));
+  result->front = -1;
+  return result;
+}
+
+stack_elem* create_stack_node(void *data) {
+  stack_elem *elem = (stack_elem*) malloc(sizeof(stack_elem));
+  elem->data = data;
+  return elem;
+}
 
 int is_empty(stack* stack) {
   if (stack->ptr == -1)
