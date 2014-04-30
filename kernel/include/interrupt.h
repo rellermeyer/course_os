@@ -19,6 +19,12 @@
 // general syscall function
 extern int syscall(int number);
 
+// the VIC has 32 bits to indicate a type of interrupt
+// currently we just pull a bit off the VIC and jump to that number handler
+// in the handler array
+// this may need to be expanded if we use the secondary controller
+#define MAX_NUM_INTERRUPTS	32
+
 typedef enum {
         IRQ_MASK,		// (this is bit 0x8 on the CPSR)
         FIQ_MASK,		// (this is bit 0x4 on the CPSR)
@@ -29,16 +35,15 @@ extern interrupt_t IRQ;
 extern interrupt_t FIQ;
 extern interrupt_t ALL;
 
-typedef struct {
+// this will tell if an interrupt mapping is an FIQ
+// HIGH bits are FIQs
+// extern char check_if_fiq[MAX_NUM_INTERRUPTS];
+
+typedef struct interrupt_handler_t{
 	void (*handler)(void *args);
 	// more may need to be added
 } interrupt_handler_t;
 
-// the VIC has 32 bits to indicate a type of interrupt
-// currently we just pull a bit off the VIC and jump to that number handler
-// in the handler array
-// this may need to be expanded if we use the secondary controller
-#define MAX_NUM_INTERRUPTS	32
 	
 
 /* these are what you should use to effect an
@@ -64,8 +69,7 @@ typedef struct {
 	disable_interrupt_save(ALL);
 
 
-/* we don't really wan't others mucking around with the interrupt state
-   functions (e.g. passing a bad parameter), so we'll  
+/*   functions (e.g. passing a bad parameter), so we'll  
    refer to the macros above for adjusting specific interrupt status */
 void	enable_interrupt(interrupt_t);
 int	enable_interrupt_save(interrupt_t);
@@ -77,7 +81,7 @@ int 	get_proc_status(void);
 void	restore_proc_status(int);
 
 int 	register_interrupt_handler(int, interrupt_handler_t *);
-void	handle_interrupt(int);
+void	handle_irq_interrupt(int);
 
 /* VIC Interrupt Mappings */
 #define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
@@ -86,10 +90,12 @@ void	handle_interrupt(int);
 #define VIC_INT_SELECT		(*((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
 #define VIC_INT_ENABLE		(*((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
 #define VIC_INT_ENCLEAR		(*((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
+//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030))) // contains the Interrupt Service Routine (ISR) of the currently active interrupt
 
 // these should be used in conjunction with the bit shift mappings below
 #define hw_interrupt_enable(n)	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | (1 << n))
-#define hw_interrupt_disable(n)	mmio_write(VIC_INT_ENCLEAR, (1 << n);
+#define hw_interrupt_disable(n)	mmio_write(VIC_INT_ENCLEAR, (1 << n));
+#define vic_select_fiq(n) 	mmio_write(VIC_INT_SELECT, (1 << n));
 
 	// Primary Interrupt Controller (PIC)
 #define WATCHDOG_IRQ	0	/* watchdog controller */
