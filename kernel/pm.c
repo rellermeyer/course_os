@@ -10,12 +10,14 @@ stack *stack = create_stack();
 //method to set CPU to idle
 int cpu_idle(int *fp)
 {
+	clear_cache();
 	return 0;
 }
 
 //method to return CPU to regular operation
 int cpu_resume(int *fp)
 {
+	enable_cache();
 	return 0;
 }
 
