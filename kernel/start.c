@@ -20,27 +20,16 @@
 #include "global_defs.h"
 #include "argparse.h"
 #include "interrupt.h"
+#include "mmap.h"
+#include "pmap.h"
+#include "vmlayout.h"
 
-
-#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
-void uart_handler(void *null) {
-	print_uart0("uart0!\n");
-}
 
 
 void start(void *p_bootargs) {
-	print_uart0("CourseOS!\n");
 
-	/* we boot into SVC mode with FIQ and IRQ masked */
-	disable_interrupts();
+	init_vector_table();
+	asm volatile("SWI 7");
 
-	interrupt_handler_t uart0_handler_struct = { &uart_handler };
-	register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
-
-	UART0_IMSC = 1<<4;
-	VIC_INT_ENABLE = 1<<12;
-	enable_interrupts();	
 	
-	for(;;);
-
 }
