@@ -48,16 +48,22 @@ void clear_cache()
 {	
 	/* still need to push & pop the stack */
 	/* disable cache */
+	asm volatile("mov r0, #0"); //clear r0
 	asm volatile("mrc p15, 0, r0, c1, c0, 0"); //mv control register to r0
 	asm volatile("bic r0, #4"); //!& with 4 - clears bit 2, cache bit
 	asm volatile("mcr p15, 0, r0, c1, c0, 0"); //write r0 to control register
 	
-	/* clear cache */
+	/* clean and flush cache */
+	asm volatile("mov r2, #0"); //clear r2
+	asm volatile("mcr p15, 0, r2, c7, c14, 0"); //clean and flush data cache
+	asm volatile("mov r2, #0"); //clear r2
+	asm volatile("mcr p15, 0, r2, c7, c5, 0"); //clean and flush instruction cache
 }
 
 void enable_cache()
 {
 	/* enable cache */
+	asm volatile("mov r0, #0"); //clear r0
 	asm volatile("mrc p15, 0, r0, c1, c0, 0"); //mv control register to r0
 	asm volatile("bic r0, #4"); //!& with 4 - enables bit 2, cache bit
 	asm volatile("mcr p15, 0, r0, c1, c0, 0"); //write r0 to control register
