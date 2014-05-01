@@ -7,9 +7,7 @@
 #include "mmap.h"
 #include "process.h"
 
-typedef struct signal
-{
-	char * type;
-} sig;
+void signal_create(uint32_t signal_type, uint32_t pid);		// creates signal given type and pid and inserts it into queue
+void signal_queue_call();					// removes signal from queue and handles it
 
 #endif
