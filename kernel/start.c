@@ -16,65 +16,6 @@
  *	(others...)
  */
 
-/*<<<<<<< HEAD
-
-#include "include/global_defs.h"
-#include <stdint.h>
-#include "include/argparse.h"
-#include "include/mmap.h"
-#include "include/pmap.h"
-#include "include/vmlayout.h"
-#include "include/loader.h"
-
-void start(void *p_bootargs) {
-   char *cmdline_args = read_cmdline_tag(p_bootargs);
-
-   print_uart0("arguments: ");
-   print_uart0(cmdline_args);
-   print_uart0("\n");
-   print_uart0("CourseOS!\n");
-
-   int addr = 0x810000;
-   int addr2 = 0x710000;
-   //os_printf(addr2);
-   os_printf(addr);
-   load_file((uint32_t *) addr);
-   // Separate the command-line arguments into separate Strings
-   //int num_args = number_of_words(cmdline_args);
-   // char* arg_list[num_args];
-   // split_string(cmdline_args, arg_list);
-   // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
-
-   // Parse and analyze each String
-   //parse_arguments(arg_count, arg_list);
-
-
-   // init_pcb_table();
-   
-    init_vector_table();
-
-    mmap();
-
-   // //Test: UART0 mapped to the correct virtual address   
-    print_vuart0("Virtual Memory!!!\n");
-
-   // //setup new stack pointers and jump to main
-    asm volatile (".include \"stacks.s\"");
-  
-   //  * NOTHING EXECUTED BEYOND THIS POINT
-   //  *
-   //  *
-   //  * Anything that needs to be setup right after
-   //  * booting the kernel should go before mmap()
-   //  *
-   //  * Any setup, heap allocation or stack allocation
-   //  * goes in main
-   //  *
-   //  *
-   	
-
-
-=======*/
 #include <stdint.h>
 #include "include/hw_handlers.h"
 #include "include/global_defs.h"
@@ -82,7 +23,7 @@ void start(void *p_bootargs) {
 #include "include/interrupt.h"
 #include "include/mmap.h"
 #include "include/process.h"
-#include "memory.h"
+#include "include/memory.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 void uart_handler(void *null) {
@@ -92,14 +33,8 @@ void uart_handler(void *null) {
 void start() {
   print_uart0("\nCourseOS!\n");
 
- // Separate the command-line arguments into separate Strings
- // int num_args = number_of_words(cmdline_args);
- // char* arg_list[num_args];
- // split_string(cmdline_args, arg_list);
- // int arg_count = sizeof(arg_list) / sizeof(arg_list[0]);
 
- // // Parse and analyze each String
- // parse_arguments(arg_count, arg_list);
+  asm volatile("SWI 7");
 
   //don't allow interrpts messing with memory
   disable_interrupts(); 
@@ -110,7 +45,25 @@ void start() {
   register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
  //asm volatile("wfi");
+  /* Simulating/Testing Interrupt Routines with UART */
+  
+  /* THIS PART IS  DONE IN THE DRIVER */
+  // Step 1: arm interrupts on device
+  /* enable RXIM interrupt */
   UART0_IMSC = 1<<4;
+  
+  // Step 2: Create handler
+  interrupt_handler_t uartHandler;
+  uartHandler.handler = uart_handler;
+  
+  // Step 3: register the handler with interrupts 
+  // (12 = interrupt mapping for UART handler -- see interrupt.h)
+  register_interrupt_handler(12, &uartHandler);
+  // now we go off into interrupt land ...
+  // ... ok we're back from the interrupt
+  
+  // Step 4: disarm the interrupt on the device
+
   VIC_INT_ENABLE = 1<<12;
   enable_interrupts();
 
@@ -129,4 +82,5 @@ void start() {
 
   //main();
   asm volatile("wfi");
+
 }

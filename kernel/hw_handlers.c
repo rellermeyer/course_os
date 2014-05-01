@@ -59,7 +59,7 @@ int printf_handler() {
     int i;
     char *str = (char *)buf;
     for (i = 0; i < len; i++) {
-	print_char_vuart0(str[i]);
+	print_char_uart0(str[i]);
     }
 
     return i;
@@ -68,7 +68,7 @@ int printf_handler() {
 void __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	register int callNumber asm("r7"); 
 	        
-	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
+	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
 	// print_vuart0("Syscall #: ");
