@@ -71,6 +71,8 @@ void handle_irq_interrupt(int interrupt_vector){
 	handlers[interrupt_vector];
 	// ok interrupt handled, clear it
 	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
+	// yea this needs to be changed
+	// we actually should probably just go ahead and disable interrupts on the VIC and in the core (and possibly on the device as well) since we don't have a nested handler
 }
 
 
