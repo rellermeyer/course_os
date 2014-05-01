@@ -23,11 +23,11 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 	}
 	
 	process_size +=  USER_PROC_STACK_SIZE;
-	process_size +=  4096; //This is going to be the heap size (need to determine what this should be
+	process_size +=  USER_PROC_HEAP_SIZE; //This is going to be the heap size (need to determine what this should be
 	
 	//Padding we want to be able to have some padding between certain sections of the program 
 	//mainly the stack from the other parts
-	process_size += 0x1000;
+	process_size += PADDING;
 	
 	return process_size;
 	
@@ -87,10 +87,10 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 		}
 	}
 		
-	current_pointer += 4096;//Heap 
+	current_pointer += USER_PROC_HEAP_SIZE;//Heap 
 	pcb_p->heap_p = current_pointer;
 
-	current_pointer += USER_PROC_STACK_SIZE + 0x1000; //Stack pointer	
+	current_pointer += USER_PROC_STACK_SIZE + PADDING; //Stack pointer	
 	
 	pcb_p->R13 = *current_pointer;
 	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
@@ -104,6 +104,7 @@ uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr)); // Get elf header
 	os_printf("%x\n", h);
+	//os_printf(file_pointer);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 
 	if(i == -1) {
