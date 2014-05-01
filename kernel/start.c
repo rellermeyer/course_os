@@ -22,33 +22,48 @@
 #include "interrupt.h"
 #include "mmap.h"
 
+#define UART0_DR   (*((volatile uint32_t *)(UART0_ADDRESS + 0x000)))
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
-void uart_handler(void *null) {
+
+void uart_handler(void) {
 	print_uart0("uart0!\n");
+	/* echo the received character + 1 */
+	UART0_DR = UART0_DR + 1;
 }
 
 
 void start(void *p_bootargs) {
-
 	init_vector_table();
-	asm volatile("SWI 7");
+	print_uart0("initialized vector table\n");
+	// asm volatile("SWI 7");
 
 	
 	/* Simulating/Testing Interrupt Routines with UART */
 	
 	/* THIS PART IS  DONE IN THE DRIVER */
-	// Step 1: arm interrupts on device
-	/* enable RXIM interrupt */
- 	UART0_IMSC = 1<<4;
 	
-	// Step 2: Create handler
+	// INITIALIZATION STEPS
+	// Step 1: Create handler
 	interrupt_handler_t uartHandler;
 	uartHandler.handler = uart_handler;
 	
-	// Step 3: register the handler with interrupts 
+	// Step 2: register the handler with interrupts 
 	// (12 = interrupt mapping for UART handler -- see interrupt.h)
 	register_interrupt_handler(12, &uartHandler);
+	
+	print_uart0("registed handler\n");
+	// INTERRUPT PROCESSING STEPS
+	// Step 1: arm interrupts on device
+	/* enable RXIM interrupt */
+ 	UART0_IMSC = 1<<4;
+	print_uart0("armed device\n");
+	
+	/* This stuff should some how happen now *?
+	// Update the VIC with the appropriate interrupt mapping
+	// irq_handler gets called
+
 	// now we go off into interrupt land ...
+	for(;;); // ... waiting for characher
 	// ... ok we're back from the interrupt
 	
 	// Step 4: disarm the interrupt on the device

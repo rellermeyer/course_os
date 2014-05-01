@@ -60,7 +60,6 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 		// update the "select" register on the VIC
 		vic_select_fiq(num);
 
-	// the VIC will take it from here ...	
 	// return a success value
 }
 
@@ -71,7 +70,7 @@ void handle_irq_interrupt(int interrupt_vector){
 	// go to handler routine
 	handlers[interrupt_vector];
 	// ok interrupt handled, clear it
-	hw_interrupt_disable(interrupt_vector);
+	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
 }
 
 
