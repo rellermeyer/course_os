@@ -52,23 +52,34 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
-void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
-	// int i, callNumber;
+int printf_handler() {
+    register int buf asm("r0");
+    register int len asm("r1");
 
-	// // the link register currently holds the address of the instruction immediately
-	// // after the SVC call
-	// // possible that syscall # passed directly in r7, not sure yet though
-	// register int address asm("lr"); 
+    int i;
+    char *str = (char *)buf;
+    for (i = 0; i < len; i++) {
+	print_char_vuart0(str[i]);
+    }
+
+    return i;
+}
+
+void __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
+	register int callNumber asm("r7"); 
 	        
-	// // load the SVC call and mask to get the number
-	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
-
-	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
+	print_vuart0("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
-	// print_uart0("Syscall #: ");
-	// os_printf("%x", &callNumber);
-	// print_uart0("\n");
+	// print_vuart0("Syscall #: ");
+	// v_printf("%x", &callNumber);
+	// print_vuart0("\n");
+
+	switch (callNumber) {
+	    case 1:
+		printf_handler();
+		break;
+	}
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
