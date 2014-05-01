@@ -60,21 +60,22 @@ void reserved_handler(void){
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
+
 	print_uart0("IRQ HANDLER\n");
 	disable_interrupts();	
+
 	// Discover source of interrupt
-	uint32_t mask = 1;
-	int source = 0;
-	// this search may need to become round robbin, but this is good for now
-	while (source < MAX_NUM_INTERRUPTS){
-		mask = mask << source;
-		if (mask == VIC_IRQ_STATUS){
-			break;
+	int i = 0;
+	// do a straight run through the VIC_INT_STATUS to determine
+	// which interrupt lines need to be tended to
+	for(i = 0; i < MAX_NUM_INTERRUPTS; i++){
+		// is the line active?
+		if((1 << i) & mmio_read(VIC_IRQ_STATUS)) {
+			// activate that specific handler
+			handle_irq_interrupt(i);	
 		}
-		source++;
-	}
-	if (source < MAX_NUM_INTERRUPTS)
-		handle_irq_interrupt(source);
+
+	// we've gone through the VIC and handled all active interrupts
 	enable_interrupts();
 }
 
