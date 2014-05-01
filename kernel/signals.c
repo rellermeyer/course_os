@@ -1,4 +1,4 @@
-//Contributors: Andrew Stepek, Michael Brennan, and Matthew Stromberg
+// Contributors: Andrew Stepek, Michael Brennan, and Matthew Stromberg
 
 /*
 Signals: SIGKILL, SIGUSR, SIGTERM, SIGPRINT
@@ -58,33 +58,31 @@ struct sig *remove()
 
 
 
-void signal_mask (char * type, int index, uint32_t PID)
+void signal_mask (char *type, int index, uint32_t PID)
 {
 	pcb* pcb_t = get_PCB(PID);
 	pcb_t.mask[index]->type = type;	
 }
 
-int raise(int sig)
+void signal_handler(struct sig *signal)
 {
-	// raises the signal (calls kill(), which hasn't been defined yet)
-	
-}
-
-void signal_handler(int sig_no)
-{
-	switch(sig_no)
+	switch(signal->sig_type)
 	{
 		case 9:
 			// SIGKILL
+			process_destroy(signal->pid);
 			break;
 		case 10:
 			// SIGUSR
+			process_create(signal->pid);
 			break;
 		case 11:
 			// SIGPRINT
+			print_process_state(signal->pid);
 			break;
 		case 15:
 			// SIGTERM
+			free_PCB(get_PCB(signal->pid));
 			break;
-		}
+	}
 }
