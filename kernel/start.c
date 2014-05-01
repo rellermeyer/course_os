@@ -15,7 +15,7 @@
  *	+ 0b10011 = SVC (supervisor, or, OS) mode
  *	(others...)
  */
- 
+
 #include <stdint.h>
 #include "hw_handlers.h"
 #include "global_defs.h"
