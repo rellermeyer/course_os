@@ -90,7 +90,7 @@ void	handle_irq_interrupt(int);
 #define VIC_INT_SELECT		(*((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
 #define VIC_INT_ENABLE		(*((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
 #define VIC_INT_ENCLEAR		(*((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
-//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030))) // contains the Interrupt Service Routine (ISR) of the currently active interrupt
+//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030))) // the ISR of the currently active interrupt
 
 // these should be used in conjunction with the bit shift mappings below
 #define hw_interrupt_enable(n)	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | (1 << n))
