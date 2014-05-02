@@ -30,12 +30,13 @@ typedef struct stack {
   int ptr;
 };
 
-stack* create_stack(void *data);
+stack* create_stack();
+stack_elem* create_stack_node(void *data);
 int is_empty(stack* stack);
 int size(stack* stack);
-stack_elem peek(stack* stack);
-void push(stack* stack, stack_elem* elem);
-stack_elem pop(stack* stack);
+stack_elem* peek(stack* stack);
+void push(stack* stack, void* data);
+stack_elem* pop(stack* stack);
 
 
 

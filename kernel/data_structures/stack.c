@@ -19,7 +19,7 @@
 
 stack* create_stack() {
   stack *result = (stack *) malloc(sizeof(stack_elem));
-  result->front = -1;
+  result->ptr = -1;
   return result;
 }
 
@@ -40,18 +40,18 @@ int size(stack* stack) {
   return stack->ptr+1;
 }
 
-stack_elem peek(stack* stack) {
+stack_elem* peek(stack* stack) {
   if (!is_empty(stack))
-    return stack->data[stack->ptr];
+    return &stack->data[stack->ptr];
   return NULL;
 }
 
-void push(stack* stack, stack_elem* elem) {
-  stack->data[++stack->ptr] = elem;
+void push(stack* stack, void* data) {
+  stack->data[++stack->ptr] = create_stack_node(data);
 }
 
-stack_elem pop(stack* stack) {
+stack_elem* pop(stack* stack) {
   if (!is_empty(stack))
-    return stack->data[stack->ptr--];
+    return &stack->data[stack->ptr--];
   return NULL;
 }
