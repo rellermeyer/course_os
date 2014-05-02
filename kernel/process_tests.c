@@ -37,6 +37,7 @@ uint32_t verify_process_destroy() {
 		return 0;
 }
 
+/* Tests to see if a pcb structure is cleared */
 uint32_t verify_free_PCB() {
 	uint32_t addr1 = 0x8000;
 	pcb* p = process_create(addr1);
@@ -56,6 +57,7 @@ uint32_t verify_free_PCB() {
 		return 0;
 }
 
+/* Call this function to kick off the tests */
 uint32_t run_process_tests(void) {
 	Test* tests[10];
 	uint32_t (*func)(void);

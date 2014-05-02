@@ -20,6 +20,8 @@ pcb* process_create(uint32_t* file_p) {
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
+		
+		//This is commented out since loader is not working properly
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		// Boolean success = load_file(pcb_pointer, file_p);
