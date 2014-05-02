@@ -21,6 +21,7 @@
 #include "argparse.h"
 #include "interrupt.h"
 #include "mmap.h"
+#include "drivers/include/timer.h"
 
 #define UART0_DR   (*((volatile uint32_t *)(UART0_ADDRESS + 0x000)))
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
@@ -37,6 +38,17 @@ void start(void *p_bootargs) {
 	print_uart0("initialized vector table\n");
 	asm volatile("SWI 7");
 
+  initialize_timers();
+
+  int timer_to_use = 0;
+  set_load_value(timer_to_use, 2500);
+  set_background_load_value(timer_to_use, 2500);
+  set_periodic_mode(timer_to_use);
+  start_timer(timer_to_use);
+  int i = 0;
+  for(i = 0; i < 10; i++){
+    os_printf("Timer %d value: %d\n", timer_to_use, get_current_timer_value(timer_to_use));
+  }
 	
 	/* Simulating/Testing Interrupt Routines with UART */
 	
