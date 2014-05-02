@@ -32,14 +32,6 @@ void start(void *p_bootargs) {
    print_uart0("CourseOS!\n");
    init_vector_table();
 
-
-   print_uart0("creating the list\n");
-   list *l = empty_create_list();
-   print_uart0("appending to the list\n");
-   insert(l, (void *) 2, 0);
-   //append(l, (void *)2);
-   print_uart0("done with the list");
-
    mmap();
 
    //Test: UART0 mapped to the correct virtual address

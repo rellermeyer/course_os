@@ -24,9 +24,5 @@ void main(void){
   init_all_processes();
 
   asm volatile("wfi");
-  list *l = create_list((void *) 1);
-  print_vuart0("The linked list has been created\n");
-  append(l, (void *) 2);
-  print_vuart0("List has been appended to\n");
 
 }
