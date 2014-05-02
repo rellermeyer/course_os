@@ -5,7 +5,7 @@
 
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES*4);
+    pcb_table = kmalloc(MAX_PROCESSES);
 	GLOBAL_PID = 0;
 } 
 
@@ -20,7 +20,6 @@ pcb* process_create(uint32_t* file_p) {
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
-
 		//This is commented out since loader is not working properly
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
@@ -36,6 +35,7 @@ pcb* process_create(uint32_t* file_p) {
 		pcb_pointer->PID = ++GLOBAL_PID;
 		pcb_pointer->has_executed = 0;
 		
+
 		return pcb_pointer;
 		
 	} else {
@@ -288,7 +288,7 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
-    load_process_state(pcb_p->PID);
+    //load_process_state(pcb_p->PID);
     os_printf("Executing Process with PID: %d\n", pcb_p->PID);
 	pcb_p->has_executed = 1;
 		

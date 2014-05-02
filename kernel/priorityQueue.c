@@ -2,13 +2,13 @@
 #include "include/global_defs.h"
 
 /* Global Variables */
-Node *head;
 Node *currentNode;
 /********************/
 
 /* Initializes all the global variables */
-void init() {
-    head = (Node *)mem_alloc(sizeof(Node));
+void init_q() {
+    head = (Node *)kmalloc(sizeof(Node));
+    os_printf("&head=%x\n", head);
     head->next = NULL;
     head->prev = NULL;
     head->PCB = NULL;
@@ -20,17 +20,15 @@ void init() {
 /* Add a PCB to the queue with a given priority.
    Return 1 if successful.
  */
-int add(void *PCB, int priority) {
-	if(head == NULL) {
-		init();
-	}
+int add(pcb *PCB, int priority) {
 
-    Node *newTask = (Node *)mem_alloc(sizeof(Node));
+    Node *newTask = (Node *)kmalloc(sizeof(Node));
+    os_printf("&newTask=%x\n", newTask);
     newTask->next = NULL;
     newTask->prev = NULL;
     newTask->PCB = PCB;
     newTask->priority = priority;
-    newTask->priority = PROCESS_READY;
+    PCB->current_state = PROCESS_READY;
 
     if(head->next == NULL) {
         head->next = (struct node *)newTask;
@@ -92,6 +90,7 @@ void join(pcb *other_PCB) {
    Else if the task was previously started, restore its state.
 */
 void dispatch(pcb *PCB) {
+  os_printf("dispatch\n");
   if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
   {
     PCB->current_state = PROCESS_RUNNING;
@@ -100,7 +99,8 @@ void dispatch(pcb *PCB) {
   else
   {
     // This will jump to the location the state was saved in task_yield()
-    load_process_state(PCB->PID); // Found in process.c
+    //load_process_state(PCB->PID); // Found in process.c
+    execute_process(PCB);
   }
 }
 
@@ -109,6 +109,7 @@ void schedule() {
   // When dispatch() returns, we must schedule again, so we have use "while"
   while (head->next != NULL)
   {
+    os_printf("schedule\n");
     Node *nodeToDispatch = (Node *)head->next;
 
     if (nodeToDispatch->PCB->current_state == PROCESS_READY)
