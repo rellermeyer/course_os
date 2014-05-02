@@ -39,6 +39,13 @@ int set_load_value(int timer_index, int value){
   return -1;
 }
 
+int get_timer_control_value(int timer_index){
+  if(timer_index < 4 && timer_index  >= 0){
+    return timer_pointers[timer_index]->control;
+  }
+  return -1;
+}
+
 /* Sets the value for the timer to load the next time it reaches
  * 0 and loads the reset value. Does not affect current timer. */
 int set_background_load_value(int timer_index, int value){
@@ -77,23 +84,25 @@ int get_current_timer_value(int timer_index){
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;
-    return 0;
-  }
-  return -1;
-}
-
-int set_free_running_mode(int timer_index){
-  if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;
+    timer_pointers[timer_index]->control &= 0xFFFFFFFD;
     return 0;
   }
   return -1;
 }
 
 int start_timer(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control |= 0x40;
+    return 0;
+  }
+  return -1;
+}
+
+int set_free_running_mode(int timer_index){
+  //Documentation is wrong
+  //control register bit 1 is for one shot or wrapping mode (assuming 0 index counting)
   if(timer_index < 4 && timer_index  >= 0){
-    timer_pointers[timer_index]->control = 0x8B;
+    timer_pointers[timer_index]->control |= 0x2;
     return 0;
   }
   return -1;
