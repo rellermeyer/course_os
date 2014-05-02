@@ -11,6 +11,7 @@ stack *stack = create_stack();
 int cpu_idle(int *fp)
 {
 	clear_cache();
+	save_registers();
 	return 0;
 }
 
@@ -44,6 +45,11 @@ void save_registers()
     push(stack, asm volatile ("pc"));
     push(stack, asm volatile ("sp"));
 
+}
+
+void restore_registers()
+{
+	
 }
 
 //method to clear L1
