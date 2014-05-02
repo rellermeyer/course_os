@@ -10,8 +10,8 @@ stack *stack = create_stack();
 //method to set CPU to idle
 int cpu_idle(int *fp)
 {
-	clear_cache();
 	save_registers();
+	clear_cache();
 	return 0;
 }
 
