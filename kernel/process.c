@@ -5,7 +5,7 @@
 
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES*4);
+    pcb_table = kmalloc(MAX_PROCESSES);
 	GLOBAL_PID = 0;
 } 
 
@@ -19,7 +19,6 @@ pcb* process_create(uint32_t* file_p) {
 	
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
-		
 		
 		//This is commented out since loader is not working properly
 		//pass pcb to loader
@@ -36,22 +35,22 @@ pcb* process_create(uint32_t* file_p) {
 		pcb_pointer->PID = ++GLOBAL_PID;
 		pcb_pointer->has_executed = 0;
 		
-		pcb_pointer->R0 = 0;
-		pcb_pointer->R1 = 0; 
-		pcb_pointer->R2 = 0; 
-		pcb_pointer->R3 = 0; 
-		pcb_pointer->R4 = 0; 
-		pcb_pointer->R5 = 0; 
-		pcb_pointer->R6 = 0; 
-		pcb_pointer->R7 = 0; 
-		pcb_pointer->R8 = 0; 
-		pcb_pointer->R9 = 0; 
-		pcb_pointer->R10 = 0; 
-		pcb_pointer->R11 = pcb_pointer->heap_p + 4096; //initial frame pointer 
-		pcb_pointer->R12 = 0; 
-		pcb_pointer->R13 = pcb_pointer->heap_p + 4096; //stack pointer is top of heap
-		pcb_pointer->R14 = 0; 
-		pcb_pointer->R15 = 0; 
+		// pcb_pointer->R0 = 0;
+		// pcb_pointer->R1 = 0; 
+		// pcb_pointer->R2 = 0; 
+		// pcb_pointer->R3 = 0; 
+		// pcb_pointer->R4 = 0; 
+		// pcb_pointer->R5 = 0; 
+		// pcb_pointer->R6 = 0; 
+		// pcb_pointer->R7 = 0; 
+		// pcb_pointer->R8 = 0; 
+		// pcb_pointer->R9 = 0; 
+		// pcb_pointer->R10 = 0; 
+		// pcb_pointer->R11 = pcb_pointer->heap_p + 4096; //initial frame pointer 
+		// pcb_pointer->R12 = 0; 
+		// pcb_pointer->R13 = pcb_pointer->heap_p + 4096; //stack pointer is top of heap
+		// pcb_pointer->R14 = 0; 
+		// pcb_pointer->R15 = 0; 
 		return pcb_pointer;
 		
 	} else {
@@ -304,7 +303,7 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
-    load_process_state(pcb_p->PID);
+    //load_process_state(pcb_p->PID);
     os_printf("Executing Process with PID: %d\n", pcb_p->PID);
 	pcb_p->has_executed = 1;
 		
