@@ -41,10 +41,12 @@ void start(void *p_bootargs) {
   initialize_timers();
 
   int timer_to_use = 0;
-  os_printf("control default%x\n",get_timer_control_value(timer_to_use));
+  os_printf("control default: %x\n",get_timer_control_value(timer_to_use));
   set_load_value(timer_to_use, 25);
   set_background_load_value(timer_to_use, 25);
   set_free_running_mode(timer_to_use);
+  enable_timer_interrupt(timer_to_use);
+  os_printf("control:  %x\n",get_timer_control_value(timer_to_use));
   start_timer(timer_to_use);
   int i = 0;
   for(i = 0; i < 100; i++){
