@@ -40,6 +40,7 @@ uint32_t* k_malloc(uint32_t size){
 }
 
 /* not implemented */
+/* not actually neccessary due to current implementation of malloc */
 void* free(void *ptr) {
     return ptr;
 }

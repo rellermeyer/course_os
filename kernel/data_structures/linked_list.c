@@ -17,7 +17,6 @@
  *
  ********************************************************************/
 
-#include "../include/locks.h"
 #include "../include/linked_list.h"
 #include "../include/mem_alloc.h"
 
