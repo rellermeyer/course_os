@@ -22,12 +22,12 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 		}
 	}
 	
-	process_size +=  USER_PROC_STACK_SIZE;
+	process_size +=  4096;
 	process_size +=  4096; //This is going to be the heap size (need to determine what this should be
 	
 	//Padding we want to be able to have some padding between certain sections of the program 
 	//mainly the stack from the other parts
-	process_size += 0x1000;
+	process_size += 4096;
 	
 	return process_size;
 	
@@ -35,11 +35,14 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 }
 
 
-void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * file_pointer)
+void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	uint32_t * process_mem = kmalloc(process_size * 4);
-	uint32_t * current_pointer = process_mem;
+	void * process_mem = aligned_kmalloc(process_size, 4096);
+	void * current_pointer = process_mem;
+
+	os_printf("process size= %x\n", process_size);
+	os_printf("&process block= %x\n\n", (uint32_t)process_mem);
 	//We're gonna copy each segment into memory at a position. Calculate what needs to done to change
 	//the entry_point to account for where we've placed something in memory
 	
@@ -80,19 +83,23 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], uint32_t * 
 			{
 				entry_point_offset = h->e_entry - ph[i].p_vaddr;
 				first_seg = FALSE;
+
+				os_printf("entry addr = %x\n", h->e_entry);
+				os_printf("prog header addr = %x\n", ph[i].p_vaddr);
 			}
+			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
-			os_memcpy(file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
-			current_pointer = current_pointer + ph[i].p_memsz;
+			os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
+			current_pointer = (uint32_t)current_pointer + ph[i].p_memsz;
 		}
 	}
 		
-	current_pointer += 4096;//Heap 
+	current_pointer = (uint32_t)current_pointer + 4096;//Heap 
 	pcb_p->heap_p = current_pointer;
 
-	current_pointer += USER_PROC_STACK_SIZE + 0x1000; //Stack pointer	
+	current_pointer = (uint32_t)current_pointer + 2*4096; //Stack pointer	
 	
-	pcb_p->R13 = *current_pointer;
+	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
 	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	

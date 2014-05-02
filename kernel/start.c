@@ -124,7 +124,7 @@ void start() {
 
   uint32_t* hello = pa2va(0x810000);  
   pcb* p = process_create(hello); 
-  
+  print_process_state(p->PID);
   //execute_process(p);
 
   //main();

@@ -5,7 +5,7 @@
 
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES*4);
+    pcb_table = kmalloc(MAX_PROCESSES*sizeof(void*));
 	GLOBAL_PID = 0;
 } 
 
@@ -34,22 +34,6 @@ pcb* process_create(uint32_t* file_p) {
 		pcb_pointer->PID = ++GLOBAL_PID;
 		pcb_pointer->has_executed = 0;
 		
-		pcb_pointer->R0 = 0;
-		pcb_pointer->R1 = 0; 
-		pcb_pointer->R2 = 0; 
-		pcb_pointer->R3 = 0; 
-		pcb_pointer->R4 = 0; 
-		pcb_pointer->R5 = 0; 
-		pcb_pointer->R6 = 0; 
-		pcb_pointer->R7 = 0; 
-		pcb_pointer->R8 = 0; 
-		pcb_pointer->R9 = 0; 
-		pcb_pointer->R10 = 0; 
-		pcb_pointer->R11 = pcb_pointer->heap_p + 4096; //initial frame pointer 
-		pcb_pointer->R12 = 0; 
-		pcb_pointer->R13 = pcb_pointer->heap_p + 4096; //stack pointer is top of heap
-		pcb_pointer->R14 = 0; 
-		pcb_pointer->R15 = 0; 
 		return pcb_pointer;
 		
 	} else {
@@ -165,6 +149,7 @@ uint32_t print_process_state(uint32_t PID) {
 	os_printf("reg 14 = %x\n", pcb_p->R14);
 	os_printf("reg 15 = %x\n", pcb_p->R15);
 
+	os_printf("heap base = %x\n", pcb_p->heap_p);
 	return 1;
 }
 
