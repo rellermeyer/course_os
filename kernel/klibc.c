@@ -20,6 +20,8 @@
 
 #include "include/klibc.h"
 #include "include/global_defs.h"
+#include "include/mem_alloc.h"
+#include "include/uart.c"
 #include <stdarg.h>
 #include <stdint.h>
 
