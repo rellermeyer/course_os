@@ -25,7 +25,6 @@ ring_buffer* create()
 
 void free_ring_buffer(ring_buffer *r)
 {
-	lock(r->l->lock);
     rb_node *clear = r->head;
     rb_node *cur = r->head->next;
     while(cur->next) {
@@ -38,14 +37,12 @@ void free_ring_buffer(ring_buffer *r)
 
 int put(ring_buffer *r, void *data)
 { /* do a size check */
-    lock(r->l->lock);
     r->size++;
     rb_node* node = (rb_node *) u_malloc(sizeof(rb_node));
     node->data = data;
     r->head->next = node;
     r->head = node;
     node->next = r->tail;
-    unlock(r->l->lock);
     return 1;
 }
 
@@ -56,11 +53,9 @@ rb_node* get(ring_buffer *r)
 
 void clear(ring_buffer *r)
 {
-	lock(r->l->lock);
     rb_node* clear = r->tail;
     r->tail = clear->next;
     r->head->next = r->tail;
-	//free(clear->data); // nots sure if good idea
+    //free(clear->data); // nots sure if good idea
     free(clear);
-	unlock(r->l->lock);
 }

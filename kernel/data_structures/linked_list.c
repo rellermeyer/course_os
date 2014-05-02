@@ -24,18 +24,17 @@
 list* empty_create_list()
 {
     list *result = (list *) u_malloc(sizeof(list));
-	result->size = 0;
+    result->size = 0;
     result->head = 0;
-	result->tail =  0;
+    result->tail =  0;
     return result;
 }
 list* create_list(void *data)
 {
     list *result = (list *) u_malloc(sizeof(list));
-	result->l->lock = 0;
     result->head = 0;
-	result->tail = 0;
-	result->size = 0;
+    result->tail = 0;
+    result->size = 0;
     insert(result, create_node(data), 0);
     return result;
 }
@@ -48,7 +47,6 @@ ll_node* create_node(void *data) {
 
 void free_list(list *l)
 {   /* since free isn't really implemented, it's not going to do anything */
-    lock(l->l);
     ll_node *tmp = l->head;
     ll_node *next = tmp->next;
     while(tmp->next) {
@@ -67,7 +65,6 @@ void free_node(ll_node *node)
 
 void insert(list *l, void *data, int index)
 {
-    lock(l->l);
     int i;
     ll_node *next = l->head;
     ll_node *prev;
@@ -84,25 +81,20 @@ void insert(list *l, void *data, int index)
     while(l->tail->next) { // safer than if
         l->tail = l->tail->next;
     }
-    unlock(l->l);
 }
 
 // this is what's broken
 void append(list *l, void *data)
 {
-	lock(l->l);
     l->tail->next = create_node(data);
     l->tail = l->tail->next;
-	unlock(l->l);
 }
 
 void delete_at(list *l, int index) {
-	lock(l->l);
     ll_node *prev = get_node(l, index);
     ll_node *to_delete = prev->next;
     prev->next = to_delete->next;
     free_node(to_delete);
-	unlock(l->l);
 }
 
 void* get_data(list *l, int index)
