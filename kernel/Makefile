@@ -7,19 +7,19 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
-OBJS=start.o uart.o vuart.o startup.o argparse.o klibc.o mmap.o pmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o data_structures/linked_list.o data_structures/locks.o
+OBJS=start.o drivers/uart.o vuart.o startup.o argparse.o klibc.o mmap.o stacks.o main.o interrupt.o hw_handlers.o process.o elf.o memory/mem_alloc.o loader.o tests.o data_structures/linked_list.o data_structures/ring_buffer.o
+
+all: kernel.img
 
 CFLAGS = -pipe
 CFLAGS += -std=gnu99 -ffreestanding -nostdinc
 
-all: course_os.img
 
 run: flash.bin
-	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin
+	${QEMU} -M versatilepb -m 128M -serial stdio -nographic -kernel flash.bin
 
 #boots the kernel at 0x210000
 flash.bin: kernel.img
-	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
@@ -48,3 +48,4 @@ clean:
 	rm -f *.elf
 	rm -f *.bin
 	rm -f *.map
+	rm -f drivers/*.o

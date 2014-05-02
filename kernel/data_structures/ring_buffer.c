@@ -12,12 +12,10 @@
  ********************************************************************/
 
 #include "../include/ring_buffer.h"
-#include "../include/mem_alloc.h"
-#include "../include/locks.h"
 
 ring_buffer* create()
 {
-    ring_buffer* rb = (ring_buffer *) u_malloc(sizeof(ring_buffer));
+    ring_buffer* rb = (ring_buffer *) umalloc(sizeof(ring_buffer));
     rb->size = 0;
     rb->l = 0;
     return rb;
@@ -28,17 +26,17 @@ void free_ring_buffer(ring_buffer *r)
     rb_node *clear = r->head;
     rb_node *cur = r->head->next;
     while(cur->next) {
-        free(clear);
+        ufree(clear);
         clear = cur;
         cur = cur->next;
     }
-    free(cur);
+    ufree(cur);
 }
 
 int put(ring_buffer *r, void *data)
 { /* do a size check */
     r->size++;
-    rb_node* node = (rb_node *) u_malloc(sizeof(rb_node));
+    rb_node* node = (rb_node *) umalloc(sizeof(rb_node));
     node->data = data;
     r->head->next = node;
     r->head = node;
@@ -57,5 +55,5 @@ void clear(ring_buffer *r)
     r->tail = clear->next;
     r->head->next = r->tail;
     //free(clear->data); // nots sure if good idea
-    free(clear);
+    ufree(clear);
 }

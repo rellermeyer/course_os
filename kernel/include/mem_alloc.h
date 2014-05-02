@@ -2,13 +2,18 @@
 Log
 4/2: Adjusted bump allocation algorithm: Sean V, Faseeh A, John G, Taylor S
 4/7: Fixed mem_alloc again works properly: Sean V, Faseeh A, Taylor S.
+5/2: added some more function headers: Brandon O,
 
 */
 
-#include <stdint.h> 
+#include <stdint.h>
 
-uint32_t* mem_alloc(uint32_t size, uint32_t priv) ;
-void* free(void *ptr);
-uint32_t* u_malloc(uint32_t size);
-uint32_t* k_malloc(uint32_t size);
-void* free(void *ptr);
+typedef enum{
+	KERN,
+	USER,
+} priv_t;
+
+uint32_t* mem_alloc(uint32_t, priv_t);
+uint32_t * umalloc(uint32_t size);
+uint32_t * kmalloc(uint32_t size);
+void ufree(void* ptr);

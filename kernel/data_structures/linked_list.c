@@ -22,7 +22,7 @@
 
 list* empty_create_list()
 {
-    list *result = (list *) u_malloc(sizeof(list));
+    list *result = (list *) umalloc(sizeof(list));
     result->size = 0;
     result->head = 0;
     result->tail =  0;
@@ -30,7 +30,7 @@ list* empty_create_list()
 }
 list* create_list(void *data)
 {
-    list *result = (list *) u_malloc(sizeof(list));
+    list *result = (list *) umalloc(sizeof(list));
     result->head = 0;
     result->tail = 0;
     result->size = 0;
@@ -39,7 +39,7 @@ list* create_list(void *data)
 }
 
 ll_node* create_node(void *data) {
-    ll_node *node = (ll_node*) u_malloc(sizeof(ll_node));
+    ll_node *node = (ll_node*) umalloc(sizeof(ll_node));
     node->data = data;
     return node;
 }
@@ -49,17 +49,17 @@ void free_list(list *l)
     ll_node *tmp = l->head;
     ll_node *next = tmp->next;
     while(tmp->next) {
-        free(tmp);
+        ufree(tmp);
         tmp = next;
         next = tmp->next;
     }
-    free(l);
+	ufree(l);
 }
 
 void free_node(ll_node *node)
 {
-    free(node->data);
-    free(node);
+    ufree(node->data);
+    ufree(node);
 }
 
 void insert(list *l, void *data, int index)
