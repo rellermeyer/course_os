@@ -24,25 +24,26 @@ int cpu_resume(int *fp)
 //method to save registers on stack
 void save_registers()
 {
-  push(stack, asm("r0"));
-  push(stack, asm("r1"));
-  push(stack, asm("r2"));
-  push(stack, asm("r3"));
-  push(stack, asm("r4"));
-  push(stack, asm("r5"));
-  push(stack, asm("r6"));
-  push(stack, asm("r7"));
-  push(stack, asm("r8"));
-  push(stack, asm("r9"));
-  push(stack, asm("r10"));
-  push(stack, asm("r11"));
-  push(stack, asm("r12"));
-		   
+    push(stack, asm volatile ("r0"));
+    push(stack, asm volatile ("r1"));
+    push(stack, asm volatile ("r2"));
+    push(stack, asm volatile ("r3"));
+    push(stack, asm volatile ("r4"));
+    push(stack, asm volatile ("r5"));
+    push(stack, asm volatile ("r6"));
+    push(stack, asm volatile ("r7"));
+    push(stack, asm volatile ("r8"));
+    push(stack, asm volatile ("r9"));
+    push(stack, asm volatile ("r10"));
+    push(stack, asm volatile ("r11"));
+    push(stack, asm volatile ("r12"));
  
-  push(stack, asm("sp"));
-  push(stack, asm("lr"));
-  push(stack, asm("pc"));
-  push(stack, asm("ip"));
+ 
+    push(stack, asm volatile ("ip"));
+    push(stack, asm volatile ("lr"));
+    push(stack, asm volatile ("pc"));
+    push(stack, asm volatile ("sp"));
+
 }
 
 //method to clear L1
