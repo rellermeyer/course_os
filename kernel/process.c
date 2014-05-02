@@ -270,6 +270,26 @@ uint32_t free_PCB(pcb* pcb_p) {
 	pcb_p->name = 0;
 	pcb_p->PID = 0;
 
+	// 0 out the registers 
+	pcb_p->R0 = 0;
+	pcb_p->R1 = 0;
+	pcb_p->R2 = 0;
+	pcb_p->R3 = 0;
+	pcb_p->R4 = 0;
+	pcb_p->R5 = 0;
+	pcb_p->R6 = 0;
+	pcb_p->R7 = 0;
+	pcb_p->R8 = 0;
+	pcb_p->R9 = 0;
+	pcb_p->R10 = 0;
+	pcb_p->R11 = 0;
+	pcb_p->R12 = 0;
+	pcb_p->R13 = 0;
+	pcb_p->R14 = 0;
+	pcb_p->R15 = 0;
+	
+	pcb_p->heap_p = 0;
+
 	return 1;
 }
 
@@ -285,8 +305,7 @@ uint32_t execute_process(pcb* pcb_p) {
     load_process_state(pcb_p->PID);
     os_printf("Executing Process with PID: %d\n", pcb_p->PID);
 	pcb_p->has_executed = 1;
-	//pcb_p->function(pcb_p->PID);
-	
+		
 	return 1;
 }
 
@@ -295,4 +314,7 @@ uint32_t execute_process(pcb* pcb_p) {
 void sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
 }
+
+
+
 

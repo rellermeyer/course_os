@@ -41,13 +41,17 @@ uint32_t verify_free_PCB() {
 	uint32_t addr1 = 0x8000;
 	pcb* p = process_create(addr1);
 
+	uint32_t tempPID = p->PID;
+
 	free_PCB(p);
 
 	expected = 0;
 	actual = p->PID;
 
-	if(expected == actual)
+	if(expected == actual) {
+		process_destroy(tempPID);
 		return 1;
+	}
 	else
 		return 0;
 }
