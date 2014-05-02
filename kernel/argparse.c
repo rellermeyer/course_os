@@ -76,11 +76,11 @@ int analyze_arguments(char **argv)
   // Run some tests
   if (os_strcmp(argv[i], "-test") == 0)
   {
-    os_printf("Running tests...\n");
-    Test *tests[2];
-    tests[0] = create_test("This passes", &test1);
-    tests[1] = create_test("This fails", &test2);
-    run_tests(tests, 2);
+    // os_printf("Running tests...\n");
+    // Test *tests[2];
+    // tests[0] = create_test("This passes", &test1);
+    // tests[1] = create_test("This fails", &test2);
+    // run_tests(tests, 2);
     return 1; // Read 1 argument
   }
 

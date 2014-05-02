@@ -22,10 +22,10 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		Boolean success = load_file(pcb_pointer, file_p);
-		if(!success) {
-			return -1;
-		} 
+		// Boolean success = load_file(pcb_pointer, file_p);
+		// if(!success) {
+		// 	return -1;
+		// } 
 		
 		// //fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
@@ -283,6 +283,7 @@ uint32_t execute_process(pcb* pcb_p) {
 		return 0;
 	}
     load_process_state(pcb_p->PID);
+    os_printf("Executing Process with PID: %d\n", pcb_p->PID);
 	pcb_p->has_executed = 1;
 	//pcb_p->function(pcb_p->PID);
 	
