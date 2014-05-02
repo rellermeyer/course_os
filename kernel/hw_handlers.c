@@ -74,7 +74,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 			// activate that specific handler
 			handle_irq_interrupt(i);	
 		}
-
+	}
 	// we've gone through the VIC and handled all active interrupts
 	enable_interrupts();
 }

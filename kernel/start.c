@@ -35,7 +35,7 @@ void uart_handler(void) {
 void start(void *p_bootargs) {
 	init_vector_table();
 	print_uart0("initialized vector table\n");
-	// asm volatile("SWI 7");
+	asm volatile("SWI 7");
 
 	
 	/* Simulating/Testing Interrupt Routines with UART */
@@ -58,9 +58,10 @@ void start(void *p_bootargs) {
  	UART0_IMSC = 1<<4;
 	print_uart0("armed device\n");
 	
-	/* This stuff should some how happen now *?
+	/* This stuff should some how happen now */
 	// Update the VIC with the appropriate interrupt mapping
 	// irq_handler gets called
+	
 
 	// now we go off into interrupt land ...
 	for(;;); // ... waiting for characher
