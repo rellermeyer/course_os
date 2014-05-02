@@ -76,6 +76,17 @@ void insert(tree* t, void *d)
     } else {
 	par->left = create_node(d);
     } 
+    node *cur = t->root;
+    while(cur->address != d) {
+	// update those balance factors
+	if(greater_than(cur->address, d)) {
+	    cur->right_balance++;
+	    cur = cur->right;
+	} else  {
+	    cur->left_balance++;
+	    cur = cur->left;
+	} 
+    }
     // any reshaping of tree
     reshape_if_needed(t, par);
 }
@@ -103,6 +114,7 @@ void reshape_if_needed(tree *t, node *cur)
 	}
     }
 }
+
 void delete(tree *t, (void *) addr)
 {
 }
