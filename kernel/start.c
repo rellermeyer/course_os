@@ -41,19 +41,20 @@ void start() {
   init_uheap(0x100000);
   //initialize pcb table and PID
   init_all_processes(); 
-  init_q();
 
-  uint32_t* hello = umalloc(sizeof(uint32_t*));
-  pcb* p = process_create(hello); 
-  add(p, 20);
+  run_process_tests();
 
 
-  hello = umalloc(sizeof(uint32_t*));
-  p = process_create(hello); 
-  add(p, 10);
+ //print_PID();
+  // init_q();
 
-  schedule();
-  asm volatile("SWI 7");
+
+  // uint32_t* hello = umalloc(sizeof(uint32_t*));
+  // pcb* p = process_create(hello); 
+  // add(p, 20);
+
+  // schedule();
+  // asm volatile("SWI 7");
 
   //execute_process(p);
 
