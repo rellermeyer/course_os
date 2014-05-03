@@ -1,5 +1,15 @@
-// Contributors: Andrew Stepek, Michael Brennan, and Matthew Stromberg
 
+/*
+
+Contributors: Michael Brennan, Andrew Stepek, and Matthew Stromberg
+
+- Handles signals. Signals are defined with what their correspdonding signal numbers are in Unix.
+
+- Singals are structs containing PID's and Signal Types, it is set up in a Queue that is maintained through the signal creation function. 
+
+- Signals are handled via passing a removal from the Queue into the Singal Handle function, which than calls the correspodning functions needed in process.h
+
+*/
 
 #include "include/signals.h"
 #include "include/mem_alloc.h"
