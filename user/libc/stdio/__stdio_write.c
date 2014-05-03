@@ -26,7 +26,7 @@ size_t __stdio_write(FILE *f, const unsigned char *buf, size_t len)
 			pthread_cleanup_pop(0);
 		} else {
 #endif    
-			cnt = syscall(SYS_writev, f->fd, iov, iovcnt);
+			cnt = syscall(SYS_write, f->fd, iov, iovcnt);
 #if 0
 		}
 #endif

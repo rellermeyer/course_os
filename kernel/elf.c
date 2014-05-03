@@ -54,8 +54,10 @@ int32_t isElf(Elf_Ehdr *h) {
 	char ELFMAG1 = get_value(1, h);	// 'E'
 	char ELFMAG2 = get_value(1, h);	// 'L'
 	char ELFMAG3 = get_value(1, h);	// 'F'
+	
 	if(ELFMAG0 != 127 || ELFMAG1 != 'E' || ELFMAG2 != 'L' || ELFMAG3 != 'F')
 		return -1;
+	
 	h->e_ident[EI_MAG0] = ELFMAG1;
 	h->e_ident[EI_MAG1] = ELFMAG2;
 	h->e_ident[EI_MAG2] = ELFMAG3;

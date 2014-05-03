@@ -24,7 +24,7 @@ _Noreturn void exit(int code)
 	static int lock;
 
 	/* If more than one thread calls exit, hang until _Exit ends it all */
-	while (a_swap(&lock, 1)) __syscall(SYS_pause);
+	//while (a_swap(&lock, 1)) __syscall(SYS_pause);
 
 	__funcs_on_exit();
 

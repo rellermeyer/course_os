@@ -22,12 +22,12 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 		}
 	}
 	
-	process_size +=  4096;
-	process_size +=  4096; //This is going to be the heap size (need to determine what this should be
+	process_size +=  USER_PROC_STACK_SIZE;
+	process_size +=  USER_PROC_HEAP_SIZE; //This is going to be the heap size (need to determine what this should be
 	
 	//Padding we want to be able to have some padding between certain sections of the program 
 	//mainly the stack from the other parts
-	process_size += 4096;
+	process_size += PADDING;
 	
 	return process_size;
 	
