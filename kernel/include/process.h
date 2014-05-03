@@ -72,7 +72,7 @@ typedef struct pcb{
   //PROCESS_STATE current_state;
   uint32_t* heap_p; //pointer to the heap
   uint32_t* process_l1pt;
-  
+  uint32_t* l2pt;
 
   /*
    * r0-r3 are the argument and scratch registers; r0-r1 are also the result registers

@@ -89,7 +89,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			}
 			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
-			//os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
+			os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
 			current_pointer = (uint32_t)current_pointer + ph[i].p_memsz;
 		}
 	}
@@ -101,9 +101,9 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	
 	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
 	
-	setup_process_vas(pcb_p->PID, process_size, h->e_entry);
+	setup_process_vas(pcb_p->PID, process_size, h->e_entry, process_mem);
 
-	pcb_p->R15 = (uint32_t)(entry_point_offset + 0x810000);//process_mem); // set PC
+	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
 
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	

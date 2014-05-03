@@ -22,6 +22,8 @@ pcb* process_create(uint32_t* file_p) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 	    pcb_pointer->process_l1pt = (uint32_t*)aligned_kmalloc(16*1024, 16*1024); //16K table at 16K boundary
 		os_printf("&process_l1pt=%x\n", pcb_pointer->process_l1pt);
+		pcb_pointer->l2pt = aligned_kmalloc(1024,1024);
+		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		// Boolean success = load_file(pcb_pointer, file_p);
@@ -107,6 +109,7 @@ uint32_t load_process_state(uint32_t PID) {
 		return 0;
 	}
 
+	//set mmu base register to the current process' page table
 	unsigned int pt_addr = (unsigned int)pcb_p->process_l1pt;
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
 
@@ -286,7 +289,7 @@ void sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
 }
 
-void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr){
+void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr, uint32_t* block_addr){
 	pcb* p = get_PCB(PID);
 
 	os_printf("setting up process vas at %x\n", p->process_l1pt);
@@ -294,10 +297,23 @@ void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr){
 	os_memcpy(first_level_pt, p->process_l1pt, 16*1024);
 
 	uint32_t entry_section = (uint32_t)entry_addr>>20;
-
 	uint32_t entry_page = (uint32_t)entry_addr>>12;
+	uint32_t num_proc_pages = proc_size>>12;
+	if(proc_size%4096 > 0)
+		num_proc_pages++;
 
-	void* l2pt = aligned_kmalloc(1024,1024);
+	uint32_t target_addr = (uint32_t)block_addr;
 
-	p->process_l1pt[entry_section] = va2pa((uint32_t)l2pt) | 1;
+	//aborts if I try to allocate l2pt in here
+	//allocating in process_create for brute force testing
+	int i;
+	for(i = 0; i < 256; i++){
+		if(i>=entry_page && i<= entry_page+num_proc_pages){
+			p->l2pt[i] = target_addr | 0x0010 | 2;
+			target_addr += 4096;
+		}
+	}
+
+	p->process_l1pt[entry_section] = (uint32_t)p->l2pt | 1;
+
 }
