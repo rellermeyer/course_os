@@ -27,13 +27,12 @@
 
 
 void start(void *p_bootargs) {
-  print_uart0("Init...\n");
+  print_uart0("Course OS!\n");
 
   // Get command line boot arguments and process them
   run_argparse(p_bootargs);
 
   init_heap(32*0x100000);
   init_vector_table();
-
 
 }
