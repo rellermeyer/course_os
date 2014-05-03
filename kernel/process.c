@@ -3,7 +3,7 @@
 #include "include/global_defs.h"
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES);
+    pcb_table = kmalloc(MAX_PROCESSES*4);
 	GLOBAL_PID = 0;
 } 
 

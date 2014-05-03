@@ -23,12 +23,7 @@
 #include "interrupt.h"
 #include "mmap.h"
 #include "klibc.h"
-
-
-#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
-void uart_handler(void *null) {
-	print_uart0("uart0!\n");
-}
+#include "memory.h"
 
 
 void start(void *p_bootargs) {
@@ -38,5 +33,7 @@ void start(void *p_bootargs) {
   run_argparse(p_bootargs);
 
   init_heap(32*0x100000);
+  init_vector_table();
+
 
 }

@@ -146,8 +146,8 @@ typedef struct {
 	}d_un;
 } Elf_Dyn;
 
-int read_elf_header(Elf_Ehdr h, uint32_t *pointer);
-void read_program_header_table(Elf_Ehdr eh, Elf_Phdr ph[], uint32_t *pointer);
-void read_section_header_table(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer);
-void parse_section_header_names(Elf_Ehdr eh, Elf_Shdr sh[], uint32_t *pointer);
+int read_elf_header(Elf_Ehdr *h, unsigned char *pointer);
+void read_program_header_table(Elf_Ehdr *eh, Elf_Phdr ph[], unsigned char *pointer);
+void read_section_header_table(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer);
+void parse_section_header_names(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer);
 #endif
