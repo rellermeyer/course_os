@@ -13,6 +13,50 @@ uint32_t* mem_alloc(uint32_t size) {
     nextBlock = nextBlock + size;
    
     return allocBlock;
+
+uint32_t* mem_alloc(uint32_t size, priv_t priv) {
+
+    uint32_t* alloc_block = 0;
+
+    uint32_t temp = size / 4;
+
+    if((size % 4) > 0) {
+        temp++;
+    }
+
+	if(priv == KERN){
+		if(next_kblock + temp > KHEAPLIM){
+			return alloc_block;
+		}
+		alloc_block = next_kblock;
+		next_kblock += temp;
+	}
+
+	if(priv == USER){
+		if(next_ublock + temp > UHEAPLIM){
+			return alloc_block;
+		}
+		alloc_block = next_ublock;
+		next_ublock += temp;
+	}
+	v_printf("returning block %x\n", alloc_block);
+	return alloc_block;
+}
+
+void* init_kheap(uint32_t size){
+	kheap = (char*)mem_alloc(size, KERN);
+	//v_printf("&kheap=%x\n", kheap);
+	kheap_size = size;
+
+	uint32_t* heap_header = kheap;
+	uint32_t* heap_footer = kheap+kheap_size-sizeof(int);
+
+	*heap_header = kheap_size;
+	*heap_footer = kheap_size;
+
+	//v_printf("heap_header=%x\n", heap_header);
+	//v_printf("heap_footer=%x\n", heap_footer);
+	return kheap;
 }
 
 void* init_heap(uint32_t size){
@@ -58,6 +102,46 @@ char* allocate(uint32_t size, char* heap, int32_t heap_size){
         //insert a footer at end of block
         *footer_addr = header*(-1);
         return heap+ret_ptr;
+	//check and coalesce both adjacent blocks
+	if(!first_block && !last_block){
+		uint32_t* right_block_header = (char*)footer_addr+sizeof(int32_t);
+		int32_t right_block_size = *right_block_header;
+
+		uint32_t* left_block_header = (char*)header_addr-sizeof(int32_t);
+		int32_t left_block_size = *left_block_header;
+
+		//both adjacent blocks are free
+		if(right_block_size>0 && left_block_size>0){
+			int32_t new_size = size + right_block_size + left_block_size + 4*sizeof(int32_t);
+
+			//set new header at left blocks header
+			uint32_t* left_header_addr = (char*)header_addr-2*sizeof(int32_t)-left_block_size;
+			*left_header_addr = new_size;
+			//set new footer at right blocks footer
+			uint32_t* right_footer_addr = (char*)footer_addr+2*sizeof(int32_t)+right_block_size;
+			*right_footer_addr = new_size;
+		}
+
+		//only right free block
+		else if(right_block_size>0 && left_block_size<0){
+			//set new header at freed blocks header
+			*header_addr = size+right_block_size+2*sizeof(int32_t);
+			//set new footer at right blocks footer
+			uint32_t* right_footer_addr = (char*)footer_addr+2*sizeof(int32_t)+right_block_size;
+			*right_footer_addr = size+right_block_size+2*sizeof(int32_t);
+		}
+		//only left free block
+		else if(left_block_size>0 && right_block_size<0){
+			//set new header at left blocks header
+			uint32_t* left_header_addr = (char*)header_addr-2*sizeof(int32_t)-left_block_size;
+			*left_header_addr = size+left_block_size+2*sizeof(int32_t);
+			//set new footer at freed blocks footer
+			*footer_addr = size+left_block_size+2*sizeof(int32_t);
+		}
+		else{
+			*header_addr = size;
+			*footer_addr = size;
+		}
 
       }
 
@@ -225,4 +309,39 @@ void mcheck(){
     if(ptr == end_ptr)
       return;
   }
+}
+
+void mcheck(void* heap_ptr, int32_t heap_size){
+
+	char* ptr = (char*)heap_ptr;
+	uint32_t* end_ptr = (char*)heap_ptr + 2*sizeof(int32_t) + heap_size;
+	int i, block=0;
+	for(i = 0; i < heap_size; i+=0){
+		uint32_t* block_addr = ptr+sizeof(int32_t);
+
+		uint32_t* header_addr = ptr;
+		int32_t block_header = *header_addr;
+		int32_t block_size = abs(block_header);
+
+		uint32_t* footer_addr = ptr+sizeof(int32_t)+block_size;
+		int32_t block_footer = *footer_addr;
+
+		if(block_header == block_footer && block_header<0){
+			v_printf("Block %d Allocated:", block);
+			v_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+		}
+		else if(block_header == block_footer && block_header>0){
+			v_printf("Block %d Free:", block);
+			v_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+		}
+		else{
+			v_printf("INCONSISTENT HEAP");
+			return;
+		}
+
+		ptr = ptr + block_size + 2*sizeof(int32_t);
+		block++;
+		if(ptr == end_ptr)
+			return;
+	}
 }

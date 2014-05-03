@@ -14,6 +14,8 @@
 #ifndef __llist_h
 #define __llist_h
 
+#include "../include/locks.h"
+
 typedef struct ll_node ll_node;
 typedef struct list list;
 
@@ -22,15 +24,16 @@ struct ll_node
 {
     ll_node *next;
     void *data;
-}; 
+};
 struct list
 {
+	struct lock *l;
     ll_node *head;
     ll_node *tail;
     int size;
 };
 
-/* prepend (because of speed) to the list. */
+list* empty_create_list();
 list* create_list(void *data);
 ll_node* create_node(void *data);
 void free_list(list *l);

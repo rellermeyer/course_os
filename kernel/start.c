@@ -30,12 +30,33 @@ void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
+void start(void *p_bootargs) {
+    print_uart0("Init...\n");
+    /*
+  char *cmdline_args = read_cmdline_tag(p_bootargs);
+
+  print_uart0("arguments: ");
+  print_uart0(cmdline_args);
+  print_uart0("\n");
+  print_uart0("CourseOS!\n");
+  */
+
+  //don't allow interrpts messing with memory
+  disable_interrupts();
+  //setup page table and enable MMU
+  mmap();
+  //register handlers
+  init_vector_table();
+  interrupt_handler_t uart0_handler_struct = { &uart_handler };
+  register_interrupt_handler(UART0_IRQ, &uart0_handler_struct);
 
 void start(void *p_bootargs) {
   print_uart0("Init...\n");
 
   // Get command line boot arguments and process them
   run_argparse(p_bootargs);
+  //Test: UART0 mapped to the correct virtual address
+  print_vuart0("MMU enabled\n");
 
   init_heap(32*0x100000);
 
