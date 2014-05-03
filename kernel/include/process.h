@@ -163,6 +163,8 @@ void sample_func(uint32_t x);
 uint32_t load_process_state(uint32_t PID);
 uint32_t save_process_state(uint32_t PID);
 uint32_t print_process_state(uint32_t PID);
+uint32_t num_processes_in_table();
+
 
 
 // static void process_exit(process p); //harder because we have to clean up

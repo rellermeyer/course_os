@@ -5,9 +5,9 @@
 
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES);
+    pcb_table = kmalloc(MAX_PROCESSES*4);
 	GLOBAL_PID = 0;
-} 
+}
 
 //creates a process and initializes the PCB
 //returns pcb pointer upon success
@@ -20,13 +20,15 @@ pcb* process_create(uint32_t* file_p) {
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		
-		//This is commented out since loader is not working properly
-		//pass pcb to loader
-		//will return -1 if not an ELF file or other error
-		Boolean success = load_file(pcb_pointer, file_p);
-		if(success == -1) {
-			return -1;
-		} 
+		
+		if(file_p != NULL) { // NULL can be passed in for test cases
+			// pass pcb to loader
+			// will return -1 if not an ELF file or other error
+			Boolean success = load_file(pcb_pointer, file_p);
+			if(success == -1) {
+				return -1;
+			} 
+		}
 		
 		// //fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
@@ -189,8 +191,8 @@ void print_PID() {
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if((*current_address) != 0) {
 			// debug
-			// os_printf("curr addr: %x\n", current_address);
-			// os_printf("contents: %x\n", *current_address);
+			os_printf("curr addr: %x\n", current_address);
+			os_printf("contents: %x\n", *current_address);
 
 			pcb* temp_pcb = (pcb*) *current_address;
 			os_printf("PID: %d\n", temp_pcb->PID);
@@ -293,6 +295,22 @@ uint32_t execute_process(pcb* pcb_p) {
 	pcb_p->has_executed = 1;
 		
 	return 1;
+}
+
+
+/* Iterates through table and returns number of processes */
+uint32_t num_processes_in_table() {
+	uint32_t* addr = pcb_table;
+	uint32_t numProcesses = 0;
+	uint32_t i;
+	for(i = 0; i < MAX_PROCESSES; ++i) {
+		
+		if((*(int*)addr) != 0){
+			numProcesses++;
+		}
+		addr += 1;
+	}
+	return numProcesses;
 }
 
 

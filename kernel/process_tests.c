@@ -11,7 +11,7 @@ uint32_t result;
 
 /* Tests if a process is created */
 uint32_t verify_process_creation() {
-	uint32_t* addr1 = 0x8000; 
+	uint32_t* addr1 = NULL; 
 	pcb* p1 = process_create(addr1);
 
 	expected = 1;
@@ -25,11 +25,12 @@ uint32_t verify_process_creation() {
 
 /* Tests to see if a process is destroyed */ 
 uint32_t verify_process_destroy() {
-	uint32_t addr1 = 0x8000;
-	process_destroy(1);
+	uint32_t addr1 = NULL;
 
 	expected = 0; 
-	actual = get_PCB(1);
+
+	process_destroy(1);
+	actual = get_PCB(1); // should not find 1 because we destroyed it
 
 	if(expected == actual)
 		return 1;
@@ -39,7 +40,7 @@ uint32_t verify_process_destroy() {
 
 /* Tests to see if a pcb structure is cleared */
 uint32_t verify_free_PCB() {
-	uint32_t addr1 = 0x8000;
+	uint32_t addr1 = NULL; //
 	pcb* p = process_create(addr1);
 
 	uint32_t tempPID = p->PID;
@@ -47,7 +48,7 @@ uint32_t verify_free_PCB() {
 	free_PCB(p);
 
 	expected = 0;
-	actual = p->PID;
+	actual = p->PID; // PID should be 0 bc of free
 
 	if(expected == actual) {
 		process_destroy(tempPID);
@@ -56,6 +57,8 @@ uint32_t verify_free_PCB() {
 	else
 		return 0;
 }
+
+
 
 /* Call this function to kick off the tests */
 uint32_t run_process_tests(void) {
@@ -73,6 +76,11 @@ uint32_t run_process_tests(void) {
 	func = &verify_free_PCB;
 	char* test3 = "Process Test 3";
 	Test* t3 = create_test(test3, func);
+
+	
+	print_PID();
+	uint32_t numProc = num_processes_in_table();
+	os_printf("NumProcInTab: %d\n", numProc);
 
 	tests[0] = t1;
 	tests[1] = t2;
