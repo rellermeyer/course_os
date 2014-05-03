@@ -72,6 +72,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
+  asm volatile("wfi");
 	os_printf("PREFETCH ABORT HANDLER\n");
 }
 
@@ -83,6 +84,7 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
   asm volatile("mov %0, sp" : "=r" (sp));
   asm volatile("mov %0, fp" : "=r" (fp));
   os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
+  asm volatile("wfi");
 }
 
 void reserved_handler(void){

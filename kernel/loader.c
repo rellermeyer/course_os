@@ -89,7 +89,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			}
 			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
-			os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
+			//os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
 			current_pointer = (uint32_t)current_pointer + ph[i].p_memsz;
 		}
 	}
@@ -100,7 +100,11 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	current_pointer = (uint32_t)current_pointer + 2*4096; //Stack pointer	
 	
 	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
-	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
+	
+	setup_process_vas(pcb_p->PID, process_size, h->e_entry);
+
+	pcb_p->R15 = (uint32_t)(entry_point_offset + 0x810000);//process_mem); // set PC
+
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	
 }	
@@ -109,8 +113,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 //Take a process control block and pointer to the start of an ELF file in memory.
 uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
-	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc( sizeof(Elf_Ehdr)); // Get elf header
-	os_printf("%x\n", h);
+	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr)); // Get elf header
+	os_printf("elf header= %x\n", h);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 
 	if(i == -1) {

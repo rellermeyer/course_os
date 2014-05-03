@@ -101,8 +101,18 @@ void start() {
  // // Parse and analyze each String
  // parse_arguments(arg_count, arg_list);
 
-  //don't allow interrpts messing with memory
-  disable_interrupts(); 
+  //flush TLB
+  asm volatile(
+    "eor r0, r0 \n\t"
+    "MCR p15, 0, r0, c8, c7, 0 \n\t"); 
+     
+  print_uart0("Virtual Memory (no paging yet)\n");  
+
+  disable_interrupts();
+  //Unmap one-to-one kernel and pt mappings
+  // *(v_first_level_pt+(P_KDSBASE>>20)) = 0;   
+  *(first_level_pt) = 0;
+  enable_interrupts(); 
  
   //register handlers
   init_vector_table();
@@ -112,7 +122,6 @@ void start() {
  //asm volatile("wfi");
   UART0_IMSC = 1<<4;
   VIC_INT_ENABLE = 1<<12;
-  enable_interrupts();
 
 
   //Test: UART0 mapped to the correct virtual address   

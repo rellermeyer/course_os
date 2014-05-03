@@ -49,3 +49,5 @@ static unsigned int * v_first_level_pt = (unsigned int*)V_L1PTBASE;
 
 //Physical address (between P_KERNTOP and P_KHEAPBASE)
 #define pa2va(pa)		(pa+V_KERNBASE)
+
+#define va2pa(va)		(P_KHEAPBASE + (va - V_KHEAPBASE))

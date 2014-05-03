@@ -2,6 +2,7 @@
 #include "include/klibc.h"
 #include "include/global_defs.h"
 #include "include/mem_alloc.h"
+#include "memory.h"
 
 
 int init_all_processes() {
@@ -19,13 +20,14 @@ pcb* process_create(uint32_t* file_p) {
 	
 	if(*free_space_in_pcb_table == 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
-		
+	    pcb_pointer->process_l1pt = (uint32_t*)aligned_kmalloc(16*1024, 16*1024); //16K table at 16K boundary
+		os_printf("&process_l1pt=%x\n", pcb_pointer->process_l1pt);
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		Boolean success = load_file(pcb_pointer, file_p);
-		if(!success) {
-			return -1;
-		} 
+		// Boolean success = load_file(pcb_pointer, file_p);
+		// if(!success) {
+		// 	return -1;
+		// } 
 		
 		// //fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
@@ -33,7 +35,8 @@ pcb* process_create(uint32_t* file_p) {
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
 		pcb_pointer->has_executed = 0;
-		
+
+		load_file(pcb_pointer, file_p);		
 		return pcb_pointer;
 		
 	} else {
@@ -103,6 +106,9 @@ uint32_t load_process_state(uint32_t PID) {
 		os_printf("Invalid PID in load_process_state");
 		return 0;
 	}
+
+	unsigned int pt_addr = (unsigned int)pcb_p->process_l1pt;
+	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
 
 	asm("MOV r0, %0"::"r"(pcb_p->R0):);
 	asm("MOV r1, %0"::"r"(pcb_p->R1):);
@@ -280,3 +286,18 @@ void sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
 }
 
+void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr){
+	pcb* p = get_PCB(PID);
+
+	os_printf("setting up process vas at %x\n", p->process_l1pt);
+
+	os_memcpy(first_level_pt, p->process_l1pt, 16*1024);
+
+	uint32_t entry_section = (uint32_t)entry_addr>>20;
+
+	uint32_t entry_page = (uint32_t)entry_addr>>12;
+
+	void* l2pt = aligned_kmalloc(1024,1024);
+
+	p->process_l1pt[entry_section] = va2pa((uint32_t)l2pt) | 1;
+}
