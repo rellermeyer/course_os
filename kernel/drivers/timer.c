@@ -32,9 +32,16 @@ void timer_start() {
  * if you want to keep the timer running with its current state
  * use set background load. */
 int set_load_value(int timer_index, int value){
-  if(timer_index < 3 && timer_index  >= 0){
+  if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->timer_load_value = value;
     return 0;
+  }
+  return -1;
+}
+
+int get_timer_control_value(int timer_index){
+  if(timer_index < 4 && timer_index  >= 0){
+    return timer_pointers[timer_index]->control;
   }
   return -1;
 }
@@ -42,7 +49,7 @@ int set_load_value(int timer_index, int value){
 /* Sets the value for the timer to load the next time it reaches
  * 0 and loads the reset value. Does not affect current timer. */
 int set_background_load_value(int timer_index, int value){
-  if(timer_index < 3 && timer_index  >= 0){
+  if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->background_timer_load_value = value;
     return 0;
   }
@@ -53,16 +60,66 @@ int set_background_load_value(int timer_index, int value){
  * note: writing to the clear timer register clears
  * the interrupt status completely. */
 int clear_interupt(int timer_index){
-  if(timer_index < 3 && timer_index  >= 0){
+  if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->interrupt_clear = 0x1;
     return 0;
   }
   return -1;
 }
 
+int set_32_bit_mode(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control |= 0x20;
+    return 0;
+  }
+  return -1;
+}
+
+int get_current_timer_value(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    return timer_pointers[timer_index]->timer_actual_value;
+  }
+  return -1;
+}
+
+int set_periodic_mode(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control &= 0xFFFFFFFD;
+    return 0;
+  }
+  return -1;
+}
+
+int enable_timer_interrupt(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control |= 0x40;
+    return 0;
+  }
+  return -1;
+}
+
+int disable_timer_interrupt(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control &= 0xFFFFFFFE;
+    return 0;
+  }
+  return -1;
+}
+
+
+int set_free_running_mode(int timer_index){
+  //Documentation is wrong
+  //control register bit 1 is for one shot or wrapping mode (assuming 0 index counting)
+  if(timer_index < 4 && timer_index  >= 0){
+    timer_pointers[timer_index]->control |= 0x2;
+    return 0;
+  }
+  return -1;
+}
+
 int start_timer(int timer_index){
-  if(timer_index < 3 && timer_index  >= 0){
-    timer_pointers[timer_index]->control = 0x1;
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control |= 0x40;
     return 0;
   }
   return -1;
