@@ -17,22 +17,48 @@
  */
 
 #include <stdint.h>
-#include "hw_handlers.h"
-#include "global_defs.h"
-#include "argparse.h"
-#include "interrupt.h"
-#include "mmap.h"
-#include "klibc.h"
-#include "memory.h"
+#include "include/hw_handlers.h"
+#include "include/global_defs.h"
+#include "include/argparse.h"
+#include "include/interrupt.h"
+#include "include/mmap.h"
+#include "include/process.h"
+#include "include/memory.h"
 
+#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
+void uart_handler(void *null) {
+	print_uart0("uart0!\n");
+}
 
-void start(void *p_bootargs) {
-  print_uart0("Course OS!\n");
+void start() {
+  print_uart0("\nCourseOS!\n");
 
-  // Get command line boot arguments and process them
-  run_argparse(p_bootargs);
-
-  init_heap(32*0x100000);
   init_vector_table();
+
+  //Test: UART0 mapped to the correct virtual address   
+  print_uart0("MMU enabled\n");
+  //init_kheap(31 * 0x100000);
+  //init_uheap(0x100000);
+  //initialize pcb table and PID
+  init_all_processes(); 
+  print_process_state(0);
+  //run_process_tests();
+
+
+ //print_PID();
+  // init_q();
+
+
+  // uint32_t* hello = umalloc(sizeof(uint32_t*));
+  // pcb* p = process_create(hello); 
+  // add(p, 20);
+
+  // schedule();
+  // asm volatile("SWI 7");
+
+  //execute_process(p);
+
+  //main();
+  asm volatile("wfi");
 
 }

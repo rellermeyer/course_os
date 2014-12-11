@@ -64,7 +64,7 @@ uint32_t save_process_state(uint32_t PID){
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
 
-	if(process_to_save == 0 || pcb_p == 0) {
+	if(process_to_save == -1 || pcb_p == 0) {
 		os_printf("Invalid PID in load_process_state");
 		return 0;
 	}	
