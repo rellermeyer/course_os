@@ -21,7 +21,8 @@ run: flash.bin
 flash.bin: kernel.img
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
-	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512	
+	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
+	dd if=../user/hello/hello of=flash.bun conv=notrunc ns=4k seek=1024	
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
