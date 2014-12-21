@@ -126,7 +126,7 @@
 #define CONFIG_BOOTDELAY	2
 // #define CONFIG_BOOTARGS		"root=/dev/nfs mem=128M ip=dhcp "\
 // 				"netdev=25,0,0xf1010000,0xf1010010,eth0"
-#define CONFIG_BOOTARGS        "root=/dev/ram mem=128M rdinit=/sbin/init"
+//#define CONFIG_BOOTARGS        "root=/dev/ram mem=128M rdinit=/sbin/init load=2048"
 #define CONFIG_BOOTCOMMAND   "bootm 0x210000"
 #define CONFIG_INITRD_TAG   1
 
