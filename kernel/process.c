@@ -1,10 +1,15 @@
-#include "include/process.h"
-#include "include/klibc.h"
-#include "include/global_defs.h"
+#include "process.h"
+#include "klibc.h"
+#include "global_defs.h"
+
+static uint32_t GLOBAL_PID;
+
+uint32_t sample_func(uint32_t);
 
 int init_all_processes() {
     pcb_table = kmalloc(MAX_PROCESSES*4);
 	GLOBAL_PID = 0;
+	return 0;
 } 
 
 //creates a process and initializes the PCB
@@ -29,14 +34,14 @@ pcb* process_create(uint32_t* file_p) {
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
-		pcb_pointer->function = sample_func;
+		pcb_pointer->function = &sample_func;
 		pcb_pointer->has_executed = 0;
 
 		return pcb_pointer;
 		
 
 	} else {
-		print_uart0("Out of memory in pcb table");
+		os_printf("Out of memory in pcb table\n");
 		return 0;
 	}
 }
@@ -64,7 +69,7 @@ uint32_t save_process_state(uint32_t PID){
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
 
-	if(process_to_save == -1 || pcb_p == 0) {
+	if(((uint32_t)process_to_save) == -1 || pcb_p == 0) {
 		os_printf("Invalid PID in load_process_state");
 		return 0;
 	}	
@@ -272,7 +277,8 @@ uint32_t execute_process(pcb* pcb_p) {
 
 
 //test function to see if execute process works correctly.
-void sample_func(uint32_t x) {
+uint32_t sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
+	return 0;
 }
 

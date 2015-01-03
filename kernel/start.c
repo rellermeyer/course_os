@@ -17,48 +17,59 @@
  */
 
 #include <stdint.h>
-#include "include/hw_handlers.h"
-#include "include/global_defs.h"
-#include "include/argparse.h"
-#include "include/interrupt.h"
-#include "include/mmap.h"
-#include "include/process.h"
-#include "include/memory.h"
+#include "hw_handlers.h"
+#include "global_defs.h"
+#include "argparse.h"
+#include "interrupt.h"
+#include "mmap.h"
+#include "process.h"
+#include "memory.h"
+#include "drivers/uart.h"
+#include "klibc.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
-void uart_handler(void *null) {
+
+extern int init_all_processes();
+
+void uart_handler(void *null)
+{
 	print_uart0("uart0!\n");
 }
 
-void start() {
-  print_uart0("\nCourseOS!\n");
+void start(uint32_t *p_bootargs)
+{
+	print_uart0("\nCourseOS!\n");
 
-  init_vector_table();
+	argparse_process(p_bootargs);
 
-  //Test: UART0 mapped to the correct virtual address   
-  print_uart0("MMU enabled\n");
-  //init_kheap(31 * 0x100000);
-  //init_uheap(0x100000);
-  //initialize pcb table and PID
-  init_all_processes(); 
-  print_process_state(0);
-  //run_process_tests();
+	print_uart0("done parsing atag list\n");
 
+	init_vector_table();
 
- //print_PID();
-  // init_q();
+	//Test: UART0 mapped to the correct virtual address
+	print_uart0("MMU enabled\n");
+	//init_kheap(31 * 0x100000);
+	//init_uheap(0x100000);
 
+	//initialize pcb table and PID
+	init_all_processes();
+	//print_process_state(0);
 
-  // uint32_t* hello = umalloc(sizeof(uint32_t*));
-  // pcb* p = process_create(hello); 
-  // add(p, 20);
+	//run_process_tests();
 
-  // schedule();
-  // asm volatile("SWI 7");
+	//print_PID();
+	// init_q();
 
-  //execute_process(p);
+	uint32_t* hello = kmalloc(sizeof(uint32_t*));
+	pcb* p = process_create(hello);
+	// add(p, 20);
 
-  //main();
-  asm volatile("wfi");
+	// schedule();
+	// asm volatile("SWI 7");
+
+	execute_process(p);
+
+	//main();
+	asm volatile("wfi");
 
 }

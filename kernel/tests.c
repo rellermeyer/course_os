@@ -1,8 +1,9 @@
 //#include <stdio.h>
 //#include <stdlib.h>
-#include "include/global_defs.h"
-#include "include/tests.h"
-#include "include/klibc.h"
+#include "global_defs.h"
+#include "tests.h"
+#include "klibc.h"
+#include "mem_alloc.h"
 
 //This function executes and displays results of test set given to it.
 void run_tests(Test *tests[], int num_tests)
@@ -27,7 +28,7 @@ void run_tests(Test *tests[], int num_tests)
 
 Test* create_test(char *name, int (*test_function)(void*))
 {
-  Test *test = mem_alloc(sizeof(Test));
+  Test *test = (Test*) mem_alloc(sizeof(Test));
   test->test_name = name;
   test->testptr = test_function;
   return test;

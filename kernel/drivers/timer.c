@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "include/timer.h"
+#include "timer.h"
 
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
@@ -21,8 +21,7 @@ void timer_start() {
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
   timer_pointers[0]->control |= 0x1;
   os_printf("control value:%x\n", timer_pointers[0]->control);
-  int i = 0;
-  for(i; i< 10; i++){
+  for(int i=0; i< 10; i++){
     os_printf("Timer register = %x\n", timer_pointers[0]->timer_actual_value);
   }
 }

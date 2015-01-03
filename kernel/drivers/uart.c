@@ -1,8 +1,9 @@
-#include "include/uart.h"
+#include <stdint.h>
+#include "drivers/uart.h"
 #include "mmap.h" 
 
 void print_uart0(const char *s) {
-	while(*s != '\0') { 
+	while(*s != '\0') {
 		mmio_write(UART0_ADDRESS, *s);
 		s++;
 	}

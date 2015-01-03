@@ -16,11 +16,16 @@
 * Notes:  The following were adapted directly from musl-libc:
 *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok,
 ********************************************************************/
-#include "include/klibc.h"
-#include "include/global_defs.h"
-#include "include/mem_alloc.h"
-#include <stdarg.h>
 #include <stdint.h>
+#include <stdarg.h>
+
+
+#include "klibc.h"
+#include "global_defs.h"
+#include "mem_alloc.h"
+//FIXME: decouple
+#include "drivers/uart.h"
+extern void print_char_uart0(char);
 
 #define LOWER_CASE 0
 #define UPPER_CASE 1
@@ -31,7 +36,7 @@
 #define ALIGN (sizeof(os_size_t))
 #define ONES ((os_size_t)-1/UCHAR_MAX)
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
-#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
+#define HASZERO(x) (((x)-ONES) & (~(x)) & HIGHS)
 
 
 static char lower_case_digits[16] = "0123456789abcdef";
@@ -69,8 +74,7 @@ void print_hex(int val, int CASE)
   char buf[100];
   int CHAR_MASK = 0xF;
   if (temp == 0){
-    //printf("0");
-    print_char_uart0('0');
+	print_char_uart0('0');
   }
   while((temp != 0) && (count_digits < 8))
   {
@@ -90,7 +94,7 @@ void print_hex(int val, int CASE)
   }
 }
 
-print_dec(int val){
+static void print_dec(int val){
   int temp = val;
   int count_digits = 0;
   char buf[100];
@@ -115,8 +119,8 @@ print_dec(int val){
 int os_printf(const char *str_buf, ...) {
   va_list args;
   int t_arg;
+  char* str_arg;
   va_start(args, str_buf);
-  int count_args_found = 0;
   while(*str_buf != '\0') {
     if(*str_buf == '%') {
       str_buf++;
@@ -130,12 +134,17 @@ int os_printf(const char *str_buf, ...) {
           print_hex(t_arg, LOWER_CASE);
           break;
         case 'd':
+        case 'u':
           t_arg = va_arg(args,int);
           print_dec(t_arg);
           break;
         case 'c':
           t_arg = va_arg(args,int);
           print_char_uart0(t_arg);
+          break;
+        case 's':
+          str_arg  = va_arg(args,char*);
+          print_uart0(str_arg);
           break;
         case '%':
           print_uart0("%");
@@ -147,6 +156,9 @@ int os_printf(const char *str_buf, ...) {
     str_buf++;
   }
   va_end(args);
+
+  // FIXME:
+  return 0;
 }
 
 /* Set the first n bytes of dest to be the value c.*/
@@ -258,8 +270,8 @@ char *__strchrnul(const char *s, int c)
 /* Copies the String src to dest */
 char *os_strcpy(char *dest, const char *src)
 {
-        const unsigned char *s = src;
-        unsigned char *d = dest;
+        const unsigned char *s = (const unsigned char*) src;
+        unsigned char *d = (unsigned char*) dest;
         while ((*d++ = *s++));
         return dest;
 }

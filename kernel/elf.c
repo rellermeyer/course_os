@@ -178,7 +178,7 @@ void read_program_header_table(Elf_Ehdr *eh, Elf_Phdr ph[], unsigned char *point
 /* CRITICAL: The section header must be initalized with the correct size,
 	 before put into the function */
 void read_section_header_table(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer) {
-	filePointer = startPointer = pointer;
+	filePointer = startPointer = (unsigned char*) pointer;
 	int i = 0;
 	filePointer = startPointer + eh->e_shoff;	
 	while(i < eh->e_shnum) {	
@@ -200,7 +200,7 @@ void read_section_header_table(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer) {
 /* It then analyzes the table and puts them into each section header */
 /* This makes it easier to differentiate between sections when put into loader */
 void parse_section_header_names(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer) {
-	filePointer = startPointer = pointer;
+	filePointer = startPointer = (unsigned char*) pointer;
 	filePointer = startPointer + sh[eh->e_shstrndx].sh_offset;	// This pointer iterates through the section header
 	int i = 1;
 	

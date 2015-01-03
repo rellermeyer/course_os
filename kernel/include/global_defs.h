@@ -4,3 +4,5 @@
 
 typedef char *String;
 typedef short Boolean;
+
+#define UNUSED(x) (void)(x)

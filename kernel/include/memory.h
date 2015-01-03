@@ -44,8 +44,9 @@
 //High vectors are enabled by setting V bit in the control register
 #define HIVECTABLE		0xffff0000
 
-static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
-static unsigned int * v_first_level_pt = (unsigned int*)V_L1PTBASE;
+//FIXME: unused
+//static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
+//static unsigned int * v_first_level_pt = (unsigned int*)V_L1PTBASE;
 
 //Physical address (between P_KERNTOP and P_KHEAPBASE)
 #define pa2va(pa)		(pa+V_KERNBASE)
