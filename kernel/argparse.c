@@ -4,7 +4,7 @@
 #include "klibc.h"
 #include "tests.h"
 
-static void argparse_parse(char **);
+static void argparse_parse(char *);
 
 /* Get the command-line arguments and run the functions to process them. */
 void argparse_process(uint32_t *p_bootargs)
@@ -19,7 +19,7 @@ void argparse_process(uint32_t *p_bootargs)
 		atag_print(tag);
 		if (tag->header.tag == ATAG_CMDLINE)
 		{
-			argparse_parse((char**) &tag->content.cmdline.cmdline);
+			argparse_parse((char*) &tag->content.cmdline.cmdline);
 		}
 	}
 }
@@ -50,15 +50,17 @@ void atag_print(struct atag *t)
 	}
 }
 
-static void argparse_parse(char **cmdline)
+static void argparse_parse(char *cmdline)
 {
-	char* token = os_strtok(*cmdline, " ");
+	os_printf("I am parsing... <<<%s>>>\n", cmdline);
+
+	char* token = os_strtok(cmdline, " ");
 
 	while (token != NULL)
 	{
 		os_printf("token: %s\n", token);
 
-		token = os_strtok(*cmdline, " ");
+		token = os_strtok(NULL, " ");
 	}
 }
 
