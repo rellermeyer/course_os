@@ -25,10 +25,11 @@ extern int syscall(int number);
 // this may need to be expanded if we use the secondary controller
 #define MAX_NUM_INTERRUPTS	32
 
-typedef enum {
-        IRQ_MASK,		// (this is bit 0x8 on the CPSR)
-        FIQ_MASK,		// (this is bit 0x4 on the CPSR)
-        ALL_INTERRUPT_MASK
+typedef enum
+{
+	IRQ_MASK,		// (this is bit 0x8 on the CPSR)
+	FIQ_MASK,		// (this is bit 0x4 on the CPSR)
+	ALL_INTERRUPT_MASK
 } interrupt_t;
 
 extern interrupt_t IRQ;
@@ -39,15 +40,14 @@ extern interrupt_t ALL;
 // HIGH bits are FIQs
 // extern char check_if_fiq[MAX_NUM_INTERRUPTS];
 
-typedef struct interrupt_handler_t{
+typedef struct interrupt_handler_t
+{
 	void (*handler)(void *args);
-	// more may need to be added
+// more may need to be added
 } interrupt_handler_t;
 
-	
-
 /* these are what you should use to effect an
-   interrupt status change! */
+ interrupt status change! */
 
 #define enable_irq() \
 	enable_interrupt(IRQ)
@@ -68,20 +68,19 @@ typedef struct interrupt_handler_t{
 #define disable_interrupts_save() \
 	disable_interrupt_save(ALL);
 
+/*   functions (e.g. passing a bad parameter), so we'll
+ refer to the macros above for adjusting specific interrupt status */
+void enable_interrupt(interrupt_t);
+int enable_interrupt_save(interrupt_t);
 
-/*   functions (e.g. passing a bad parameter), so we'll  
-   refer to the macros above for adjusting specific interrupt status */
-void	enable_interrupt(interrupt_t);
-int	enable_interrupt_save(interrupt_t);
-	
-void	disable_interrupt(interrupt_t);
-int	disable_interrupt_save(interrupt_t);
+void disable_interrupt(interrupt_t);
+int disable_interrupt_save(interrupt_t);
 
-int 	get_proc_status(void);
-void	restore_proc_status(int);
+int get_proc_status(void);
+void restore_proc_status(int);
 
-int 	register_interrupt_handler(int, interrupt_handler_t *);
-void	handle_irq_interrupt(int);
+int register_interrupt_handler(int, interrupt_handler_t *);
+void handle_irq_interrupt(int);
 
 /* VIC Interrupt Mappings */
 #define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
@@ -97,7 +96,7 @@ void	handle_irq_interrupt(int);
 #define hw_interrupt_disable(n)	mmio_write(VIC_INT_ENCLEAR, (1 << n));
 #define vic_select_fiq(n) 	mmio_write(VIC_INT_SELECT, (1 << n));
 
-	// Primary Interrupt Controller (PIC)
+// Primary Interrupt Controller (PIC)
 #define WATCHDOG_IRQ	0	/* watchdog controller */
 #define SWI_IRQ		1	/* software interrupt */
 #define COMMS_RX_IRQ	2	/* debug comms receive intercept */

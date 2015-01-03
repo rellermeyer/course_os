@@ -11,8 +11,12 @@ OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers
 
 all: kernel.img
 
-CFLAGS = -pipe
-CFLAGS += -std=gnu99 -ffreestanding -nostdinc
+CFLAGS += -pipe
+CFLAGS += -std=gnu99 
+CFLAGS += -ffreestanding 
+CFLAGS += -nostdinc
+CFLAGS += -Wall
+CFLAGS += -Werror
 
 run: flash.bin
 	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x400000 0x14000"

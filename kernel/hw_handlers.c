@@ -3,12 +3,13 @@
  * Harware Handler Interface  
  *
  */
-#include "include/hw_handlers.h"
-#include "include/mmap.h"
-#include "include/memory.h" 
-#include "include/interrupt.h"
+#include "hw_handlers.h"
+#include "mmap.h"
+#include "memory.h"
+#include "interrupt.h"
+#include "klibc.h"
 
-/* copy vector table from wherever the hell QEMU loads the kernel to 0x00 */
+/* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
      * to old method.       
@@ -44,7 +45,7 @@ void init_vector_table(void) {
 
 /* handlers */
 void reset_handler(void) {
-    print_uart0("RESET HANDLER\n");
+    os_printf("RESET HANDLER\n");
     _Reset();
 }
 
@@ -63,7 +64,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// // load the SVC call and mask to get the number
 	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-	print_uart0("SOFTWARE INTERRUPT HANDLER\n");
+	os_printf("SOFTWARE INTERRUPT HANDLER\n");
 
 	// // Print out syscall # for debug purposes
 	// print_uart0("Syscall #: ");
@@ -80,13 +81,13 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 }
 
 void reserved_handler(void){
-	print_uart0("RESERVED HANDLER\n");
+	os_printf("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
-	print_uart0("IRQ HANDLER\n");
+	os_printf("IRQ HANDLER\n");
 	disable_interrupts();	
 
 	// Discover source of interrupt
@@ -105,7 +106,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
-	print_uart0("FIQ HANDLER\n");
+	os_printf("FIQ HANDLER\n");
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4
 }
