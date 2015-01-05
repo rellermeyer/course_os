@@ -60,16 +60,6 @@ void start(uint32_t *p_bootargs)
 	//print_PID();
 	// init_q();
 
-	uint32_t* hello = kmalloc(sizeof(uint32_t*));
-	pcb* p = process_create(hello);
-	// add(p, 20);
-
-	// schedule();
-	// asm volatile("SWI 7");
-
-	execute_process(p);
-
 	//main();
-	asm volatile("wfi");
-
+	//asm volatile("wfi");
 }

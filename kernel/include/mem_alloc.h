@@ -7,17 +7,21 @@ Log
 #ifndef __MEM_ALLOC_H__
 #define __MEM_ALLOC_H__
 
-#include <stdint.h> 
+#include <stdint.h>
+#include <global_defs.h>
 
 #define MEM_START 0x500000
 
-char* heap;
+uint32_t *heap;
 uint32_t heap_size;
 
-uint32_t* mem_alloc(uint32_t);
-void* init_heap(uint32_t);
-char* allocate(uint32_t, char*, int32_t);
-void deallocate(void*, char*, int32_t);
+void *mem_alloc(uint32_t);
+void *aligned_mem_alloc(size_t, size_t);
+
+void *init_heap(uint32_t);
+void *allocate(uint32_t, uint32_t*, int32_t);
+void deallocate(void*, uint32_t*, int32_t);
+
 void mcheck();
 
 #endif

@@ -47,5 +47,7 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 void* kmalloc(uint32_t);
 void kfree(void*);
 
+int32_t abs(int32_t);
+
 #endif
 

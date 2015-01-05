@@ -11,7 +11,6 @@ void run_tests(Test *tests[], int num_tests)
   int i;
   for(i = 0; i < num_tests; i++)
   {
-    //This needs to changed to os_printf eventuallly.
     os_printf("%s",tests[i]->test_name);
     os_printf(" ... ");
     //evaluates test here, if it passes prints PASSES else FAILS

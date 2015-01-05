@@ -1,9 +1,9 @@
-#include "include/loader.h"
-#include "include/mem_alloc.h"
-#include "include/klibc.h"
-#include "include/process.h"
 #include <stdint.h>
-#include "include/elf.h"
+#include "loader.h"
+#include "mem_alloc.h"
+#include "klibc.h"
+#include "process.h"
+#include "elf.h"
 
 //Worked on by Kaelen Haag and Jeremy Wenzel
 //We determine what the size of our process is going to be
@@ -38,7 +38,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	void * process_mem = aligned_kmalloc(process_size, 4096);
+	void * process_mem = aligned_mem_alloc(process_size, 4096);
 	void * current_pointer = process_mem;
 
 	os_printf("process size= %x\n", process_size);
@@ -89,19 +89,19 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			}
 			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
-			os_memcpy((uint32_t)file_pointer + ph[i].p_offset, current_pointer, (os_size_t)ph[i].p_memsz); 
-			current_pointer = (uint32_t)current_pointer + ph[i].p_memsz;
+			os_memcpy((uint32_t*) ((uint32_t)file_pointer + ph[i].p_offset), current_pointer, (os_size_t)ph[i].p_memsz);
+			current_pointer = (void*) ((uint32_t)current_pointer + ph[i].p_memsz);
 		}
 	}
 		
-	current_pointer = (uint32_t)current_pointer + 4096;//Heap 
+	current_pointer = (void*) ((uint32_t)current_pointer + 4096);//Heap
 	pcb_p->heap_p = current_pointer;
 
-	current_pointer = (uint32_t)current_pointer + 2*4096; //Stack pointer	
+	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
 	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
 	
-	setup_process_vas(pcb_p->PID, process_size, h->e_entry, process_mem);
+	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
 	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
 
