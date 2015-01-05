@@ -1,6 +1,7 @@
 #include "process.h"
 #include "klibc.h"
 #include "global_defs.h"
+#include "loader.h"
 
 static uint32_t GLOBAL_PID;
 
@@ -25,10 +26,10 @@ pcb* process_create(uint32_t* file_p) {
 		
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		// Boolean success = load_file(pcb_pointer, file_p);
-		// if(!success) {
-		// 	return -1;
-		// } 
+		Boolean success = load_file(pcb_pointer, file_p);
+		if(!success) {
+		 	return (pcb*) -1;
+		}
 		
 		//fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
@@ -281,4 +282,36 @@ uint32_t sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
 	return 0;
 }
+
+void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr, uint32_t* block_addr){
+	/*
+	pcb* p = get_PCB(PID);
+
+	os_printf("setting up process vas at %x\n", p->process_l1pt);
+
+	os_memcpy(first_level_pt, p->process_l1pt, 16*1024);
+
+	uint32_t entry_section = (uint32_t)entry_addr>>20;
+	uint32_t entry_page = (uint32_t)entry_addr>>12;
+	uint32_t num_proc_pages = proc_size>>12;
+	if(proc_size%4096 > 0)
+		num_proc_pages++;
+
+	uint32_t target_addr = (uint32_t)block_addr;
+
+	//aborts if I try to allocate l2pt in here
+	//allocating in process_create for brute force testing
+	int i;
+	for(i = 0; i < 256; i++){
+		if(i>=entry_page && i<= entry_page+num_proc_pages){
+			p->l2pt[i] = target_addr | 0x0010 | 2;
+			target_addr += 4096;
+		}
+	}
+
+	p->process_l1pt[entry_section] = (uint32_t)p->l2pt | 1;
+	*/
+}
+
+
 

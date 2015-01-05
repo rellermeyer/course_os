@@ -53,7 +53,6 @@ typedef enum PROCESS_STATE
 	PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING
 } PROCESS_STATE;
 
-// FIXME: unused
 #define MAX_PROCESSES  32
 
 typedef struct pcb
@@ -124,6 +123,8 @@ typedef struct pcb
 
 	uint32_t total_cpu_time;
 
+	void* heap_p;
+
 } pcb;
 
 /* interface
@@ -156,6 +157,8 @@ uint32_t execute_process(pcb* pcb_p);
 uint32_t load_process_state(uint32_t PID);
 uint32_t save_process_state(uint32_t PID);
 uint32_t print_process_state(uint32_t PID);
+
+void setup_process_vas(uint32_t, uint32_t, uint32_t*, uint32_t*);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();

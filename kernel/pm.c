@@ -1,9 +1,9 @@
-nclude "include/pm.h"
-#include "include/stdint.h"
-#include "include/stdarg.h"
-#include "include/interrupt.h"
-#include "include/klibc.h"
-#include "include/stack.h"
+#include "pm.h"
+#include "stdint.h"
+#include "stdarg.h"
+#include "interrupt.h"
+#include "klibc.h"
+#include "stack.h"
 
 stack *stack = create_stack();
 
