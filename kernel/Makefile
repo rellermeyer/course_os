@@ -19,7 +19,7 @@ CFLAGS += -Wall
 CFLAGS += -Werror
 
 run: flash.bin
-	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x400000 0x14000"
+	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 #boots the kernel at 0x210000
 flash.bin: kernel.img
