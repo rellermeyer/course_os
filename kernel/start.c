@@ -38,16 +38,22 @@ void uart_handler(void *null)
 
 void start(uint32_t *p_bootargs)
 {
+	// Setup all of the exception handlers... (hrm, interaction with VM?)
+	init_vector_table();
+
+	// Initialize the virtual memory
+	mmap(p_bootargs);
+
+	//Test: UART0 mapped to the correct virtual address
+	print_uart0("MMU enabled\n");
+
 	print_uart0("\nCourseOS!\n");
 
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");
 
-	init_vector_table();
 
-	//Test: UART0 mapped to the correct virtual address
-	print_uart0("MMU enabled\n");
 	//init_kheap(31 * 0x100000);
 	//init_uheap(0x100000);
 
