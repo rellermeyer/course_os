@@ -1,12 +1,14 @@
 #include "include/mmap.h"
 #include "include/memory.h"
 #include "include/klibc.h"
+#include "include/drivers/uart.h"
 /*
  * APX AP            Privileged    Unprivileged
  *  1  11 (0x8c00) = read-only     read-only
  *  1  01 (0x8400) = read-only     no access
  *  0  10 (0x0800) = read-write    read-only
  *  0  01 (0x0400) = read-write    no-access
+ * See http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0333h/I1029222.html
 
  * Bits 0 and 1 identify the table entry type
  * 0 = translation fault 
@@ -14,11 +16,12 @@
  * 2 = section or supersection
  */	
 
+static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
 
 void mmap(void *p_bootargs) {
-	char *cmdline_args = read_cmdline_tag(p_bootargs);
-	print_uart0(cmdline_args);
-	print_uart0("\n");
+	//char *cmdline_args = read_cmdline_tag(p_bootargs);
+	//print_uart0(cmdline_args);
+	//print_uart0("\n");
 	asm volatile("cpsid if");
 
 	//stash register state on the stack
@@ -48,7 +51,7 @@ void mmap(void *p_bootargs) {
 
 	//also map it to high memory at 0xf0000000 (vpn = 3840)
 	first_level_pt[V_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
-	first_level_pt[V_KERNBASE+0x100000>>20] = 0<<20+0x100000 | 0x0400 | 2;
+	first_level_pt[(V_KERNBASE+0x100000)>>20] = 0x100000 | 0x0400 | 2;
 
 	//map 31MB of phsyical memory managed by kmalloc
 	unsigned int p_kheap_addr = P_KHEAPBASE;
@@ -67,7 +70,7 @@ void mmap(void *p_bootargs) {
 
 	//map ~2MB of peripheral registers one-to-one
 	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
-	first_level_pt[(PERIPHBASE+0x100000)>>20] = PERIPHBASE+0x100000 | 0x0400 | 2;
+	first_level_pt[(PERIPHBASE+0x100000)>>20] = (PERIPHBASE+0x100000) | 0x0400 | 2;
 
 	//map 752MB of PCI interface one-to-one
 	unsigned int pci_bus_addr = PCIBASE;
