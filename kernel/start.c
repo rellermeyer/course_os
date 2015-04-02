@@ -30,6 +30,7 @@
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
 extern int init_all_processes();
+extern int vm_count_free_frames();
 
 void uart_handler(void *null)
 {
@@ -64,6 +65,7 @@ void start2(uint32_t *p_bootargs)
 	os_printf("%X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
+	os_printf("There are %d free frames.\n", vm_count_free_frames());
 
 	argparse_process(p_bootargs);
 
@@ -84,4 +86,5 @@ void start2(uint32_t *p_bootargs)
 
 	//main();
 	//asm volatile("wfi");
+	while (1);
 }

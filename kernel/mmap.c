@@ -16,6 +16,8 @@
  * 2 = section or supersection
  */	
 
+int vm_build_free_frame_list(void *start, void *end);
+
 static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
 
 void mmap(void *p_bootargs) {
@@ -86,11 +88,13 @@ void mmap(void *p_bootargs) {
 	}
 
 	//remap 62MB of physical memory after the kernel 
+	// This is where we allocate frames from
 	unsigned int phys_addr = P_KERNTOP;
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
 	}
+	//vm_build_free_frame_list((void*)P_KERNTOP, (void*)P_KERNTOP+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
 
@@ -120,6 +124,9 @@ void mmap(void *p_bootargs) {
 	control |= 0x3007; //0b11000000000111
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
+
+	// Build the free frame list
+	vm_build_free_frame_list((void*)PMAPBASE, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");
