@@ -10,7 +10,7 @@
 .equ Mode_UND, 0x1B
 .equ Mode_SYS, 0x1F
 
- 
+ MOV	R1, R0 // R0 has p_bootargs, which we need to hang onto
  LDR     R0, =stack_base
  MSR     CPSR_c, #Mode_FIQ
  MOV     sp, R0
@@ -49,3 +49,4 @@
  EOR 	 R0, R0
  ADD 	 R0, lr, #0xf0000000
  MOV 	 lr, R0
+ MOV	R0, R1
