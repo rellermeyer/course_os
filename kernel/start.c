@@ -36,18 +36,34 @@ void uart_handler(void *null)
 	print_uart0("uart0!\n");
 }
 
+// This start is what u-boot calls. It's just a wrapper around setting up the
+// virtual memory for the kernel.
 void start(uint32_t *p_bootargs)
 {
-	// Setup all of the exception handlers... (hrm, interaction with VM?)
-	init_vector_table();
-
 	// Initialize the virtual memory
+	print_uart0("Enabling MMU...\n");
+	/*print_uart0("p_bootargs: ");
+	print_uart0((char*)p_bootargs);
+	print_uart0("\n");*/
+	os_printf("%X\n",*p_bootargs);
 	mmap(p_bootargs);
+}
+
+// This start is what starts the kernel. Note that virtual memory is enabled
+// at this point (And running, also, in the kernel's VAS).
+void start2(uint32_t *p_bootargs)
+{
+	// Setup all of the exception handlers... (hrm, interaction with VM?)
+	//init_vector_table();
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 
 	print_uart0("\nCourseOS!\n");
+	//p_bootargs = (uint32_t*)0x100;
+	os_printf("%X\n",*p_bootargs);
+	/*print_uart0((char*)p_bootargs);
+	  print_uart0("\n");*/
 
 	argparse_process(p_bootargs);
 

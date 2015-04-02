@@ -27,6 +27,8 @@ void mmap(void *p_bootargs) {
 	//stash register state on the stack
 	asm volatile("push {r0-r11}");
 
+	os_printf("%X\n",p_bootargs);
+
 /*
 	int pte;
 	unsigned int mb_addr = 0;
@@ -40,6 +42,10 @@ void mmap(void *p_bootargs) {
 */
 	
 	//temporarily map where it is until we copy it in VAS
+	// TODO: Is this really needed?
+	// Rationale: if I understand correctly, the page table is just
+	// pointers. The kernel already exists at P_KDSBASE, so V_KDSBASE
+	// will point at valid data (since V_KDSBASE points to P_KDSBASE).
 	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
 	//1MB for static kernel data structures (stacks and l1 pt)
@@ -118,10 +124,13 @@ void mmap(void *p_bootargs) {
 	//restore register state
 	asm volatile("pop {r0-r11}");
 
+	// Except for r0, which is p_bootargs. stacks.s needs to know it.
+	asm volatile("mov r0, %[args]" : : [args] "r" (p_bootargs));
+
 	asm volatile("cpsie if");
   	asm volatile (".include \"stacks.s\"");
 
   	//branch to proper kernel at start
-  	asm volatile("bl start");
+  	asm volatile("bl start2");
 
 }
