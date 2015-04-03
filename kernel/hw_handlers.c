@@ -79,13 +79,28 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 	case SYSCALL_SWITCH:
 		os_printf("Switch system call called!\n");
+		break;
 	case SYSCALL_DELETE:
+		os_printf("Delete system call called!\n");
+		break;
 	case SYSCALL_OPEN:
+		os_printf("Open system call called!\n");
+		break;
 	case SYSCALL_READ:
+		os_printf("Read system call called!\n");
+		break;
 	case SYSCALL_WRITE:
+		os_printf("Write system call called!\n");
+		break;
 	case SYSCALL_CLOSE:
+		os_printf("Close system call called!\n");
+		break;
 	case SYSCALL_SET_PERM:
+		os_printf("Set permission system call called!\n");
+		break;
 	case SYSCALL_MEM_MAP:
+		os_printf("Memory map system call called!\n");
+		break;
 	default:
 		os_printf("That wasn't a syscall you knob!\n");
 		break;
