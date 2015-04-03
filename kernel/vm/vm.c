@@ -71,86 +71,7 @@ void vm_enable_vas(struct vas *vas) {
 
 struct vas *vm_new_vas() {
 	// Grab a new page table (remember, we have the first MB after KERNTOP)
-	/*struct vas *p = (struct vas*)P_KERNTOP;
-	// TODO: What if we overrun our alloted MB?
-	while (p->next != 0x0) {
-		p = p->next;
-	}
-
-	// TODO: Have a better allocation scheme.
-	struct vas *next = (void*)p + PAGE_TABLE_SIZE*2;
-	p->next = next;*/
-
-	// Now, advance and fill in the new page table
-	struct vas *p = (struct vas*)(PMAPBASE);// + 2*PAGE_TABLE_SIZE);
-	p->next = 0x0;
-	p->l1_pagetable = (unsigned int*)((void*)p + 3*PAGE_TABLE_SIZE); // The area immediately after the struct vas, aligned to 16KB
-	p->l1_pagetable_phys = (unsigned int*)(P_KERNTOP + 3*PAGE_TABLE_SIZE);
-
-	// Zero out the page table
-	int i;
-	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
-		p->l1_pagetable[i] = 0;
-	}
-
-
-	unsigned int *first_level_pt = (unsigned int *)p->l1_pagetable;
-	os_printf("New first_level_pt=%X\n",first_level_pt);
-
-	//temporarily map where it is until we copy it in VAS
-	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
-
-	//1MB for static kernel data structures (stacks and l1 pt)
-	first_level_pt[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
-
-	//map the kernel where its currently loaded in the same location temporarily
-	//should be less than a MB
-	first_level_pt[P_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
-
-	//also map it to high memory at 0xf0000000 (vpn = 3840)
-	first_level_pt[V_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
-	first_level_pt[(V_KERNBASE+0x100000)>>20] = 0x100000 | 0x0400 | 2;
-
-	//map 31MB of phsyical memory managed by kmalloc
-	unsigned int p_kheap_addr = P_KHEAPBASE;
-	for(i = (V_KHEAPBASE>>20); i < (V_KHEAPTOP>>20); i++){
-		first_level_pt[i] = p_kheap_addr | 0x0400 | 2;
-		p_kheap_addr += 0x100000;
-	}
-
-	//map 32MB of physical memory manged by umalloc
-	unsigned int p_uheap_addr = P_UHEAPBASE;
-	for(i = (V_UHEAPBASE>>20); i < (V_UHEAPTOP>>20); i++){
-		first_level_pt[i] = p_uheap_addr | 0x0400 | 2;
-		p_uheap_addr += 0x100000;
-	}
-
-	//map ~2MB of peripheral registers one-to-one
-	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
-	first_level_pt[(PERIPHBASE+0x100000)>>20] = (PERIPHBASE+0x100000) | 0x0400 | 2;
-
-	//map 752MB of PCI interface one-to-one
-	unsigned int pci_bus_addr = PCIBASE;
-	for(i = (PCIBASE>>20); i < (PCITOP>>20); i++){
-		first_level_pt[i] = pci_bus_addr | 0x0400 | 2; 
-		pci_bus_addr += 0x100000;
-	}
-
-	//remap 62MB of physical memory after the kernel 
-	// (KERNTOP to KHEAPBASE)
-	// This is where we allocate frames from. Except for the first one.
-	unsigned int phys_addr = P_KERNTOP;
-	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
-		first_level_pt[i] = phys_addr | 0x0400 | 2;
-		phys_addr += 0x100000;
-	}
-
-	return p;
-}
-
-struct vas *vm_new_vas2() {
-	// Grab a new page table (remember, we have the first MB after KERNTOP)
-	struct vas *p = (struct vas*)P_KERNTOP;
+	struct vas *p = (struct vas*)PMAPBASE;
 	// TODO: What if we overrun our alloted MB?
 	while (p->next != 0x0) {
 		p = p->next;
@@ -161,9 +82,13 @@ struct vas *vm_new_vas2() {
 	p->next = next;
 
 	// Now, advance and fill in the new page table
+	//struct vas *p = (struct vas*)(PMAPBASE);// + 2*PAGE_TABLE_SIZE);
 	p = p->next;
 	p->next = 0x0;
 	p->l1_pagetable = (unsigned int*)((void*)p + PAGE_TABLE_SIZE); // The area immediately after the struct vas, aligned to 16KB
+
+	// Chintzy conversion thing
+	p->l1_pagetable_phys = (unsigned int*)((unsigned int)p->l1_pagetable - (PMAPBASE - P_KERNTOP));
 
 	// Zero out the page table
 	int i;
@@ -191,7 +116,6 @@ struct vas *vm_new_vas2() {
 	// 2MB of peripheral registers (so we get the serial port et. al.)
 	p->l1_pagetable[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
 	p->l1_pagetable[(PERIPHBASE+0x100000)>>20] = (PERIPHBASE+0x100000) | 0x0400 | 2;
-
 	return p;
 }
 
@@ -233,7 +157,14 @@ void vm_test() {
 	os_printf("%X\n", vas2->l1_pagetable);
 	os_printf("(deref: entry at 0x200000: 0x%X)\n", vas2->l1_pagetable[0x200000>>20]);
 
+	// Test making a thing in this thing
+	struct vas *vas3 = vm_new_vas();
+	vm_enable_vas(vas3);
+	os_printf("asfdsafkmfdaskdakfdank\n");
+	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
+
 	// Clean up & switch back to the kernel's VAS before we return.
 	//vm_enable_vas((struct vas*)P_KERNTOP);
+	// PMAPBASE is the address of the kernel's VAS (in virtual memory)
 	vm_enable_vas((struct vas*)PMAPBASE);
 }
