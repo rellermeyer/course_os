@@ -3,20 +3,33 @@
 #include "klibc.h"
 #include "./frame.h"
 
+static struct vas *vm_current_vas = 0x0;
+
 int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
+	// We have to save the current VAS
+	struct vas *prev_vas = vm_current_vas;
+	vm_enable_vas((struct vas*)PMAPBASE);
+
 	// TODO: Check if the vas already has a mapping there.
 	void *pptr = vm_get_free_frame();
 	if (pptr == 0x0) {
 		// We need to swap! (or something...)
 		return 1; // For now, just fail
 	}
+	vm_enable_vas(prev_vas);
 	return vm_set_mapping(vas, vptr, pptr, permission);
 }
 
 int vm_free_page(struct vas *vas, void *vptr) {
+	// We have to save the current VAS
+	struct vas *prev_vas = vm_current_vas;
+	vm_enable_vas((struct vas*)PMAPBASE);
+
 	// TODO: Check if it was actually allocated
 	vm_release_frame((void*)(vas->l1_pagetable[(unsigned int)vptr>>20]&~((PAGE_TABLE_SIZE<<1) - 1)));
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+
+	vm_enable_vas(prev_vas);
 	return 0;
 }
 
@@ -41,6 +54,8 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 }
 
 void vm_enable_vas(struct vas *vas) {
+	vm_current_vas = vas;
+
 	os_printf("Enabling mapping at VAS 0x%X\n", vas);
 	//os_printf("(entry at 0xF0300000: 0x%X)\n", vas->l1_pagetable[0xF0300000>>20]);
 	//os_printf("(entry at 0x200000: 0x%X)\n", vas->l1_pagetable[0x200000>>20]);
@@ -162,6 +177,15 @@ void vm_test() {
 	vm_enable_vas(vas3);
 	os_printf("asfdsafkmfdaskdakfdank\n");
 	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
+
+	// Test allocating frames...
+	vm_allocate_page(vas3, (void*)0x5000000, 0);
+	// Oh man! We should be able to write to there!
+	char *p = (char*)0x5000000;
+	p[0] = 1;
+
+	// Free the page!
+	vm_free_page(vas3, p);
 
 	// Clean up & switch back to the kernel's VAS before we return.
 	//vm_enable_vas((struct vas*)P_KERNTOP);
