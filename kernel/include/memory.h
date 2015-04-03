@@ -9,10 +9,12 @@
 #define V_KERNTOP		0xf0200000
 
 //Physical region managed by kmalloc
-#define P_KHEAPBASE		0x04000000
+//#define P_KHEAPBASE		0x04000000
+#define P_KHEAPBASE		0x04100000
 #define P_KHEAPTOP		0x05f00000
 //Vitual region managed by kmalloc
-#define V_KHEAPBASE		0xee100000
+//#define V_KHEAPBASE		0xee100000
+#define V_KHEAPBASE		0xee200000
 #define V_KHEAPTOP		V_KERNBASE
 
 //Physical region managed by umalloc
@@ -26,7 +28,9 @@
 //Total space=1MB, currently used=44kB	
 #define P_KDSBASE		0x07f00000
 	//#define	KERNSTKBASE		0x07ff9000	//7 stacks 4K each = 28K
-	#define	P_L1PTBASE		0x07f00000	//16K (16K boundary required also)
+//#define	P_L1PTBASE		0x07f00000	//16K (16K boundary required also)
+// Right before KHEAPBASE
+#define	P_L1PTBASE		0x00200000	//16K (16K boundary required also)
 
 #define V_KDSBASE		0xfff00000
  	#define V_L1PTBASE		0xfff00000

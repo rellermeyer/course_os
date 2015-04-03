@@ -26,6 +26,7 @@
 #include "memory.h"
 #include "drivers/uart.h"
 #include "klibc.h"
+#include "vm.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -65,6 +66,9 @@ void start2(uint32_t *p_bootargs)
 	os_printf("%X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
+
+	vm_test();
+
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 
 	argparse_process(p_bootargs);
