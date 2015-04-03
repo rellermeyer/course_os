@@ -10,6 +10,7 @@ uint32_t get(uint32_t);
 uint32_t toggle(uint32_t);
 uint32_t set(uint32_t);
 uint32_t lower(uint32_t);
+uint32_t firstFree();
 
 #endif 
 
