@@ -56,10 +56,12 @@ void start(uint32_t *p_bootargs)
 void start2(uint32_t *p_bootargs)
 {
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
-	//init_vector_table();
+	init_vector_table();
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
+	asm volatile("swi 1");
+	//while (1);
 
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
@@ -70,6 +72,7 @@ void start2(uint32_t *p_bootargs)
 	vm_test();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
+	asm volatile("swi 1");
 	while (1);
 	argparse_process(p_bootargs);
 
