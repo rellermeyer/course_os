@@ -37,13 +37,13 @@ void vm_release_frame(void *p) {
 }
 
 int vm_count_free_frames() {
-	//os_printf("free frame list address: %X\n", vm_free_list);
+	os_printf("free frame list address: %X\n", vm_free_list);
 	int cnt = 0;
 	struct vm_free_frame *p = vm_free_list;
 	while ((p = p->next)) {
-		//os_printf("0x%X -> 0x%X\n", p, p->next);
+		os_printf("0x%X -> 0x%X\n", p, p->next);
 		cnt++;
 	}
-	//os_printf("Returning %d\n",cnt);
+	os_printf("Returning %d\n",cnt);
 	return cnt;
 }

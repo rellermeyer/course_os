@@ -49,10 +49,6 @@ void mmap(void *p_bootargs) {
 	os_printf("first_level_pt=%X\n",first_level_pt);
 
 	//temporarily map where it is until we copy it in VAS
-	// TODO: Is this really needed?
-	// Rationale: if I understand correctly, the page table is just
-	// pointers. The kernel already exists at P_KDSBASE, so V_KDSBASE
-	// will point at valid data (since V_KDSBASE points to P_KDSBASE).
 	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
 	//1MB for static kernel data structures (stacks and l1 pt)
@@ -103,7 +99,8 @@ void mmap(void *p_bootargs) {
 
 	// We have to empty out the first MB of that, so we can use it as an array of VASs
 	// The first slot is actually the kernel's VAS
-	((struct vas*)P_KERNTOP)->l1_pagetable = first_level_pt;
+	((struct vas*)P_KERNTOP)->l1_pagetable = (unsigned int*)(PMAPBASE + PAGE_TABLE_SIZE);//first_level_pt;
+	((struct vas*)P_KERNTOP)->l1_pagetable_phys = first_level_pt;
 	((struct vas*)P_KERNTOP)->next = 0x0;
 
 	//vm_build_free_frame_list((void*)P_KERNTOP, (void*)P_KERNTOP+(unsigned int)((PMAPTOP)-(PMAPBASE)));
