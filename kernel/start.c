@@ -70,7 +70,7 @@ void start2(uint32_t *p_bootargs)
 	vm_test();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
-
+	while (1);
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");
