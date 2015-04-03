@@ -86,7 +86,7 @@ void vm_enable_vas(struct vas *vas) {
 
 struct vas *vm_new_vas() {
 	// Grab a new page table (remember, we have the first MB after KERNTOP)
-	struct vas *p = (struct vas*)PMAPBASE;
+	struct vas *p = (struct vas*)V_L1PTBASE;
 	// TODO: What if we overrun our alloted MB?
 	while (p->next != 0x0) {
 		p = p->next;
@@ -120,13 +120,21 @@ struct vas *vm_new_vas() {
 	p->l1_pagetable[V_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
 	p->l1_pagetable[(V_KERNBASE+0x100000)>>20] = 0x100000 | 0x0400 | 2;
 
+	// Kernel datastructures
+	//temporarily map where it is until we copy it in VAS
+	p->l1_pagetable[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+
+	//1MB for static kernel data structures (stacks and l1 pt)
+	p->l1_pagetable[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+
 	// Our 1MB page to store VAS datastructures
-	p->l1_pagetable[PMAPBASE>>20] = P_KERNTOP | 0x0400 | 2;
+	//p->l1_pagetable[PMAPBASE>>20] = P_KERNTOP | 0x0400 | 2;
+	p->l1_pagetable[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
 
 	// The high vector table
-	p->l1_pagetable[HIVECTABLE>>20] = 0<<20 | 0x0400 | 2;
+	//p->l1_pagetable[HIVECTABLE>>20] = 0<<20 | 0x0400 | 2;
 
-	os_printf("Creating page table w/ 0xF0200000's entry = 0x%X\n", p->l1_pagetable[PMAPBASE>>20]);
+	os_printf("Creating page table w/ 0xFFF00000's entry = 0x%X\n", p->l1_pagetable[V_KDSBASE>>20]);
 
 	// 2MB of peripheral registers (so we get the serial port et. al.)
 	p->l1_pagetable[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
@@ -148,12 +156,12 @@ void vm_test() {
 	unsigned int mystack = (unsigned int)&vas1;
 	mystack &= 0xFFF00000; // Round down to nearest MB
 	os_printf("Stack addr: 0x%X\n", mystack);
-	vm_set_mapping(vas1, (void*)mystack, (void*)mystack, 0);
+	//vm_set_mapping(vas1, (void*)mystack, (void*)mystack, 0);
 
 	//char *p = (char*)0x1;
 	//p[0]++;
 
-	os_printf("Created page table w/ 0xF0200000's entry = 0x%X\n", vas1->l1_pagetable[PMAPBASE>>20]);
+	os_printf("Created page table w/ 0xFFF00000's entry = 0x%X\n", vas1->l1_pagetable[V_KDSBASE>>20]);
 
 	//vas1 = (struct vas*)PMAPBASE;
 	vm_enable_vas(vas1);
@@ -165,11 +173,13 @@ void vm_test() {
 	// Do we still have the stack?
 	os_printf("This value better be the same as above: 0x%X\n", vas1);
 
-	struct vas *vas2 = (struct vas*)PMAPBASE;//V_KERNTOP;
-	vas2 = (struct vas*)0x0;
+	struct vas *vas2 = (struct vas*)V_L1PTBASE;//PMAPBASE;//V_KERNTOP;
+	//vas2 = (struct vas*)0x0;
 	os_printf("%X (%X)\n", vas2, &vas2);
 	os_printf("%X\n", *((unsigned int*)vas2));
 	os_printf("%X\n", vas2->l1_pagetable);
+	os_printf("Entry: %x\n", vas1->l1_pagetable[(unsigned int)vas2->l1_pagetable >> 20]);
+	os_printf("%X\n", vas2->l1_pagetable[0]);
 	os_printf("(deref: entry at 0x200000: 0x%X)\n", vas2->l1_pagetable[0x200000>>20]);
 
 	// Test making a thing in this thing

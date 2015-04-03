@@ -30,10 +30,12 @@
 	//#define	KERNSTKBASE		0x07ff9000	//7 stacks 4K each = 28K
 //#define	P_L1PTBASE		0x07f00000	//16K (16K boundary required also)
 // Right before KHEAPBASE
-#define	P_L1PTBASE		0x00200000	//16K (16K boundary required also)
+//#define	P_L1PTBASE		0x00200000	//16K (16K boundary required also)
+#define	P_L1PTBASE	        P_KERNTOP	//16K (16K boundary required also)
+//#define V_L1PTBASE (1<<20)
 
 #define V_KDSBASE		0xfff00000
- 	#define V_L1PTBASE		0xfff00000
+#define V_L1PTBASE	        V_KERNTOP
 
 #define PERIPHBASE		0x10000000
 #define PERIPHTOP		0x20000000
