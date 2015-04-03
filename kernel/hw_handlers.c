@@ -54,22 +54,57 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 }
 
 void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
-	// int i, callNumber;
+	int callNumber;
 
-	// // the link register currently holds the address of the instruction immediately
-	// // after the SVC call
-	// // possible that syscall # passed directly in r7, not sure yet though
-	// register int address asm("lr"); 
+	// the link register currently holds the address of the instruction immediately
+	// after the SVC call
+	// possible that syscall # passed directly in r7, not sure yet though
+	register int address asm("lr"); 
 	        
-	// // load the SVC call and mask to get the number
-	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+	// load the SVC call and mask to get the number
+	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
 	os_printf("SOFTWARE INTERRUPT HANDLER\n");
 
-	// // Print out syscall # for debug purposes
-	// print_uart0("Syscall #: ");
-	// os_printf("%x", &callNumber);
-	// print_uart0("\n");
+	// Print out syscall # for debug purposes
+	os_printf("Syscall #: ");
+	os_printf("%x", callNumber);
+	os_printf("\n");
+
+	// System Call Handler
+	switch(callNumber)
+	{
+	case SYSCALL_CREATE:
+		os_printf("Create system call called!\n");
+		break;
+	case SYSCALL_SWITCH:
+		os_printf("Switch system call called!\n");
+		break;
+	case SYSCALL_DELETE:
+		os_printf("Delete system call called!\n");
+		break;
+	case SYSCALL_OPEN:
+		os_printf("Open system call called!\n");
+		break;
+	case SYSCALL_READ:
+		os_printf("Read system call called!\n");
+		break;
+	case SYSCALL_WRITE:
+		os_printf("Write system call called!\n");
+		break;
+	case SYSCALL_CLOSE:
+		os_printf("Close system call called!\n");
+		break;
+	case SYSCALL_SET_PERM:
+		os_printf("Set permission system call called!\n");
+		break;
+	case SYSCALL_MEM_MAP:
+		os_printf("Memory map system call called!\n");
+		break;
+	default:
+		os_printf("That wasn't a syscall you knob!\n");
+		break;
+	}
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){

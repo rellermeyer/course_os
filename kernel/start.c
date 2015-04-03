@@ -78,12 +78,11 @@ void start2(uint32_t *p_bootargs)
 
 	print_uart0("done parsing atag list\n");
 
-
 	//init_kheap(31 * 0x100000);
 	//init_uheap(0x100000);
 
 	//initialize pcb table and PID
-	init_all_processes();
+	/* init_all_processes(); */
 	//print_process_state(0);
 
 	//run_process_tests();
