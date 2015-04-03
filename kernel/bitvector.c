@@ -12,11 +12,10 @@ uint64_t *makeVector(uint32_t size) {
 }
 
 // toggles a given bit
-// bug when you toggle the last or first bit of the array, will work on tomorrow 
 uint32_t toggle (uint32_t index) {
 	uint64_t val = floor(index/64); // can I use floor in the kernel?
 	uint64_t onePart = bitVec[val];
-	uint64_t mask = 0x1 << (index - (val * 64));
+	uint64_t mask = 0x1 << 63 - (index % 64);
 	bitVec[val] = bitVec[val] ^ mask;
 	return 1;
 }
