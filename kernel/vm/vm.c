@@ -19,6 +19,8 @@ int vm_unpin(struct vas *vas, void *vptr) {
 }
 
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
+	// TODO: Make permissions matter
+	vas->l1_pagetable[(unsigned int)pptr>>20] = (unsigned int)vptr | 0x0400 | 2;
 	return 0;
 }
 
@@ -27,7 +29,15 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 }
 
 void vm_enable_vas(struct vas *vas) {
-	return;
+	os_printf("Enabling mapping at VAS 0x%X\n", vas);
+
+	//TTBR0
+	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (vas->l1_pagetable));
+	// Translation table 1 
+
+	//Set Domain Access Control to enforce out permissions
+	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
+	//asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
 }
 
 struct vas *vm_new_vas() {
@@ -59,6 +69,10 @@ struct vas *vm_new_vas() {
 	// Our 1MB page to store VAS datastructures
 	p->l1_pagetable[PMAPBASE>>20] = P_KERNTOP | 0x0400 | 2;
 
+	// 2MB of peripheral registers (so we get the serial port et. al.)
+	p->l1_pagetable[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
+	p->l1_pagetable[(PERIPHBASE+0x100000)>>20] = (PERIPHBASE+0x100000) | 0x0400 | 2;
+
 	return p;
 }
 
@@ -70,4 +84,19 @@ int vm_free_vas(struct vas *vas) {
 void vm_test() {
 	struct vas *vas1 = vm_new_vas();
 	os_printf("Got new vas at 0x%X\n", vas1);
+
+	// We're part of the kernel, which is already mapped into vas1.
+	// But our stack isn't, so let's add that mapping.
+	unsigned int mystack = (unsigned int)&vas1;
+	mystack &= 0xFFF00000; // Round down to nearest MB
+	vm_set_mapping(vas1, (void*)mystack, (void*)mystack, 0);
+
+	vm_enable_vas(vas1);
+	//vm_enable_vas((struct vas*)P_KERNTOP);
+
+	// Can we still print?
+	os_printf("Hey, I'm printing!\n");
+
+	// Do we still have the stack?
+	os_printf("This value better be the same as above: 0x%X\n", vas1);
 }
