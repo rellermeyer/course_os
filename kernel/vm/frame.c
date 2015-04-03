@@ -14,10 +14,10 @@ int vm_build_free_frame_list(void *start, void *end) {
 	for (p=start; (void*)p<end; p=(void*)p+BLOCK_SIZE) {
 		p->next = (void*)p+BLOCK_SIZE;
 		if ((unsigned int)((void*)p+BLOCK_SIZE) >= (unsigned int)end) {
-			os_printf("Too much.\n");
+			//os_printf("Too much.\n");
 			p->next = 0x0;
 		}
-		os_printf("0x%X -> 0x%X (0x%X), 0x%X\n",p, p->next, (void*)p+BLOCK_SIZE, end);
+		//os_printf("0x%X -> 0x%X (0x%X), 0x%X\n",p, p->next, (void*)p+BLOCK_SIZE, end);
 	}
 	return 0;
 }
@@ -37,13 +37,13 @@ void vm_release_frame(void *p) {
 }
 
 int vm_count_free_frames() {
-	os_printf("free frame list address: %X\n", vm_free_list);
+	//os_printf("free frame list address: %X\n", vm_free_list);
 	int cnt = 0;
 	struct vm_free_frame *p = vm_free_list;
 	while ((p = p->next)) {
-		os_printf("0x%X -> 0x%X\n", p, p->next);
+		//os_printf("0x%X -> 0x%X\n", p, p->next);
 		cnt++;
 	}
-	os_printf("Returning %d\n",cnt);
+	//os_printf("Returning %d\n",cnt);
 	return cnt;
 }

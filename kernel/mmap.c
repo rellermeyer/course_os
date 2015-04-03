@@ -2,6 +2,8 @@
 #include "include/memory.h"
 #include "include/klibc.h"
 #include "include/drivers/uart.h"
+#include "include/vm.h"
+
 /*
  * APX AP            Privileged    Unprivileged
  *  1  11 (0x8c00) = read-only     read-only
@@ -42,7 +44,10 @@ void mmap(void *p_bootargs) {
 
 	}
 */
-	
+
+	first_level_pt = (unsigned int *)(P_KERNTOP + PAGE_TABLE_SIZE);
+	os_printf("first_level_pt=%X\n",first_level_pt);
+
 	//temporarily map where it is until we copy it in VAS
 	// TODO: Is this really needed?
 	// Rationale: if I understand correctly, the page table is just
@@ -88,12 +93,19 @@ void mmap(void *p_bootargs) {
 	}
 
 	//remap 62MB of physical memory after the kernel 
-	// This is where we allocate frames from
+	// (KERNTOP to KHEAPBASE)
+	// This is where we allocate frames from. Except for the first one.
 	unsigned int phys_addr = P_KERNTOP;
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
 	}
+
+	// We have to empty out the first MB of that, so we can use it as an array of VASs
+	// The first slot is actually the kernel's VAS
+	((struct vas*)P_KERNTOP)->l1_pagetable = first_level_pt;
+	((struct vas*)P_KERNTOP)->next = 0x0;
+
 	//vm_build_free_frame_list((void*)P_KERNTOP, (void*)P_KERNTOP+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
@@ -108,7 +120,6 @@ void mmap(void *p_bootargs) {
 	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
 	asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
 	
-
 	/*CONTROL REGISTER
 	 *	Enable MMU by setting 0
 	 *	Alignment bit 1
@@ -125,8 +136,10 @@ void mmap(void *p_bootargs) {
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
+	os_printf("Got here\n");
+
 	// Build the free frame list
-	vm_build_free_frame_list((void*)PMAPBASE, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
+	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");
