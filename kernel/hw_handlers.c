@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "interrupt.h"
 #include "klibc.h"
+#include "vm.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
@@ -64,6 +65,10 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
+	// We have to switch VASs to the kernel's VAS if we want to do anything
+	struct vas *prev_vas = vm_get_current_vas();
+	vm_use_kernel_vas();
+
 	os_printf("SOFTWARE INTERRUPT HANDLER\n");
 
 	// Print out syscall # for debug purposes
@@ -105,6 +110,8 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("That wasn't a syscall you knob!\n");
 		break;
 	}
+
+	vm_enable_vas(prev_vas);
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
