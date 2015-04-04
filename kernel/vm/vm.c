@@ -24,9 +24,19 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 		// We need to swap! (or something...)
 		return 1; // For now, just fail
 	}
+        if (vm_set_mapping(vas, vptr, pptr, permission)) {
+		// Release the frame to prevent a memory leak
+		vm_release_frame(pptr);
+		vm_enable_vas(prev_vas);
+		return 2;
+	}
 	vm_enable_vas(prev_vas);
-	return vm_set_mapping(vas, vptr, pptr, permission);
+	return 0;
 }
+
+#define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
+#define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
+#define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
 
 int vm_free_page(struct vas *vas, void *vptr) {
 	// We have to save the current VAS
@@ -34,7 +44,8 @@ int vm_free_page(struct vas *vas, void *vptr) {
 	vm_enable_vas((struct vas*)V_L1PTBASE);
 
 	// TODO: Check if it was actually allocated
-	vm_release_frame((void*)(vas->l1_pagetable[(unsigned int)vptr>>20]&~((PAGE_TABLE_SIZE<<1) - 1)));
+	uint32_t entry = VM_L1_GET_ENTRY(vas->l1_pagetable, vptr);
+	vm_release_frame((void*)VM_ENTRY_GET_FRAME(entry));
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 
 	vm_enable_vas(prev_vas);
@@ -57,16 +68,13 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 
 int vm_free_mapping(struct vas *vas, void *vptr) {
 	// TODO: If this is a paged frame, then we need to release it...
+	// Also, we may want to clear it then.
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 	return 0;
 }
 
 void vm_enable_vas(struct vas *vas) {
 	vm_current_vas = vas;
-
-	os_printf("Enabling mapping at VAS 0x%X\n", vas);
-	//os_printf("(entry at 0xF0300000: 0x%X)\n", vas->l1_pagetable[0xF0300000>>20]);
-	//os_printf("(entry at 0x200000: 0x%X)\n", vas->l1_pagetable[0x200000>>20]);
 
 	// Clear the BTAC
 	asm volatile("mcr p15, 0, %[r], c7, c5, 6" : : [r] "r" (0x0));
@@ -76,48 +84,47 @@ void vm_enable_vas(struct vas *vas) {
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (vas->l1_pagetable_phys));
-	// Translation table 1 
-
-	os_printf("Got here.\n");
+	// Translation table 1 is currently ignored
 
 	// Clean the caches (data & instruction)
 	asm volatile("mcr p15, 0, %[r], c7, c7, 0" : : [r] "r" (0x0));
-
-	os_printf("Got here?\n");
-
-	// Enable caches
-
-	//Set Domain Access Control to enforce out permissions
-	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
-	//asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
 }
 
 struct vas *vm_new_vas() {
 	// Grab a new page table (remember, we have the first MB after KERNTOP)
 	struct vas *p = (struct vas*)V_L1PTBASE;
-	// TODO: What if we overrun our alloted MB?
 	while (p->next != 0x0) {
 		p = p->next;
+		// Have we overrun our alloted PAGE_TABLE_SIZE?
+		if ((unsigned int)p >= V_L1PTBASE+PAGE_TABLE_SIZE) {
+			// TODO: Page the page tables.
+			return 0x0;
+		}
 	}
 
-	// TODO: Have a better allocation scheme.
-	struct vas *next = (void*)p + PAGE_TABLE_SIZE*2;
+	// The PT metadata lives in the bottom PAGE_TABLE_SIZE
+	// The actual page table lives after the bottom PAGE_TABLE_SIZE
+
+	struct vas *next = p + 1;
 	p->next = next;
 
-	// Now, advance and fill in the new page table
-	//struct vas *p = (struct vas*)(PMAPBASE);// + 2*PAGE_TABLE_SIZE);
+	// Advance and make the new page table
 	p = p->next;
 	p->next = 0x0;
-	p->l1_pagetable = (unsigned int*)((void*)p + PAGE_TABLE_SIZE); // The area immediately after the struct vas, aligned to 16KB
 
-	// Chintzy conversion thing
-	p->l1_pagetable_phys = (unsigned int*)((unsigned int)p->l1_pagetable - (PMAPBASE - P_KERNTOP));
+	int idx = p - (struct vas*)V_L1PTBASE;
+	p->l1_pagetable = (unsigned int*)(V_L1PTBASE + PAGE_TABLE_SIZE + idx*PAGE_TABLE_SIZE);
+	// TODO: Probably have a more general virtual->physical converter...
+	p->l1_pagetable_phys = (unsigned int*)((unsigned int)p->l1_pagetable - (V_L1PTBASE - P_L1PTBASE));
 
 	// Zero out the page table
+	//os_memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
+#if 1
 	int i;
 	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
 		p->l1_pagetable[i] = 0;
 	}
+#endif
 
 	// Setup the static mappings...
 	// The kernel (high & low addresses)
@@ -136,13 +143,7 @@ struct vas *vm_new_vas() {
 	p->l1_pagetable[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
 	// Our 1MB page to store VAS datastructures
-	//p->l1_pagetable[PMAPBASE>>20] = P_KERNTOP | 0x0400 | 2;
 	p->l1_pagetable[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
-
-	// The high vector table
-	//p->l1_pagetable[HIVECTABLE>>20] = 0<<20 | 0x0400 | 2;
-
-	os_printf("Creating page table w/ 0xFFF00000's entry = 0x%X\n", p->l1_pagetable[V_KDSBASE>>20]);
 
 	// 2MB of peripheral registers (so we get the serial port et. al.)
 	p->l1_pagetable[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
@@ -156,6 +157,8 @@ int vm_free_vas(struct vas *vas) {
 
 // TODO: Move this into a framework...
 void vm_test() {
+	os_printf("***** Test code for VM (vm_test()): *****\n");
+
 	struct vas *vas1 = vm_new_vas();
 	os_printf("Got new vas at 0x%X\n", vas1);
 
@@ -164,16 +167,10 @@ void vm_test() {
 	unsigned int mystack = (unsigned int)&vas1;
 	mystack &= 0xFFF00000; // Round down to nearest MB
 	os_printf("Stack addr: 0x%X\n", mystack);
-	//vm_set_mapping(vas1, (void*)mystack, (void*)mystack, 0);
-
-	//char *p = (char*)0x1;
-	//p[0]++;
 
 	os_printf("Created page table w/ 0xFFF00000's entry = 0x%X\n", vas1->l1_pagetable[V_KDSBASE>>20]);
 
-	//vas1 = (struct vas*)PMAPBASE;
 	vm_enable_vas(vas1);
-	//vm_enable_vas((struct vas*)P_KERNTOP);
 
 	// Can we still print?
 	os_printf("Hey, I'm printing!\n");
@@ -181,8 +178,7 @@ void vm_test() {
 	// Do we still have the stack?
 	os_printf("This value better be the same as above: 0x%X\n", vas1);
 
-	struct vas *vas2 = (struct vas*)V_L1PTBASE;//PMAPBASE;//V_KERNTOP;
-	//vas2 = (struct vas*)0x0;
+	struct vas *vas2 = (struct vas*)V_L1PTBASE;
 	os_printf("%X (%X)\n", vas2, &vas2);
 	os_printf("%X\n", *((unsigned int*)vas2));
 	os_printf("%X\n", vas2->l1_pagetable);
@@ -193,7 +189,6 @@ void vm_test() {
 	// Test making a thing in this thing
 	struct vas *vas3 = vm_new_vas();
 	vm_enable_vas(vas3);
-	os_printf("asfdsafkmfdaskdakfdank\n");
 	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
 
 	// Test allocating frames...
@@ -202,11 +197,27 @@ void vm_test() {
 	char *p = (char*)0x5000000;
 	p[0] = 1;
 
+	// Test allocating many frames...
+	p += BLOCK_SIZE;
+	while (!vm_allocate_page(vas3, (void*)p, 0)) {
+		p += BLOCK_SIZE;
+	}
+	os_printf("Highest frame allocated: 0x%X\n",p);
+	while ((unsigned int)p > 0x5000000) {
+		vm_free_page(vas3, p);
+		p -= BLOCK_SIZE;
+	}
+
+	// Test the data abort...
+	os_printf("You should see a data abort...\n");
+	int i = p[-1];
+	os_printf("%d\n",i);
+
 	// Free the page!
 	vm_free_page(vas3, p);
 
 	// Clean up & switch back to the kernel's VAS before we return.
-	//vm_enable_vas((struct vas*)P_KERNTOP);
-	// PMAPBASE is the address of the kernel's VAS (in virtual memory)
 	vm_enable_vas((struct vas*)V_L1PTBASE);
+
+	os_printf("*****************************\n");
 }
