@@ -3,12 +3,20 @@
 #include "klibc.h"
 #include "./frame.h"
 
-static struct vas *vm_current_vas = 0x0;
+static struct vas *vm_current_vas = (struct vas*)V_L1PTBASE;
+
+struct vas *vm_get_current_vas() {
+	return vm_current_vas;
+}
+
+void vm_use_kernel_vas() {
+	vm_enable_vas((struct vas*)V_L1PTBASE);
+}
 
 int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*)PMAPBASE);
+	vm_enable_vas((struct vas*)V_L1PTBASE);
 
 	// TODO: Check if the vas already has a mapping there.
 	void *pptr = vm_get_free_frame();
@@ -23,7 +31,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 int vm_free_page(struct vas *vas, void *vptr) {
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*)PMAPBASE);
+	vm_enable_vas((struct vas*)V_L1PTBASE);
 
 	// TODO: Check if it was actually allocated
 	vm_release_frame((void*)(vas->l1_pagetable[(unsigned int)vptr>>20]&~((PAGE_TABLE_SIZE<<1) - 1)));
@@ -200,5 +208,5 @@ void vm_test() {
 	// Clean up & switch back to the kernel's VAS before we return.
 	//vm_enable_vas((struct vas*)P_KERNTOP);
 	// PMAPBASE is the address of the kernel's VAS (in virtual memory)
-	vm_enable_vas((struct vas*)PMAPBASE);
+	vm_enable_vas((struct vas*)V_L1PTBASE);
 }
