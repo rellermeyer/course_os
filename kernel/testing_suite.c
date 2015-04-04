@@ -11,7 +11,6 @@ void add_test(TEST test, TEST_SUITE *tests) {
     *(tests->TESTS) = test;
     ++tests->TESTS;
     ++tests->NUM_OF_TESTS;
-    printf("this is a test");
 }
 
 void run_tests(TEST_SUITE tests) {
