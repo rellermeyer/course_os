@@ -3,6 +3,28 @@
 #include "klibc.h"
 #include "./frame.h"
 
+#define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+#define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+
+static const int perm_mapping[16] = {
+	0,  // 0000 Nothing
+	5,  // 0001 Privileged RO, nothing otherwise
+	6,  // 0010 User RO, privileged RO.
+	6,  // 0011 User RO, privileged RO.
+	1,  // 0100 Privileged RW, nothing otherwise
+	-1, // 0101 ???
+	2,  // 0110 Privileged RW, user RO
+	-1, // 0111 ???
+	3,  // 1000 User RW, privileged RW
+	-1, // 1001 ???
+	-1, // 1010 ???
+	-1, // 1011 ???
+	3,  // 1100 User RW, privileged RW
+	-1, // 1101 ???
+	-1, // 1110 ???
+	-1, // 1111 ???
+};
+
 static struct vas *vm_current_vas = (struct vas*)V_L1PTBASE;
 
 struct vas *vm_get_current_vas() {
@@ -14,6 +36,8 @@ void vm_use_kernel_vas() {
 }
 
 int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
+	CHECK_VPTR;
+
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
 	vm_enable_vas((struct vas*)V_L1PTBASE);
@@ -22,13 +46,14 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	void *pptr = vm_get_free_frame();
 	if (pptr == 0x0) {
 		// We need to swap! (or something...)
-		return 1; // For now, just fail
+		return VM_ERR_UNKNOWN; // For now, just fail
 	}
-        if (vm_set_mapping(vas, vptr, pptr, permission)) {
+	int retval = vm_set_mapping(vas, vptr, pptr, permission);
+        if (retval) {
 		// Release the frame to prevent a memory leak
 		vm_release_frame(pptr);
 		vm_enable_vas(prev_vas);
-		return 2;
+		return retval;
 	}
 	vm_enable_vas(prev_vas);
 	return 0;
@@ -39,6 +64,8 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
 
 int vm_free_page(struct vas *vas, void *vptr) {
+	CHECK_VPTR;
+
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
 	vm_enable_vas((struct vas*)V_L1PTBASE);
@@ -61,14 +88,19 @@ int vm_unpin(struct vas *vas, void *vptr) {
 }
 
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
-	// TODO: Make permissions matter
-	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | 0x0400 | 2;
+	CHECK_VPTR;
+	CHECK_PPTR;
+	int perm = perm_mapping[permission];
+	if (perm == -1)	return VM_ERR_BADPERM;
+	if (vas->l1_pagetable[(unsigned int)vptr>>20]) return VM_ERR_MAPPED;
+
+	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	return 0;
 }
 
 int vm_free_mapping(struct vas *vas, void *vptr) {
-	// TODO: If this is a paged frame, then we need to release it...
-	// Also, we may want to clear it then.
+	CHECK_VPTR;
+	// TODO: If this is a paged frame, then we need to throw an error
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 	return 0;
 }
