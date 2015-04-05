@@ -35,6 +35,9 @@ struct vas *vm_new_vas();
 
 int vm_free_vas(struct vas *vas);
 
+struct vas *vm_get_current_vas();
+void vm_use_kernel_vas();
+
 void vm_test();
 
 #endif

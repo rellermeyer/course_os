@@ -45,7 +45,7 @@ void mmap(void *p_bootargs) {
 	}
 */
 
-	first_level_pt = (unsigned int *)(P_KERNTOP + PAGE_TABLE_SIZE);
+	first_level_pt = (unsigned int *)(P_L1PTBASE + PAGE_TABLE_SIZE);
 	os_printf("first_level_pt=%X\n",first_level_pt);
 
 	//temporarily map where it is until we copy it in VAS
@@ -97,11 +97,13 @@ void mmap(void *p_bootargs) {
 		phys_addr += 0x100000;
 	}
 
+	first_level_pt[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
+
 	// We have to empty out the first MB of that, so we can use it as an array of VASs
 	// The first slot is actually the kernel's VAS
-	((struct vas*)P_KERNTOP)->l1_pagetable = (unsigned int*)(PMAPBASE + PAGE_TABLE_SIZE);//first_level_pt;
-	((struct vas*)P_KERNTOP)->l1_pagetable_phys = first_level_pt;
-	((struct vas*)P_KERNTOP)->next = 0x0;
+	((struct vas*)P_L1PTBASE)->l1_pagetable = (unsigned int*)(V_L1PTBASE + PAGE_TABLE_SIZE);//first_level_pt;
+	((struct vas*)P_L1PTBASE)->l1_pagetable_phys = first_level_pt;
+	((struct vas*)P_L1PTBASE)->next = 0x0;
 
 	//vm_build_free_frame_list((void*)P_KERNTOP, (void*)P_KERNTOP+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
@@ -123,13 +125,15 @@ void mmap(void *p_bootargs) {
 	 *	D-cache bit 2
 	 *	I-cache bit 12
 	 *	V bit 13 (1=high vectors 0xffff0000)
+	 * We disable high vectors, since low vectors work just fine.
 	 */
 	unsigned int control;
 
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
-	control |= 0x3007; //0b11000000000111
+	//control |= 0x3007; //0b11000000000111
+	control |= 0x1007; //0b11000000000111
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
