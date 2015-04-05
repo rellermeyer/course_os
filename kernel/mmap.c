@@ -10,7 +10,7 @@
  *  1  01 (0x8400) = read-only     no access
  *  0  10 (0x0800) = read-write    read-only
  *  0  01 (0x0400) = read-write    no-access
- * See http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0333h/I1029222.html
+ * See http://infocenter.arm.com/help/topic/com.arm.doc.ddi0333h/Caceaije.html
 
  * Bits 0 and 1 identify the table entry type
  * 0 = translation fault 
