@@ -2,29 +2,6 @@
 #include "../include/test.h"
 #include "../include/klibc.h"
 
-int test1() {
-    int i = 1;
-    int j = 2;
-    if (i <= j) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-int test2() {
-    int i = 2;
-    int j = 1;
-    if (i >= j) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-
 int test_os_memcmp_1() {
     char buffer1[] = "DWgaOtP12df0";
     char buffer2[] = "DWGAOTP12DF0";
@@ -69,7 +46,6 @@ int test_os_memcmp_3() {
 
 int main () {
     printf("STARTING\n");
-    TEST test_1 = create_test("test_1", &test1);
 
     TEST test_memcmp_1 = create_test("test_os_memcmp_1", &test_os_memcmp_1);
     TEST test_memcmp_2 = create_test("test_os_memcmp_2", &test_os_memcmp_2);
@@ -78,8 +54,6 @@ int main () {
     printf("CREATED TESTS\n");
     TEST_SUITE tests = create_test_suite();
     printf("CREATED SUITE\n");
-
-    add_test(test_1, &tests);
 
     add_test(test_memcmp_1, &tests);
     add_test(test_memcmp_2, &tests);
