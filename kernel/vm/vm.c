@@ -4,7 +4,7 @@
 #include "./frame.h"
 
 #define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
-#define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+#define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
 static const int perm_mapping[16] = {
 	0,  // 0000 Nothing
@@ -224,7 +224,7 @@ void vm_test() {
 	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
 
 	// Test allocating frames...
-	vm_allocate_page(vas3, (void*)0x5000000, 0);
+        vm_allocate_page(vas3, (void*)0x5000000, VM_PERM_PRIVILEGED_RW);
 	// Oh man! We should be able to write to there!
 	char *p = (char*)0x5000000;
 	p[0] = 1;
