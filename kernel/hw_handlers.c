@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "interrupt.h"
 #include "klibc.h"
+#include "vm.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
@@ -54,22 +55,63 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 }
 
 void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
-	// int i, callNumber;
+	int callNumber;
 
-	// // the link register currently holds the address of the instruction immediately
-	// // after the SVC call
-	// // possible that syscall # passed directly in r7, not sure yet though
-	// register int address asm("lr"); 
+	// the link register currently holds the address of the instruction immediately
+	// after the SVC call
+	// possible that syscall # passed directly in r7, not sure yet though
+	register int address asm("lr"); 
 	        
-	// // load the SVC call and mask to get the number
-	// callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+	// load the SVC call and mask to get the number
+	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+
+	// We have to switch VASs to the kernel's VAS if we want to do anything
+	struct vas *prev_vas = vm_get_current_vas();
+	vm_use_kernel_vas();
 
 	os_printf("SOFTWARE INTERRUPT HANDLER\n");
 
-	// // Print out syscall # for debug purposes
-	// print_uart0("Syscall #: ");
-	// os_printf("%x", &callNumber);
-	// print_uart0("\n");
+	// Print out syscall # for debug purposes
+	os_printf("Syscall #: ");
+	os_printf("%x", callNumber);
+	os_printf("\n");
+
+	// System Call Handler
+	switch(callNumber)
+	{
+	case SYSCALL_CREATE:
+		os_printf("Create system call called!\n");
+		break;
+	case SYSCALL_SWITCH:
+		os_printf("Switch system call called!\n");
+		break;
+	case SYSCALL_DELETE:
+		os_printf("Delete system call called!\n");
+		break;
+	case SYSCALL_OPEN:
+		os_printf("Open system call called!\n");
+		break;
+	case SYSCALL_READ:
+		os_printf("Read system call called!\n");
+		break;
+	case SYSCALL_WRITE:
+		os_printf("Write system call called!\n");
+		break;
+	case SYSCALL_CLOSE:
+		os_printf("Close system call called!\n");
+		break;
+	case SYSCALL_SET_PERM:
+		os_printf("Set permission system call called!\n");
+		break;
+	case SYSCALL_MEM_MAP:
+		os_printf("Memory map system call called!\n");
+		break;
+	default:
+		os_printf("That wasn't a syscall you knob!\n");
+		break;
+	}
+
+	vm_enable_vas(prev_vas);
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
@@ -78,6 +120,12 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	os_printf("DATA ABORT HANDLER\n");
+	int pc, lr, sp, fp;
+	asm volatile("mov %0, pc" : "=r" (pc));
+	asm volatile("mov %0, lr" : "=r" (lr));
+	asm volatile("mov %0, sp" : "=r" (sp));
+	asm volatile("mov %0, fp" : "=r" (fp));
+	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
 }
 
 void reserved_handler(void){
