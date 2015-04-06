@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "klibc.h"
 #include "vm.h"
+#include "/include/file.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
@@ -88,9 +89,20 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
 		break;
+
 	case SYSCALL_OPEN:
 		os_printf("Open system call called!\n");
+		char* filepath;
+		char mode;
+		// retrieve the args that open() put in r1, r2, r3 and pass to kopen():
+		asm volatile("mov %0, r1": "(filepath)");
+		asm volatile("mov %0, r2": "(mode)");
+		// call kopen(), passing appropriate args:
+		opentable_entry* fd = kopen(filepath, mode);
+		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
+		asm volatile("mov %0, (fd)" : "r1");
 		break;
+
 	case SYSCALL_READ:
 		os_printf("Read system call called!\n");
 		break;

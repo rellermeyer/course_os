@@ -25,3 +25,12 @@ typedef struct file
 // 	 data 
 
 // } inode;
+
+opentable_entry* kopen(char* filepath, char mode){
+	// TODO implement
+
+}//end kopen()
+
+// int read(opentable_entry* fd, int numBytes)
+
+
