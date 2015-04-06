@@ -37,16 +37,21 @@ int open(char* filepath, char mode, int args){
   description table*/
 int read(int fd, void* buf, int numBytes){
 	//note, not sure if we need to allocated memory for buf, or if the user is responsible for that...
-	int bytesRead; //this will be what we return:()
-	// move the arguments into registers for kread to use:
-	asm volatile("mov %0, (fd)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
-	asm volatile("mov %0, (buf)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
-	asm volatile("mov %0, (numBytes)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
 
-	// preserve registers r1, r2, and r3 on the stack
+	if (numBytes<=0)
+		os_printf(“Invalid number of bytes \n”);
+
+	int bytesRead; //this will be what we return:()
+
+        // preserve registers r1, r2, and r3 on the stack
     asm volatile("push r1" "\n\t"
                  "push r2" "\n\t"
                  "push r3" "\n\t");
+
+	// move the arguments into registers for kread to use:
+	asm volatile("mov %0, (fd)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+	asm volatile("mov %0, (buf)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+	asm volatile("mov %0, (numBytes)": "<register>");//note, <register> not necessarily correct...need to figure out which register to us
 
 	// trigger the software_interrupt_handler in hw_handler.c:
 	asm volatile("swi SYSCALL_READ");
@@ -62,6 +67,67 @@ int read(int fd, void* buf, int numBytes){
 	//note, actual data read from file gets moved to buf in kopen()
 }//end open syscall
 
+/*write() returns the number of bytes that were actually written*/
+int write(int fd, void* buf, int numBytes){
+	
+	if (numBytes<=0)
+		os_printf(“Invalid number of bytes \n”);
+
+	int bytesWritten; //this will be what we return
+
+	// preserve registers r1, r2, and r3 on the stack
+    	asm volatile("push r1" "\n\t"
+                     "push r2" "\n\t"
+                     "push r3" "\n\t");
+
+	// move the arguments into registers for kwrite to use:
+	asm volatile("mov %0, (fd)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+	asm volatile("mov %0, (buf)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+	asm volatile("mov %0, (numBytes)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+
+
+	// trigger the software_interrupt_handler in hw_handler.c:
+	asm volatile("swi SYSCALL_WRITE");
+
+	// retrieve the return values from kwrite to pass back to user:
+	asm volatile("mov %0, <register>" : "=r" (bytesWritten));
+
+	// Restore r1, r2, and r3 to original values
+        asm volatile("pop r3" "\n\t"
+                     "pop r2" "\n\t"
+                     "pop r1" "\n\t");
+	return bytesWritten;
+
+	//note, actual data written from file gets moved to buf in kwrite()
+}//end write syscall
+
+
+/*close() returns the 0 if successful and -1 if not*/
+int close(int fd){
+
+	int error; //0 if close ok, -1 if error. This will be return.
+
+	// move the arguments into registers for kclose to use:
+	asm volatile("mov %0, (fd)": "<register>");//note, <register> not necessarily correct...need to figure out which register to use
+
+	// preserve registers r1, r2, and r3 on the stack  —— need all 3?
+        asm volatile("push r1" "\n\t"
+                     "push r2" "\n\t"
+                     "push r3" "\n\t");
+
+	// trigger the software_interrupt_handler in hw_handler.c:
+	asm volatile("swi SYSCALL_CLOSE");
+
+	// retrieve the return values from kread to pass back to user:
+	asm volatile("mov %0, <register>" : "=r" ());
+
+	// Restore r1, r2, and r3 to original values
+        asm volatile("pop r3" "\n\t"
+                     "pop r2" "\n\t"
+                     "pop r1" "\n\t");
+
+	return error;
+}//end close syscall
 
 /*put these in kopen() implementation:
 	switch(mode){}
