@@ -5,7 +5,7 @@
 
 
 //CONSTANTS:
-const uint16_t BLOCKSIZE = 4096;
+const uint16_t BLOCKSIZE = 2048;
 
 
 //STRUCTS:
