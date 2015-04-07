@@ -4,25 +4,27 @@
 #include "file.h"  //add directory if necessary
 
 //only has fd and pointers. More fields can be added if necessary.
-typedef struct opentable_entry 
-{
-	struct opentable_entry * previous;
-	int fd; //file descriptor
-	int offset; //keeps track of where we are reading
-	struct opentable_entry * next;	
-} opentable_entry;
+// typedef struct file_descriptor 
+// {
+// 	file* file;
+// 	struct file_descriptor * previous;
+// 	// int fd; //file descriptor
+// 	int offset; //keeps track of where we are reading
+// 	struct file_descriptor * next;	
+// 	int open;
+// } file_descriptor;
 
 // beginning of list 
-struct opentable_entry * HEAD;
+file_descriptor * HEAD;
 
 // end of list
-struct opentable_entry * TAIL;
+file_descriptor * TAIL;
 
 
 //this function can be used to insert a file in the list and returns a pointer to it
-opentable_entry* add_to_opentable(int fd_to_add) 
+file_descriptor* add_to_opentable(file_descriptor* fd_to_add) 
 {
-	struct opentable_entry to_add;
+	file_descriptor to_add;
 	to_add->fd = fd_to_add;
 
 	if (HEAD==NULL) //empty list
@@ -42,7 +44,7 @@ opentable_entry* add_to_opentable(int fd_to_add)
 
 //this function can be used to delete a file from the list
 //returns 0 if all ok, -1 if wrong
-int delete_from_opentable(opentable_entry* fd_to_delete)
+int delete_from_opentable(file_descriptor* fd_to_delete)
 {
 	if (HEAD==NULL)
 		return -1; //error
