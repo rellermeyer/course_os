@@ -26,11 +26,45 @@ typedef struct file
 
 // } inode;
 
-opentable_entry* kopen(char* filepath, char mode){
+file_descriptor * kopen(char* filepath, char mode){
+	file_descriptor* fd;
 	// TODO implement
 
+
+	return fd;
 }//end kopen()
 
 // int read(opentable_entry* fd, int numBytes)
+
+
+
+
+
+
+
+
+
+
+
+/*put these in kopen() implementation:
+	switch(mode){}
+		case "r":
+   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
+		
+	       break;
+	    case "w":
+   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
+
+	       
+	       break;
+	    case "a":
+   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
+
+	  	    break;
+	    default :
+			os_printf("Error! Must pass a valid mode parameter\n");
+		}
+*/
+
 
 

@@ -80,12 +80,12 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// System Call Handler
 	switch(callNumber)
 	{
-	case SYSCALL_CREATE:
-		os_printf("Create system call called!\n");
-		break;
-	case SYSCALL_SWITCH:
-		os_printf("Switch system call called!\n");
-		break;
+	// case SYSCALL_CREATE:
+	// 	os_printf("Create system call called!\n");
+	// 	break;
+	// case SYSCALL_SWITCH:
+	// 	os_printf("Switch system call called!\n");
+	// 	break;
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
 		break;
@@ -94,11 +94,11 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Open system call called!\n");
 		char* filepath;
 		char mode;
-		// retrieve the args that open() put in r1, r2, r3 and pass to kopen():
+		// retrieve the args that open() put in r1, r2 and pass to kopen():
 		asm volatile("mov %0, r1": "(filepath)");
 		asm volatile("mov %0, r2": "(mode)");
 		// call kopen(), passing appropriate args:
-		opentable_entry* fd = kopen(filepath, mode);
+		file_descriptor* fd = kopen(filepath, mode);
 		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
 		asm volatile("mov %0, (fd)" : "r1");
 		break;
