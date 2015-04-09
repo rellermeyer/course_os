@@ -30,20 +30,20 @@ typedef struct free_index {
 
 // FIFO structure. When a file is closed, it is added to the tail. 
 // When requested to open a file, the index is taken from the head. 
-struct free_index * HEAD;
-struct free_index * TAIL;
+free_index * HEAD;
+free_index * TAIL;
 
 //called by start.c, will initialize the free list and the table
 void fs_table_init()
 {
-	struct free_index * behind = kmalloc(sizeof(struct free_index));
+	free_index * behind = kmalloc(sizeof(struct free_index));
     HEAD = behind;
     HEAD->index = 0;
 
     int i;
     int max = SYSTEM_SIZE;
     for (i=1; i<max; i++) {
-        struct free_index * ahead = kmalloc(sizeof(struct free_index));
+        free_index * ahead = kmalloc(sizeof(struct free_index));
         ahead->index = i;
         behind->next = ahead;
         behind = ahead;
@@ -53,7 +53,6 @@ void fs_table_init()
  	//since there is no turn off at the moment, the function is still fo be implemented
 }
 
-
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
 int add_to_opentable(struct file * f) 
@@ -61,10 +60,10 @@ int add_to_opentable(struct file * f)
 	if (HEAD==NULL) //not enough space
 		return -1; 	
 	int fd = HEAD->index; //take available fd
-	struct free_index * free_me = HEAD; 
-        HEAD = HEAD->next; //dequeue
+	free_index * free_me = HEAD; 
+    HEAD = HEAD->next; //dequeue
 	kfree(free_me); //free old node
-	struct file_descriptor to_add; //initialize the struct
+	file_descriptor to_add; //initialize the struct
 	to_add.linked_file = f;
 	to_add.offset = 0; 
 	table[fd] = to_add; //add to table ---> hopefully this copies the struct and not only a pointer!
@@ -79,23 +78,15 @@ int delete_from_opentable(int fd)
 	if (table[fd]==NULL) 
 		return -1; //invalid entry
 	table[fd]=NULL;
-	struct free_index * to_add = kmalloc(sizeof(struct free_index)); //create new node
+	free_index * to_add = kmalloc(sizeof(struct free_index)); //create new node
 	to_add->index = fd;
 	TAIL->next = to_add;
 	TAIL = to_add; //enqueue
 
 }
 
-
 //this function checks whether the file is open or not
 int file_is_open(int fd) 
 {
 	return (table[fd]!=NULL);
 }
-
-
-
-
-
-
-
