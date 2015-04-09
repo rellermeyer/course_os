@@ -1,6 +1,6 @@
 //This file contains the table of open files, implemented as an array
 // with methods like add_to_opentable and delete_from_opentable to be called in open and close 
-//Since methods are provided, other files should not touch neither the free LL or the arrray, 
+//Since methods are provided, other files should not touch neither the free LL or the array, 
 // but just use the premade methods. 
 
 #include "../include/file.h" 
@@ -37,17 +37,18 @@ struct free_index * TAIL;
 void fs_table_init()
 {
 	struct free_index * behind = kmalloc(sizeof(struct free_index));
-        HEAD = behind;
-        int i;
-        int max = SYSTEM_SIZE-1;
-        for (i=0; i<max; i++) {
-                behind->index = i;
-                struct free_index * ahead = kmalloc(sizeof(struct free_index));
-                behind->next = ahead;
-                behind = ahead;
-        } 
-        behind->index = SYSTEM_SIZE;
-        TAIL = behind;
+    HEAD = behind;
+    HEAD->index = 0;
+
+    int i;
+    int max = SYSTEM_SIZE;
+    for (i=1; i<max; i++) {
+        struct free_index * ahead = kmalloc(sizeof(struct free_index));
+        ahead->index = i;
+        behind->next = ahead;
+        behind = ahead;
+    } 
+    TAIL = behind;
 	//note: this memory should be freed with a cleanup function once the computer turns off
  	//since there is no turn off at the moment, the function is still fo be implemented
 }
