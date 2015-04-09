@@ -27,6 +27,8 @@
 #include "drivers/uart.h"
 #include "klibc.h"
 #include "vm.h"
+#include "include/open_table.h" //to initialize fs opentable
+
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -62,6 +64,8 @@ void start2(uint32_t *p_bootargs)
 	print_uart0("MMU enabled\n");
 	asm volatile("swi 1");
 	//while (1);
+
+	fs_table_init(); //initializes fs opentable  
 
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
