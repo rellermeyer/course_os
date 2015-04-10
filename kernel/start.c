@@ -83,7 +83,7 @@ void start2(uint32_t *p_bootargs)
 	test_allocate();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
-	//asm volatile("swi 1");
+	asm volatile("swi 1");
 	while (1);
 	argparse_process(p_bootargs);
 
