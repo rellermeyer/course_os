@@ -127,13 +127,13 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
      inkscape:cx="349.79685"
-     inkscape:cy="334.49711"
+     inkscape:cy="305.92568"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1366"
-     inkscape:window-height="713"
-     inkscape:window-x="-2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1060"
+     inkscape:window-x="1364"
      inkscape:window-y="-3"
      inkscape:window-maximized="1"
      fit-margin-top="0"
@@ -158,7 +158,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -272,77 +272,9 @@
          id="tspan3799-1-0-4">0x300000</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 160,497.36218 110,0"
-       id="path3872"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 160,587.36218 110,0"
-       id="path3874"
-       inkscape:connector-curvature="0" />
-    <text
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="180"
-       y="532.36218"
-       id="text3847-3"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         x="180"
-         y="532.36218"
-         style="font-size:20px"
-         id="tspan3965">KHEAP</tspan><tspan
-         sodipodi:role="line"
-         x="180"
-         y="557.36218"
-         style="font-size:20px"
-         id="tspan4363">(32MB)</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch"
-       x="155"
-       y="502.36218"
-       id="text3795-8-2-0-1"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         x="155"
-         y="502.36218"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch"
-         id="tspan3799-1-0-4-0">0x4100000</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch"
-       x="155"
-       y="592.36218"
-       id="text3795-8-2-0-0"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         x="155"
-         y="592.36218"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch"
-         id="tspan3799-1-0-4-9">0x5F00000</tspan></text>
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 160,677.36218 110,0"
        id="path3874-4"
        inkscape:connector-curvature="0" />
-    <text
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="180"
-       y="622.36218"
-       id="text3847-3-0"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3849-8-4"
-         x="180"
-         y="622.36218"
-         style="font-size:20px">UHEAP</tspan><tspan
-         sodipodi:role="line"
-         x="180"
-         y="647.36218"
-         style="font-size:20px"
-         id="tspan4365">(32MB)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch"
@@ -358,30 +290,30 @@
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="214"
-       y="382.36218"
+       x="220"
+       y="472.36218"
        id="text3957"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3959"
-         x="214"
-         y="382.36218"
+         x="220"
+         y="472.36218"
          style="font-size:20px;text-align:center;text-anchor:middle">Virtual</tspan><tspan
          sodipodi:role="line"
-         x="214"
-         y="407.36218"
+         x="220"
+         y="497.36218"
          style="font-size:20px;text-align:center;text-anchor:middle"
          id="tspan3961">Memory</tspan><tspan
          sodipodi:role="line"
-         x="214"
-         y="432.36218"
+         x="220"
+         y="522.36218"
          style="font-size:20px;text-align:center;text-anchor:middle"
          id="tspan3963">Frames</tspan><tspan
          sodipodi:role="line"
-         x="214"
-         y="457.36218"
+         x="220"
+         y="547.36218"
          style="font-size:20px;text-align:center;text-anchor:middle"
-         id="tspan4361">(64MB)</tspan></text>
+         id="tspan4361">(128MB)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"

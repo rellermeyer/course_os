@@ -48,7 +48,6 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 		// We need to swap! (or something...)
 		return VM_ERR_UNKNOWN; // For now, just fail
 	}
-	os_printf("Mapping 0x%x to 0x%x\n", vptr, pptr);
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
         if (retval) {
 		// Release the frame to prevent a memory leak
@@ -73,7 +72,6 @@ int vm_free_page(struct vas *vas, void *vptr) {
 
 	// TODO: Check if it was actually allocated
 	uint32_t entry = VM_L1_GET_ENTRY(vas->l1_pagetable, vptr);
-	os_printf("Releasing frame %x\n",VM_ENTRY_GET_FRAME(entry));
 	vm_release_frame((void*)VM_ENTRY_GET_FRAME(entry));
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 
@@ -96,8 +94,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	if (perm == -1)	return VM_ERR_BADPERM;
 	if (vas->l1_pagetable[(unsigned int)vptr>>20]) return VM_ERR_MAPPED;
 
-	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
-	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | 0x0400 | 2;
+	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	return 0;
 }
 
@@ -245,7 +242,6 @@ void vm_test() {
 	p[0] = 1;
 	os_printf("%x %x\n", &p, p);
 	os_printf("%d == 1?\n", p[0]);
-	p[-1] = 2;
 
 	// Test allocating many frames...
 	p += BLOCK_SIZE;
