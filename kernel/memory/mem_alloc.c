@@ -1,5 +1,6 @@
 #include "mem_alloc.h"
 #include "klibc.h"
+#include "vm.h"
 
 uint32_t *nextBlock = (uint32_t*) MEM_START;
 
@@ -18,9 +19,28 @@ void *mem_alloc(uint32_t size)
 	return allocBlock;
 }
 
+/*
+ * The kernel heap is organized in blocks. Each block has a header and a
+ * footer each a 4 byte integer, at the beginning and end of the block.
+ * The header and footer both specify the size of the block in question.
+ * Used blocks are indicated by the heap header and the heap footer being
+ * negative.
+ *
+ * To allocate a block, we start at the first block and walk through each
+ * one, finding the first free block large enough to support a header,
+ * footer, and the size requested.
+ *
+ * To free a block, we do a bunch of merging stuff to check to see if we
+ * should merge with the blocks on the left or right of us, respectively.
+ */
+
 void *init_heap(uint32_t size)
 {
-	heap = (uint32_t*) mem_alloc(size);
+	//heap = (uint32_t*) mem_alloc(size);
+	vm_allocate_page(KERNEL_VAS, (void*)MEM_START, VM_PERM_PRIVILEGED_RW);
+	heap = (uint32_t*)MEM_START;
+	heap_size = BLOCK_SIZE; // We have exactly 1 block
+
 	//os_printf("&heap=%x\n", heap);
 	heap_size = size;
 
@@ -35,12 +55,45 @@ void *init_heap(uint32_t size)
 	return heap;
 }
 
+// TODO: what if there's an error allocating the page?
+// Returns the new (big) free block
+uint32_t *extend_heap(uint32_t amt)
+{
+	uint32_t start_size = heap_size;
+	uint32_t amt_added = 0;
+	while (heap_size-start_size < amt) {
+		vm_allocate_page(KERNEL_VAS, (void*)MEM_START+heap_size, VM_PERM_PRIVILEGED_RW);
+		heap_size += BLOCK_SIZE;
+		amt_added += BLOCK_SIZE;
+	}
+
+	// Now extend the footer block
+	uint32_t *orig_footer = (uint32_t*)((void*)MEM_START+start_size);
+
+	// If it's free, simply move it (and update the header)
+	// If it's used, add a free block to the end
+	if (*orig_footer > 0) {
+		uint32_t *orig_header = (uint32_t*)(MEM_START+start_size-sizeof(uint32_t)-*orig_footer);
+		*orig_header += amt_added;
+		uint32_t *new_footer = (uint32_t*)(MEM_START+heap_size-sizeof(uint32_t));
+		*new_footer = *orig_footer + amt_added;
+		return orig_header;
+	} else {
+		uint32_t *new_header = (uint32_t*)(MEM_START+start_size);
+		uint32_t *new_footer = (uint32_t*)(MEM_START+heap_size-sizeof(uint32_t));
+		*new_header = amt_added - 2*sizeof(uint32_t);
+		*new_footer = amt_added - 2*sizeof(uint32_t);
+		return new_header;
+	}
+	return 0x0;
+}
+
 void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 {
 	if (size > (heap_size + 2 * sizeof(int32_t)))
 		return 0;
 	int32_t i, ret_ptr;
-	for (i = 0; i < heap_size; i += 0)
+	for (i = 0; i < heap_size;)
 	{
 
 		//os_printf("byte=%d\n",i);
@@ -98,7 +151,19 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 		}
 	}
 
-	return (void*) 0;
+	// Allocate some more memory.
+	uint32_t *header = extend_heap(size+2*sizeof(uint32_t));
+	uint32_t *new_footer = (uint32_t*)((void*)header + size + 2*sizeof(uint32_t));
+	uint32_t *new_header = new_footer + 1;
+	uint32_t *old_footer = (void*)header + sizeof(uint32_t) + *header;
+
+	*new_header = *header - size - 2*sizeof(uint32_t);
+	*new_footer = *new_header;
+	*header = -size;
+	*old_footer = -size;
+
+	// The memory immediately after new_header
+	return (void*) (new_header+1);
 }
 
 void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
