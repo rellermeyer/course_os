@@ -29,12 +29,12 @@ void *vm_get_free_frame() {
 	void *p = vm_free_list;
 	vm_free_list = vm_free_list->next;
 	os_printf("Fetching free frame, %x -> %x\n", p, vm_free_list);
-	return p - 0xf0000000;
+	return p - 0xf0000000; // Convert from VPTR to PPTR
 }
 
 void vm_release_frame(void *p) {
 	// TODO: Check if p is actually a valid frame
-	p += 0xf0000000;
+	p += 0xf0000000; // Convert from PPTR to VPTR
 	struct vm_free_frame *flist = p;
 	flist->next = vm_free_list;
 	vm_free_list = p;

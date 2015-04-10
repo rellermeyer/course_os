@@ -50,7 +50,7 @@ void *init_heap()
 	uint32_t* heap_header = heap;
 	uint32_t* heap_footer = (uint32_t*)((void*)heap + heap_size - sizeof(int));
 
-	*heap_header = 1;//heap_size - 2*sizeof(uint32_t);
+	*heap_header = heap_size - 2*sizeof(uint32_t);
 	*heap_footer = heap_size - 2*sizeof(uint32_t);
 
 	os_printf("heap size = 0x%x\n", heap_size);
@@ -199,13 +199,15 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 
 void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 {
+	os_printf("Deallocating %x\n", ptr);
+
 	uint32_t first_block = 0;
 	uint32_t last_block = 0;
 
-	uint32_t* header_addr = (uint32_t*) ptr - sizeof(int32_t);
+	uint32_t* header_addr = (uint32_t*) ((void*)ptr - sizeof(int32_t));
 	uint32_t size = abs(*header_addr);
 
-	uint32_t* footer_addr = (uint32_t*) ptr + size;
+	uint32_t* footer_addr = (uint32_t*) ((void*)ptr + size);
 
 	if (header_addr == heap)
 	{
@@ -217,10 +219,12 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 		last_block = 1;
 	}
 
+	os_printf("first block: %d, last block: %d\n", first_block, last_block);
+
 	//only check and coalesce right block
 	if (first_block)
 	{
-		uint32_t* right_header_addr = (uint32_t*) footer_addr + sizeof(int32_t);
+		uint32_t* right_header_addr = (uint32_t*) ((void*)footer_addr + sizeof(int32_t));
 		int32_t right_block_size = *right_header_addr;
 
 		//free right block
@@ -229,8 +233,8 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 			//set new header at freed blocks header
 			*header_addr = size + right_block_size + 2 * sizeof(int32_t);
 			//set new footer at right blocks footer
-			uint32_t* right_footer_addr = (uint32_t*) footer_addr
-					+ 2 * sizeof(int32_t) + right_block_size;
+			uint32_t* right_footer_addr = (uint32_t*) ((void*)footer_addr
+								   + 2 * sizeof(int32_t) + right_block_size);
 			*right_footer_addr = size + right_block_size + 2 * sizeof(int32_t);
 		}
 		else
@@ -244,15 +248,15 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 	//only check and coalesce left block
 	if (last_block)
 	{
-		uint32_t* left_block_header = (uint32_t*) header_addr - sizeof(int32_t);
+		uint32_t* left_block_header = (uint32_t*) ((void*)header_addr - sizeof(int32_t));
 		int32_t left_block_size = *left_block_header;
 
 		//free left block
 		if (left_block_size > 0)
 		{
 			//set new header at left blocks header
-			uint32_t* left_header_addr = (uint32_t*) header_addr
-					- 2 * sizeof(int32_t) - left_block_size;
+			uint32_t* left_header_addr = (uint32_t*) ((void*)header_addr
+								  - 2 * sizeof(int32_t) - left_block_size);
 			*left_header_addr = size + left_block_size + 2 * sizeof(int32_t);
 			//set new footer at freed blocks footer
 			*footer_addr = size + left_block_size + 2 * sizeof(int32_t);
@@ -267,10 +271,10 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 	//check and coalesce both adjacent blocks
 	if (!first_block && !last_block)
 	{
-		uint32_t* right_block_header = (uint32_t*) footer_addr + sizeof(int32_t);
+		uint32_t* right_block_header = (uint32_t*) ((void*)footer_addr + sizeof(int32_t));
 		int32_t right_block_size = *right_block_header;
 
-		uint32_t* left_block_header = (uint32_t*) header_addr - sizeof(int32_t);
+		uint32_t* left_block_header = (uint32_t*) ((void*)header_addr - sizeof(int32_t));
 		int32_t left_block_size = *left_block_header;
 
 		//both adjacent blocks are free
@@ -280,12 +284,12 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 					+ 4 * sizeof(int32_t);
 
 			//set new header at left blocks header
-			uint32_t* left_header_addr = (uint32_t*) header_addr
-					- 2 * sizeof(int32_t) - left_block_size;
+			uint32_t* left_header_addr = (uint32_t*) ((void*)header_addr
+								  - 2 * sizeof(int32_t) - left_block_size);
 			*left_header_addr = new_size;
 			//set new footer at right blocks footer
-			uint32_t* right_footer_addr = (uint32_t*) footer_addr
-					+ 2 * sizeof(int32_t) + right_block_size;
+			uint32_t* right_footer_addr = (uint32_t*) ((void*)footer_addr
+								   + 2 * sizeof(int32_t) + right_block_size);
 			*right_footer_addr = new_size;
 		}
 
@@ -295,16 +299,16 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 			//set new header at freed blocks header
 			*header_addr = size + right_block_size + 2 * sizeof(int32_t);
 			//set new footer at right blocks footer
-			uint32_t* right_footer_addr = (uint32_t*) footer_addr
-					+ 2 * sizeof(int32_t) + right_block_size;
+			uint32_t* right_footer_addr = (uint32_t*) ((void*)footer_addr
+								   + 2 * sizeof(int32_t) + right_block_size);
 			*right_footer_addr = size + right_block_size + 2 * sizeof(int32_t);
 		}
 		//only left free block
 		else if (left_block_size > 0 && right_block_size < 0)
 		{
 			//set new header at left blocks header
-			uint32_t* left_header_addr = (uint32_t*) header_addr
-					- 2 * sizeof(int32_t) - left_block_size;
+			uint32_t* left_header_addr = (uint32_t*) ((void*)header_addr
+								  - 2 * sizeof(int32_t) - left_block_size);
 			*left_header_addr = size + left_block_size + 2 * sizeof(int32_t);
 			//set new footer at freed blocks footer
 			*footer_addr = size + left_block_size + 2 * sizeof(int32_t);
@@ -454,12 +458,24 @@ void test_allocate()
 			}*/
 	}
 
+	// Test one of them
+	pntrs[230][0] = 1;
+	os_printf("%d == 1?\n", pntrs[230][0]);
+
+	if (mcheck()) {
+		os_printf("Memory is inconsistent :-(\n");
+	} else {
+		os_printf("Memory is consistent :-)\n");
+	}
+
 	// Free all the pntrs
 	for (i=0; i<256; i++) {
 		if (pntrs[i]) {
 			deallocate(pntrs[i], heap, heap_size);
 		}
 	}
+
+	deallocate(p, heap, heap_size);
 
 	os_printf("heap_size = %d bytes\n", heap_size);
 	os_printf("******************************************************\n");

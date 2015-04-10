@@ -60,7 +60,7 @@ void start2(uint32_t *p_bootargs)
 	init_vector_table();
 
 	// Setup kmalloc...
-	//init_heap();
+	init_heap();
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
@@ -79,6 +79,7 @@ void start2(uint32_t *p_bootargs)
 	os_printf("0x%x == 1?\n", p[0]);*/
 
 	vm_test();
+	os_printf("There are %d free frames.\n", vm_count_free_frames());
 	test_allocate();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
