@@ -21,8 +21,8 @@
 #define P_UHEAPBASE		P_KHEAPTOP
 #define P_UHEAPTOP		0x07f00000
 //Virtual region managed by umalloc
-#define V_UHEAPBASE		0x00200000
-#define V_UHEAPTOP 		0x02200000
+//#define V_UHEAPBASE		0x00200000
+//#define V_UHEAPTOP 		0x02200000
 
 //All static kernel data structures
 //Total space=1MB, currently used=44kB	

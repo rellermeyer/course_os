@@ -71,11 +71,11 @@ void mmap(void *p_bootargs) {
 	}
 
 	//map 32MB of physical memory manged by umalloc
-	unsigned int p_uheap_addr = P_UHEAPBASE;
+	/*unsigned int p_uheap_addr = P_UHEAPBASE;
 	for(i = (V_UHEAPBASE>>20); i < (V_UHEAPTOP>>20); i++){
 		first_level_pt[i] = p_uheap_addr | 0x0400 | 2;
 		p_uheap_addr += 0x100000;
-	}
+		}*/
 
 	//map ~2MB of peripheral registers one-to-one
 	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;

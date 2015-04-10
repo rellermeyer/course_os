@@ -34,51 +34,62 @@ void *mem_alloc(uint32_t size)
  * should merge with the blocks on the left or right of us, respectively.
  */
 
-void *init_heap(uint32_t size)
+void *init_heap()
 {
 	//heap = (uint32_t*) mem_alloc(size);
-	vm_allocate_page(KERNEL_VAS, (void*)MEM_START, VM_PERM_PRIVILEGED_RW);
+	int retval = vm_allocate_page(KERNEL_VAS, (void*)MEM_START, VM_PERM_PRIVILEGED_RW);
+	if (retval) {
+		os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+	}
 	heap = (uint32_t*)MEM_START;
 	heap_size = BLOCK_SIZE; // We have exactly 1 block
 
 	//os_printf("&heap=%x\n", heap);
-	heap_size = size;
+	//heap_size = size;
 
 	uint32_t* heap_header = heap;
-	uint32_t* heap_footer = heap + heap_size - sizeof(int);
+	uint32_t* heap_footer = (uint32_t*)((void*)heap + heap_size - sizeof(int));
 
-	*heap_header = heap_size;
-	*heap_footer = heap_size;
+	*heap_header = 1;//heap_size - 2*sizeof(uint32_t);
+	*heap_footer = heap_size - 2*sizeof(uint32_t);
 
-	//os_printf("heap_header=%x\n", heap_header);
-	//os_printf("heap_footer=%x\n", heap_footer);
+	os_printf("heap size = 0x%x\n", heap_size);
+	os_printf("heap_header=%x (%x == %x)\n", heap_header, *heap_header, heap_size - 2*sizeof(uint32_t));
+	os_printf("heap_footer=%x\n", heap_footer);
 	return heap;
 }
 
 // TODO: what if there's an error allocating the page?
-// Returns the new (big) free block
+// Returns a pointer to the new (big) free block's header
 uint32_t *extend_heap(uint32_t amt)
 {
 	uint32_t start_size = heap_size;
 	uint32_t amt_added = 0;
 	while (heap_size-start_size < amt) {
-		vm_allocate_page(KERNEL_VAS, (void*)MEM_START+heap_size, VM_PERM_PRIVILEGED_RW);
+		int retval = vm_allocate_page(KERNEL_VAS, (void*)(MEM_START+heap_size), VM_PERM_PRIVILEGED_RW);
+		if (retval) {
+			os_printf("ERROR: vm_allocate_page(,%d,) returned %d\n", MEM_START+heap_size, retval);
+		}
 		heap_size += BLOCK_SIZE;
 		amt_added += BLOCK_SIZE;
 	}
 
 	// Now extend the footer block
-	uint32_t *orig_footer = (uint32_t*)((void*)MEM_START+start_size);
+	uint32_t *orig_footer = (uint32_t*)((void*)MEM_START+start_size-sizeof(uint32_t));
+	os_printf("%x %x\n", orig_footer, *orig_footer);
 
 	// If it's free, simply move it (and update the header)
 	// If it's used, add a free block to the end
 	if (*orig_footer > 0) {
-		uint32_t *orig_header = (uint32_t*)(MEM_START+start_size-sizeof(uint32_t)-*orig_footer);
-		*orig_header += amt_added;
+		os_printf("Last block was free.\n");
+		uint32_t *orig_header = (uint32_t*)(MEM_START+start_size-2*sizeof(uint32_t)-*orig_footer);
 		uint32_t *new_footer = (uint32_t*)(MEM_START+heap_size-sizeof(uint32_t));
+		os_printf("%x\n", orig_header);
 		*new_footer = *orig_footer + amt_added;
+		*orig_header += amt_added;
 		return orig_header;
 	} else {
+		os_printf("Last block was used.\n");
 		uint32_t *new_header = (uint32_t*)(MEM_START+start_size);
 		uint32_t *new_footer = (uint32_t*)(MEM_START+heap_size-sizeof(uint32_t));
 		*new_header = amt_added - 2*sizeof(uint32_t);
@@ -90,6 +101,11 @@ uint32_t *extend_heap(uint32_t amt)
 
 void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 {
+	// Round size up to the nearest 4 bytes...
+	/*if (size&3) {
+		size = (size&~3) + 4;
+	}*/
+
 	if (size > (heap_size + 2 * sizeof(int32_t)))
 		return 0;
 	int32_t i, ret_ptr;
@@ -98,12 +114,12 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 
 		//os_printf("byte=%d\n",i);
 
-		uint32_t* header_addr = heap + i;
+		uint32_t* header_addr = (uint32_t*)((void*)heap + i);
 		int32_t header = *header_addr;
 
-		//os_printf("&header=%x\n",header_addr);
+		//os_printf("&header=%x header=%d\n",header_addr, header);
 
-		uint32_t* footer_addr = heap + i + sizeof(int32_t) + size;
+		uint32_t* footer_addr = (uint32_t*)((void*)heap + i + sizeof(int32_t) + size);
 
 		//free and >= request
 		if (header > 0 && header >= size)
@@ -118,7 +134,8 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 				*header_addr = header * (-1);
 				//insert a footer at end of block
 				*footer_addr = header * (-1);
-				return heap + ret_ptr;
+				return (uint32_t*)((void*)heap + ret_ptr);
+				//return heap + ret_ptr;
 
 			}
 
@@ -135,27 +152,41 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 				*footer_addr = size * (-1);
 
 				//insert new free block header
-				uint32_t* new_header = heap + i + 2 * sizeof(int32_t) + size;
+				uint32_t* new_header = (uint32_t*)((void*)heap + i + 2 * sizeof(int32_t) + size);
 				*new_header = old_space - occ_space;
 				//insert new free block footer
-				uint32_t* new_footer = heap + i + sizeof(int32_t) + old_space;
+				uint32_t* new_footer = (uint32_t*)((void*)heap + i + sizeof(int32_t) + old_space);
 				*new_footer = old_space - occ_space;
 
-				return heap + ret_ptr;
+				/*os_printf("header & footer: %x and %x\n", new_header, new_footer);
+				os_printf("header & footer: %x and %x\n", header_addr, footer_addr);
+				os_printf("%x and %x and %d and %d\n", *header_addr, *footer_addr, *new_header, *new_footer);*/
+
+				return (uint32_t*)((void*)heap + ret_ptr);
 			}
 		}
 		//jump to the next block
 		else
 		{
 			i = i + abs(header) + 2 * sizeof(int32_t);
+			//os_printf("i: 0x%x\n",i);
 		}
 	}
 
 	// Allocate some more memory.
-	uint32_t *header = extend_heap(size+2*sizeof(uint32_t));
-	uint32_t *new_footer = (uint32_t*)((void*)header + size + 2*sizeof(uint32_t));
+	uint32_t new_amt = size+2*sizeof(uint32_t);
+	uint32_t *header = extend_heap(new_amt);
+	os_printf("Allocated more memory %u.\n", new_amt);
+
+	// Recursive call. TODO: (relatively) Inefficient
+	return allocate(size, heap, heap_size);
+
+	uint32_t *new_footer = (uint32_t*)((void*)header + size + sizeof(uint32_t));
 	uint32_t *new_header = new_footer + 1;
 	uint32_t *old_footer = (void*)header + sizeof(uint32_t) + *header;
+
+	os_printf("old_footer = 0x%x\n",old_footer);
+	os_printf("new_header = 0x%x\n", new_header);
 
 	*new_header = *header - size - 2*sizeof(uint32_t);
 	*new_footer = *new_header;
@@ -321,11 +352,11 @@ void* aligned_mem_alloc(uint32_t size, uint32_t alignment)
 		return kmalloc(size);
 }
 
-void mcheck()
+int mcheck()
 {
 
 	char* ptr = (char*) heap;
-	uint32_t* end_ptr = (uint32_t*) heap + 2 * sizeof(int32_t) + heap_size;
+	uint32_t* end_ptr = (uint32_t*) ((void*)heap + heap_size);
 	int i, block = 0;
 	for (i = 0; i < heap_size; i += 0)
 	{
@@ -350,13 +381,86 @@ void mcheck()
 		}
 		else
 		{
-			os_printf("INCONSISTENT HEAP");
-			return;
+			os_printf("INCONSISTENT HEAP\n");
+			os_printf("block_header = %d\n",block_header);
+			os_printf("block_footer = %d\n",block_footer);
+			os_printf("header addr = %x\n",header_addr);
+			os_printf("footer addr = %x\n",footer_addr);
+			return 1;
 		}
 
 		ptr = ptr + block_size + 2 * sizeof(int32_t);
 		block++;
+		os_printf("%x %x\n", ptr, end_ptr);
 		if ((uint32_t*) ptr == end_ptr)
-			return;
+			return 0;
 	}
+	return 0;
+}
+
+//nbits is 0-22
+uint32_t gen_rand(uint64_t *state, int nbits)
+{
+	*state = *state * 41 + (*state >> 5);
+	uint32_t mask = ((1<<nbits)-1)<<10;
+	uint32_t v = (*state & mask);
+	return v>>10;
+}
+
+int vm_count_free_frames();
+
+void test_allocate()
+{
+	os_printf("***** Test code for allocater (test_allocate()): *****\n");
+
+	if (mcheck()) {
+		os_printf("Inconsistent memory to begin with...\n");
+	}
+
+	// Allocate some memory
+	char *p = allocate(15, heap, heap_size);
+	p = allocate(15, heap, heap_size);
+	os_strcpy(p, "Hello!");
+	os_printf("%s\n", p);
+
+	if (mcheck()) {
+		os_printf("allocate(15) failed.\n\n");
+		int i;
+		for (i=0; i<8; i++) {
+			int j;
+			for (j=0; j<8; j++) {
+				os_printf("%X ", ((char*)heap)[i*8+j]);
+			}
+			os_printf("\n");
+		}
+	}
+
+	// Allocate a bunch of blocks of "random" size
+	uint64_t rng = 1234567891;
+
+	char *pntrs[256];
+	uint32_t alloced = 0;
+	int i;
+	os_printf("Starting out w/ %u bytes of heap\n", heap_size);
+	for (i=0; i<256; i++) {
+		uint32_t size = gen_rand(&rng, 15);
+		pntrs[i] = allocate(size, heap, heap_size);
+		alloced += size;
+		os_printf("%u %u %u %u %d\n", i, heap_size, size, alloced, vm_count_free_frames());
+
+		/*if (mcheck()) {
+			os_printf("Memory is inconsistent. Stopping test.\n");
+			break;
+			}*/
+	}
+
+	// Free all the pntrs
+	for (i=0; i<256; i++) {
+		if (pntrs[i]) {
+			deallocate(pntrs[i], heap, heap_size);
+		}
+	}
+
+	os_printf("heap_size = %d bytes\n", heap_size);
+	os_printf("******************************************************\n");
 }

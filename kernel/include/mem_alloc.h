@@ -18,10 +18,11 @@ uint32_t heap_size;
 void *mem_alloc(uint32_t);
 void *aligned_mem_alloc(size_t, size_t);
 
-void *init_heap(uint32_t);
+void *init_heap();
 void *allocate(uint32_t, uint32_t*, int32_t);
 void deallocate(void*, uint32_t*, int32_t);
 
-void mcheck();
+int mcheck();
+void test_allocate();
 
 #endif
