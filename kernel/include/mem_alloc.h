@@ -15,7 +15,6 @@ Log
 uint32_t *heap;
 uint32_t heap_size;
 
-void *mem_alloc(uint32_t);
 void *aligned_mem_alloc(size_t, size_t);
 
 void *init_heap();
