@@ -213,6 +213,13 @@ struct vas *vm_new_vas() {
 }
 
 int vm_free_vas(struct vas *vas) {
+	struct vm_free_list *n = (struct vm_free_list*)vas->l1_pagetable;
+	n->next = vm_l1pt_free_list;
+	vm_l1pt_free_list = n;
+
+	n = (struct vm_free_list*)vas;
+	n->next = vm_vas_free_list;
+	vm_vas_free_list = n;
 	return 0;
 }
 
