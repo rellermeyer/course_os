@@ -83,7 +83,7 @@ int get_current_timer_value(int timer_index){
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |=0x20;// &=0xFFFFFFFD;
+    timer_pointers[timer_index]->control ^=0x1;// &=0xFFFFFFFD;
     return 0;
   }
   return -1;
@@ -91,7 +91,7 @@ int set_periodic_mode(int timer_index){
 
 int enable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x40;
+    timer_pointers[timer_index]->control |= 0x20;//0x40;
     return 0;
   }
   return -1;
@@ -124,24 +124,54 @@ int start_timer(int timer_index){
   return -1;
 }
 
+void print_control_status(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    os_printf("control byte:%x",timer_pointers[timer_index]->control); 
+  }
+}
 //testing timer code
+int start_interrupts(int start_val){
+        initialize_timers();
+        timer_start();
+        set_background_load_value(0,start_val);
+        set_periodic_mode(0);
+        enable_timer_interrupt(0);
+	print_control_status(0);
+        start_timer(0);
+	// int i=10;
+	while(1){
+                os_printf("\n%d",get_current_timer_value(0));
+		if(get_current_timer_value(0)==0){
+                        os_printf("\nInterrupt");
+        //        	i--;
+		}
+	}       
+        return 0;
+}
 void timer_test(){
-initialize_timers();
+	initialize_timers();
 
 	os_printf("time %d\n",get_current_timer_value(0));
-	timer_start();
+	start_interrupts(5);
+	//timer_start();
 	//start_timer(1);
 	//start_timer(2);
 	//start_timer(3);
 	//set_periodic_mode(0);
-	set_load_value(0, 10);
-	enable_timer_interrupt(0);	
-	set_periodic_mode(0);
+	//set_load_value(0, 10);
+	//enable_timer_interrupt(0);	
+	//set_periodic_mode(0);
+  	//print_control_status(0);
+        //int val=9;
 	//os_printf("starting%d\n",start_timer(0));
-	for(int i=0;i<1000;i++){
-		os_printf("time %d\n",get_current_timer_value(0));
+	//for(int i=0;i<1000;i++){
+	//	if(get_current_timer_value(0)!=val){
+	//		os_printf("time %d\n",get_current_timer_value(0));
+	//		val=get_current_timer_value(0);
+ 	//	}
 	//	os_printf("time %d\n",get_current_timer_value(1));
 	//	os_printf("time %d\n",get_current_timer_value(2));
-	//	os_printf("time %d\n",get_current_timer_value(3));
-	}		
+	//	os_printf("time %d\n",get_current_timer_value(3));		
+	return;
 }
+
