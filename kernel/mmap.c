@@ -21,6 +21,8 @@
 int vm_build_free_frame_list(void *start, void *end);
 
 static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
+extern struct vm_free_list *vm_vas_free_list;
+extern struct vm_free_list *vm_l1pt_free_list;
 
 void mmap(void *p_bootargs) {
 	//char *cmdline_args = read_cmdline_tag(p_bootargs);
@@ -48,6 +50,11 @@ void mmap(void *p_bootargs) {
 	first_level_pt = (unsigned int *)(P_L1PTBASE + PAGE_TABLE_SIZE);
 	os_printf("first_level_pt=%X\n",first_level_pt);
 
+	int i;
+	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
+		first_level_pt[i] = 0;
+	}
+
 	//temporarily map where it is until we copy it in VAS
 	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
 
@@ -68,7 +75,6 @@ void mmap(void *p_bootargs) {
 
 	//map 752MB of PCI interface one-to-one
 	unsigned int pci_bus_addr = PCIBASE;
-	int i;
 	for(i = (PCIBASE>>20); i < (PCITOP>>20); i++){
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2; 
 		pci_bus_addr += 0x100000;
@@ -90,6 +96,8 @@ void mmap(void *p_bootargs) {
 	((struct vas*)P_L1PTBASE)->l1_pagetable = (unsigned int*)(V_L1PTBASE + PAGE_TABLE_SIZE);//first_level_pt;
 	((struct vas*)P_L1PTBASE)->l1_pagetable_phys = first_level_pt;
 	((struct vas*)P_L1PTBASE)->next = 0x0;
+	vm_vas_free_list = (struct vm_free_list*)((void*)vm_vas_free_list + sizeof(struct vas));
+	vm_l1pt_free_list = (struct vm_free_list*)((void*)vm_l1pt_free_list + PAGE_TABLE_SIZE);
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
 

@@ -49,6 +49,8 @@ void start(uint32_t *p_bootargs)
 	print_uart0((char*)p_bootargs);
 	print_uart0("\n");*/
 	os_printf("%X\n",*p_bootargs);
+	vm_init();
+	os_printf("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
