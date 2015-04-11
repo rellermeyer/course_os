@@ -51,6 +51,8 @@ struct vas {
 #define VM_PERM_PRIVILEGED_RW 4
 #define VM_PERM_USER_RW 8
 
+void vm_init();
+
 /**
  * vm_allocate_page and vm_free_page allocate and free pages, and allow the
  * VAS to access them at the given virtual address (vptr).
