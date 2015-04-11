@@ -18,16 +18,16 @@ uint32_t floor(uint32_t n) {
 
 bitVector *makeVector(uint32_t size) {
 	// make the array 
-	bitVector *BV = (bitVector*) mem_alloc(sizeof(struct bitVector));
+	bitVector *BV = (bitVector*) kmalloc(sizeof(struct bitVector));
 	if(size % WORD_SIZE == 0) {
 		uint32_t array[size/32]; // Can I use ceil in the kernel?
-		uint32_t *bitVec = (uint32_t*) mem_alloc(sizeof(array)); 
+		uint32_t *bitVec = (uint32_t*) kmalloc(sizeof(array)); 
 		BV->vector = bitVec;
 		BV->length = size;
 		return BV;
 	} else {
 		uint32_t array[(size/32) + 1]; // Can I use ceil in the kernel?
-		uint32_t *bitVec = (uint32_t*) mem_alloc(sizeof(array)); 
+		uint32_t *bitVec = (uint32_t*) kmalloc(sizeof(array)); 
 		BV->vector = bitVec;
 		BV->length = size;
 		return BV;

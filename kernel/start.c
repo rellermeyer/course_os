@@ -27,7 +27,11 @@
 #include "drivers/uart.h"
 #include "klibc.h"
 #include "vm.h"
+<<<<<<< HEAD
 #include "drivers/timer.h"
+=======
+#include "mem_alloc.h"
+>>>>>>> 03bf93772ff4aa3c77c020c7462538d4338e1450
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -59,6 +63,9 @@ void start2(uint32_t *p_bootargs)
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
 
+	// Setup kmalloc...
+	init_heap();
+
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 	asm volatile("swi 1");
@@ -69,10 +76,23 @@ void start2(uint32_t *p_bootargs)
 	os_printf("%X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
+<<<<<<< HEAD
 	timer_test();
 	
 	//vm_test();
         
+=======
+
+	// Test stuff...
+	/*int *p = (int*)0xFFFFFFF0;
+	p[0] = 1;
+	os_printf("0x%x == 1?\n", p[0]);*/
+
+	vm_test();
+	os_printf("There are %d free frames.\n", vm_count_free_frames());
+	test_allocate();
+
+>>>>>>> 03bf93772ff4aa3c77c020c7462538d4338e1450
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 	asm volatile("swi 1");
 	while (1);
