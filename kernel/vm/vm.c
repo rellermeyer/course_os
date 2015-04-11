@@ -179,13 +179,7 @@ struct vas *vm_new_vas() {
 	p->l1_pagetable_phys = (unsigned int*)((unsigned int)p->l1_pagetable - (V_L1PTBASE - P_L1PTBASE));
 
 	// Zero out the page table
-	//os_memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
-#if 1
-	int i;
-	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
-		p->l1_pagetable[i] = 0;
-	}
-#endif
+	os_memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
 
 	// Setup the static mappings...
 	// The kernel (high & low addresses)
