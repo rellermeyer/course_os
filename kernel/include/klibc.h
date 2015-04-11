@@ -33,8 +33,8 @@ int os_strcmp ( const char *left, const char *right);
 
 int os_printf (const char *str_buf, ...);
 
-void *os_memset(void *dest, int c, os_size_t n);
-char *__strchrnul(const char *s, int c);
+void *os_memset(void *dest, char c, os_size_t n);
+char *__strchrnul(const char *s, char c);
 char *os_strcpy(char *dest, const char *src);
 os_size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
