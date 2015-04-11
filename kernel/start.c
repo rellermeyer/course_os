@@ -27,6 +27,7 @@
 #include "drivers/uart.h"
 #include "klibc.h"
 #include "vm.h"
+#include "drivers/timer.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -68,9 +69,10 @@ void start2(uint32_t *p_bootargs)
 	os_printf("%X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
-
+	timer_test();
+	
 	vm_test();
-
+        
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 	asm volatile("swi 1");
 	while (1);

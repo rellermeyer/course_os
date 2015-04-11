@@ -22,7 +22,7 @@ int get_current_timer_value(int timer_index);
 int set_periodic_mode(int timer_index);
 int set_free_running_mode(int timer_index);
 int start_timer(int timer_index);
-
+void timer_test();
 
 rasp_pi_timer *timer_pointers[4];
 

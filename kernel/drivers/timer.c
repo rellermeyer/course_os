@@ -21,8 +21,8 @@ void timer_start() {
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
   timer_pointers[0]->control |= 0x1;
   os_printf("control value:%x\n", timer_pointers[0]->control);
-  for(int i=0; i< 10; i++){
-    os_printf("Timer register = %x\n", timer_pointers[0]->timer_actual_value);
+  for(int i=0; i< 4; i++){
+    os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
   }
 }
 
@@ -83,7 +83,7 @@ int get_current_timer_value(int timer_index){
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control &= 0xFFFFFFFD;
+    timer_pointers[timer_index]->control |=0x20;// &=0xFFFFFFFD;
     return 0;
   }
   return -1;
@@ -126,6 +126,22 @@ int start_timer(int timer_index){
 
 //testing timer code
 void timer_test(){
-	initialize_timers();
+initialize_timers();
+
+	os_printf("time %d\n",get_current_timer_value(0));
 	timer_start();
+	//start_timer(1);
+	//start_timer(2);
+	//start_timer(3);
+	//set_periodic_mode(0);
+	set_load_value(0, 10);
+	enable_timer_interrupt(0);	
+	set_periodic_mode(0);
+	//os_printf("starting%d\n",start_timer(0));
+	for(int i=0;i<1000;i++){
+		os_printf("time %d\n",get_current_timer_value(0));
+	//	os_printf("time %d\n",get_current_timer_value(1));
+	//	os_printf("time %d\n",get_current_timer_value(2));
+	//	os_printf("time %d\n",get_current_timer_value(3));
+	}		
 }
