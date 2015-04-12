@@ -73,14 +73,6 @@ int kdelete(char* filepath) {
 	return error;
 } // end kdelete();
 
-
-
-
-
-
-
-
-
 /*put these in kopen() implementation:
 	switch(mode){}
 		case "r":
