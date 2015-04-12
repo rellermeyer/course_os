@@ -87,6 +87,8 @@ int delete_from_opentable(int fd) {
 
 //this function checks whether the file is open or not
 int file_is_open(int fd) {
+	if (fd<0 || fd>=SYSTEM_SIZE)
+		return 0;
         return (table[fd]!=NULL);
 }
 
