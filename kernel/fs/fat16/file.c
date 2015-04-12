@@ -132,6 +132,15 @@ int kseek(int fd, int num_bytes) {
 
 
 
+/* create a new file, if we are unsuccessful return -1 */
+int kcreate(char* filepath, int mode) {
+	int error;
+
+	return error;
+} // end kcreate();
+
+
+
 /* delete the file with the path filepath. Return -1 if the file does not excist */
 int kdelete(char* filepath) {
 	int error;
