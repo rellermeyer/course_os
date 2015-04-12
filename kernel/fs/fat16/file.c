@@ -1,5 +1,6 @@
 #include <stdint>
 #include "../../include/linked_list.h"
+#include "../../include/bitvector.h"
 //NOTES:
 //free list = keeps track of which blocks on the storage device are free (i.e. available)...must be stored persistently
 
@@ -9,7 +10,7 @@ const uint16_t BLOCKSIZE = 2048;
 
 
 //STRUCTS:
-typedef struct file
+struct file
 {
 	/* data */
 	char* fname;
@@ -18,7 +19,7 @@ typedef struct file
 	bitvector perms; // a bitvector of length three to track: read, write, execute
 	time creation_time; // need to look up CourseOS specific data type
 	uint16_t offset;
-} file;
+};
 
 // typedef struct inode
 // {
@@ -26,8 +27,11 @@ typedef struct file
 
 // } inode;
 
-file_descriptor * kopen(char* filepath, char mode){
-	file_descriptor* fd;
+int kopen(char* filepath, char mode){
+	int fd;
+	// TODO reach filepath & return pointer to struct file
+
+
 	// TODO implement
 
 
@@ -36,16 +40,16 @@ file_descriptor * kopen(char* filepath, char mode){
 
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd, void* buf, int numBytes) {
-	int bytesRead;
+	int bytes_read;
 
-	return bytesRead;
+	return bytes_read;
 } // end kread();
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
-int kwrite(int fd, void* buf, int numBytes) {
-	int bytesWritten;
+int kwrite(int fd, void* buf, int num_bytes) {
+	int bytes_written;
 
-	return bytesWritten;
+	return bytes_written;
 } // end kwrite();
 
 /* close the file fd, return 1 if the close was successful */
@@ -56,7 +60,7 @@ int kclose(int fd) {
 } // end kclose();
 
 /* seek within the file, return an error if you are outside the boundaries */
-int kseek(int fd, int numBytes) {
+int kseek(int fd, int num_bytes) {
 	int error;
 
 	return error;
@@ -68,14 +72,6 @@ int kdelete(char* filepath) {
 
 	return error;
 } // end kdelete();
-
-
-
-
-
-
-
-
 
 /*put these in kopen() implementation:
 	switch(mode){}
