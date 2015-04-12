@@ -15,8 +15,8 @@ int open(char* filepath, char mode){
 
 	int fd;
 	// preserve registers r1, r2 on the stack
-         asm volatile("push r1" "\n\t"
-                      "push r2" "\n\t");
+    asm volatile("push r1" "\n\t"
+                 "push r2" "\n\t");
 
 	// move the arguments into registers for kopen() to use:
 	asm volatile("mov %0, (filepath)": "r1");
@@ -30,19 +30,43 @@ int open(char* filepath, char mode){
 	asm volatile("mov %0, r1" : "=r" (fd));
 
 	// Restore r1, r2, and r3 to original values
-        asm volatile("pop r2" "\n\t"
-                     "pop r1" "\n\t");
+    asm volatile("pop r2" "\n\t"
+                 "pop r1" "\n\t");
 	
 	return fd;
 }//end open syscall
  
-
-
 /*create() returns a file descriptor to use in later functions*/
-int create(char* filepath){
-	int fd;
-	fd = open(filepath, 'w');
-	return fd;
+int create(char* filepath, char mode){
+
+	if(mode != 'r' || mode != 'w' || mode != 'a' || mode!='b'){
+		os_printf("mode is not a valid option. \n");
+		os_printf("r=read, w=write, b=both read and write, a=append.\n");
+		return -1;
+	}//end if
+
+	int error;
+
+	// preserve registers r1 on the stack
+    asm volatile("push r1" "\n\t");
+    asm volatile("push r2" "\n\t");
+
+	// move the arguments into registers for kcreate() to use:
+	asm volatile("mov %0, (filepath)": "r1");
+	asm volatile("mov %0, (mode)": "r2");
+
+	// trigger the software_interrupt_handler in hw_handler.c:
+	asm volatile("swi SYSCALL_CREATE");
+	// kopen() gets called from within hw_handler.c
+
+	// retrieve the return values from kopen to pass back to user:
+	asm volatile("mov %0, r1" : "=r" (error));
+
+	// Restore r1, and r2 to original values
+    asm volatile("pop r2" "\n\t"
+                 "pop r1" "\n\t");
+	
+	return error;
 }//end create syscall
 
 
@@ -60,9 +84,9 @@ int read(int fd, void* buf, int numBytes){
 	int bytesRead; //this will be what we return
 
         // preserve registers r1, r2, and r3 on the stack
-        asm volatile("push r1" "\n\t"
-                     "push r2" "\n\t"
-                     "push r3" "\n\t");
+    asm volatile("push r1" "\n\t"
+                 "push r2" "\n\t"
+                 "push r3" "\n\t");
 
 	// move the arguments into registers for kread to use:
 	asm volatile("mov %0, (fd)": "r1");
@@ -77,7 +101,7 @@ int read(int fd, void* buf, int numBytes){
 	asm volatile("mov %0, r1" : "=r" (bytesRead));
 
 	// Restore r1, r2, and r3 to original values
-        asm volatile("pop r3" "\n\t"
+    asm volatile("pop r3" "\n\t"
                  "pop r2" "\n\t"
                  "pop r1" "\n\t");
 	return bytesRead;
@@ -131,13 +155,13 @@ int write(int fd, void* buf, int numBytes){
 int close(int fd){
 	int error; //0 if close ok, -1 if error. This will be return.
 	
-        if(!file_is_open(fd)){
-                os_printf("file not open \n");
-                return -1;
-        }
+    if(!file_is_open(fd)){
+        os_printf("file not open \n");
+        return -1;
+    }
 
-	// preserve registers r1, r2, and r3 on the stack  —— need all 3?
-        asm volatile("push r1" "\n\t");
+	// preserve registers r1 on the stack  —— need all 3?
+    asm volatile("push r1" "\n\t");
 
 	// move the arguments into registers for kclose to use:
 	asm volatile("mov %0, (fd)": "r1");
@@ -146,11 +170,11 @@ int close(int fd){
 	asm volatile("swi SYSCALL_CLOSE");
 	// kclose() gets called from within hw_handler.c	
 
-	// retrieve the return values from kread to pass back to user:
+	// retrieve the return values from kclose to pass back to user:
 	asm volatile("mov %0, r1" : "=r" (error));
 
 	// Restore r1, r2, and r3 to original values
-        asm volatile("pop r1" "\n\t");
+    asm volatile("pop r1" "\n\t");
 
 	return error;
 }//end close syscall
@@ -173,8 +197,8 @@ int seek(int fd, int numBytes){
 	}//end if else
 
 	// preserve registers r1, r2 on the stack  —— need all 3?
-        asm volatile("push r1" "\n\t"
-                     "push r2" "\n\t");
+    asm volatile("push r1" "\n\t"
+                 "push r2" "\n\t");
 
 	// move the arguments into registers for kseek() to use:
 	asm volatile("mov %0, (fd)": "r1");
@@ -184,37 +208,37 @@ int seek(int fd, int numBytes){
 	asm volatile("swi SYSCALL_SEEK");
 	// kseek() gets called from within hw_handler.c	
 
-	// retrieve the return values from kread to pass back to user:
+	// retrieve the return values from kseek to pass back to user:
 	asm volatile("mov %0, r1" : "=r" (error));
 
 	// Restore r1, r2 to original values
-        asm volatile("pop r2" "\n\t"
-                     "pop r1" "\n\t");
+    asm volatile("pop r2" "\n\t"
+                 "pop r1" "\n\t");
 	return error;
 }//end seek syscall
 
 
 
-/*delete() returns the 0 if successful and -1 if not*/
+/* delete() returns the 0 if successful and -1 if not */
 int delete(char* filepath){
 	int error; //0 if delete ok, -1 if error. This will be return.
 	// error checking:
 	// probably will have to check  if file exists in kdelete, but check here if possible...
 	// preserve registers r1 on the stack
-        asm volatile("push r1" "\n\t");
+    asm volatile("push r1" "\n\t");
 
 	// move the arguments into registers for kdelete() to use:
 	asm volatile("mov %0, (filepath)": "r1");
 
 	// trigger the software_interrupt_handler in hw_handler.c:
 	asm volatile("swi SYSCALL_DELETE");
-	// kopen() gets called from within hw_handler.c
+	// kdelete() gets called from within hw_handler.c
 
-	// retrieve the return values from kopen to pass back to user:
+	// retrieve the return values from kdelete to pass back to user:
 	asm volatile("mov %0, r1" : "=r" (error));
 
-	// Restore r1 to original values
-        asm volatile("pop r1" "\n\t");
+	// Restore r1 to original value
+    asm volatile("pop r1" "\n\t");
 	return error;
 }//end delete syscall
 
