@@ -14,7 +14,6 @@ struct file
 	uint16_t size;
 	bitvector perms; // a bitvector of length three to track: read, write, execute
 	time creation_time; // need to look up CourseOS specific data type
-	uint16_t offset;
 };
 
 int kopen(char* filepath, char mode);
