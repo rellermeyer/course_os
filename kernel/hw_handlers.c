@@ -115,7 +115,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		int fd;
 		void* buf;
 		int numBytes;
-		// retrieve the args that open() put in r1, r2 and pass to kread():
+		// retrieve the args that read() put in r1, r2 and pass to kread():
 		asm volatile("mov %0, r1": "(fd)");
 		asm volatile("mov %0, r2": "(buf)");
 		asm volatile("mov %0, r3": "(numBytes)");
@@ -129,7 +129,7 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		int fd;
 		void* buf;
 		int numBytes;
-		// retrieve the args that write() put in r1, r2 and pass to kread():
+		// retrieve the args that write() put in r1, r2 and pass to kwrite():
 		asm volatile("mov %0, r1": "(fd)");
 		asm volatile("mov %0, r2": "(buf)");
 		asm volatile("mov %0, r3": "(numBytes)");
