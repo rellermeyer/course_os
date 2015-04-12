@@ -7,8 +7,9 @@
 /*open() returns a file descriptor, an int used to call later fuctions.
 A return value of -1 tells that an error occurred and the file cannot be opened*/
 int open(char* filepath, char mode){
-	if(mode != 'r' || mode != 'w' || mode != 'a'){
-		os_printf("mode is not a valid option. must be r, w, or a\n");
+	if(mode != 'r' || mode != 'w' || mode != 'a' || mode!='b'){
+		os_printf("mode is not a valid option. \n");
+		os_printf("r=read, w=write, b=both read and write, a=append.\n");
 		return -1;
 	}//end if
 
