@@ -105,7 +105,20 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		asm volatile("mov %0, r1": "(filepath)");
 		asm volatile("mov %0, r2": "(mode)");
 		// call kopen(), passing appropriate args:
-		file_descriptor* fd = kopen(filepath, mode);
+		int fd = kopen(filepath, mode);
+		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
+		asm volatile("mov %0, (fd)" : "r1");
+		break;
+
+	case SYSCALL_CREATE:
+		os_printf("Create system call called!\n");
+		char* filepath;
+		char mode;
+		// retrieve the args that open() put in r1, r2 and pass to kopen():
+		asm volatile("mov %0, r1": "(filepath)");
+		asm volatile("mov %0, r2": "(mode)");
+		// call kopen(), passing appropriate args:
+		int error = kopen(filepath, mode);
 		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
 		asm volatile("mov %0, (fd)" : "r1");
 		break;
