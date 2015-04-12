@@ -206,7 +206,7 @@ int delete(char* filepath){
 	asm volatile("mov %0, (filepath)": "r1");
 
 	// trigger the software_interrupt_handler in hw_handler.c:
-	asm volatile("swi SYSCALL_OPEN");
+	asm volatile("swi SYSCALL_DELETE");
 	// kopen() gets called from within hw_handler.c
 
 	// retrieve the return values from kopen to pass back to user:
