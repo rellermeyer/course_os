@@ -1,6 +1,7 @@
 #include <stdint>
 #include "../../include/linked_list.h"
 #include "../../include/bitvector.h"
+#include "../../include/open_table.h"
 //NOTES:
 //free list = keeps track of which blocks on the storage device are free (i.e. available)...must be stored persistently
 
@@ -29,14 +30,46 @@ struct file
 
 int kopen(char* filepath, char mode){
 	int fd;
+
 	// TODO reach filepath & return pointer to struct file
+	//struct file* f = returned file
+	bitvector *p = f->perms;
+	switch mode{
+		case 'r':
+			if(get(0, p) == 0){
+				os_printf("File Cannot Be Read\n");
+				
+				return -1;
+			}
+			break;
+		case 'w':
+			if(get(1, p) == 0){
+				os_printf("File Cannot Be Written\n");
+				return -1;
+			}
+			break;
+		case 'a':
+			if(get(2, p) == 0){
+				os_printf("File Cannot Be Appeneded To\n");
+				return -1;
+			}	
+			break;
+		case 'b':
+			if(get(3, p) == 0){
+				os_printf("File Cannot Be Read and Written\n");
+				return -1;
+			}	
+			break;
+		default:
+			os_printf("File permission passed");
+	}
 
-
-	// TODO implement
-
+	fd = add_to_opentable(f, mode);
 
 	return fd;
 }//end kopen()
+
+
 
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd, void* buf, int numBytes) {
