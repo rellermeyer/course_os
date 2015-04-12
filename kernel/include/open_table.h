@@ -1,3 +1,6 @@
+#ifndef __OPEN_TABLE_H__
+#define __OPEN_TABLE_H__
+
 //header for the open table file
 //that implements the open table for the file system
 
@@ -17,4 +20,6 @@ int delete_from_opentable(int fd);      //deletes a file from the opentable
 int file_is_open(int fd); //checks if there is an entry corrensponding to that fd
 
 
-//cleanup functinos to be implemented when shutdown will be implemented 
+//cleanup functinos to be implemented when shutdown will be implemented
+
+#endif 
