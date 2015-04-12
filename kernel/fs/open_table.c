@@ -13,6 +13,7 @@
 // Each cell of the array is a struct with infos about the file.
 // More fields can be added if necessary.
 struct file_descriptor {
+	char permission;
         struct file * linked_file; //pointer to file struct 
         int offset; //keeps track of where we are reading
 };
@@ -53,7 +54,7 @@ void fs_table_init() {
 
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
-int add_to_opentable(struct file * f) {
+int add_to_opentable(struct file * f, char perm) {
         if (HEAD==NULL) //not enough space
                 return -1;
         int fd = HEAD->index; //take available fd
@@ -64,6 +65,7 @@ int add_to_opentable(struct file * f) {
         kfree(free_me); //free old node
         struct file_descriptor to_add; //initialize the struct
         to_add.linked_file = f;
+	to_add.permission = perm;
         to_add.offset = 0;
         table[fd] = to_add; //add to table
         return fd;
