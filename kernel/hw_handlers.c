@@ -88,6 +88,13 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// 	break;
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
+		char* filepath;
+		// retrieve the args that delete() put in r1 and pass to kdelete():
+		asm volatile("mov %0, r1": "(filepath)");
+		// call kdelete(), passing appropriate args:
+		int error = kdelete(fd);
+		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
+		asm volatile("mov %0, (error)" : "r1");
 		break;
 
 	case SYSCALL_OPEN:
@@ -105,12 +112,53 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 	case SYSCALL_READ:
 		os_printf("Read system call called!\n");
+		int fd;
+		void* buf;
+		int numBytes;
+		// retrieve the args that open() put in r1, r2 and pass to kread():
+		asm volatile("mov %0, r1": "(fd)");
+		asm volatile("mov %0, r2": "(buf)");
+		asm volatile("mov %0, r3": "(numBytes)");
+		// call kread(), passing appropriate args:
+		int bytesRead = kread(fd, buf, numBytes);
+		// move fd that kread() returns to a r1 to be retrieved by read() and returned to user:
+		asm volatile("mov %0, (bytesRead)" : "r1");
 		break;
 	case SYSCALL_WRITE:
 		os_printf("Write system call called!\n");
+		int fd;
+		void* buf;
+		int numBytes;
+		// retrieve the args that write() put in r1, r2 and pass to kread():
+		asm volatile("mov %0, r1": "(fd)");
+		asm volatile("mov %0, r2": "(buf)");
+		asm volatile("mov %0, r3": "(numBytes)");
+		// call kwrite(), passing appropriate args:
+		int bytesWritten = kwrite(fd, buf, numBytes);
+		// move fd that kwrite() returns to a r1 to be retrieved by write() and returned to user:
+		asm volatile("mov %0, (bytesWritten)" : "r1");
 		break;
 	case SYSCALL_CLOSE:
 		os_printf("Close system call called!\n");
+		int fd;
+		// retrieve the args that close() put in r1 and pass to kclose():
+		asm volatile("mov %0, r1": "(fd)");
+		// call kclose(), passing appropriate args:
+		int error = kclose(fd);
+		// move error that kclose() returns to a r1 to be retrieved by close() and returned to user:
+		asm volatile("mov %0, (error)" : "r1");
+		break;
+	case SYSCALL_SEEK:
+		os_printf("Seek system call called!\n");
+		int fd;
+		int numBytes;
+		// retrieve the args that seek() put in r1, r2 and pass to kseek():
+		asm volatile("mov %0, r1": "(fd)");
+		asm volatile("mov %0, r2": "(numBytes)");
+		// call kseek(), passing appropriate args:
+		int error = kseek(fd, numBytes);
+		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
+		asm volatile("mov %0, (error)" : "r1");
 		break;
 	case SYSCALL_SET_PERM:
 		os_printf("Set permission system call called!\n");
