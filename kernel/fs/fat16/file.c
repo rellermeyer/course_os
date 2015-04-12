@@ -34,9 +34,40 @@ file_descriptor * kopen(char* filepath, char mode){
 	return fd;
 }//end kopen()
 
-// int read(opentable_entry* fd, int numBytes)
+/* read from fd, put it in buf, then return the number of bytes read in numBytes */
+int kread(int fd, void* buf, int numBytes) {
+	int bytesRead;
 
+	return bytesRead;
+} // end kread();
 
+/* write from fd, put it in buf, then return the number of bytes written in numBytes */
+int kwrite(int fd, void* buf, int numBytes) {
+	int bytesWritten;
+
+	return bytesWritten;
+} // end kwrite();
+
+/* close the file fd, return 1 if the close was successful */
+int kclose(int fd) {
+	int error;
+
+	return error;
+} // end kclose();
+
+/* seek within the file, return an error if you are outside the boundaries */
+int kseek(int fd, int numBytes) {
+	int error;
+
+	return error;
+} // end kseek();
+
+/* delete the file with the path filepath. Return -1 if the file does not excist */
+int kdelete(char* filepath) {
+	int error;
+
+	return error;
+} // end kdelete();
 
 
 
