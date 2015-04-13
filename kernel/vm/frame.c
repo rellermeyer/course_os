@@ -6,7 +6,7 @@ struct vm_free_frame {
 	void *next; // Next free frame
 };
 
-struct vm_free_frame *vm_free_list;
+struct vm_free_frame *vm_free_list = 0x0;
 
 int vm_build_free_frame_list(void *start, void *end) {
 	vm_free_list = start;
@@ -27,11 +27,12 @@ void *vm_get_free_frame() {
 	}
 	void *p = vm_free_list;
 	vm_free_list = vm_free_list->next;
-	return p;
+	return p - 0xf0000000; // Convert from VPTR to PPTR
 }
 
 void vm_release_frame(void *p) {
 	// TODO: Check if p is actually a valid frame
+	p += 0xf0000000; // Convert from PPTR to VPTR
 	struct vm_free_frame *flist = p;
 	flist->next = vm_free_list;
 	vm_free_list = p;

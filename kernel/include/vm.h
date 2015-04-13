@@ -1,6 +1,8 @@
 #ifndef __VM_H
 #define __VM_H 1
 
+#include "memory.h"
+
 #define BLOCK_SIZE (1<<20)
 
 #define PAGE_TABLE_SIZE (1<<14)
@@ -19,6 +21,8 @@ struct vas {
 #define VM_ERR_MAPPED -3
 #define VM_ERR_BADPERM -4
 #define VM_ERR_UNKNOWN -5
+
+#define KERNEL_VAS ((struct vas*)V_L1PTBASE)
 
 /**
  * These permissions dictate who can access what pages. Note that you
