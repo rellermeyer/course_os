@@ -4,7 +4,7 @@
 #include "./frame.h"
 
 #define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
-#define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+#define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
 static const int perm_mapping[16] = {
 	0,  // 0000 Nothing
@@ -109,17 +109,19 @@ void vm_enable_vas(struct vas *vas) {
 	vm_current_vas = vas;
 
 	// Clear the BTAC
-	asm volatile("mcr p15, 0, %[r], c7, c5, 6" : : [r] "r" (0x0));
+	// Performed by cleaning the caches, below
+	//asm volatile("mcr p15, 0, %[r], c7, c5, 6" : : [r] "r" (0x0));
 
 	// Flush the write caches
-	asm volatile("MCR p15, 0, %[r], c7, c10, 4" : : [r] "r" (0x0));
+	asm volatile("MCR p15, 0, %[r], c7, c10, 4" : : [r] "r" (0x0)); // sync barrier
+	asm volatile("MCR p15, 0, %[r], c7, c10, 5" : : [r] "r" (0x0)); // memory barrier
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (vas->l1_pagetable_phys));
 	// Translation table 1 is currently ignored
 
 	// Clean the caches (data & instruction)
-	asm volatile("mcr p15, 0, %[r], c7, c7, 0" : : [r] "r" (0x0));
+	asm volatile("mcr p15, 0, %[r], c7, c14, 0" : : [r] "r" (0x0));
 }
 
 struct vas *vm_new_vas() {
@@ -224,18 +226,31 @@ void vm_test() {
 	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
 
 	// Test allocating frames...
-	vm_allocate_page(vas3, (void*)0x5000000, 0);
+	int retval = vm_allocate_page(vas3, (void*)0x25000000, VM_PERM_PRIVILEGED_RW);
+	if (retval) {
+		os_printf("ERROR: vm_allocate_page returned %x\n", retval);
+	}
+
+	{
+		int *p = (int*)0xFFFFFFF0;
+		p[0] = 1;
+		os_printf("0x%x == 1?\n", p[0]);
+	}
+
 	// Oh man! We should be able to write to there!
-	char *p = (char*)0x5000000;
+	int *p = (int*)0x25000000;
 	p[0] = 1;
+	os_printf("%x %x\n", &p, p);
+	os_printf("%d == 1?\n", p[0]);
 
 	// Test allocating many frames...
 	p += BLOCK_SIZE;
 	while (!vm_allocate_page(vas3, (void*)p, 0)) {
 		p += BLOCK_SIZE;
 	}
+	p -= BLOCK_SIZE;
 	os_printf("Highest frame allocated: 0x%X\n",p);
-	while ((unsigned int)p > 0x5000000) {
+	while ((unsigned int)p > 0x25000000) {
 		vm_free_page(vas3, p);
 		p -= BLOCK_SIZE;
 	}

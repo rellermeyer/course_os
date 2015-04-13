@@ -67,34 +67,20 @@ void mmap(void *p_bootargs) {
 	first_level_pt[V_KERNBASE>>20] = 0<<20 | 0x0400 | 2;
 	first_level_pt[(V_KERNBASE+0x100000)>>20] = 0x100000 | 0x0400 | 2;
 
-	//map 31MB of phsyical memory managed by kmalloc
-	unsigned int p_kheap_addr = P_KHEAPBASE;
-	int i;
-	for(i = (V_KHEAPBASE>>20); i < (V_KHEAPTOP>>20); i++){
-		first_level_pt[i] = p_kheap_addr | 0x0400 | 2;
-		p_kheap_addr += 0x100000;
-	}
-
-	//map 32MB of physical memory manged by umalloc
-	unsigned int p_uheap_addr = P_UHEAPBASE;
-	for(i = (V_UHEAPBASE>>20); i < (V_UHEAPTOP>>20); i++){
-		first_level_pt[i] = p_uheap_addr | 0x0400 | 2;
-		p_uheap_addr += 0x100000;
-	}
-
 	//map ~2MB of peripheral registers one-to-one
 	first_level_pt[PERIPHBASE>>20] = PERIPHBASE | 0x0400 | 2;
 	first_level_pt[(PERIPHBASE+0x100000)>>20] = (PERIPHBASE+0x100000) | 0x0400 | 2;
 
 	//map 752MB of PCI interface one-to-one
 	unsigned int pci_bus_addr = PCIBASE;
+	int i;
 	for(i = (PCIBASE>>20); i < (PCITOP>>20); i++){
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2; 
 		pci_bus_addr += 0x100000;
 	}
 
 	//remap 62MB of physical memory after the kernel 
-	// (KERNTOP to KHEAPBASE)
+	// (KERNTOP to end of physical RAM (PMAPTOP))
 	// This is where we allocate frames from. Except for the first one.
 	unsigned int phys_addr = P_KERNTOP;
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
@@ -109,8 +95,6 @@ void mmap(void *p_bootargs) {
 	((struct vas*)P_L1PTBASE)->l1_pagetable = (unsigned int*)(V_L1PTBASE + PAGE_TABLE_SIZE);//first_level_pt;
 	((struct vas*)P_L1PTBASE)->l1_pagetable_phys = first_level_pt;
 	((struct vas*)P_L1PTBASE)->next = 0x0;
-
-	//vm_build_free_frame_list((void*)P_KERNTOP, (void*)P_KERNTOP+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
 
