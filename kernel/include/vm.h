@@ -6,6 +6,7 @@
 #define BLOCK_SIZE (1<<20)
 
 #define PAGE_TABLE_SIZE (1<<14)
+#define L2_PAGE_TABLE_SIZE (1<<12)
 
 struct vas {
 	// A pointer to the first level of the pagetable.
