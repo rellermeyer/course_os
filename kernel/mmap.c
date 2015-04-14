@@ -20,7 +20,7 @@
 
 int vm_build_free_frame_list(void *start, void *end);
 
-static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
+unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
 extern struct vm_free_list *vm_vas_free_list;
 extern struct vm_free_list *vm_l1pt_free_list;
 
@@ -80,14 +80,27 @@ void mmap(void *p_bootargs) {
 		pci_bus_addr += 0x100000;
 	}
 
+	// Quick coarse page table address
+	unsigned int coarse_page_table_address = P_L1PTBASE + 2*PAGE_TABLE_SIZE;
+	os_printf("coarse pt: 0x%X\n", coarse_page_table_address);
+
 	//remap 62MB of physical memory after the kernel 
 	// (KERNTOP to end of physical RAM (PMAPTOP))
 	// This is where we allocate frames from. Except for the first one.
 	unsigned int phys_addr = P_KERNTOP;
+	// +1 to skip L1PTBASE
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
-		first_level_pt[i] = phys_addr | 0x0400 | 2;
-		phys_addr += 0x100000;
+		first_level_pt[i] = coarse_page_table_address | 1;
+		//break;
+		//phys_addr += 0x100000;
 	}
+
+	// Fill in the coarse page table
+	// (TODO: How do we handle 64kB pages? Do they take up 16 entries?)
+	os_memset((void*)coarse_page_table_address, 0, L2_PAGE_TABLE_SIZE);
+	// Set the first page to phys_addr
+	*(unsigned int*)coarse_page_table_address = phys_addr | 0x10 | 2;
+	os_printf("0x%X\n", *(unsigned int*)coarse_page_table_address);
 
 	first_level_pt[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
 
@@ -100,6 +113,8 @@ void mmap(void *p_bootargs) {
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)vm_l1pt_free_list + PAGE_TABLE_SIZE);
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
+
+	os_printf("0x%X\n", first_level_pt[(PMAPBASE+0x100000)>>20]);
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -125,14 +140,17 @@ void mmap(void *p_bootargs) {
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
 	//control |= 0x3007; //0b11000000000111
-	control |= 0x1007; //0b11000000000111
+	control |= 0x1007; //0b01000000000111 (No high vectors)
+	control |= 1<<23; // Enable ARMv6
+	os_printf("control reg: 0x%x\n", control);
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
 	os_printf("Got here\n");
 
 	// Build the free frame list
-	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
+	// TODO: Uncomment!!!
+	//vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");

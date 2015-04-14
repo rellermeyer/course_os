@@ -217,6 +217,23 @@ int vm_free_vas(struct vas *vas) {
 	return 0;
 }
 
+void vm_test_early() {
+	os_printf("Test code for VM (early).\n");
+
+	// Test 4KB pages
+	os_printf("0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
+	os_printf("entry at the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
+	unsigned int *p2 = (unsigned int*)(PMAPBASE+0x100000);
+	os_printf("0x%X\n",p2);
+	p2[1]++;
+	p2[1023]++;
+	os_printf("Should not have seen a page fault, should see one now.\n");
+	p2[1024]++;
+
+	os_printf("Leaving early test code for VM.\n");
+	while(1);
+}
+
 // TODO: Move this into a framework...
 void vm_test() {
 	os_printf("***** Test code for VM (vm_test()): *****\n");
