@@ -1,4 +1,4 @@
-course_os: process control branch
+course_os
 =========
 
 CS 439 course OS
