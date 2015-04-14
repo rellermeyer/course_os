@@ -92,16 +92,21 @@ void join(pcb *other_PCB) {
    Else if the task was previously started, restore its state.
 */
 void dispatch(pcb *PCB) {
-  if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
-  {
-    PCB->current_state = PROCESS_RUNNING;
-    execute_process(PCB); // Found in process.c
-  }
-  else
-  {
-    // This will jump to the location the state was saved in task_yield()
-    load_process_state(PCB->PID); // Found in process.c
-  }
+  // if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
+  // {
+  //   PCB->current_state = PROCESS_RUNNING;
+  //   execute_process(PCB); // Found in process.c
+  // }
+  // else
+  // {
+  //   // This will jump to the location the state was saved in task_yield()
+  //   // load_process_state(PCB->PID); // Found in process.c
+  //   execute_process(PCB); //Execute process loads the registers anyways
+
+  // }
+  PCB->current_state = PROCESS_RUNNING;
+  execute_process(PCB);
+
 }
 
 /* Schedule a new task and call dispatch() to run it. */
