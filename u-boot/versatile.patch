@@ -1,14 +1,15 @@
 --- new/include/configs/versatile.h	2014-10-14 03:47:15.000000000 -0500
 +++ u-boot-2014.10/include/configs/versatile.h	2014-12-22 15:07:12.090798194 -0600
-@@ -100,9 +100,8 @@
+@@ -100,9 +100,9 @@
  #define CONFIG_BOOTP_SUBNETMASK
  
  #define CONFIG_BOOTDELAY	2
 -#define CONFIG_BOOTARGS		"root=/dev/nfs mem=128M ip=dhcp "\
 -				"netdev=25,0,0xf1010000,0xf1010010,eth0 "\
 -				"console=ttyAMA0,38400n1"
-+#define CONFIG_BOOTARGS      "root=/dev/ram mem=128M -load hello 0x410000 0x12C2A"
-+#define CONFIG_BOOTCOMMAND   "bootm 0x210000"
++#define CONFIG_BOOTARGS      ""
++#define CONFIG_CMD_SOURCE
++#define CONFIG_BOOTCOMMAND   "source 24f000"
  
  /*
   * Static configuration when assigning fixed address
