@@ -9,9 +9,18 @@ typedef struct
     int_least32_t offset;
 } Stream;
 
+typedef struct
+{
+    int_least32_t *data;
+    int_least32_t datalen;
+    char *q_name;
+    char *options;
+    struct Queue *next;
+}Queue;
+
 void q_create(char q_name[], char options[]);
-int_least32_t q_open(char q_name[]);
-int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t datalen);
+Queue q_open(char q_name[]);
+int_least32_t q_publish(Queue *q, int_least32_t *data, int_least32_t datalen);
 int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalen);
 int_least32_t q_subscribe(int_least32_t q, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata);
 /*to add other functions below*/
