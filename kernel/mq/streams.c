@@ -4,17 +4,19 @@
 #include <string.h>
 #include <stdint.h>
 
-typedef struct
-{
-    int_least32_t *data;
-    char *q_name;
-    char *options;
-}Queue;
+Queue *head;
+Queue *tail;
+short initialized;
 
 void q_create(char q_name[], char options[])
 {
 	Queue *q;
     memset(&q, 0, sizeof(q));
+    if (!initialized){
+        initialized = 1;
+        *head = *q;
+        *tail = *q;
+    }
     if (options == "rr"){
         q->options = options;
 		printf("printing rr\n");
@@ -25,13 +27,28 @@ void q_create(char q_name[], char options[])
 		printf("Error: options was %s. Expected \"rr\" or \"broadcast\"\n", options);
 	}
 }
-int_least32_t q_open(char q_name[])
+Queue q_open(char q_name[])
 {
-
+    //TODO: is there a way to use a hashset or some variable arraylist of queues?
+    if (!initialized){
+        //TODO: how do I handle errors?
+    }
+    Queue *temp = head;
+    while (temp->next != NULL){
+        if (temp->q_name = q_name)
+            return *temp;
+        temp = temp->next;
+    }
+    //TODO: No match found. Return error.
 }
-int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t datalen)
+int_least32_t q_publish(/*int_least32_t qd --changed to queue for now*/ Queue *q, int_least32_t *data, int_least32_t datalen)
 {
-
+    int kilo = 1024;
+    if (sizeof(*data) > 128 * kilo){
+        //TODO: throw an error
+    }
+    q->data = *data;
+    q->datalen = datalen;
 }
 int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalen)
 {
@@ -39,7 +56,7 @@ int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32
 }
 int_least32_t q_subscribe(int_least32_t q, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
-
+    //TODO: execute asynchronous callback with *receiver
 }
 
 
