@@ -1,3 +1,5 @@
+#ifndef __streams_h
+#define __streams_h
 #include <stdint.h>
 
 typedef struct
@@ -22,4 +24,4 @@ int_least32_t q_subscribe(int_least32_t q, void (*receiver)(int_least32_t *userd
 //void clear(Stream *bs);
 //int_least32_t put_element(Stream* bs, int_least32_t ele);
 //int_least32_t get_element(Stream* bs, int_least32_t loc);
-
+#endif
