@@ -4,9 +4,26 @@
 #include <string.h>
 #include <stdint.h>
 
+typedef struct
+{
+    int_least32_t *data;
+    char *q_name;
+    char *options;
+}Queue;
+
 void q_create(char q_name[], char options[])
 {
-
+	Queue *q;
+    memset(&q, 0, sizeof(q));
+    if (options == "rr"){
+        q->options = options;
+		printf("printing rr\n");
+	}else if(options == "broadcast"){
+        q->options = options;
+		printf("printing broadcast\n");
+	}else{
+		printf("Error: options was %s. Expected \"rr\" or \"broadcast\"\n", options);
+	}
 }
 int_least32_t q_open(char q_name[])
 {
@@ -72,7 +89,7 @@ int main()
 {
     Stream s;
     memset(&s, 0, sizeof(s));
-    
+    q_create("someArg", "rr");
   //  create_buffer(&s, 10);
 
 }
