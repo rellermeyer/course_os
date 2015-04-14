@@ -24,7 +24,6 @@ int init_all_processes() {
   file_p is a file pointer that we will create the process with */
 pcb* process_create(uint32_t* file_p) {
 
-	os_printf("lol do we even get here?\n");
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
 
 	
@@ -46,12 +45,11 @@ pcb* process_create(uint32_t* file_p) {
         
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
-        uint32_t add = 0x3000;
-		pcb_pointer->function = sample_func;
-		os_printf("%X %X %X \n",file_p, pcb_pointer->function, add);
+        uint32_t add = 0x2000;
+		pcb_pointer->function = file_p + (success->e_ehsize+(success->e_phentsize*success->e_phnum))/4 ;
+		os_printf("%X %X %X \n",file_p,&pcb_pointer->function , add);
 		//assert(1==3)
 		pcb_pointer->has_executed = 0;
-		os_printf("PROCESS_CREATE_DEBUG: 53\n");
 		return pcb_pointer;
 		
 
@@ -300,7 +298,7 @@ uint32_t execute_process(pcb* pcb_p) {
     //         then call load_process_state to switch to new process
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
 
-	//load_process_state(pcb_p->PID);
+	load_process_state(pcb_p->PID);
 //	print_process_state(pcb_p->PID);
 	//os_printf(" HELLO WORLD %X \n", pcb_p->function);
 //	assert(1==2);
@@ -313,8 +311,8 @@ uint32_t execute_process(pcb* pcb_p) {
 	pcb_p->current_state = PROCESS_RUNNING;
 
 	//Run main function (TODO: How do we run main functions that have input parameters?)
-    pcb_p->function();
-    os_printf("HELLO MY FRIEND");
+    //pcb_p->function();
+    //os_printf("HELLO MY FRIEND");
     while(1);
 	return pcb_p->PID;
 }
