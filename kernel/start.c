@@ -109,6 +109,7 @@ void start2(uint32_t *p_bootargs)
 
 	init_all_processes();
 	argparse_process(p_bootargs);
+	
 
 	print_uart0("done parsing atag list\n");
 

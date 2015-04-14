@@ -9,6 +9,6 @@
 #define USER_PROC_HEAP_SIZE 4096;
 #define PADDING 0x1000;
 
-uint32_t load_file(pcb *, uint32_t *); //Needs to be of the type that's where ever our beginning of file is in mem
+Elf_Ehdr* load_file(pcb *, uint32_t *); //Needs to be of the type that's where ever our beginning of file is in mem
 
 #endif

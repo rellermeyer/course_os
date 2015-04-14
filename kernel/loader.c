@@ -111,7 +111,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
+Elf_Ehdr* load_file(pcb * process_control_block, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr)); // Get elf header
 	os_printf("elf header= %x\n", h);
@@ -119,18 +119,18 @@ uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 
 	if(i == -1) {
 		os_printf("File is Not an ELF File. Exiting\n");
-		return -1;
+		return 0;
 	}
 
 	if(h->e_phnum == 0) {
 		os_printf("No Program headers in ELF file. Exiting\n");
-		return -1;
+		return 0;
 	}
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
 	
 	allocate_process_memory(process_control_block, h, ph, file_pointer);
-	return 1;
+	return h;
 }
 
