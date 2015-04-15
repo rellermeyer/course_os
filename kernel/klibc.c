@@ -141,26 +141,45 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 	int nwritten = 0;
 	int t_arg;
 	char* str_arg;
+	int padding = -1;
+	char pad_char = 0;
 	while (*str_buf != '\0')
 	{
 		int n;
 		if (*str_buf == '%')
 		{
 			str_buf++;
+			// This label is where we go after we've read an option.
+		reread_switch:;
 			switch (*str_buf)
 			{
+			case '0':
+				// Zero-padding... Read all the numbers.
+				// Then restart the switch statement.
+				padding = 0;
+				pad_char = '0';
+				while (*str_buf <= '9' && *str_buf >= '0') {
+					padding *= 10;
+					padding += *str_buf - '0';
+					str_buf++;
+				}
+				goto reread_switch;
+				break;
 			case 'X':
 				t_arg = va_arg(args, int);
-				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 1);
+				n = print_int(buf, buflen, t_arg, 16, 1, padding, pad_char, 1);
 				break;
 			case 'x':
 				t_arg = va_arg(args, int);
-				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 0);
+				n = print_int(buf, buflen, t_arg, 16, 1, padding, pad_char, 0);
 				break;
 			case 'd':
+				t_arg = va_arg(args, int);
+				n = print_int(buf, buflen, t_arg, 10, 0, padding, pad_char, 0);
+				break;
 			case 'u':
 				t_arg = va_arg(args, int);
-				n = print_int(buf, buflen, t_arg, 10, 1, -1, ' ', 0);
+				n = print_int(buf, buflen, t_arg, 10, 1, padding, pad_char, 0);
 				break;
 			case 'c':
 				t_arg = va_arg(args, int);
@@ -180,6 +199,8 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 				n = 1;
 				break;
 			}
+			// Reset all the options
+			padding = -1;
 		}
 		else
 		{
