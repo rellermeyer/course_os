@@ -22,6 +22,7 @@
  * 4/21 Added os_memcpy for loader - Kaelen
  */
 #include <stdint.h>
+#include <stdarg.h>
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
