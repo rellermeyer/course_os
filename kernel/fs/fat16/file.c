@@ -9,7 +9,7 @@
 
 
 //CONSTANTS:
-const uint16_t BLOCKSIZE = 2048;
+const int BLOCKSIZE = 2048;
 
 
 //STRUCTS:
@@ -18,10 +18,9 @@ struct file
 	/* data */
 	char* fname;
 	list inode;
-	uint16_t size;
+	int size;
 	bitvector perms; // a bitvector of length three to track: read, write, execute
 	time creation_time; // need to look up CourseOS specific data type
-	uint16_t offset;
 };
 
 // typedef struct inode
@@ -63,7 +62,7 @@ int kopen(char* filepath, char mode){
 			}	
 			break;
 		default:
-			os_printf("File permission passed");
+			os_printf("File permission passed\n");
 	}
 
 	fd = add_to_opentable(f, mode);
@@ -75,14 +74,89 @@ int kopen(char* filepath, char mode){
 
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd, void* buf, int numBytes) {
-	int bytes_read;
+	int bytes_read = 0;
+	void* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
+	//while retaining the original pointer to return back to the user
+
 	struct file_descriptor filedescr = table[fd];
 	if (filedescr.permission != 'r' || filedescr.permission != 'b') {
 		os_printf("no permission \n");
 		return -1;
 	}
 
-	//PASS PARAMETER TO RECIEVE	
+	// Allocate space for and create a bitvector to be used repeatedly to transfer the data:
+	void* transferSpace = kmalloc(BLOCKSIZE);
+	int ct = 0; //for debugging only TODO: remove once debugged
+	int blockNum = 0;
+	if(numBytes < BLOCKSIZE){
+
+
+
+
+
+
+
+
+	}else if(numBytes > BLOCKSIZE){
+		//read and transfer first chunk:
+		blockNum = fd->offset / BLOCKSIZE;
+	 	int success = recieve(transferSpace, blockNum);
+	 	if(success < 0){
+	 		// failed on a block receive, therefore the whole kread fails; return failure error
+	 		os_printf("failed to receive block number %d\n", ct);
+	 		return -1;
+	 	}//end if
+	 	ct++;
+		// dif is the difference between the current offset and the end of the bloc (always less than BLOCKSIZE)
+		int dif = fd->offset % BLOCKSIZE;
+		// Actually move the data:
+		int i;
+		for(i = 0; i < dif; i++){
+			*buf_offset = *(transferSpace + (BLOCKSIZE - dif) +)
+			buf_offset ++;
+			bytes_read ++;
+			fd->offset ++;
+		}//end for
+		//DONE READING FIRST CHUNK, now fd-> is pointing to start of block
+		
+
+
+	}else{
+
+
+
+
+
+
+	}
+
+
+
+
+	while(numBytes > BLOCKSIZE){
+		blockNum = fd->offset / BLOCKSIZE;
+	 	int success = recieve(transferSpace, blockNum);
+	 	if(success < 0){
+	 		// failed on a block receive, therefore the whole kread fails; return failure error
+	 		os_printf("failed to receive block number %d\n", ct);
+	 		return -1;
+	 	}//end if
+	 	ct++;
+		numBytes -= BLOCKSIZE;
+		if(fd->)
+	}//end while
+
+	if(numBytes > 0){
+		// then there is more to be read, but less than 1 block
+		int success = recieve(transferSpace, );
+	 	if(success < 0){
+	 		// failed on a block receive, therefore the whole kread fails; return failure error
+	 		os_printf("failed to receive block number %d\n", ct);
+	 		return -1;
+	 	}//end if
+	 	ct++;
+	}
+
 	recieve();
 	//GET RETURN BUFFER FROM RECIVE() 
 
@@ -148,26 +222,6 @@ int kdelete(char* filepath) {
 	return error;
 } // end kdelete();
 
-
-/*put these in kopen() implementation:
-	switch(mode){}
-		case "r":
-   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
-		
-	       break;
-	    case "w":
-   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
-
-	       
-	       break;
-	    case "a":
-   	    //inline assembly code to move the filepath and mode arguments to registers to be used in kopen():
-
-	  	    break;
-	    default :
-			os_printf("Error! Must pass a valid mode parameter\n");
-		}
-*/
 
 
 
