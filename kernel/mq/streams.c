@@ -16,6 +16,9 @@ void q_create(char q_name[], char options[])
         initialized = 1;
         *head = *q;
         *tail = *q;
+    }else{
+        tail->next = q;
+        tail = q;
     }
     if (options == "rr"){
         q->options = options;
@@ -29,6 +32,8 @@ void q_create(char q_name[], char options[])
 }
 Queue q_open(char q_name[])
 {
+    //TODO: Ask lane if need to provide alternative to fopen
+    //by doing something similar to opensource.apple.com/source/Libc/Libc-167/stdio.subproj/fopen.c
     //TODO: is there a way to use a hashset or some variable arraylist of queues?
     if (!initialized){
         //TODO: how do I handle errors?
