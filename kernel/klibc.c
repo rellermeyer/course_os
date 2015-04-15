@@ -67,36 +67,76 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 	}
 }
 
+// base is between 2 and 16, inclusive
+int print_int(char *buf, int buflen,
+	      int val, int base, int is_unsigned, int zero_padding,
+	      int max_len, int is_uppercase)
+{
+	if (max_len > buflen) {
+		max_len = buflen;
+	}
+	int orig_max_len = max_len;
+	int negate = 0;
+	if (val < 0 && !is_unsigned) {
+		val = -val;
+		negate = 1;
+	}
+        unsigned int temp = val;
+
+	if (max_len == 0) return orig_max_len - max_len;
+	if (negate) {
+		*buf = '-';
+		buf++;
+		max_len--;
+		if (max_len == 0) return orig_max_len - max_len;
+	}
+
+	char tmp_buf[64];
+	int ndigits = 0;
+	while (temp != 0) {
+		if (is_uppercase) {
+			tmp_buf[ndigits] = upper_case_digits[temp%base];
+		} else {
+			tmp_buf[ndigits] = lower_case_digits[temp%base];
+		}
+		temp = temp / base;
+		ndigits++;
+	}
+
+	// Zero-pad the output
+	int i;
+	if (zero_padding > 0) {
+		for (i=0; i<zero_padding-ndigits; i++) {
+			*buf = '0';
+			buf++;
+			max_len--;
+			if (max_len == 0) return orig_max_len;
+		}
+	}
+
+	// Output the digits
+	for (i=ndigits-1; i>=0; i--) {
+		*buf = tmp_buf[i];
+		buf++;
+		max_len--;
+		if (max_len == 0) return orig_max_len;
+	}
+	if (ndigits == 0) {
+		*buf = '0';
+		buf++;
+		max_len--;
+		if (max_len == 0) return orig_max_len;
+	}
+
+	return orig_max_len - max_len;
+}
+
 void print_hex(int val, int CASE)
 {
-	int temp = val;
-	int count_digits = 0;
 	char buf[100];
-	int CHAR_MASK = 0xF;
-	if (temp == 0)
-	{
-		print_char_uart0('0');
-	}
-	while ((temp != 0) && (count_digits < 8))
-	{
-		int index = temp & CHAR_MASK;
-		if (CASE == UPPER_CASE)
-		{
-			buf[count_digits] = upper_case_digits[index];
-		}
-		else
-		{
-			buf[count_digits] = lower_case_digits[index];
-		}
-		temp = temp >> 4;
-		count_digits += 1;
-	}
-	while (count_digits > 0)
-	{
-		//printf("%c", buf[count_digits-1]);
-		print_char_uart0(buf[count_digits - 1]);
-		count_digits--;
-	}
+	int n = print_int(buf, 100, val, 16, 0, -1, 100, CASE);
+	buf[n] = 0;
+	print_uart0(buf);
 }
 
 static void print_dec(int val)
@@ -104,27 +144,9 @@ static void print_dec(int val)
 	int temp = val;
 	int count_digits = 0;
 	char buf[100];
-	if (temp == 0)
-	{
-		print_uart0("0");
-	}
-	else if (temp < 0)
-	{
-		print_uart0("-");
-		temp = -temp;
-	}
-	while (temp != 0)
-	{
-		int index = temp % 10;
-		buf[count_digits] = upper_case_digits[index];
-		temp = temp / 10;
-		count_digits += 1;
-	}
-	while (count_digits > 0)
-	{
-		print_char_uart0(buf[count_digits - 1]);
-		count_digits--;
-	}
+	int n = print_int(buf, 100, val, 10, 0, -1, 100, 0);
+	buf[n] = 0;
+	print_uart0(buf);
 }
 
 int os_printf(const char *str_buf, ...)
