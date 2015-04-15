@@ -2,27 +2,28 @@
 #define __streams_h
 #include <stdint.h>
 
-typedef struct
+struct stream
 {
-    int_least32_t *data;
-    int_least32_t length;
-    int_least32_t offset;
-} Stream;
+	int_least32_t *data;
+	int_least32_t length;
+	int_least32_t offset;
+};
 
-typedef struct
+struct queue
 {
-    int_least32_t *data;
-    int_least32_t datalen;
-    char *q_name;
-    char *options;
-    struct Queue *next;
-}Queue;
+	int_least32_t *data;
+	int_least32_t datalen;
+	char *q_name;
+	char *options;
+	struct queue *next;
+};
 
 void q_create(char q_name[], char options[]);
-Queue q_open(char q_name[]);
-int_least32_t q_publish(Queue *q, int_least32_t *data, int_least32_t datalen);
+struct queue *q_open(char q_name[]);
+int_least32_t q_publish(struct queue *q, int_least32_t *data, int_least32_t datalen);
 int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalen);
 int_least32_t q_subscribe(int_least32_t q, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata);
+void q_test();
 /*to add other functions below*/
 
 
