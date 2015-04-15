@@ -74,6 +74,51 @@ int kopen(char* filepath, char mode){
 
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd, void* buf, int numBytes) {
+	
+	/* Start of my idea of Algo */
+
+	int bytes_read = 0;
+	if(numBytes < BLOCKSIZE) {
+		while(bytes_read < numBytes) {
+			f1();
+		}
+	} else if(numBytes >= BLOCKSIZE) {
+		f1();
+	}
+	while((numBytes - bytes_read) > BLOCKSIZE) {
+		f2();
+	} 
+	if(bytes_read < numBytes) {
+		f1();
+	}
+
+
+	f1() {
+		int bytesLeftInBlock = offset % BLOCKSIZE;
+		int index = offset / BLOCKSIZE;
+		if(bytesLeftInBlock == 0) {
+			 ___________________
+			|~~~~~~~~~|			|
+			---------------------
+		} else if((((numBytes - bytes_read) + offset) / BLOCKSIZE) > index) {
+			_____________________
+			|           |~~~~~~~~|
+			----------------------
+		} else {
+			______________________
+			|      |~~~~|         |
+			-----------------------
+		}
+	}
+
+	f2() {
+		// read BLOCKSIZE
+	}
+
+	/* End my idea of Algo */
+
+
+
 	int bytes_read = 0;
 	void* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
