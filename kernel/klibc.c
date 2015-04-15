@@ -69,12 +69,10 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 
 // base is between 2 and 16, inclusive
 int print_int(char *buf, int buflen,
-	      int val, int base, int is_unsigned, int zero_padding,
-	      int max_len, int is_uppercase)
+	      int val, int base, int is_unsigned, int padding, char pad_char,
+	      int is_uppercase)
 {
-	if (max_len > buflen) {
-		max_len = buflen;
-	}
+	int max_len = buflen;
 	int orig_max_len = max_len;
 	int negate = 0;
 	if (val < 0 && !is_unsigned) {
@@ -105,9 +103,9 @@ int print_int(char *buf, int buflen,
 
 	// Zero-pad the output
 	int i;
-	if (zero_padding > 0) {
-		for (i=0; i<zero_padding-ndigits; i++) {
-			*buf = '0';
+	if (padding > 0) {
+		for (i=0; i<padding-ndigits-negate; i++) {
+			*buf = pad_char;
 			buf++;
 			max_len--;
 			if (max_len == 0) return orig_max_len;
@@ -131,22 +129,92 @@ int print_int(char *buf, int buflen,
 	return orig_max_len - max_len;
 }
 
-void print_hex(int val, int CASE)
+static void print_hex(int val, int CASE)
 {
 	char buf[100];
-	int n = print_int(buf, 100, val, 16, 0, -1, 100, CASE);
+	int n = print_int(buf, 100, val, 16, 1, -1, ' ', CASE);
 	buf[n] = 0;
 	print_uart0(buf);
 }
 
 static void print_dec(int val)
 {
-	int temp = val;
-	int count_digits = 0;
 	char buf[100];
-	int n = print_int(buf, 100, val, 10, 0, -1, 100, 0);
+	int n = print_int(buf, 100, val, 10, 0, -1, ' ', 0);
 	buf[n] = 0;
 	print_uart0(buf);
+}
+
+// args must already have been started
+int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
+{
+	buflen--;
+	if (buflen == 0) return 0;
+	int nwritten = 0;
+	int t_arg;
+	char* str_arg;
+	while (*str_buf != '\0')
+	{
+		int n;
+		if (*str_buf == '%')
+		{
+			str_buf++;
+			switch (*str_buf)
+			{
+			case 'X':
+				t_arg = va_arg(args, int);
+				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 1);
+				//print_hex(t_arg, UPPER_CASE);
+				break;
+			case 'x':
+				t_arg = va_arg(args, int);
+				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 0);
+				//print_hex(t_arg, LOWER_CASE);
+				break;
+			case 'd':
+			case 'u':
+				t_arg = va_arg(args, int);
+				n = print_int(buf, buflen, t_arg, 10, 1, -1, ' ', 0);
+				//print_dec(t_arg);
+				break;
+			case 'c':
+				t_arg = va_arg(args, int);
+				*buf = t_arg;
+				n = 1;
+				//print_char_uart0(t_arg);
+				break;
+			case 's':
+				str_arg = va_arg(args, char*);
+				os_strcpy(buf, str_arg);
+				n = os_strlen(str_arg);
+				//print_uart0(str_arg);
+				break;
+			case '%':
+				//print_uart0("%");
+				*buf = '%';
+				n = 1;
+				break;
+			}
+		}
+		else
+		{
+			//print_char_uart0(*str_buf);
+			*buf = *str_buf;
+			n = 1;
+		}
+		buf += n;
+		buflen -= n;
+		nwritten += n;
+		if (buflen == 0)
+		{
+			//Return!
+			break;
+		}
+		str_buf++;
+	}
+	buf[0] = 0;
+
+	return nwritten;
 }
 
 int os_printf(const char *str_buf, ...)
@@ -155,6 +223,13 @@ int os_printf(const char *str_buf, ...)
 	int t_arg;
 	char* str_arg;
 	va_start(args, str_buf);
+	va_end(args);
+	char buf[256];
+	int n = os_vsnprintf(buf, 255, str_buf, args);
+	buf[n] = 0;
+	print_uart0(buf);
+	return n;
+
 	while (*str_buf != '\0')
 	{
 		if (*str_buf == '%')
