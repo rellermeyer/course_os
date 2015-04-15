@@ -4,23 +4,23 @@
 //#include <string.h>
 #include <stdint.h>
 #include "klibc.h"
+#include "hashtable.h"
 
 struct queue *head;
 struct queue *tail;
 short initialized;
+struct ht *q_table;
 
 void q_create(char q_name[], char options[])
 {
 	struct queue *q;
 	os_memset(&q, 0, sizeof(q));
 	if (!initialized) {
-		// Hrm...
-		/*initialized = 1;
-		*head = *q;
-		*tail = *q;*/
+		initialized = 1;
+        q_table = ht_alloc(100);
+        ht_add(q_table, q_name, (void*)q);
 	}else{
-        //tail->next = q;
-        //tail = q;
+        ht_add(q_table, q_name, q);
     }
 	if (!os_strcmp(options,"rr")) {
 		q->options = options;
@@ -38,14 +38,15 @@ struct queue *q_open(char q_name[])
 	//TODO: is there a way to use a hashset or some variable arraylist of queues?
 	if (!initialized) {
 		//TODO: how do I handle errors?
+        return 0x0;
 	}
 	struct queue *temp = head;
 	while (temp->next != 0x0) {
-		if (!os_strcmp(temp->q_name, q_name))
+		if (!os_strcmp(temp->q_name, q_name)){
 			return temp;
+        }
 		temp = temp->next;
 	}
-	//TODO: No match found. Return error.
 	return 0x0;
 }
 
