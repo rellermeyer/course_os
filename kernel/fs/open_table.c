@@ -3,6 +3,19 @@
 //Since methods are provided, other files should not touch neither the free LL or the arrray, 
 // but just use the premade methods. 
 
+/* GINEVERA PLEASE READ! We (Charlie and Joel) are thinking that this whole implementation
+should probably be converted to heap memory instead of done locally on the stack. Also,
+can you add a function like this, so that we can access the file_descriptor struct for a 
+given int fd in order to get to its offset, etc. from file.c....? Thanks!
+
+file_descriptor* get_file_descriptor(int index){
+        file_descriptor* fd_to_be_returned = table[fd];
+        return fd_to_be_returned;
+}
+
+where index is the int version of
+the fd that open() returns to user, but what's returned is a pointer to the file_descriptor struct. */
+
 #include "../include/file.h"
 #include "../include/klibc.h"
 
@@ -19,7 +32,7 @@ struct file_descriptor {
 };
 
 // Array of open files 
-struct file_descriptor table[SYSTEM_SIZE];
+struct file_descriptor table[SYSTEM_SIZE]; // THIS NEEDS TO BE KMALLOC'ED so that it's on the heap instead of local on the stack...?
 
 
 // LL of free indexes at which we can place a newly opened file.
