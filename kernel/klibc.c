@@ -169,8 +169,11 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 				break;
 			case 's':
 				str_arg = va_arg(args, char*);
-				os_strcpy(buf, str_arg);
+				os_strncpy(buf, str_arg, buflen);
 				n = os_strlen(str_arg);
+				if (n > buflen) {
+					n = buflen;
+				}
 				break;
 			case '%':
 				*buf = '%';
@@ -186,7 +189,7 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 		buf += n;
 		buflen -= n;
 		nwritten += n;
-		if (buflen == 0)
+		if (buflen <= 0)
 		{
 			//Return!
 			break;
@@ -340,6 +343,16 @@ char *os_strcpy(char *dest, const char *src)
 	const unsigned char *s = (const unsigned char*) src;
 	unsigned char *d = (unsigned char*) dest;
 	while ((*d++ = *s++))
+		;
+	return dest;
+}
+
+/* Copies the String src to dest */
+char *os_strncpy(char *dest, const char *src, os_size_t n)
+{
+	const unsigned char *s = (const unsigned char*) src;
+	unsigned char *d = (unsigned char*) dest;
+	while ((*d++ = *s++) && n--)
 		;
 	return dest;
 }

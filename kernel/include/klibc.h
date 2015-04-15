@@ -38,6 +38,7 @@ int os_printf (const char *str_buf, ...);
 void *os_memset(void *dest, int c, os_size_t n);
 char *__strchrnul(const char *s, int c);
 char *os_strcpy(char *dest, const char *src);
+char *os_strncpy(char *dest, const char *src, os_size_t n);
 os_size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
 os_size_t os_strspn(const char *s, const char *accept);
