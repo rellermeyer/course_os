@@ -25,5 +25,6 @@ struct ht *ht_alloc(int nentries);
 int ht_add(struct ht *table, const char *key, void *value);
 int ht_remove(struct ht *table, const char *key);
 void *ht_get(struct ht *table, const char *key);
+void ht_test();
 
 #endif
