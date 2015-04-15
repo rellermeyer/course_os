@@ -129,27 +129,15 @@ int print_int(char *buf, int buflen,
 	return orig_max_len - max_len;
 }
 
-static void print_hex(int val, int CASE)
-{
-	char buf[100];
-	int n = print_int(buf, 100, val, 16, 1, -1, ' ', CASE);
-	buf[n] = 0;
-	print_uart0(buf);
-}
-
-static void print_dec(int val)
-{
-	char buf[100];
-	int n = print_int(buf, 100, val, 10, 0, -1, ' ', 0);
-	buf[n] = 0;
-	print_uart0(buf);
-}
-
 // args must already have been started
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 {
-	buflen--;
 	if (buflen == 0) return 0;
+	buflen--;
+	if (buflen == 0) {
+		buf[0] = 0;
+		return 1;
+	}
 	int nwritten = 0;
 	int t_arg;
 	char* str_arg;
@@ -164,33 +152,27 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 			case 'X':
 				t_arg = va_arg(args, int);
 				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 1);
-				//print_hex(t_arg, UPPER_CASE);
 				break;
 			case 'x':
 				t_arg = va_arg(args, int);
 				n = print_int(buf, buflen, t_arg, 16, 1, -1, ' ', 0);
-				//print_hex(t_arg, LOWER_CASE);
 				break;
 			case 'd':
 			case 'u':
 				t_arg = va_arg(args, int);
 				n = print_int(buf, buflen, t_arg, 10, 1, -1, ' ', 0);
-				//print_dec(t_arg);
 				break;
 			case 'c':
 				t_arg = va_arg(args, int);
 				*buf = t_arg;
 				n = 1;
-				//print_char_uart0(t_arg);
 				break;
 			case 's':
 				str_arg = va_arg(args, char*);
 				os_strcpy(buf, str_arg);
 				n = os_strlen(str_arg);
-				//print_uart0(str_arg);
 				break;
 			case '%':
-				//print_uart0("%");
 				*buf = '%';
 				n = 1;
 				break;
@@ -198,7 +180,6 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 		}
 		else
 		{
-			//print_char_uart0(*str_buf);
 			*buf = *str_buf;
 			n = 1;
 		}
@@ -213,66 +194,29 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 		str_buf++;
 	}
 	buf[0] = 0;
+	nwritten++;
 
 	return nwritten;
+}
+
+int os_snprintf(char *buf, int buflen, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	int n = os_vsnprintf(buf, buflen, fmt, args);
+	va_end(args);
+	return n;
 }
 
 int os_printf(const char *str_buf, ...)
 {
 	va_list args;
-	int t_arg;
-	char* str_arg;
 	va_start(args, str_buf);
-	va_end(args);
 	char buf[256];
 	int n = os_vsnprintf(buf, 255, str_buf, args);
-	buf[n] = 0;
+	va_end(args);
 	print_uart0(buf);
 	return n;
-
-	while (*str_buf != '\0')
-	{
-		if (*str_buf == '%')
-		{
-			str_buf++;
-			switch (*str_buf)
-			{
-			case 'X':
-				t_arg = va_arg(args, int);
-				print_hex(t_arg, UPPER_CASE);
-				break;
-			case 'x':
-				t_arg = va_arg(args, int);
-				print_hex(t_arg, LOWER_CASE);
-				break;
-			case 'd':
-			case 'u':
-				t_arg = va_arg(args, int);
-				print_dec(t_arg);
-				break;
-			case 'c':
-				t_arg = va_arg(args, int);
-				print_char_uart0(t_arg);
-				break;
-			case 's':
-				str_arg = va_arg(args, char*);
-				print_uart0(str_arg);
-				break;
-			case '%':
-				print_uart0("%");
-				break;
-			}
-		}
-		else
-		{
-			print_char_uart0(*str_buf);
-		}
-		str_buf++;
-	}
-	va_end(args);
-
-	// FIXME:
-	return 0;
 }
 
 /* Set the first n bytes of dest to be the value c.*/
