@@ -31,6 +31,7 @@ typedef unsigned int os_size_t;
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
 
+int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_printf (const char *str_buf, ...);
 
 void *os_memset(void *dest, int c, os_size_t n);
