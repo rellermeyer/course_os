@@ -20,6 +20,8 @@
  * 4/20 Added os_memset, os_strchrnul, os_strcpy, os_strlen, os_strtok,
  *      os_strspn, and os_strcspn from MUSL - Sheldon
  * 4/21 Added os_memcpy for loader - Kaelen
+ * --------------Spring 2015---------------
+ * 4/15/15: Added implementation of assert() 
  */
 #include <stdint.h>
 #include <stdarg.h>
@@ -31,6 +33,14 @@ typedef unsigned int os_size_t;
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
+
+
+//TODO: 4-15-15: Assert doesn't actually do anything when called. Why?
+#define assert( X ) if ( !(X) )\
+{\
+    os_printf("ASSERT ERROR (TODO: Actually print what the error is) %d\n", X);\
+    while(1){};\
+}
 
 /**
  * Note: os_printf is restricted to printing only 256 characters.

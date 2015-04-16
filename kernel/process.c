@@ -3,8 +3,6 @@
 #include "global_defs.h"
 #include "loader.h"
 #include "vm.h"
-#include <assert.h>
-
 
 static uint32_t GLOBAL_PID;
 
@@ -24,18 +22,24 @@ int init_all_processes() {
   file_p is a file pointer that we will create the process with */
 pcb* process_create(uint32_t* file_p) {
 
+	os_printf("lol do we even get here?\n");
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
+
 	
-	if(*free_space_in_pcb_table == 0) {
+	//This used to be == 0, which doesn't seem correct
+	if(*free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
-		
+		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		Boolean success = load_file(pcb_pointer, file_p);
+
+		os_printf("PROCESS_CREATE_DEBUG: 41\n");
 		if(!success) {
 		 	return (pcb*) -1;
 		}
-		
+		os_printf("PROCESS_CREATE_DEBUG: 45\n");
+
 		//fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
 		//initialize PCB		
@@ -43,7 +47,7 @@ pcb* process_create(uint32_t* file_p) {
         
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
-		pcb_pointer->function = &file_p;
+		pcb_pointer->function = &sample_func;
 		pcb_pointer->has_executed = 0;
 
 		return pcb_pointer;
@@ -294,7 +298,7 @@ uint32_t execute_process(pcb* pcb_p) {
 	load_process_state(pcb_p->PID);
     
     //4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
-    assert(pcb_p->stored_vas == NULL && "Assert error: trying to enter execute_process with already initialized process!");
+    assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
     
     //4-13-15: Create new virtual address space for process and switch into it
     pcb_p->stored_vas = vm_new_vas();

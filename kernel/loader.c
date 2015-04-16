@@ -118,12 +118,12 @@ uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 
 	if(i == -1) {
-		os_printf("File is Not an ELF File. Exiting");
+		os_printf("File is Not an ELF File. Exiting\n");
 		return -1;
 	}
 
 	if(h->e_phnum == 0) {
-		os_printf("No Program headers in ELF file. Exiting");
+		os_printf("No Program headers in ELF file. Exiting\n");
 		return -1;
 	}
 	
