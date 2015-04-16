@@ -133,6 +133,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		return VM_ERR_MAPPED;
 	}
 
+	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	return 0;
 }
@@ -230,8 +231,12 @@ void vm_test_early() {
 	os_printf("Should not have seen a page fault, should see one now.\n");
 	p2[1024]++;
 
+	// Hey, let's check the access bit now.
+	p2 = ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE));
+	os_printf("Entry is the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
+
 	os_printf("Leaving early test code for VM.\n");
-	while(1);
+	while (1);
 }
 
 // TODO: Move this into a framework...
