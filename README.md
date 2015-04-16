@@ -3,7 +3,7 @@ course_os
 
 CS 439 course OS
 
-Copyright (c) 2014, <OWNER>
+Copyright (c) 2015, <OWNER>
  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
