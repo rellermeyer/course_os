@@ -244,7 +244,7 @@ int os_printf(const char *str_buf, ...)
 }
 
 /* Set the first n bytes of dest to be the value c.*/
-void *os_memset(void *dest, int c, os_size_t n)
+void *os_memset(void *dest, char c, os_size_t n)
 {
 	unsigned char *s = dest;
 	os_size_t k;
@@ -339,11 +339,10 @@ void *os_memset(void *dest, int c, os_size_t n)
  If c is not found, then return a pointer to the NULL character at
  the end of String s.
  */
-char *__strchrnul(const char *s, int c)
+char *__strchrnul(const char *s, char c)
 {
 	os_size_t *w, k;
 
-	c = (unsigned char) c;
 	if (!c)
 		return (char *) s + os_strlen(s);
 
