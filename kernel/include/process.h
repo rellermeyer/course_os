@@ -65,10 +65,11 @@ typedef struct pcb
 	uint32_t user_id;
 	uint32_t group_id;
 	uint32_t parent_id;
-	uint32_t (*function)(uint32_t);
+	uint32_t (*function)();
 	uint32_t has_executed;
+	vas* stored_vas;
 	//CPU state data
-	//PROCESS_STATE current_state;
+	PROCESS_STATE current_state;
 
 	/*
 	 * r0-r3 are the argument and scratch registers; r0-r1 are also the result registers
