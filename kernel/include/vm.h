@@ -7,14 +7,14 @@
 
 #define PAGE_TABLE_SIZE (1<<14)
 
-typedef struct vas {
+struct vas {
 	// A pointer to the first level of the pagetable.
 	unsigned int *l1_pagetable;
 	unsigned int *l1_pagetable_phys; // The physical address to it
 
 	// A pointer to the next VAS (it's a linked list)
 	struct vas *next;
-}vas;
+};
 
 #define VM_ERR_BADV -1
 #define VM_ERR_BADP -2
