@@ -49,15 +49,23 @@ void start(uint32_t *p_bootargs)
 	print_uart0((char*)p_bootargs);
 	print_uart0("\n");*/
 	os_printf("%X\n",*p_bootargs);
+	vm_init();
+	os_printf("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
+
+void vm_test_early();
 
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs)
 {
+
+
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
+
+	vm_test_early();
 
 	// Setup kmalloc...
 	init_heap();
