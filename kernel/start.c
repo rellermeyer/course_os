@@ -27,6 +27,10 @@
 #include "drivers/uart.h"
 #include "klibc.h"
 #include "vm.h"
+#include "scheduler.h"
+
+// Tests
+#include "tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -85,7 +89,11 @@ void start2(uint32_t *p_bootargs)
 	/* init_all_processes(); */
 	//print_process_state(0);
 
-	//run_process_tests();
+	init_prq_tests();
+
+	init_sched();
+
+	run_process_tests();
 
 	//print_PID();
 	// init_q();
