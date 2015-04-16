@@ -119,7 +119,7 @@ int print_int(char *buf, int buflen,
 		max_len--;
 		if (max_len == 0) return orig_max_len;
 	}
-	if (ndigits == 0) {
+	if (ndigits == 0 && padding<=0) {
 		*buf = '0';
 		buf++;
 		max_len--;
