@@ -95,16 +95,17 @@ void mmap(void *p_bootargs) {
 	unsigned int phys_addr = P_KERNTOP;
 	// +1 to skip L1PTBASE
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
-		first_level_pt[i] = coarse_page_table_address | 1;
+		first_level_pt[i] = phys_addr | 0x0400 | 2;
+		phys_addr += 0x100000;
 		//break;
 		//phys_addr += 0x100000;
 	}
 
 	// Fill in the coarse page table
 	// (TODO: How do we handle 64kB pages? Do they take up 16 entries?)
-	os_memset((void*)coarse_page_table_address, 0, L2_PAGE_TABLE_SIZE);
+	//os_memset((void*)coarse_page_table_address, 0, L2_PAGE_TABLE_SIZE);
 	// Set the first page to phys_addr
-	*(unsigned int*)coarse_page_table_address = phys_addr | 0x20 | 2;
+	//*(unsigned int*)coarse_page_table_address = phys_addr | 0x20 | 2;
 	os_printf("0x%X\n", *(unsigned int*)coarse_page_table_address);
 
 	first_level_pt[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
@@ -155,8 +156,7 @@ void mmap(void *p_bootargs) {
 	os_printf("Got here\n");
 
 	// Build the free frame list
-	// TODO: Uncomment!!!
-	//vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
+	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");
