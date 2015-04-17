@@ -1,9 +1,11 @@
 #include "include/testing_suite.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "klibc.h"
+#include "mem_alloc.h"
 
 TEST_SUITE create_test_suite() {
-    TEST_SUITE tests = {malloc(sizeof(TEST)), 0};//malloc(sizeof(TEST_SUITE));
+    TEST_SUITE tests;
+    tests.TESTS = (TEST*) malloc(sizeof(TEST));
+    tests.NUM_OF_TESTS = 0;//malloc(sizeof(TEST_SUITE));
     return tests;
 }
 
@@ -17,19 +19,19 @@ void run_tests(TEST_SUITE tests) {
     int i;
     tests.TESTS -= tests.NUM_OF_TESTS;
 
-    printf("[==========] Running test suite\n");
-    printf("[----------] Running %d tests...\n", tests.NUM_OF_TESTS);
-    printf("[----------]\n");
+    os_printf("[==========] Running test suite\n");
+    os_printf("[----------] Running %d tests...\n", tests.NUM_OF_TESTS);
+    os_printf("[----------]\n");
 
     for (i = 0; i < tests.NUM_OF_TESTS; ++i) {
-        printf("[RUN       ] %s\n", (tests.TESTS[i]).test_name);
+    	os_printf("[RUN       ] %s\n", (tests.TESTS[i]).test_name);
         if ((tests.TESTS[i]).ptr_to_test() == 1) {
-	    printf("[        OK] %s\n", (tests.TESTS[i]).test_name);
+        	os_printf("[        OK] %s\n", (tests.TESTS[i]).test_name);
         }
         else {
-	    printf("[      FAIL] %s\n", (tests.TESTS[i]).test_name);
+        	os_printf("[      FAIL] %s\n", (tests.TESTS[i]).test_name);
         }
     }
 
-    printf("[==========] Done\n");
+    os_printf("[==========] Done\n");
 }

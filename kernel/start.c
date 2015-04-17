@@ -27,6 +27,7 @@
 #include "drivers/uart.h"
 #include "klibc.h"
 #include "vm.h"
+#include "tests.h"
 #include "scheduler.h"
 
 // Tests
@@ -76,6 +77,11 @@ void start2(uint32_t *p_bootargs)
 	vm_test();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
+
+	run_prq_tests();
+
+	init_sched();
+
 	asm volatile("swi 1");
 	while (1);
 	argparse_process(p_bootargs);
@@ -88,12 +94,6 @@ void start2(uint32_t *p_bootargs)
 	//initialize pcb table and PID
 	/* init_all_processes(); */
 	//print_process_state(0);
-
-	init_prq_tests();
-
-	init_sched();
-
-	run_process_tests();
 
 	//print_PID();
 	// init_q();

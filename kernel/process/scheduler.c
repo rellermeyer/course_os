@@ -1,6 +1,7 @@
 #include "../include/mem_alloc.h"
 #include "../include/scheduler.h"
+#include "klibc.h"
 
 void init_sched(){
-	printf("Initializing scheduler\n");
+	os_printf("Initializing scheduler\n");
 }

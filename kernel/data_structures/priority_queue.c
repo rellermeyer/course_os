@@ -1,5 +1,6 @@
-#include "../include/mem_alloc.h"
 #include "../include/priority_queue.h"
+#include "../include/mem_alloc.h"
+#include "klibc.h"
 
 void __prq_insert(prq_node aNode, prq_node* heap, int size);
 void __prq_shift_down(prq_node* heap, int size, int idx);
@@ -47,10 +48,9 @@ void __prq_shift_down(prq_node* heap, int size, int idx) {
 }
 
 prq_node __prq_remove_min(prq_node * heap, int size) {
-	int cidx;
 	prq_node rv = heap[1];
 	if (PRQ_DEBUG) {
-		printf("%d:%d:%d\n", size, heap[1].value, heap[size].value);
+		os_printf("%d:%d:%d\n", size, heap[1].value, heap[size].value);
 	}
 	heap[1] = heap[size];
 	--size;
@@ -70,7 +70,7 @@ prq_node prq_dequeue(prq_handle * queue) {
 	return rv;
 }
 
-void init_queue(prq_handle * queue, int n) {
+void prq_init_queue(prq_handle * queue, int n) {
 	queue->size = 0;
 	queue->heap = (prq_node*) malloc(sizeof(prq_node) * (n + 1));
 }

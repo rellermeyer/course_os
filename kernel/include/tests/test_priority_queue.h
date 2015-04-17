@@ -8,6 +8,6 @@
 #ifndef KERNEL_INCLUDE_TESTS_TEST_PRIORITY_QUEUE_H_
 #define KERNEL_INCLUDE_TESTS_TEST_PRIORITY_QUEUE_H_
 
-void init_prq_tests();
+void run_prq_tests();
 
 #endif /* KERNEL_INCLUDE_TESTS_TEST_PRIORITY_QUEUE_H_ */
