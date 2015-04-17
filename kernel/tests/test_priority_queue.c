@@ -4,36 +4,54 @@
 #include "klibc.h"
 
 #define NUMTESTS 2
+#define MIN_PRIORITY 20
+#define MAX_PRIORITY -20
 
 //This is where you define the tests you want to run. They return 1 on success and 0 on failure.
 int test_prq_1() {
-	return 1;
-}
-
-int test_prq_2() {
-	int n;
-	int i;
 	prq_handle queue;
 	prq_node hn;
-	n = 50;
-	prq_init_queue(&queue, n);
+	int i;
 
-	for (i = 0; i < n; ++i) {
-		hn.value = 50 % 10000;
-		os_printf("prq_enqueue node with value: %d\n", hn.value);
+	prq_init(&queue, 100);
+
+	// Add reverse
+	for (i = MIN_PRIORITY; i >= MAX_PRIORITY; i--) {
+		hn.priority = i;
 		prq_enqueue(hn, &queue);
 	}
 
-	os_printf("\nprq_dequeue all values:\n");
-
-	for (i = 0; i < n; ++i) {
-		hn = prq_dequeue(&queue);
-		os_printf(
-				"prq_dequeued node with value: %d, queue size after removal: %d\n",
-				hn.value, queue.size);
+	// Add forward
+	for (i = MAX_PRIORITY; i <= MIN_PRIORITY; i++) {
+		hn.priority = i;
+		prq_enqueue(hn, &queue);
 	}
 
-	return 1;
+	for (i = MAX_PRIORITY; i <= MIN_PRIORITY; i++) {
+		hn = prq_dequeue(&queue);
+		int priority_1 = hn.priority;
+		hn = prq_dequeue(&queue);
+		int priority_2 = hn.priority;
+		if (priority_1 != priority_2) {
+			os_printf("test_prq_1 [%d]: expected [%d]\n", priority_1,
+					priority_2);
+			return TEST_FAIL;
+		}
+		if (priority_1 != i) {
+			os_printf("test_prq_1 [%d]: expected [%d]\n", priority_1, i);
+			return TEST_FAIL;
+		}
+		if (priority_2 != i) {
+			os_printf("test_prq_1 [%d]: expected [%d]\n", priority_2, i);
+			return TEST_FAIL;
+		}
+	}
+
+	return TEST_OK;
+}
+
+int test_prq_2() {
+	return TEST_OK;
 }
 
 void run_prq_tests() {

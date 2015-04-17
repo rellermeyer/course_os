@@ -4,6 +4,9 @@ typedef struct Test {
   int (*testptr)();
 } Test;
 
+#define TEST_FAIL	0
+#define TEST_OK		1
+
 // Run_tests takes an array of tests which it runs and prints the results.
 void run_tests(Test *test_group[], int num_tests);
 

@@ -11,7 +11,7 @@
 #define PRQ_DEBUG 1
 
 typedef struct prq_node {
-    int value;
+    int priority;
     void * data;
 } prq_node;
 
@@ -22,6 +22,6 @@ typedef struct prq_handle {
 
 void prq_enqueue(prq_node node, prq_handle * queue);
 prq_node prq_dequeue(prq_handle * queue);
-void prq_init_queue(prq_handle * queue, int n);
+void prq_init(prq_handle * queue, int n);
 
 #endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */
