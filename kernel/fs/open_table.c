@@ -7,14 +7,7 @@
 should probably be converted to heap memory instead of done locally on the stack. Also,
 can you add a function like this, so that we can access the file_descriptor struct for a 
 given int fd in order to get to its offset, etc. from file.c....? Thanks!
-
-file_descriptor* get_file_descriptor(int index){
-        file_descriptor* fd_to_be_returned = table[fd];
-        return fd_to_be_returned;
-}
-
-where index is the int version of
-the fd that open() returns to user, but what's returned is a pointer to the file_descriptor struct. */
+*/
 
 #include "../include/file.h"
 #include "../include/klibc.h"
@@ -64,6 +57,14 @@ void fs_table_init() {
         //since there is no turn off at the moment, the function is still fo be implemented
 }
 
+
+//returns struct of descriptor at index fd
+//if invalid, returns NULL.
+struct file_descriptor get_descriptor(int fd){
+	if (file_is_open(fd))
+		return table[fd];
+	return NULL;
+}
 
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
