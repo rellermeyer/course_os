@@ -1,3 +1,5 @@
+/* Device Driver for ARM Dual-Timer Module (SP804)
+Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.arm.doc.ddi0271d/DDI0271.pdf*/
 #include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
@@ -19,6 +21,10 @@ void timer_start() {
   os_printf("Timer driver loaded\n");
   timer_pointers[0]->timer_load_value = 1000;
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
+<<<<<<< HEAD
+=======
+  timer_pointers[0]->control |= 0x1;
+>>>>>>> 39f6a31008dd664fd3fcbe9b5dbc62d998312e3f
   os_printf("control value:%x\n", timer_pointers[0]->control);
   for(int i=0; i< 4; i++){
     os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
@@ -57,7 +63,7 @@ int set_background_load_value(int timer_index, int value){
 /* Clear any interrupt data for the timer.
  * note: writing to the clear timer register clears
  * the interrupt status completely. */
-int clear_interupt(int timer_index){
+int clear_interrupt(int timer_index){
   if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->interrupt_clear = 0x1;
     return 0;
@@ -114,7 +120,7 @@ int set_free_running_mode(int timer_index){
   }
   return -1;
 }
-
+//starts the timer, countdown from load value
 int start_timer(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x40;
@@ -122,13 +128,17 @@ int start_timer(int timer_index){
   }
   return -1;
 }
-
+//prints the configuration of the control byte
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
+  return 0;
   }
+  return -1;
 }
-//testing timer code
+
+/*testing timer code
+starts interrupts every start_val ticks */
 int start_interrupts(int start_val){
         initialize_timers();
         timer_start();
@@ -147,6 +157,7 @@ int start_interrupts(int start_val){
 	}       
         return 0;
 }
+//just testing code
 void timer_test(){
 	initialize_timers();
 
@@ -173,4 +184,5 @@ void timer_test(){
 	//	os_printf("time %d\n",get_current_timer_value(3));		
 	return;
 }
+
 
