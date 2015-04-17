@@ -136,18 +136,18 @@ void print_control_status(int timer_index){
 
 /*testing timer code
 starts interrupts every start_val ticks */
-int start_interrupts(int start_val){
+int start_interrupts(int timer_index,int start_val){
         initialize_timers();
-        timer_start(1);
-        set_background_load_value(1,start_val);
-        set_periodic_mode(1);
-        enable_timer_interrupt(1);
-	print_control_status(1);
-        enable_timer(1);
+        timer_start(timer_index);
+        set_background_load_value(timer_index,start_val);
+        set_periodic_mode(timer_index);
+        enable_timer_interrupt(timer_index);
+	print_control_status(timer_index);
+        enable_timer(timer_index);
 	// int i=10;
 	while(1){
-                os_printf("\n%d",get_current_timer_value(1));
-		if(get_current_timer_value(1)==0){
+                os_printf("\n%d",get_current_timer_value(timer_index));
+		if(get_current_timer_value(timer_index)==0){
                         os_printf("\nInterrupt");
         //        	i--;
 		}
@@ -159,7 +159,7 @@ void timer_test(){
 	initialize_timers();
 
 	os_printf("time %d\n",get_current_timer_value(1));
-	start_interrupts(5);
+	start_interrupts(2,5);
 	//timer_start();
 	//start_timer(1);
 	//start_timer(2);
