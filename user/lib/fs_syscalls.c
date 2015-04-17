@@ -84,14 +84,14 @@ int read(int fd, void* buf, int numBytes){
 	int bytesRead; //this will be what we return
 
         // preserve registers r1, r2, and r3 on the stack
-    asm volatile("push r1" "\n\t"
-                 "push r2" "\n\t"
-                 "push r3" "\n\t");
+    // asm volatile("push r1"
+    //              "push r2"
+    //              "push r3");
 
 	// move the arguments into registers for kread to use:
-	asm volatile("mov %0, (fd)": "r1");
-	asm volatile("mov %0, (buf)": "r2")
-	asm volatile("mov %0, (numBytes)": "r3");
+	asm volatile("mov %[fd], r1":: "r1");
+	asm volatile("mov %[buf], r2":: "r2")
+	asm volatile("mov %[numBytes], r3":: "r3");
 
 	// trigger the software_interrupt_handler in hw_handler.c:
 	asm volatile("swi SYSCALL_READ");
@@ -101,9 +101,9 @@ int read(int fd, void* buf, int numBytes){
 	asm volatile("mov %0, r1" : "=r" (bytesRead));
 
 	// Restore r1, r2, and r3 to original values
-    asm volatile("pop r3" "\n\t"
-                 "pop r2" "\n\t"
-                 "pop r1" "\n\t");
+    // asm volatile("pop r3" "\n\t"
+    //              "pop r2" "\n\t"
+    //              "pop r1" "\n\t");
 	return bytesRead;
 	//note, actual data read from file gets moved to buf in kread()
 }//end open syscall
