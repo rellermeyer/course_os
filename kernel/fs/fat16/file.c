@@ -6,23 +6,88 @@
 #include "../../include/klibc.h"
 
 //NOTES:
-//free list = keeps track of which blocks on the storage device are free (i.e. available)...must be stored persistently
-
-
-//CONSTANTS:
-const int BLOCKSIZE = 2048;
-
 
 //STRUCTS:
-struct file
+struct superblock
 {
-	/* data */
+	char* fs_name; // 32 bytes (max length for this field abides by MAX_NAME_LENGTH)
+	int fs_version; // 36 bytes
+	int magic_num; // 40 bytes
+	int sd_card_capacity; // 44 bytes
+	int blocksize; // 48 bytes
+	int root_inum; // 52 bytes
+	int max_inodes; // 56 bytes
+	int max_data_blocks; // 66 bytes
+	int inode_bitmap_loc; // 70 bytes
+	int data_bitmap_loc; // 74 bytes
+	int start_inode_table_loc; // 78 bytes
+	int start_data_blocks_loc; // 82 bytes
+	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
+};
+
+struct metadata
+{
 	char* fname;
 	list inode;
 	int size;
 	bitvector perms; // a bitvector of length three to track: read, write, execute
-	time creation_time; // need to look up CourseOS specific data type
+	time creation_time; // need to look up CourseOS specific data type	
 };
+
+
+struct directory
+{
+	struct metadata meta;
+};
+
+struct file
+{
+	struct metadata meta;
+	void* data_blocks[];
+};
+
+//CONSTANTS:
+const int SUPERBLOCK = 0;
+const int MAX_NAME_LENGTH = 32;
+const int MAX_BLOCKS;
+conts int BLOCKSIZE = 512;
+
+struct superblock FS;
+
+// const char* FS_NAME;
+// const int FS_VERSION;
+// const int MAGIG_NUM;
+// const int SD_CARD_CAPACITY;
+// const int BLOCKSIZE;
+// const int ROOT_INUM;
+// const int MAX_INODES;
+// const int MAX_DATA_BLOCKS;
+// const int ROOT_INUM;
+// const int INODE_BITMAP_LOC;
+// const int DATA_BITMAP_LOC;
+// const int START_INDOE_TABLE_LOC;
+// const int START_DATA_BLOCKS_LOC;
+
+// initialize the filesystem:
+int kfs_init(){
+	//initialize the SD Card driver:
+	init_sd();
+	//read in the super block from disk and store in memory:
+	void* superblock_spaceholder = kmalloc(BLOCKSIZE);
+	receive(superblock_spaceholder, 0);
+	os_size_t size_of_superblock = sizeof(struct superblock);
+	uint32_t* fs_superblock_temp = (uint32_t*) kmalloc(size_of_superblock);
+	os_memcpy(superblock_spaceholder, fs_superblock_temp, size_of_superblock);
+	superblock* fs_superblock = (superblock*) fs_superblock_temp;
+
+	FS = *fs_superblock;
+
+	//initialize the free list by grabbing it from the SD Card:
+	
+
+
+
+}
 
 
 int kopen(char* filepath, char mode){
@@ -215,7 +280,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
     uint32_t* transferSpace = kmalloc(BLOCKSIZE);
     // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
 
-    // have offset in thefile already, just need to move it and copy.
+    // have offset in the file already, just need to move it and copy.
     // fd->offset is the offset in the file. 
     int blockNum;
     int bytes_left_in_block;
@@ -231,7 +296,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			// write total_bytes_left
 			os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
 			transferSpace -= total_bytes_left;
-			// pointer to start, blockNum, where we are in file, lengh of write
+			// pointer to start, blockNum, where we are in file, length of write
 			transmit(transferSpace, blockNum, fd->offset, total_bytes_left);
 
 			bytes_written += total_bytes_left;
