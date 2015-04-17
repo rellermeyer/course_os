@@ -200,18 +200,53 @@ int kread(int fd_int, void* buf, int numBytes) {
 
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
-int kwrite(int fd, void* buf, int num_bytes) {
+int kwrite(int fd_int, void* buf, int num_bytes) {
 	int bytes_written;
-        struct file_descriptor filedescr = table[fd];
-        if (filedescr.permission != 'w' || filedescr.permission != 'b') {
+        file_descriptor* fd = get_file_descriptor(fd_int);
+        if (fd->permission != 'w' || fd->permission != 'b') {
                 os_printf("no permission \n");
                 return -1;
         }
 
-	//PASS PARAMETERS TO TRANSMIT	
-	transmit();
-	//GET RETURN VALUES FROM RECEIVE()
+    int total_bytes_left = num_bytes;
+    int bytes_written = 0;
 
+    uint32_t* buf_offset = buf;
+    uint32_t* transferSpace = kmalloc(BLOCKSIZE);
+    // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
+
+    // have offset in thefile already, just need to move it and copy.
+    // fd->offset is the offset in the file. 
+    int blockNum;
+    int bytes_left_in_block;
+    while(bytes_written < total_bytes_left) {
+		blockNum = fd->offset / BLOCKSIZE;
+		// need to put things in transferSpace, move pointer back when done
+		bytes_left_in_block = BLOCKSIZE - (fd->offset % BLOCKSIZE);
+		if(total_bytes_left <= bytes_left_in_block){
+		/*	--------------- 			-----------------				
+			|~~~~~~~|      |	 OR		|     |~~~~~|   |
+			----------------			-----------------
+		*/ 
+		// write total_bytes_left
+		os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
+		transferSpace -= total_bytes_left;
+		transmit();
+		bytes_written += total_bytes_left;
+		total_bytes_left -= total_bytes_left;
+		}
+		else if(bytes_left_in_block <= total_bytes_left) {
+			/* 
+				------------
+				|	    |~~~|
+				------------
+				read to the end of the block
+			*/
+		} else {
+			// read a whole block
+		}
+		transmit(transferSpace,blockNum);
+	}
 	return bytes_written;
 } // end kwrite();
 
