@@ -17,7 +17,7 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
-void timer_start() {
+void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
   timer_pointers[0]->timer_load_value = 1000;
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
