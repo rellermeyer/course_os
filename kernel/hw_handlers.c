@@ -129,10 +129,11 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		void* buf;
 		int numBytes;
 		// retrieve the args that read() put in r1, r2 and pass to kread():
-		asm volatile("mov %0, r1": "(fd)");
+		asm volatile("mov %r1, %[fd]");
 		asm volatile("mov %0, r2": "(buf)");
 		asm volatile("mov %0, r3": "(numBytes)");
 		// call kread(), passing appropriate args:
+		// TODO: macro to translate process's virtual memory into kernel's view of virtual memory
 		int bytesRead = kread(fd, buf, numBytes);
 		// move fd that kread() returns to a r1 to be retrieved by read() and returned to user:
 		asm volatile("mov %0, (bytesRead)" : "r1");
