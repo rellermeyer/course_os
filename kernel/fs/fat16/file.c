@@ -47,7 +47,7 @@ struct file
 };
 
 //CONSTANTS:
-const int SUPERBLOCK = 0;
+const int SUPERBLOCK = 1;
 const int MAX_NAME_LENGTH = 32;
 const int MAX_BLOCKS;
 conts int BLOCKSIZE = 512;
@@ -74,17 +74,16 @@ int kfs_init(){
 	init_sd();
 	//read in the super block from disk and store in memory:
 	void* superblock_spaceholder = kmalloc(BLOCKSIZE);
-	receive(superblock_spaceholder, 0);
+	receive(superblock_spaceholder, (SUPERBLOCK*BLOCKSIZE));
 	os_size_t size_of_superblock = sizeof(struct superblock);
-	uint32_t* fs_superblock_temp = (uint32_t*) kmalloc(size_of_superblock);
-	os_memcpy(superblock_spaceholder, fs_superblock_temp, size_of_superblock);
-	superblock* fs_superblock = (superblock*) fs_superblock_temp;
-
+	void* fs_superblock_temp = kmalloc(size_of_superblock);
+	// os_memcpy(superblock_spaceholder, fs_superblock_temp, size_of_superblock);
+	struct superblock* fs_superblock = (struct superblock*) fs_superblock_temp;
 	FS = *fs_superblock;
 
 	//initialize the free list by grabbing it from the SD Card:
 	
-
+	FS->inode_bitmap_loc
 
 
 }
