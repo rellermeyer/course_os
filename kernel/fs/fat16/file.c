@@ -224,16 +224,19 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 		// need to put things in transferSpace, move pointer back when done
 		bytes_left_in_block = BLOCKSIZE - (fd->offset % BLOCKSIZE);
 		if(total_bytes_left <= bytes_left_in_block){
-		/*	--------------- 			-----------------				
-			|~~~~~~~|      |	 OR		|     |~~~~~|   |
-			----------------			-----------------
-		*/ 
-		// write total_bytes_left
-		os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
-		transferSpace -= total_bytes_left;
-		transmit();
-		bytes_written += total_bytes_left;
-		total_bytes_left -= total_bytes_left;
+			/*	--------------- 			-----------------				
+				|~~~~~~~|      |	 OR		|     |~~~~~|   |
+				----------------			-----------------
+			*/ 
+			// write total_bytes_left
+			os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
+			transferSpace -= total_bytes_left;
+			// pointer to start, blockNum, where we are in file, lengh of write
+			transmit(transferSpace, blockNum, fd->offset, total_bytes_left);
+
+			bytes_written += total_bytes_left;
+			total_bytes_left -= total_bytes_left;
+			fd->offset += total_bytes_left;
 		}
 		else if(bytes_left_in_block <= total_bytes_left) {
 			/* 
@@ -242,10 +245,24 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				------------
 				read to the end of the block
 			*/
+			os_memcpy(buf_offset, transferSpace, (os_size_t) bytes_left_in_block);
+			transferSpace -= bytes_left_in_block;
+			// pointer to start, blockNum, where we are in file, lengh of write
+			transmit(transferSpace, blockNum, fd->offset, bytes_left_in_block);
+
+			bytes_written += bytes_left_in_block;
+			total_bytes_left -= tbytes_left_in_block;
+			fd->offset += bytes_left_in_block;
 		} else {
-			// read a whole block
+			os_memcpy(buf_offset, transferSpace, (os_size_t) BLOCKSIZE);
+			transferSpace -= BLOCKSIZE;
+			// pointer to start, blockNum, where we are in file, lengh of write
+			transmit(transferSpace, blockNum, fd->offset, BLOCKSIZE);
+
+			bytes_written += BLOCKSIZE;
+			total_bytes_left -= BLOCKSIZE;
+			fd->offset += BLOCKSIZE;
 		}
-		transmit(transferSpace,blockNum);
 	}
 	return bytes_written;
 } // end kwrite();
