@@ -236,7 +236,7 @@ void vm_test_early() {
 	os_printf("Entry is the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
 
 	os_printf("Leaving early test code for VM.\n");
-	while (1);
+	//while (1);
 }
 
 // TODO: Move this into a framework...

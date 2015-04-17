@@ -65,7 +65,7 @@ void start2(uint32_t *p_bootargs)
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
 
-	vm_test_early();
+	//vm_test_early();
 
 	// Setup kmalloc...
 	init_heap();
