@@ -9,7 +9,7 @@
 
 void fs_table_init(); //initializes fs open table at boot up time
 
-int add_to_opentable(struct file * f, char perm);  //adds a file to the opentable
+int add_to_opentable(struct file *f, char perm);  //adds a file to the opentable
 					//returns fd if successul
 					//and -1 if unsuccessful
 
