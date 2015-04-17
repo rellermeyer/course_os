@@ -69,7 +69,7 @@ int clear_interrupt(int timer_index){
 
 int set_32_bit_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;
+    timer_pointers[timer_index]->control |= 0x2;
     return 0;
   }
   return -1;
@@ -92,7 +92,7 @@ int set_periodic_mode(int timer_index){
 
 int enable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;//0x40;
+    timer_pointers[timer_index]->control |= 0x20;
     return 0;
   }
   return -1;
@@ -108,8 +108,6 @@ int disable_timer_interrupt(int timer_index){
 
 
 int set_free_running_mode(int timer_index){
-  //Documentation is wrong
-  //control register bit 1 is for one shot or wrapping mode (assuming 0 index counting)
   if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->control |= 0x1;
     return 0;
