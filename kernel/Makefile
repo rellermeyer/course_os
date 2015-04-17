@@ -16,7 +16,7 @@ CFLAGS += -std=gnu99
 CFLAGS += -ffreestanding 
 CFLAGS += -nostdinc
 CFLAGS += -Wall
-CFLAGS += -Werror
+#CFLAGS += -Werror
 
 run: flash.bin
 #	(cat uboot-commands.ubt; cat) | ${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"

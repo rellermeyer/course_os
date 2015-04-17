@@ -28,6 +28,8 @@
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
+#include "drivers/timer.h"
+
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -78,6 +80,7 @@ void start2(uint32_t *p_bootargs)
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
 
+	timer_test();
 	vm_test();
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 	test_allocate();
