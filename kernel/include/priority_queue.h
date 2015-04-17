@@ -8,7 +8,7 @@
 #ifndef KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 #define KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 
-#define PRQ_DEBUG 1
+#define PRQ_DEBUG 0
 
 typedef struct prq_node {
     int priority;
