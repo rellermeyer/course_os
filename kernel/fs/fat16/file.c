@@ -7,66 +7,18 @@
 
 //NOTES:
 
-//STRUCTS:
-struct superblock
-{
-	char* fs_name; // 32 bytes (max length for this field abides by MAX_NAME_LENGTH)
-	int fs_version; // 36 bytes
-	int magic_num; // 40 bytes
-	int sd_card_capacity; // 44 bytes
-	int blocksize; // 48 bytes
-	int root_inum; // 52 bytes
-	int max_inodes; // 56 bytes
-	int max_data_blocks; // 66 bytes
-	int inode_bitmap_loc; // 70 bytes
-	int data_bitmap_loc; // 74 bytes
-	int start_inode_table_loc; // 78 bytes
-	int start_data_blocks_loc; // 82 bytes
-	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
-};
-
-struct metadata
-{
-	char* fname;
-	list inode;
-	int size;
-	bitvector perms; // a bitvector of length three to track: read, write, execute
-	time creation_time; // need to look up CourseOS specific data type	
-};
-
-
-struct directory
-{
-	struct metadata meta;
-};
-
-struct file
-{
-	struct metadata meta;
-	void* data_blocks[];
-};
-
 //CONSTANTS:
 const int SUPERBLOCK = 1;
 const int MAX_NAME_LENGTH = 32;
 const int MAX_BLOCKS;
-conts int BLOCKSIZE = 512;
+const int BLOCKSIZE = 512;
 
-struct superblock FS;
+struct *superblock FS;
+bitvector* inode_bitmap;
+bitvector* data_block_bitmap;
+Inode* inode_table;
+void* data_table;
 
-// const char* FS_NAME;
-// const int FS_VERSION;
-// const int MAGIG_NUM;
-// const int SD_CARD_CAPACITY;
-// const int BLOCKSIZE;
-// const int ROOT_INUM;
-// const int MAX_INODES;
-// const int MAX_DATA_BLOCKS;
-// const int ROOT_INUM;
-// const int INODE_BITMAP_LOC;
-// const int DATA_BITMAP_LOC;
-// const int START_INDOE_TABLE_LOC;
-// const int START_DATA_BLOCKS_LOC;
 
 // initialize the filesystem:
 int kfs_init(){
@@ -74,17 +26,26 @@ int kfs_init(){
 	init_sd();
 	//read in the super block from disk and store in memory:
 	void* superblock_spaceholder = kmalloc(BLOCKSIZE);
-	receive(superblock_spaceholder, (SUPERBLOCK*BLOCKSIZE));
-	os_size_t size_of_superblock = sizeof(struct superblock);
-	void* fs_superblock_temp = kmalloc(size_of_superblock);
-	// os_memcpy(superblock_spaceholder, fs_superblock_temp, size_of_superblock);
-	struct superblock* fs_superblock = (struct superblock*) fs_superblock_temp;
-	FS = *fs_superblock;
+	receive(superblock_spaceholder, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
+
+	FS = (struct superblock*) superblock_spaceholder; // super block is smaller than block size
 
 	//initialize the free list by grabbing it from the SD Card:
 	
-	FS->inode_bitmap_loc
+	void* inode_bitmap_temp = kmalloc(BLOCKSIZE); 
+	receive(inode_bitmap_temp, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
+	inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
 
+	void* data_block_bitmap_temp = kmalloc(BLOCKSIZE);
+	receive(data_block_bitmap_temp, (FS->data_bitmap_loc) * BLOCKSIZE);
+	data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
+
+	void* inode_table_temp = kmalloc(BLOCKSIZE);
+	receive(inode_table_temp, (FS->start_inode_table_loc) * BLOCKSIZE);
+	inode_table = inode_table_temp;  // pointer to the start of the inode table
+
+	data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
+	receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
 
 }
 
