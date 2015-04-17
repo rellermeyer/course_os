@@ -21,10 +21,6 @@ void timer_start() {
   os_printf("Timer driver loaded\n");
   timer_pointers[0]->timer_load_value = 1000;
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
-<<<<<<< HEAD
-=======
-  timer_pointers[0]->control |= 0x1;
->>>>>>> 39f6a31008dd664fd3fcbe9b5dbc62d998312e3f
   os_printf("control value:%x\n", timer_pointers[0]->control);
   for(int i=0; i< 4; i++){
     os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
