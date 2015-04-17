@@ -19,7 +19,6 @@ void timer_start() {
   os_printf("Timer driver loaded\n");
   timer_pointers[0]->timer_load_value = 1000;
   os_printf("control address:%x\n", &(timer_pointers[0]->control));
-  timer_pointers[0]->control |= 0x1;
   os_printf("control value:%x\n", timer_pointers[0]->control);
   for(int i=0; i< 4; i++){
     os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
@@ -83,7 +82,7 @@ int get_current_timer_value(int timer_index){
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control ^=0x1;// &=0xFFFFFFFD;
+    timer_pointers[timer_index]->control &=0xFFFFFFBE;
     return 0;
   }
   return -1;
