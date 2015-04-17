@@ -1,50 +1,27 @@
-#ifndef __PQUEUE__H__
-#define __PQUEUE__H__
+/*
+ * priority_queue.h
+ *
+ *  Created on: Apr 16, 2015
+ *      Author: mwkurian
+ */
 
-/**
-* Debugging macro .
-*
-* Checks for a NULL pointer, and prints the error message, source file and
-* line via 'stderr' .
-* If the check fails the program exits with error code (-1) .
-*/
-#define DEBUG(msg) printf("%s\n", msg)
+#ifndef KERNEL_INCLUDE_PRIORITY_QUEUE_H_
+#define KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 
-#define NP_CHECK(ptr) \
-    { \
-        if (NULL == (ptr)) { \
-            DEBUG("NULL"); \
-            exit(-1); \
-        } \
-    } \
+#define PRQ_DEBUG 0
 
-/**
-* Priority Queue Structure
-*/
-typedef struct PQueue_s {
-    /* The actual size of heap at a certain time */
-    size_t size;
-    /* The amount of allocated memory for the heap */
-    size_t capacity;
-    /* An array of (void*), the actual max-heap */
-    void **data;
-    /* A pointer to a comparator function, used to prioritize elements */
-    int (*cmp)(const void *d1, const void *d2);
-} PQueue;
+typedef struct prq_node {
+    int priority;
+    void * data;
+} prq_node;
 
-/** Allocates memory for a new Priority Queue .
-Needs a pointer to a comparator function, thus establishing priorities .
-*/
-PQueue *pqueue_new(int (*cmp)(const void *d1, const void *d2),
-                   size_t capacity);
+typedef struct prq_handle {
+    prq_node * heap;
+    int size;
+} prq_handle;
 
-/** De-allocates memory for a given Priority Queue */
-void pqueue_delete(PQueue *q);
+void prq_enqueue(prq_node node, prq_handle * queue);
+prq_node prq_dequeue(prq_handle * queue);
+void prq_init(prq_handle * queue, int n);
 
-/** Add an element inside the Priority Queue */
-void pqueue_enqueue(PQueue *q, const void *data);
-
-/** Removes the element with the greatest priority from within the Queue */
-void *pqueue_dequeue(PQueue *q);
-
-#endif
+#endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */

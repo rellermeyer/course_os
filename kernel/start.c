@@ -28,6 +28,11 @@
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
+#include "tests.h"
+#include "scheduler.h"
+
+// Tests
+#include "tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
