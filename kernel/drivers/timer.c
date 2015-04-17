@@ -20,6 +20,7 @@ void initialize_timers(){
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
   timer_pointers[timer_index]->timer_load_value = 1000;
+  timer_pointers[timer_index]->control=0x88;
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
   for(int i=0; i< 4; i++){
