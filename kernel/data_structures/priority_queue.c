@@ -1,5 +1,4 @@
 #include "../include/priority_queue.h"
-#include "../include/mem_alloc.h"
 #include "klibc.h"
 
 void __prq_insert(prq_node node, prq_node* heap, int size);
@@ -75,5 +74,5 @@ prq_node prq_dequeue(prq_handle * queue) {
 // Add test cases as necessary
 void prq_init(prq_handle * queue, int n) {
 	queue->size = 0;
-	queue->heap = (prq_node*) mem_alloc(sizeof(prq_node) * (n + 1));
+	queue->heap = (prq_node*) kmalloc(sizeof(prq_node) * (n + 1));
 }
