@@ -19,9 +19,9 @@ void initialize_timers(){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  timer_pointers[0]->timer_load_value = 1000;
-  os_printf("control address:%x\n", &(timer_pointers[0]->control));
-  os_printf("control value:%x\n", timer_pointers[0]->control);
+  timer_pointers[timer_index]->timer_load_value = 1000;
+  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
+  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
   for(int i=0; i< 4; i++){
     os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
   }
@@ -117,7 +117,7 @@ int set_free_running_mode(int timer_index){
   return -1;
 }
 //starts the timer, countdown from load value
-int start_timer(int timer_index){
+int enable_timer(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x40;
     return 0;
@@ -137,16 +137,16 @@ void print_control_status(int timer_index){
 starts interrupts every start_val ticks */
 int start_interrupts(int start_val){
         initialize_timers();
-        timer_start();
-        set_background_load_value(0,start_val);
-        set_periodic_mode(0);
-        enable_timer_interrupt(0);
-	print_control_status(0);
-        start_timer(0);
+        timer_start(1);
+        set_background_load_value(1,start_val);
+        set_periodic_mode(1);
+        enable_timer_interrupt(1);
+	print_control_status(1);
+        enable_timer(1);
 	// int i=10;
 	while(1){
-                os_printf("\n%d",get_current_timer_value(0));
-		if(get_current_timer_value(0)==0){
+                os_printf("\n%d",get_current_timer_value(1));
+		if(get_current_timer_value(1)==0){
                         os_printf("\nInterrupt");
         //        	i--;
 		}
@@ -157,7 +157,7 @@ int start_interrupts(int start_val){
 void timer_test(){
 	initialize_timers();
 
-	os_printf("time %d\n",get_current_timer_value(0));
+	os_printf("time %d\n",get_current_timer_value(1));
 	start_interrupts(5);
 	//timer_start();
 	//start_timer(1);
