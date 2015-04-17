@@ -125,16 +125,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="349.79685"
-     inkscape:cy="305.92568"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="198.7691"
+     inkscape:cy="324.12851"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
-     showgrid="true"
-     inkscape:window-width="1920"
-     inkscape:window-height="1060"
-     inkscape:window-x="1364"
-     inkscape:window-y="-3"
+     showgrid="false"
+     inkscape:window-width="1855"
+     inkscape:window-height="1176"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -163,10 +163,24 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Background"
+     style="display:inline">
+    <rect
+       style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3080"
+       width="577.70624"
+       height="625.78949"
+       x="-0.70710677"
+       y="1.751133" />
+  </g>
+  <g
+     inkscape:label="Foreground vectors"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-80.617125,-217.16687)">
+     transform="translate(-80.617125,-217.16687)"
+     style="display:inline">
     <rect
        style="fill:none;stroke:url(#linearGradient3777)"
        id="rect3771"
@@ -249,14 +263,14 @@
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="165"
-       y="327.36218"
+       x="164.28572"
+       y="325.2193"
        id="text3847"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3849"
-         x="165"
-         y="327.36218"
+         x="164.28572"
+         y="325.2193"
          style="font-size:20px">L1PTBASE</tspan></text>
     <text
        xml:space="preserve"
