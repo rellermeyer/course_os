@@ -85,6 +85,8 @@ int get_current_timer_value(int timer_index){
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control &=0xFFFFFFBE;
+	timer_pointers[timer_index]->control |=0x40;
+
     return 0;
   }
   return -1;
