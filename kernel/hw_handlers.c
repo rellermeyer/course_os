@@ -126,6 +126,21 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	asm volatile("mov %0, sp" : "=r" (sp));
 	asm volatile("mov %0, fp" : "=r" (fp));
 	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
+
+	// Get the DSFR
+	int dsfr;
+	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
+	os_printf("DSFR: 0x%X\n", dsfr);
+
+	switch (dsfr) {
+	case 6: // Access bit.
+		// Set it to 1 so we don't get notified again.
+		// TODO: The eviction policy will listen to this.
+		*((unsigned int*)(V_L1PTBASE + 2*PAGE_TABLE_SIZE)) |= (1<<4);
+		break;
+	default:
+		break;
+	};
 }
 
 void reserved_handler(void){
