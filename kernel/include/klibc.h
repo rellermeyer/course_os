@@ -22,6 +22,7 @@
  * 4/21 Added os_memcpy for loader - Kaelen
  */
 #include <stdint.h>
+#include <stdarg.h>
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
@@ -31,11 +32,30 @@ typedef unsigned int os_size_t;
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
 
+/**
+ * Note: os_printf is restricted to printing only 256 characters.
+ * Supported format string conversions:
+ * X: upper-case hexadecimal print.
+ * x: lower-case hexadecimal print.
+ * d: signed integer.
+ * u: unsigned integer.
+ * c: ASCII character.
+ * s: string.
+ * %: the percent sign itself.
+ *
+ * Supported options:
+ * 0: zero-pad the result (applies to X,x,d,u). For example:
+ *    os_printf("'%05d %05d %05u'\n", 15, -15, -15);
+ *    prints '00015 -0015 4294967281'
+ */
+int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
+int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
 int os_printf (const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);
 char *__strchrnul(const char *s, char c);
 char *os_strcpy(char *dest, const char *src);
+char *os_strncpy(char *dest, const char *src, os_size_t n);
 os_size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
 os_size_t os_strspn(const char *s, const char *accept);
