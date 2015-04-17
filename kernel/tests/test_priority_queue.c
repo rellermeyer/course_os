@@ -3,7 +3,7 @@
 #include "../include/priority_queue.h"
 #include "klibc.h"
 
-#define NUMTESTS 2
+#define NUM_TESTS 2
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
 
@@ -51,18 +51,61 @@ int test_prq_1() {
 }
 
 int test_prq_2() {
+	prq_handle queue;
+	prq_node hn;
+	int i;
+
+	prq_init(&queue, 10);
+
+	hn.priority = 0;
+	prq_enqueue(hn, &queue);
+	hn.priority = -2;
+	prq_enqueue(hn, &queue);
+	hn.priority = 1;
+	prq_enqueue(hn, &queue);
+	hn.priority = -10;
+	prq_enqueue(hn, &queue);
+	hn.priority = 30;
+	prq_enqueue(hn, &queue);
+
+	if((i = prq_dequeue(&queue).priority) != -10){
+		os_printf("test_prq_1 [%d]: expected [%d]\n", i, -10);
+		return TEST_FAIL;
+	}
+
+	if((i = prq_dequeue(&queue).priority) != -2){
+		os_printf("test_prq_1 [%d]: expected [%d]\n", i, -2);
+		return TEST_FAIL;
+	}
+
+	hn.priority = 2;
+	prq_enqueue(hn, &queue);
+
+	if((i = prq_dequeue(&queue).priority) != 0){
+		os_printf("test_prq_1 [%d]: expected [%d]\n", i, 0);
+		return TEST_FAIL;
+	}
+
+	prq_dequeue(&queue);
+
+	if((i = prq_dequeue(&queue).priority) != 2){
+		os_printf("test_prq_1 [%d]: expected [%d]\n", i, 2);
+		return TEST_FAIL;
+	}
+
+	if((i = prq_dequeue(&queue).priority) != 30){
+		os_printf("test_prq_1 [%d]: expected [%d]\n", i, 30);
+		return TEST_FAIL;
+	}
+
 	return TEST_OK;
+
 }
 
 void run_prq_tests() {
-	//This is the array of test functions that we pass to the test runner.
-	Test *tests[NUMTESTS];
-
-	//Tests are created by providing a descriptor that will be printed out when the test is run, and the address of the test function.
+	Test *tests[NUM_TESTS];
 	tests[0] = create_test("test_prq_1", &test_prq_1);
-
 	tests[1] = create_test("test_prq_2", &test_prq_2);
-
-	run_tests(tests, NUMTESTS);
+	run_tests(tests, NUM_TESTS);
 }
 
