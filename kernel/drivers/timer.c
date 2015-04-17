@@ -61,7 +61,7 @@ int set_background_load_value(int timer_index, int value){
 /* Clear any interrupt data for the timer.
  * note: writing to the clear timer register clears
  * the interrupt status completely. */
-int clear_interupt(int timer_index){
+int clear_interrupt(int timer_index){
   if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->interrupt_clear = 0x1;
     return 0;
@@ -118,7 +118,7 @@ int set_free_running_mode(int timer_index){
   }
   return -1;
 }
-
+//starts the timer, countdown from load value
 int start_timer(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x40;
@@ -130,10 +130,13 @@ int start_timer(int timer_index){
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
+  return 0;
   }
+  return -1;
 }
-//testing timer code
-//starts interrupts every start_val ticks 
+
+/*testing timer code
+starts interrupts every start_val ticks */
 int start_interrupts(int start_val){
         initialize_timers();
         timer_start();
