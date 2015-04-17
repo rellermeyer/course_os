@@ -72,5 +72,5 @@ prq_node prq_dequeue(prq_handle * queue) {
 
 void prq_init_queue(prq_handle * queue, int n) {
 	queue->size = 0;
-	queue->heap = (prq_node*) malloc(sizeof(prq_node) * (n + 1));
+	queue->heap = (prq_node*) mem_alloc(sizeof(prq_node) * (n + 1));
 }

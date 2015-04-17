@@ -17,7 +17,6 @@ clean:
 	$(MAKE) -C user/hello clean
 .PHONY: clean
 build: u-boot kernel
-.PHONY: build
 run: 
 	@$(MAKE) -C ./kernel run
 .PHONY: run
