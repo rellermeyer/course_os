@@ -3,13 +3,14 @@
 //#include <stdio.h>
 //#include <string.h>
 #include <stdint.h>
+//#include <pthread.h>
 #include "klibc.h"
 #include "hashtable.h"
 
-struct queue *head;
-struct queue *tail;
 short initialized;
 struct ht *q_table;
+struct queue *q_map[100];
+int_least32_t next;
 
 void q_create(char q_name[], char options[])
 {
@@ -20,11 +21,11 @@ void q_create(char q_name[], char options[])
         q_table = ht_alloc(100);
         ht_add(q_table, q_name, (void*)q);
 	}else{
-        ht_add(q_table, q_name, q);
+        ht_add(q_table, q_name, (void*)q);
     }
 	if (!os_strcmp(options,"rr")) {
 		q->options = options;
-		os_printf("printing rr\n");
+            os_printf("printing rr\n");
 	} else if(!os_strcmp(options,"broadcast")) {
 		q->options = options;
 		os_printf("printing broadcast\n");
@@ -33,44 +34,49 @@ void q_create(char q_name[], char options[])
 	}
 }
 
-struct queue *q_open(char q_name[])
+int_least32_t q_open(char q_name[])
 {
-	//TODO: is there a way to use a hashset or some variable arraylist of queues?
 	if (!initialized) {
-		//TODO: how do I handle errors?
         return 0x0;
 	}
-	struct queue *temp = head;
-	while (temp->next != 0x0) {
-		if (!os_strcmp(temp->q_name, q_name)){
-			return temp;
-        }
-		temp = temp->next;
-	}
-	return 0x0;
+	
+    struct queue *result = ht_get(q_table, q_name);
+    result->qd = result;
+    q_map[next] = result;
+    int_least32_t qd = next;
+    next ++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
+    
+	return qd;
 }
 
-int_least32_t q_publish(/*int_least32_t qd --changed to queue for now*/ struct queue *q, int_least32_t *data, int_least32_t datalen)
+int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t datalen)
 {
 	int kilo = 1024;
 	if (datalen > 128 * kilo) {
 		//TODO: throw an error
+        return 0x0;
 	}
+
 	// TODO: Copy the data? Don't copy the data? Copy-on-write the data?
-	q->data = data;
+	struct queue *q = q_map[qd];
+    q->data = data;
 	q->datalen = datalen;
 	return 0;
 }
 
-int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalen)
+int_least32_t q_subscribe(int_least32_t qd, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
-	return 0;
-}
+	////TODO: execute asynchronous callback with *receiver
+    struct subscriber *user;
+    os_memset(&user, 0, sizeof(user));
+    user->userdata = userdata;
+    //struct queue *q = ht_get(q_table, qd);
 
-int_least32_t q_subscribe(int_least32_t q, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
-{
-	//TODO: execute asynchronous callback with *receiver
-	return 0;
+  
+    // pthread_cond_signal(&q->update);//something like this?
+//    (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength);
+    //rcvr;
+    return 0;
 }
 
 void q_test()
