@@ -20,8 +20,6 @@ void initialize_timers(){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-
-//  timer_pointers[timer_index]->control=0x88;
   set_prescale(timer_index,2);
   enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
@@ -157,50 +155,29 @@ void print_control_status(int timer_index){
   return -1;
 }
 
-/*testing timer code
-starts interrupts every start_val ticks */
+/*starts interrupts every start_val ticks */
 int start_interrupts(int timer_index,int start_val){
 	initialize_timers();
 	timer_start(timer_index);
 	set_background_load_value(timer_index,start_val);
 	set_periodic_mode(timer_index);
-	enable_timer_interrupt(timer_index);
-	print_control_status(timer_index);
-	//enable_timer(timer_index);
-	//int i=10;
-	while(1){
-		os_printf("\n%d",get_current_timer_value(1));
-		if(get_current_timer_value(1)==0){
-			os_printf("\nInterrupt");
-			//i--;
-		}
-	}       
+	enable_timer_interrupt(timer_index);     
 	return 0;
 }
 //just testing code
+/*while(1){
+                os_printf("\n%d",get_current_timer_value(1));
+                if(get_current_timer_value(1)==0){
+                        os_printf("\nInterrupt");
+                        //i--;
+                }
+        } */
+
+/*
 void timer_test(){
 	initialize_timers();
-
-	//os_printf("time %d\n",get_current_timer_value(1));
 	start_interrupts(1,5);
-	//timer_start();
-	//start_timer(1);
-	//start_timer(2);
-	//start_timer(3);
-	//set_periodic_mode(0);
-	//set_load_value(0, 10);
-	//enable_timer_interrupt(0);	
-	//set_periodic_mode(0);
-  	//print_control_status(0);
-        //int val=9;
-	//os_printf("starting%d\n",start_timer(0));
-	//for(int i=0;i<1000;i++){
-	//	if(get_current_timer_value(0)!=val){
-	//		os_printf("time %d\n",get_current_timer_value(0));
-	//		val=get_current_timer_value(0);
- 	//	}
-	//	os_printf("time %d\n",get_current_timer_value(1));
-	//	os_printf("time %d\n",get_current_timer_value(2));
-	//	os_printf("time %d\n",get_current_timer_value(3));		
+	print_control_status(timer_index);
+		
 	return;
-}
+}*/
