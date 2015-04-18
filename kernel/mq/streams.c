@@ -3,7 +3,6 @@
 //#include <stdio.h>
 //#include <string.h>
 #include <stdint.h>
-//#include <pthread.h>
 #include "klibc.h"
 #include "hashtable.h"
 
@@ -23,6 +22,7 @@ void q_create(char q_name[], char options[])
 	}else{
         ht_add(q_table, q_name, (void*)q);
     }
+    //implement the below if we increase # of subscribers
 	if (!os_strcmp(options,"rr")) {
 		q->options = options;
             os_printf("printing rr\n");
@@ -66,17 +66,19 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 
 int_least32_t q_subscribe(int_least32_t qd, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
-	////TODO: execute asynchronous callback with *receiver
     struct subscriber *user;
     os_memset(&user, 0, sizeof(user));
     user->userdata = userdata;
-    //struct queue *q = ht_get(q_table, qd);
-
-  
-    // pthread_cond_signal(&q->update);//something like this?
-//    (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength);
-    //rcvr;
+	struct queue *q = q_map[qd];
+    q->subscriber = user;
+    q->receiver = receiver; 
     return 0;
+}
+
+void q_send(int_least32_t qd, int_least32_t *data, int_least32_t datalength)
+{
+    struct queue *q = q_map[qd];
+    q->receiver(q->subscriber->userdata, data, datalength);
 }
 
 void q_test()
@@ -87,52 +89,4 @@ void q_test()
 	os_printf("***************************************************\n");
 }
 
-/*possibly to draw upon below methods later*/
-//int_least32_t create_buffer(Stream *bs, int_least32_t length)
-//{
-//    if (bs == NULL)
-//    {
-//        return -1;
-//    }
-//    
-//    bs->data = malloc(length);
-//    memset(bs->data, 0, length);
-//
-//    bs->length = length;
-//    bs->offset = 0;
-//    return 0;
-//}
-//
-//int_least32_t remaining_bytes(Stream *bs)
-//{
-//    return bs->length - bs->offset;
-//}
-//
-//void clear(Stream *bs)
-//{
-//    bs-> offset = 0;
-//}
-//
-//int_least32_t put_ele(Stream *bs, int_least32_t ele)
-//{
-//     if (remaining_bytes(bs) < 1)
-//         return -1;
-//     bs->data[bs->offset] = ele;
-//     bs->offset ++;
-//}
-//
-//int_least32_t get_ele(Stream *bs, int_least32_t loc)
-//{
-//    if (loc >= (bs->offset))
-//        return -1;
-//    return bs->data[loc];
-//}
 
-/*int main()
-{
-    Stream s;
-    memset(&s, 0, sizeof(s));
-    q_create("someArg", "rr");
-  //  create_buffer(&s, 10);
-
-}*/
