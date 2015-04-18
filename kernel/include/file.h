@@ -15,22 +15,23 @@ struct superblock
 	int blocksize; // 48 bytes
 	int root_inum; // 52 bytes
 	int max_inodes; // 56 bytes
+	int inode_size;
 	int max_data_blocks; // 66 bytes
 	int inode_bitmap_loc; // 70 bytes
 	int data_bitmap_loc; // 74 bytes
 	int start_inode_table_loc; // 78 bytes
-	int start_data_blocks_loc; // 82 bytes
+	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };
 
 struct Inode // this is metadata
 {
-	char mode;
 	int size;
-	int* data_blocks[];
-	int blocks_in_file;
+	int* data_blocks; // how big is his going to be?
+	int blocks_in_file[27];
 	int usr_id;
 	int is_dir;
+	char mode;
 };
 
 /* 

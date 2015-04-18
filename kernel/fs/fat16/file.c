@@ -13,12 +13,23 @@ const int MAX_NAME_LENGTH = 32;
 const int MAX_BLOCKS;
 const int BLOCKSIZE = 512;
 
+// FAKE CONSTANTS:
+const int sd_card_capacity = 512000;
+const int root_inum = 2;
+const int max_inodes = 200; // will eventually be in superblock create
+const int inode_size = 128;
+const int max_data_blocks = 796;
+const int inode_bitmap_loc = 2 * BLOCKSIZE;
+const int data_bitmap_loc = 3 * BLOCKSIZE;
+const int start_inode_table_loc = 4;
+const int start_data_blocks_loc = 204;
+
+
 struct *superblock FS;
 bitvector* inode_bitmap;
 bitvector* data_block_bitmap;
 Inode* inode_table;
 void* data_table;
-
 
 // initialize the filesystem:
 int kfs_init(){
@@ -48,7 +59,6 @@ int kfs_init(){
 	receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
 
 }
-
 
 int kopen(char* filepath, char mode){
 	int fd;
