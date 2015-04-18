@@ -27,7 +27,7 @@ void timer_start(int timer_index) {
   }
 }
 
-/* This function sets the value that the timer will begin at.
+/* This function sets the value that the timer will begin at
  * This operation also resets the timer to this new value.
  * if you want to keep the timer running with its current state
  * use set background load. */
@@ -84,12 +84,30 @@ int get_current_timer_value(int timer_index){
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control &= 0xFFFFFFBE;
     timer_pointers[timer_index]->control &=0xFFFFFFBE;
 	timer_pointers[timer_index]->control |=0x40;
-
     return 0;
   }
   return -1;
+}
+
+int set_prescale(int timer_index, int mode){
+	if(timer_index < 4 && timer_index >= 0 && mode <= 2 && mode >= 0){
+		if(mode == 0)
+			timer_pointers[timer_index]->control &= 0xFFFFFFF3;
+		else if(mode == 1)
+		{
+			timer_pointers[timer_index]->control |= 0x4;
+			timer_pointers[timer_index]->control &= 0xFFFFFFF7;
+		}
+		else if(mode == 2){
+			timer_pointers[timer_index]->control |= 0x8;
+			timer_pointers[timer_index]->control &= 0xFFFFFFFB;
+		}
+		return 0;
+	}
+	return -1;
 }
 
 int enable_timer_interrupt(int timer_index){
@@ -150,8 +168,8 @@ int start_interrupts(int timer_index,int start_val){
                         os_printf("\nInterrupt");
         //        	i--;
 		}
-	}       
-        return 0;
+	}
+	return 0;
 }
 //just testing code
 void timer_test(){
