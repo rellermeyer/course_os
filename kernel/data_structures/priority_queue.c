@@ -102,7 +102,11 @@ prq_node * prq_dequeue(prq_handle * queue) {
 // FIXME @CalvinBench
 // Add support for variable length priority queues
 // Add test cases as necessary
-void prq_init(prq_handle * queue, int n) {
+void prq_create(prq_handle * queue, int n) {
     queue->size = 0;
     queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * (n + 1));
+}
+
+void prq_free(prq_handle * queue){
+    kfree(queue->heap);
 }
