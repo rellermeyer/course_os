@@ -20,7 +20,9 @@
 
 int vm_build_free_frame_list(void *start, void *end);
 
-static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
+unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
+extern struct vm_free_list *vm_vas_free_list;
+extern struct vm_free_list *vm_l1pt_free_list;
 
 void mmap(void *p_bootargs) {
 	//char *cmdline_args = read_cmdline_tag(p_bootargs);
@@ -44,15 +46,25 @@ void mmap(void *p_bootargs) {
 
 	}
 */
-
+	//TODO:. Collin LOOOK HERE
 	first_level_pt = (unsigned int *)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	//first_level_pt = 0x00200000 + 0x4000 = 0x00204000
 	os_printf("first_level_pt=%X\n",first_level_pt);
+
+	int i;
+	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
+		first_level_pt[i] = 0;
+	}
 
 	//temporarily map where it is until we copy it in VAS
 	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+	//first_level_pt[0x07f00000>>20] = first_level_pt[7F] = 0x07f00000 = 0x07f04010
+	//														0x00004000
+	//														0x00000010			
 
 	//1MB for static kernel data structures (stacks and l1 pt)
 	first_level_pt[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+	//first_level_pt[0xfff00000>>20] = first_level_pt[0xfff] = 0x0x7f04010
 
 	//map the kernel where its currently loaded in the same location temporarily
 	//should be less than a MB
@@ -68,20 +80,33 @@ void mmap(void *p_bootargs) {
 
 	//map 752MB of PCI interface one-to-one
 	unsigned int pci_bus_addr = PCIBASE;
-	int i;
 	for(i = (PCIBASE>>20); i < (PCITOP>>20); i++){
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2; 
 		pci_bus_addr += 0x100000;
 	}
 
+	// Quick coarse page table address
+	unsigned int coarse_page_table_address = P_L1PTBASE + 2*PAGE_TABLE_SIZE;
+	os_printf("coarse pt: 0x%X\n", coarse_page_table_address);
+
 	//remap 62MB of physical memory after the kernel 
 	// (KERNTOP to end of physical RAM (PMAPTOP))
 	// This is where we allocate frames from. Except for the first one.
 	unsigned int phys_addr = P_KERNTOP;
+	// +1 to skip L1PTBASE
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
+		//break;
+		//phys_addr += 0x100000;
 	}
+
+	// Fill in the coarse page table
+	// (TODO: How do we handle 64kB pages? Do they take up 16 entries?)
+	//os_memset((void*)coarse_page_table_address, 0, L2_PAGE_TABLE_SIZE);
+	// Set the first page to phys_addr
+	//*(unsigned int*)coarse_page_table_address = phys_addr | 0x20 | 2;
+	os_printf("0x%X\n", *(unsigned int*)coarse_page_table_address);
 
 	first_level_pt[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
 
@@ -90,8 +115,12 @@ void mmap(void *p_bootargs) {
 	((struct vas*)P_L1PTBASE)->l1_pagetable = (unsigned int*)(V_L1PTBASE + PAGE_TABLE_SIZE);//first_level_pt;
 	((struct vas*)P_L1PTBASE)->l1_pagetable_phys = first_level_pt;
 	((struct vas*)P_L1PTBASE)->next = 0x0;
+	vm_vas_free_list = (struct vm_free_list*)((void*)vm_vas_free_list + sizeof(struct vas));
+	vm_l1pt_free_list = (struct vm_free_list*)((void*)vm_l1pt_free_list + PAGE_TABLE_SIZE);
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
+
+	os_printf("0x%X\n", first_level_pt[(PMAPBASE+0x100000)>>20]);
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -117,7 +146,10 @@ void mmap(void *p_bootargs) {
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
 	//control |= 0x3007; //0b11000000000111
-	control |= 0x1007; //0b11000000000111
+	control |= 0x1007; //0b01000000000111 (No high vectors)
+	control |= 1<<23; // Enable ARMv6
+	control |= 1<<29; // Enable ForceAP
+	os_printf("control reg: 0x%x\n", control);
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 

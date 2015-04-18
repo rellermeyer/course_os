@@ -2,10 +2,12 @@
 #define __VM_H 1
 
 #include "memory.h"
+#include<stdint.h>
 
 #define BLOCK_SIZE (1<<20)
 
 #define PAGE_TABLE_SIZE (1<<14)
+#define L2_PAGE_TABLE_SIZE (1<<12)
 
 struct vas {
 	// A pointer to the first level of the pagetable.
@@ -51,6 +53,8 @@ struct vas {
 #define VM_PERM_PRIVILEGED_RW 4
 #define VM_PERM_USER_RW 8
 
+void vm_init();
+
 /**
  * vm_allocate_page and vm_free_page allocate and free pages, and allow the
  * VAS to access them at the given virtual address (vptr).
@@ -69,6 +73,7 @@ struct vas {
  * VM_ERR_NOT_MAPPED - vptr is not mapped in this VAS.
  */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission);
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission);
 int vm_free_page(struct vas *vas, void *vptr);
 
 /**
