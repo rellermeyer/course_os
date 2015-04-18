@@ -24,10 +24,10 @@ void __prq_shift_down(prq_handle * queue, int idx) {
     prq_node * node, *child;
     for (;;) {
         cidx = idx * 2;
-        if (cidx > queue->size) {
+        if (cidx > queue->count) {
             break;   //it has no child
         }
-        if (cidx < queue->size) {
+        if (cidx < queue->count) {
             if (heap[cidx]->priority > heap[cidx + 1]->priority) {
                 ++cidx;
             }
@@ -49,7 +49,7 @@ void __prq_shift_down(prq_handle * queue, int idx) {
 
 prq_node * prq_peek(prq_handle * queue) {
     if (queue) {
-        if (queue->size > 0) {
+        if (queue->count > 0) {
             return queue->heap[1];
         }
     }
@@ -57,9 +57,9 @@ prq_node * prq_peek(prq_handle * queue) {
     return 0;
 }
 
-int prq_size(prq_handle * queue) {
+int prq_count(prq_handle * queue) {
     if (queue) {
-        return queue->size;
+        return queue->count;
     }
 
     return 0;
@@ -67,34 +67,40 @@ int prq_size(prq_handle * queue) {
 
 void prq_enqueue(prq_handle * queue, prq_node * node) {
     prq_node ** heap = queue->heap;
-    int index = node->index = queue->size + 1;
+    int index = (node->index = queue->count + 1);
     heap[index] = node;
-    ++queue->size;
+    ++queue->count;
     __prq_shift_up(queue, index);
 }
 
 void prq_remove(prq_handle * queue, prq_node * node) {
+    if (!queue->count) {
+        return;
+    }
     prq_node ** heap = queue->heap;
-    prq_node * end = heap[queue->size];
+    prq_node * end = heap[queue->count];
     int index = (end->index = node->index);
     node->index = -1;
     heap[index] = end;
-    heap[queue->size] = 0;
-    --queue->size;
+    heap[queue->count] = 0;
+    --queue->count;
     // FIXME optimize later
     __prq_shift_up(queue, index);
     __prq_shift_down(queue, index);
 }
 
 prq_node * prq_dequeue(prq_handle * queue) {
+    if (!queue->count) {
+        return 0;
+    }
     prq_node ** heap = queue->heap;
     prq_node * top = heap[1];
-    prq_node * end = heap[queue->size];
+    prq_node * end = heap[queue->count];
     end->index = 1;
     top->index = -1;
     heap[1] = end;
-    heap[queue->size] = 0;
-    --queue->size;
+    heap[queue->count] = 0;
+    --queue->count;
     __prq_shift_down(queue, 1);
     return top;
 }
@@ -102,11 +108,16 @@ prq_node * prq_dequeue(prq_handle * queue) {
 // FIXME @CalvinBench
 // Add support for variable length priority queues
 // Add test cases as necessary
-void prq_create(prq_handle * queue, int n) {
-    queue->size = 0;
+prq_handle* prq_create(int n) {
+    prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
+    queue->count = 0;
     queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * (n + 1));
+    return queue;
 }
 
-void prq_free(prq_handle * queue){
-    kfree(queue->heap);
+void prq_free(prq_handle * queue) {
+    if (queue) {
+        kfree(queue->heap);
+        kfree(queue);
+    }
 }

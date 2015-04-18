@@ -15,22 +15,22 @@
 #define MIN(a, b)   ((a < b) ? a : b)
 
 static char * last_err;
-static prq_handle all_tasks;
-static prq_handle active_tasks;
+static prq_handle * all_tasks;
+static prq_handle * active_tasks;
 static int ignore_interrupt;
 static sched_task * active_task;
 
 uint32_t sched_init() {
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    prq_create(&all_tasks, MAX_TASKS);
-    prq_create(&active_tasks, MAX_ACTIVE_TASKS);
+    all_tasks = prq_create(MAX_TASKS);
+    active_tasks = prq_create(MAX_ACTIVE_TASKS);
     active_task = 0;
     return 1;
 }
 
 sched_task* sched_create_task(uint32_t* file_p, int niceness) {
-    if (prq_size(&all_tasks) >= MAX_TASKS) {
+    if (prq_count(all_tasks) >= MAX_TASKS) {
         last_err = "Too many tasks";
         return 0;
     }
@@ -89,20 +89,20 @@ void sched_interrupt_handler() {
         vm_use_kernel_vas();
     }
 
-    if (prq_size(&active_tasks) < MAX_ACTIVE_TASKS) {
-        if (prq_size(&all_tasks) > 0) {
-            prq_node * node = prq_dequeue(&all_tasks);
+    if (prq_count(active_tasks) < MAX_ACTIVE_TASKS) {
+        if (prq_count(all_tasks) > 0) {
+            prq_node * node = prq_dequeue(all_tasks);
             sched_task * task = (sched_task*) node->data;
             prq_node * new_node = (prq_node*) kmalloc(sizeof(prq_node));
             new_node->data = task;
             new_node->priority = task->niceness;
             task->active_tasks_node = new_node;
-            prq_enqueue(&active_tasks, new_node); // add to active_tasks if the task
+            prq_enqueue(active_tasks, new_node); // add to active_tasks if the task
             kfree(active_task->all_tasks_node);
         }
     }
 
-    if (prq_size(&active_tasks) == 0) {
+    if (prq_count(active_tasks) == 0) {
         return;
     }
 
@@ -112,7 +112,7 @@ void sched_interrupt_handler() {
     if (active_task == 0) {
         task = active_task;
     } else {
-        prq_node * node = prq_peek(&active_tasks);
+        prq_node * node = prq_peek(active_tasks);
         task = (sched_task*) node->data;
     }
 
@@ -127,18 +127,19 @@ void sched_interrupt_handler() {
             vm_use_kernel_vas();
             active_task->state = TASK_STATE_FINSIHED;	    // process completed
             free_PCB(active_task->pcb);				  // free process memory
-            prq_remove(&active_tasks, active_task->active_tasks_node); // remove it from the queue
+            prq_remove(active_tasks, active_task->active_tasks_node); // remove it from the queue
             kfree(active_task->active_tasks_node);
+            active_task = 0;
 
             // NOTE next interrupt will get the start the process
 
             break;
             // switch tasks; active task will go to sleep and let another task proceed
         case TASK_STATE_ACTIVE:
-            if (prq_size(&active_tasks) > 1) { // check if there at least one another task in the queue
-                prq_remove(&active_tasks, active_task->active_tasks_node); // remove the running task from queue
-                prq_enqueue(&active_tasks, active_task->active_tasks_node); // add it again to see if its position in the queue
-                sched_task * next = (sched_task*) prq_peek(&active_tasks)->data;
+            if (prq_count(active_tasks) > 1) { // check if there at least one another task in the queue
+                prq_remove(active_tasks, active_task->active_tasks_node); // remove the running task from queue
+                prq_enqueue(active_tasks, active_task->active_tasks_node); // add it again to see if its position in the queue
+                sched_task * next = (sched_task*) prq_peek(active_tasks)->data;
 
                 if (active_task == next) {
                     vm_enable_vas(active_task->vas_struct);
@@ -175,7 +176,7 @@ uint32_t sched_add_task(sched_task * task) {
 
         task->state = TASK_STATE_INACTIVE;
         task->all_tasks_node = new_node;
-        prq_enqueue(&all_tasks, new_node);
+        prq_enqueue(all_tasks, new_node);
 
         if (active_task != 0) {
             vm_enable_vas(active_task->vas_struct);
@@ -192,7 +193,14 @@ uint32_t sched_remove_task(sched_task * task) {
     return 1;
 }
 
-const char *
-sched_last_err() {
+uint32_t sched_get_active_pid(){
+    if(active_task){
+        return active_task->pcb->PID;
+    }
+
+    return 0;
+}
+
+const char * sched_last_err() {
     return last_err;
 }
