@@ -9,8 +9,8 @@
 #define KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 
 typedef struct prq_node {
+    int index;  // FIXME double underscore
     int priority;
-    int index;
     void * data;
 } prq_node;
 
@@ -20,7 +20,7 @@ typedef struct prq_handle {
 } prq_handle;
 
 void prq_enqueue(prq_handle * queue, prq_node * node);
-void prq_dequeue(prq_handle * queue);
+prq_node * prq_dequeue(prq_handle * queue);
 void prq_dequeue(prq_handle * queue, prq_node * node);
 void prq_init(prq_handle * queue, int n);
 int prq_size(prq_handle * queue);

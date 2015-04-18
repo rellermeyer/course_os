@@ -13,7 +13,8 @@
 
 typedef struct sched_task {
 	pcb * pcb;
-	prq_node * node;
+    prq_node * all_tasks_node;
+	prq_node * active_tasks_node;
 	int niceness;
 	int state;
 	struct vas * vas_struct;
