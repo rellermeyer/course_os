@@ -23,8 +23,8 @@ static sched_task * active_task;
 uint32_t sched_init() {
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    prq_init(&all_tasks, MAX_TASKS);
-    prq_init(&active_tasks, MAX_ACTIVE_TASKS);
+    prq_create(&all_tasks, MAX_TASKS);
+    prq_create(&active_tasks, MAX_ACTIVE_TASKS);
     active_task = 0;
     return 1;
 }

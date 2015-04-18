@@ -22,7 +22,8 @@ typedef struct prq_handle {
 void prq_enqueue(prq_handle * queue, prq_node * node);
 prq_node * prq_dequeue(prq_handle * queue);
 void prq_remove(prq_handle * queue, prq_node * node);
-void prq_init(prq_handle * queue, int n);
+void prq_create(prq_handle * queue, int n);
+void prq_free(prq_handle * queue);
 int prq_size(prq_handle * queue);
 prq_node * prq_peek(prq_handle * queue);
 #endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */
