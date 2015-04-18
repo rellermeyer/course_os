@@ -14,129 +14,133 @@
 //This is where you define the tests you want to run. They return 1 on success and 0 on failure.
 int test_prq_1() {
 
-    prq_handle queue;
+    prq_handle * queue;
     prq_node * hn;
     int i;
 
-    prq_create(&queue, 100);
+    queue = prq_create(100);
 
     // Add reverse
     for (i = MIN_PRIORITY; i >= MAX_PRIORITY; i--) {
         hn = new(prq_node);
         hn->priority = i;
-        prq_enqueue(&queue, hn);
+        prq_enqueue(queue, hn);
     }
 
     // Add forward
     for (i = MAX_PRIORITY; i <= MIN_PRIORITY; i++) {
         hn = new(prq_node);
         hn->priority = i;
-        prq_enqueue(&queue, hn);
+        prq_enqueue(queue, hn);
     }
 
     for (i = MAX_PRIORITY; i <= MIN_PRIORITY; i++) {
 
-        hn = prq_dequeue(&queue);
+        hn = prq_dequeue(queue);
         int priority_1 = hn->priority;
         del(hn);
 
-        hn = prq_dequeue(&queue);
+        hn = prq_dequeue(queue);
         int priority_2 = hn->priority;
         del(hn);
 
         if (priority_1 != priority_2) {
-            os_printf("test_prq_1 [%d]: expected [%d]\n", priority_1,
+            os_printf("[%d]: expected [%d]\n", priority_1,
                     priority_2);
-            ret(&queue, TEST_FAIL);
+            ret(queue, TEST_FAIL);
         }
         if (priority_1 != i) {
-            os_printf("test_prq_1 [%d]: expected [%d]\n", priority_1, i);
-            ret(&queue, TEST_FAIL);
+            os_printf("[%d]: expected [%d]\n", priority_1, i);
+            ret(queue, TEST_FAIL);
         }
         if (priority_2 != i) {
-            os_printf("test_prq_1 [%d]: expected [%d]\n", priority_2, i);
-            ret(&queue, TEST_FAIL);
+            os_printf("[%d]: expected [%d]\n", priority_2, i);
+            ret(queue, TEST_FAIL);
         }
     }
 
-    ret(&queue, TEST_OK);
+    ret(queue, TEST_OK);
 }
 
 int test_prq_2() {
-    prq_handle queue;
+    prq_handle * queue;
     prq_node * hn;
     int p;
 
-    prq_create(&queue, 10);
+    queue = prq_create(10);
 
     hn = new(prq_node);
     hn->priority = 0;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
 
     hn = new(prq_node);
     hn->priority = -2;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
 
     hn = new(prq_node);
     hn->priority = 1;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
 
     hn = new(prq_node);
     hn->priority = -10;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
 
     hn = new(prq_node);
     hn->priority = 30;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
 
-    hn = prq_dequeue(&queue);
+    hn = prq_dequeue(queue);
     p = hn->priority;
     del(hn);
 
     if (p != -10) {
-        os_printf("test_prq_1 [%d]: expected [%d]\n", p, -10);
-        ret(&queue, TEST_FAIL);
+        os_printf("[%d]: expected [%d]\n", p, -10);
+        ret(queue, TEST_FAIL);
     }
 
-    hn = prq_dequeue(&queue);
+    hn = prq_dequeue(queue);
     p = hn->priority;
     del(hn);
 
     if (p != -2) {
-        os_printf("test_prq_1 [%d]: expected [%d]\n", p, -2);
-        ret(&queue, TEST_FAIL);
+        os_printf("[%d]: expected [%d]\n", p, -2);
+        ret(queue, TEST_FAIL);
     }
 
     hn = new(prq_node);
     hn->priority = 2;
-    prq_enqueue(&queue, hn);
+    prq_enqueue(queue, hn);
+
+    hn = prq_dequeue(queue);
+    p = hn->priority;
+    del(hn);
 
     if (p != 0) {
-        os_printf("test_prq_1 [%d]: expected [%d]\n", p, 0);
-        ret(&queue, TEST_FAIL);
+        os_printf("[%d]: expected [%d]\n", p, 0);
+        ret(queue, TEST_FAIL);
     }
 
-    prq_dequeue(&queue);
+    prq_dequeue(queue);
 
-    hn = prq_dequeue(&queue);
+    hn = prq_dequeue(queue);
     p = hn->priority;
     del(hn);
 
     if (p != 2) {
-        os_printf("test_prq_1 [%d]: expected [%d]\n", p, 2);
-        ret(&queue, TEST_FAIL);
+        os_printf("[%d]: expected [%d]\n", p, 2);
+        ret(queue, TEST_FAIL);
     }
 
-    hn = prq_dequeue(&queue);
+    hn = prq_dequeue(queue);
     p = hn->priority;
     del(hn);
 
     if (p != 30) {
-        os_printf("test_prq_1 [%d]: expected [%d]\n", p, 30);
-        ret(&queue, TEST_FAIL);
+        os_printf("[%d]: expected [%d]\n", p, 30);
+        ret(queue, TEST_FAIL);
     }
 
-    ret(&queue, TEST_OK);
+    ret(queue, TEST_OK);
 
 }
 
