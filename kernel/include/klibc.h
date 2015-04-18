@@ -20,6 +20,8 @@
  * 4/20 Added os_memset, os_strchrnul, os_strcpy, os_strlen, os_strtok,
  *      os_strspn, and os_strcspn from MUSL - Sheldon
  * 4/21 Added os_memcpy for loader - Kaelen
+ * --------------Spring 2015---------------
+ * 4/15/15: Added implementation of assert() 
  */
 #include <stdint.h>
 #include <stdarg.h>
@@ -31,6 +33,12 @@ typedef unsigned int os_size_t;
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
+
+
+//4-17-15: Working assert implementation - Prakash
+#define assert(X){\
+    if ( (X) || _assert_fail(__FILE__, __LINE__, #X));\
+}
 
 /**
  * Note: os_printf is restricted to printing only 256 characters.
@@ -69,5 +77,9 @@ void kfree(void*);
 
 int32_t abs(int32_t);
 
-#endif
+//4-17-15: Initial panic * assert_fail functions added
+void panic();
+int _assert_fail(char *_file, unsigned int _line, char *_func);
+    //__attribute__ ((__noreturn__));
 
+#endif

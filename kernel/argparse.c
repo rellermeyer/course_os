@@ -10,8 +10,6 @@ static void argparse_parse(char *);
 /* Get the command-line arguments and run the functions to process them. */
 void argparse_process(uint32_t *p_bootargs)
 {
-	os_printf("I am here\n");
-
 	for (atag_iterator(tag, p_bootargs))
 	{
 		os_printf("tag (+%d) %d\n",
