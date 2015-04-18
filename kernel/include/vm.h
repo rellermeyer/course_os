@@ -2,6 +2,7 @@
 #define __VM_H 1
 
 #include "memory.h"
+#include<stdint.h>
 
 #define BLOCK_SIZE (1<<20)
 
@@ -72,6 +73,7 @@ void vm_init();
  * VM_ERR_NOT_MAPPED - vptr is not mapped in this VAS.
  */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission);
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission);
 int vm_free_page(struct vas *vas, void *vptr);
 
 /**
