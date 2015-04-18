@@ -15,25 +15,6 @@ given int fd in order to get to its offset, etc. from file.c....? Thanks!
 //number of files that can fit in the table
 #define SYSTEM_SIZE 512; 
 
-
-// Each cell of the array is a struct with infos about the file.
-// More fields can be added if necessary.
-struct file_descriptor {
-	char permission;
-        struct file * linked_file; //pointer to file struct 
-        int offset; //keeps track of where we are reading
-};
-
-// Array of open files 
-struct file_descriptor table[SYSTEM_SIZE]; // THIS NEEDS TO BE KMALLOC'ED so that it's on the heap instead of local on the stack...?
-
-
-// LL of free indexes at which we can place a newly opened file.
-struct free_index {
-        int index;
-        struct free_index * next;
-};
-
 // FIFO structure. When a file is closed, it is added to the tail. 
 // When requested to open a file, the index is taken from the head. 
 struct free_index * HEAD;
@@ -60,7 +41,7 @@ void fs_table_init() {
 
 //returns struct of descriptor at index fd
 //if invalid, returns NULL.
-struct file_descriptor get_descriptor(int fd){
+struct* file_descriptor get_descriptor(int fd){
 	if (file_is_open(fd))
 		return table[fd];
 	return NULL;
