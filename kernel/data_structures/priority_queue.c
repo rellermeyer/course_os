@@ -86,7 +86,7 @@ void prq_dequeue(prq_handle * queue, prq_node * node) {
     __prq_shift_down(queue, index);
 }
 
-void prq_dequeue(prq_handle * queue) {
+prq_node * prq_dequeue(prq_handle * queue) {
     prq_node ** heap = queue->heap;
     prq_node * top = heap[1];
     prq_node * end = heap[size];
@@ -96,6 +96,7 @@ void prq_dequeue(prq_handle * queue) {
     heap[size] = 0;
     --queue->size;
     __prq_shift_down(queue, 1);
+    return top;
 }
 
 // FIXME @CalvinBench
