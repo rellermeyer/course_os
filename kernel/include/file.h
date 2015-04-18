@@ -6,6 +6,12 @@
 #include "linked_list.h"
 #include <stdint.h>
 
+#define BLOCKSIZE 512
+#define MAX_NAME_LENGTH 32
+#define MAX_DATABLOCKS_PER_INODE 27
+#define DIR_ENTRY_SIZE 40
+
+
 struct superblock
 {
 	char* fs_name; // 32 bytes (max length for this field abides by MAX_NAME_LENGTH)
@@ -24,14 +30,26 @@ struct superblock
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };
 
-struct Inode // this is metadata
+struct inode // this is metadata
 {
 	int size;
-	int* data_blocks; // how big is his going to be?
-	int blocks_in_file[27];
-	int usr_id;
 	int is_dir;
+	int usr_id;
+	int blocks_in_file;
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 27 right now
 	char mode;
+};
+
+struct dir_entry
+{
+	int inum;
+	int name_length; //including null terminating string
+	char name[MAX_NAME_LENGTH]; // 32 chars right now
+}; // 8 _ MAX_NAME_LENGTH bytes long...40 bytes right now
+
+struct dir_data_block
+{
+	struct dir_entry dir_entries[(int)(BLOCKSIZE/DIR_ENTRY_SIZE)]
 };
 
 /* 
@@ -43,7 +61,7 @@ struct directory
 
 struct file
 {
-	struct Inode* inode;
+	struct inode inode;
 	// what to put here to avoid level of indirection?
 };
 
