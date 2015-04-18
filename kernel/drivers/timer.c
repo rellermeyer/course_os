@@ -20,7 +20,9 @@ void initialize_timers(){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  timer_pointers[timer_index]->control=0x88;
+//  timer_pointers[timer_index]->control=0x88;
+  set_prescale(timer_index,2);
+  enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
   for(int i=0; i< 4; i++)
@@ -158,7 +160,7 @@ int start_interrupts(int timer_index,int start_val){
 	set_periodic_mode(timer_index);
 	enable_timer_interrupt(timer_index);
 	print_control_status(timer_index);
-	enable_timer(timer_index);
+	//enable_timer(timer_index);
 	//int i=10;
 	while(1){
 		os_printf("\n%d",get_current_timer_value(timer_index));
