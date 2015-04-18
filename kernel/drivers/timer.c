@@ -3,6 +3,7 @@ Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.ar
 #include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
+
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
 void initialize_timers(){
@@ -22,9 +23,8 @@ void timer_start(int timer_index) {
   timer_pointers[timer_index]->control=0x88;
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
-  for(int i=0; i< 4; i++){
+  for(int i=0; i< 4; i++)
     os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
-  }
 }
 
 /* This function sets the value that the timer will begin at
@@ -40,9 +40,8 @@ int set_load_value(int timer_index, int value){
 }
 
 int get_timer_control_value(int timer_index){
-  if(timer_index < 4 && timer_index  >= 0){
+  if(timer_index < 4 && timer_index  >= 0)
     return timer_pointers[timer_index]->control;
-  }
   return -1;
 }
 
@@ -76,17 +75,16 @@ int set_32_bit_mode(int timer_index){
 }
 
 int get_current_timer_value(int timer_index){
-  if(timer_index < 4 && timer_index >= 0){
+  if(timer_index < 4 && timer_index >= 0)
     return timer_pointers[timer_index]->timer_actual_value;
-  }
   return -1;
 }
 
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control &= 0xFFFFFFBE;
-    timer_pointers[timer_index]->control &=0xFFFFFFBE;
-	timer_pointers[timer_index]->control |=0x40;
+		timer_pointers[timer_index]->control &= 0xFFFFFFBE;
+		timer_pointers[timer_index]->control &=0xFFFFFFBE;
+		timer_pointers[timer_index]->control |=0x40;
     return 0;
   }
   return -1;
@@ -146,7 +144,7 @@ int enable_timer(int timer_index){
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
-  return 0;
+  	return 0;
   }
   return -1;
 }
@@ -154,19 +152,19 @@ void print_control_status(int timer_index){
 /*testing timer code
 starts interrupts every start_val ticks */
 int start_interrupts(int timer_index,int start_val){
-        initialize_timers();
-        timer_start(timer_index);
-        set_background_load_value(timer_index,start_val);
-        set_periodic_mode(timer_index);
-        enable_timer_interrupt(timer_index);
+	initialize_timers();
+	timer_start(timer_index);
+	set_background_load_value(timer_index,start_val);
+	set_periodic_mode(timer_index);
+	enable_timer_interrupt(timer_index);
 	print_control_status(timer_index);
-        enable_timer(timer_index);
-	// int i=10;
+	enable_timer(timer_index);
+	//int i=10;
 	while(1){
-                os_printf("\n%d",get_current_timer_value(timer_index));
+		os_printf("\n%d",get_current_timer_value(timer_index));
 		if(get_current_timer_value(timer_index)==0){
-                        os_printf("\nInterrupt");
-        //        	i--;
+		os_printf("\nInterrupt");
+		//i--;
 		}
 	}
 	return 0;
@@ -174,7 +172,6 @@ int start_interrupts(int timer_index,int start_val){
 //just testing code
 void timer_test(){
 	initialize_timers();
-
 	os_printf("time %d\n",get_current_timer_value(1));
 	start_interrupts(2,5);
 	//timer_start();
