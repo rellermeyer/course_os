@@ -71,6 +71,7 @@ int clear_interrupt(int timer_index){
   return -1;
 }
 
+//enable 32 bit mode in the specified timer index 
 int set_32_bit_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x2;
@@ -86,6 +87,7 @@ int get_current_timer_value(int timer_index){
   return -1;
 }
 
+//enable periodic mode of specified timer index
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control &= 0xFFFFFFBE;
@@ -116,6 +118,7 @@ int set_prescale(int timer_index, int mode){
 	return -1;
 }
 
+//enables timer interrupt of the given timer index
 int enable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x20;
@@ -124,6 +127,7 @@ int enable_timer_interrupt(int timer_index){
   return -1;
 }
 
+//disables timer interrupt of the given timer index
 int disable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control &= 0xFFFFFFDF;
