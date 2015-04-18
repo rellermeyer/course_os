@@ -100,11 +100,11 @@ void start2(uint32_t *p_bootargs)
 				Note: As of 4-15-15 this fails horribly with hello.o not being
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
-	while (1);
 
 	//test assert
 	//assert(1==2 && "Test assert please ignore");
 
+	init_all_processes();
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");
