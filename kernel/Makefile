@@ -3,7 +3,7 @@ include $(CURDIR)/../config.mk
 TOOLCHAIN_PATH:=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
-LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
+LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 
@@ -29,13 +29,16 @@ flash.bin: kernel.img script.img
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
-	dd if=../user/hello/hello of=flash.bin conv=notrunc bs=4k seek=576
+#	dd if=../user/hello/hello of=flash.bin conv=notrunc bs=4k seek=576
 
 kernel.elf: $(OBJS)
-	$(LD) -T kernel.ld -Map=kernel.map $(OBJS) -o kernel.elf
+	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
 
 kernel.bin: kernel.elf
-	$(OBJCOPY) -O binary kernel.elf kernel.bin
+	dd if=/dev/zero of=kernel.bin bs=4k count=64
+	$(OBJCOPY) -O binary kernel.elf kernel.bin.2
+	dd if=kernel.bin.2 of=kernel.bin conv=notrunc bs=4k
+	dd if=../user/hello/hello of=kernel.bin conv=notrunc bs=4k seek=16
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img

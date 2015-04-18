@@ -1,5 +1,10 @@
+/*
+    Spring 2015 pcb_exec subteam: Sathya Sankaran, Jason Sim, Rakan Stanbouly
+*/
+
 #include "include/priorityQueue.h"
 #include "include/global_defs.h"
+#include "vm.h"
 
 /* Global Variables */
 Node *head;
@@ -84,7 +89,6 @@ void join(pcb *other_PCB) {
   {
     task_yield();
   }
-
   currentNode->PCB->current_state = PROCESS_RUNNING;
 }
 
@@ -92,15 +96,19 @@ void join(pcb *other_PCB) {
    Else if the task was previously started, restore its state.
 */
 void dispatch(pcb *PCB) {
-  if (PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
+  //4-15-15: Dispatch deals with both new and old processes
+  if (!PCB->current_state || PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
   {
     PCB->current_state = PROCESS_RUNNING;
     execute_process(PCB); // Found in process.c
   }
   else
   {
-    // This will jump to the location the state was saved in task_yield()
-    load_process_state(PCB->PID); // Found in process.c
+    //4-15-15: This will load the VAS and jump to the location the state was saved in task_yield()
+    //TODO: is this all that needs to be done here to switch into the process?
+    vm_enable_vas(PCB->stored_vas);
+    load_process_state(PCB->PID); // From process.c
+    ///execute_process(PCB); //This is incorrect
   }
 }
 
@@ -137,6 +145,8 @@ void task_yield()
      back to here later.
   */
   currentNode->PCB->current_state = PROCESS_READY;
+  //4-15-15: also save the VAS for the process. Hopefully this is all we need to do.
+  currentNode->PCB->stored_vas = vm_get_current_vas();
   int has_jumped = save_process_state(currentNode->PCB->PID);
 
   if (has_jumped == FALSE)
@@ -147,6 +157,8 @@ void task_yield()
   else
   {
     // If the jump has happened, return to the task
+    //4-15-15: and restore the VAS
+    vm_enable_vas(currentNode->PCB->stored_vas);
     currentNode->PCB->current_state = PROCESS_RUNNING;
     return;
   }

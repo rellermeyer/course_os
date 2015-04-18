@@ -203,5 +203,3 @@ void timer_test(){
 	//	os_printf("time %d\n",get_current_timer_value(3));		
 	return;
 }
-
-

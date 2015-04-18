@@ -20,8 +20,11 @@
  * 4/20 Added os_memset, os_strchrnul, os_strcpy, os_strlen, os_strtok,
  *      os_strspn, and os_strcspn from MUSL - Sheldon
  * 4/21 Added os_memcpy for loader - Kaelen
+ * --------------Spring 2015---------------
+ * 4/15/15: Added implementation of assert() 
  */
 #include <stdint.h>
+#include <stdarg.h>
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
@@ -31,11 +34,36 @@ typedef unsigned int os_size_t;
 int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
 
+
+//4-17-15: Working assert implementation - Prakash
+#define assert(X){\
+    if ( (X) || _assert_fail(__FILE__, __LINE__, #X));\
+}
+
+/**
+ * Note: os_printf is restricted to printing only 256 characters.
+ * Supported format string conversions:
+ * X: upper-case hexadecimal print.
+ * x: lower-case hexadecimal print.
+ * d: signed integer.
+ * u: unsigned integer.
+ * c: ASCII character.
+ * s: string.
+ * %: the percent sign itself.
+ *
+ * Supported options:
+ * 0: zero-pad the result (applies to X,x,d,u). For example:
+ *    os_printf("'%05d %05d %05u'\n", 15, -15, -15);
+ *    prints '00015 -0015 4294967281'
+ */
+int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
+int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
 int os_printf (const char *str_buf, ...);
 
-void *os_memset(void *dest, int c, os_size_t n);
-char *__strchrnul(const char *s, int c);
+void *os_memset(void *dest, char c, os_size_t n);
+char *__strchrnul(const char *s, char c);
 char *os_strcpy(char *dest, const char *src);
+char *os_strncpy(char *dest, const char *src, os_size_t n);
 os_size_t os_strlen(const char *s);
 char *os_strtok(char *s, const char *sep);
 os_size_t os_strspn(const char *s, const char *accept);
@@ -49,5 +77,9 @@ void kfree(void*);
 
 int32_t abs(int32_t);
 
-#endif
+//4-17-15: Initial panic * assert_fail functions added
+void panic();
+int _assert_fail(char *_file, unsigned int _line, char *_func);
+    //__attribute__ ((__noreturn__));
 
+#endif
