@@ -35,11 +35,9 @@ int os_memcmp ( const void *left, const void *right, os_size_t num );
 int os_strcmp ( const char *left, const char *right);
 
 
-//TODO: 4-15-15: Assert doesn't actually do anything when called. Why?
-#define assert( X ) if ( !(X) )\
-{\
-    os_printf("ASSERT ERROR (TODO: Actually print what the error is) %d\n", X);\
-    while(1){};\
+//4-17-15: Working assert implementation - Prakash
+#define assert(X){\
+    if ( (X) || _assert_fail(__FILE__, __LINE__, #X));\
 }
 
 /**
@@ -79,5 +77,9 @@ void kfree(void*);
 
 int32_t abs(int32_t);
 
-#endif
+//4-17-15: Initial panic * assert_fail functions added
+void panic();
+int _assert_fail(char *_file, unsigned int _line, char *_func);
+    //__attribute__ ((__noreturn__));
 
+#endif
