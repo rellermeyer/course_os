@@ -19,13 +19,14 @@ struct queue
 	struct subscriber *subscriber;
     //struct subscriber *subscriber_head;//to implement if change to multi- subscriber model
     //struct subscriber *subscriber_tail;
+    void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength);
     struct queue *next;
 };
 
 struct subscriber
 {
     int_least32_t *userdata;
-//    int_least32_t *next;
+//    int_least32_t *next;//implement later if add multi- subscribers
 };
 
 void q_create(char q_name[], char options[]);
