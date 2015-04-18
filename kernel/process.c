@@ -299,7 +299,6 @@ uint32_t execute_process(pcb* pcb_p) {
     
     //4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
     assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
-    
     //4-13-15: Create new virtual address space for process and switch into it
     pcb_p->stored_vas = vm_new_vas();
 	vm_enable_vas(pcb_p->stored_vas);

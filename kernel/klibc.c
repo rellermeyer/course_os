@@ -40,6 +40,27 @@ extern void print_char_uart0(char);
 static char lower_case_digits[16] = "0123456789abcdef";
 static char upper_case_digits[16] = "0123456789ABCDEF";
 
+/*4-17-15: - Prakash 
+	* panic() added
+		- Currrently states the panic and stalls the machine
+*/
+void panic()
+{
+	os_printf("Kernel panic!\n");
+	asm("wfi");
+}
+
+/*4-17-15: - Prakash
+	_assert_fail() added
+		- This is a helper function for the assert() macro
+*/
+int _assert_fail(char *_file, unsigned int _line, char *_func)
+{
+	os_printf("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
+	panic();
+	return 1;
+}
+
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp(const void *left, const void *right, os_size_t num)
 {
