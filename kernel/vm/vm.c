@@ -96,6 +96,15 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	return 0;
 }
 
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
+	unsigned char *p = (unsigned char*)vptr;
+	while (p-(unsigned char*)vptr < nbytes) {
+		vm_allocate_page(vas, p, permission);
+		p += BLOCK_SIZE;
+	}
+	return p;
+}
+
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
 #define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
@@ -276,8 +285,8 @@ void vm_test() {
 	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
 
 	// Test allocating frames...
-	int retval = vm_allocate_page(vas3, (void*)0x25000000, VM_PERM_PRIVILEGED_RW);
-	if (retval) {
+        void *retval = vm_allocate_pages(vas3, (void*)0x25000000, 1, VM_PERM_PRIVILEGED_RW);
+	if (!retval) {
 		os_printf("ERROR: vm_allocate_page returned %x\n", retval);
 	}
 
