@@ -92,7 +92,19 @@ void start2(uint32_t *p_bootargs)
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 	asm volatile("swi 1");
+
+	/*
+	4-15-15: 	#Prakash: 	What happens if we let the program load here?
+							Let's make argparse_process() do its thing
+
+				Note: As of 4-15-15 this fails horribly with hello.o not being
+				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
+	*/
 	while (1);
+
+	//test assert
+	//assert(1==2 && "Test assert please ignore");
+
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");
