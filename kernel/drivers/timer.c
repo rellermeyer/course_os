@@ -20,7 +20,10 @@ void initialize_timers(){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  timer_pointers[timer_index]->timer_load_value = 1000;
+
+//  timer_pointers[timer_index]->control=0x88;
+  set_prescale(timer_index,2);
+  enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
   for(int i=0; i< 4; i++){
@@ -156,14 +159,14 @@ void print_control_status(int timer_index){
 
 /*testing timer code
 starts interrupts every start_val ticks */
-int start_interrupts(int start_val){
+int start_interrupts(int timer_index,int start_val){
 	initialize_timers();
-	timer_start(1);
-	set_background_load_value(1,start_val);
-	set_periodic_mode(1);
-	enable_timer_interrupt(1);
-	print_control_status(1);
-	enable_timer(1);
+	timer_start(timer_index);
+	set_background_load_value(timer_index,start_val);
+	set_periodic_mode(timer_index);
+	enable_timer_interrupt(timer_index);
+	print_control_status(timer_index);
+	//enable_timer(timer_index);
 	//int i=10;
 	while(1){
 		os_printf("\n%d",get_current_timer_value(1));
@@ -178,8 +181,8 @@ int start_interrupts(int start_val){
 void timer_test(){
 	initialize_timers();
 
-	os_printf("time %d\n",get_current_timer_value(1));
-	start_interrupts(5);
+	//os_printf("time %d\n",get_current_timer_value(1));
+	start_interrupts(1,5);
 	//timer_start();
 	//start_timer(1);
 	//start_timer(2);
@@ -201,5 +204,3 @@ void timer_test(){
 	//	os_printf("time %d\n",get_current_timer_value(3));		
 	return;
 }
-
-
