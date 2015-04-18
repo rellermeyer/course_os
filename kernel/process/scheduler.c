@@ -3,8 +3,8 @@
 #include "../include/klibc.h"
 #include "../include/process.h"
 
-#define MAX_TASKS 100
-#define MAX_ACTIVE_TASKS 4
+#define MAX_TASKS 100   // in the future, cap will be removed
+#define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
 #define MAX_NICENESS -20
 #define MIN_NICENESS 20
 #define TASK_STATE_FINSIHED 3
@@ -19,6 +19,20 @@ static prq_handle * all_tasks;
 static prq_handle * active_tasks;
 static int ignore_interrupt;
 static sched_task * active_task;
+
+// NOTE
+// scheduler logic only. not tested
+
+// FIXME
+// - add comments
+// - register interrupt
+// - deregister interrupts instead of flag
+// - optimize
+
+// scheduler
+// ---------
+// round-robin timer-enabled scheduler that runs tasks in descending priority
+// with the help of a heap-based priority queue
 
 uint32_t sched_init() {
     os_printf("Initializing scheduler\n");
