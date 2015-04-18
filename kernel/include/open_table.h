@@ -25,7 +25,7 @@ struct free_index {
 
 void fs_table_init(); //initializes fs open table at boot up time
 
-int add_to_opentable(struct file *f, char perm);  //adds a file to the opentable
+int add_to_opentable(struct file*, char);  //adds a file to the opentable
 					//returns fd if successul
 					//and -1 if unsuccessful
 
@@ -33,9 +33,9 @@ int delete_from_opentable(int fd);      //deletes a file from the opentable
 					//returns 0 if successful
 					//and -1 if unsuccessful
 
-int file_is_open(int fd); //checks if there is an entry corrensponding to that fd
+int file_is_open(int); //checks if there is an entry corrensponding to that fd
 
-
+struct file_descriptor* get_descriptor(int);
 //cleanup functinos to be implemented when shutdown will be implemented
 
 #endif 

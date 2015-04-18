@@ -43,7 +43,7 @@ struct directory
 
 struct file
 {
-	struct Inode inode;
+	struct Inode* inode;
 	// what to put here to avoid level of indirection?
 };
 
