@@ -3,6 +3,7 @@ Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.ar
 #include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
+
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
 void initialize_timers(){
@@ -86,7 +87,7 @@ int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control &= 0xFFFFFFBE;
     timer_pointers[timer_index]->control &=0xFFFFFFBE;
-	timer_pointers[timer_index]->control |=0x40;
+		timer_pointers[timer_index]->control |=0x40;
     return 0;
   }
   return -1;
@@ -148,7 +149,7 @@ int enable_timer(int timer_index){
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
-  return 0;
+  	return 0;
   }
   return -1;
 }
