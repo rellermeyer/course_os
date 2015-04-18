@@ -9,13 +9,17 @@
 
 //CONSTANTS:
 const int SUPERBLOCK = 1;
-const int MAX_NAME_LENGTH = 32;
+// const int MAX_NAME_LENGTH = 32; moved this to a define
 const int MAX_BLOCKS;
-const int BLOCKSIZE = 512;
+// const int BLOCKSIZE = 512; moved this to a define...should be dynamic though...how?
+// const int INODE_SIZE = 128; shouldn't need this...should be able to do sizeof(Inode)
+const int MAX_MEMORY;
+const int INODE_TABLE_CACHE_SIZE;
+const int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
 
 // FAKE CONSTANTS:
 const int sd_card_capacity = 512000;
-const int root_inum = 2;
+const int root_inum = 0;
 const int max_inodes = 200; // will eventually be in superblock create
 const int inode_size = 128;
 const int max_data_blocks = 796;
@@ -28,11 +32,15 @@ const int start_data_blocks_loc = 204;
 struct *superblock FS;
 bitvector* inode_bitmap;
 bitvector* data_block_bitmap;
-Inode* inode_table;
+inode** inode_table_cache; //is this right? we want an array of inode pointers...
 void* data_table;
 
 // initialize the filesystem:
-int kfs_init(){
+int kfs_init(int max_memory){
+	MAX_MEMORY = max_memory;
+	INODE_TABLE_CACHE_SIZE = (int) MAX_MEMORY/20; //does this seem reasonable? using 1/20 of total system memory for caching indode table?
+	NUM_INODE_TABLE_BLOCKS_TO_CACHE = ((int) INODE_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
+
 	//initialize the SD Card driver:
 	init_sd();
 	//read in the super block from disk and store in memory:
@@ -42,7 +50,6 @@ int kfs_init(){
 	FS = (struct superblock*) superblock_spaceholder; // super block is smaller than block size
 
 	//initialize the free list by grabbing it from the SD Card:
-	
 	void* inode_bitmap_temp = kmalloc(BLOCKSIZE); 
 	receive(inode_bitmap_temp, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
 	inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
@@ -51,19 +58,49 @@ int kfs_init(){
 	receive(data_block_bitmap_temp, (FS->data_bitmap_loc) * BLOCKSIZE);
 	data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
 
-	void* inode_table_temp = kmalloc(BLOCKSIZE);
-	receive(inode_table_temp, (FS->start_inode_table_loc) * BLOCKSIZE);
-	inode_table = inode_table_temp;  // pointer to the start of the inode table
+	
+	//NEED TO LOOK THROUGH THIS AGAIN:
+	void* inode_table_temp = kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	int i;
+	for(i = 0; i < FS->max_inodes; i++){
+		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * 4){
+			if(i % 4 == 0){
+				receive((inode_table_temp + ((i/4)*BLOCKSIZE)), ((FS->start_inode_table_loc) + (i/4)) * BLOCKSIZE);
+			}
+			inode_table_cache[i] = &((inode_table_temp + (((int)(i/4))*BLOCKSIZE)) + (int)(BLOCKSIZE/4));
+		}
+		//each iteration through the loop will grab 4 inodes, since we can fit 4 inodes per block
+	}
+	// inode_table_cache = (inode*) inode_table_temp;  // cast the void pointer to an Inode pointer
 
-	data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
-	receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
-
+	//what was this for? don't think we need it...
+	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
+	// receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
 }
 
 int kopen(char* filepath, char mode){
 	int fd;
+	//Get the inode for the root dir:
+	inode_table_cache[0]
+
 
 	// TODO reach filepath & return pointer to struct file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	//struct file* f = returned file
 	bitvector *p = f->perms;
 	switch mode{
