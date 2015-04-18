@@ -99,7 +99,7 @@ void start2(uint32_t *p_bootargs)
 
 	run_prq_tests();
 
-	init_sched();
+	sched_init();
 
 	asm volatile("swi 1");
 	while (1);

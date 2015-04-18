@@ -24,10 +24,10 @@ void __prq_shift_down(prq_handle * queue, int idx) {
     prq_node * node, *child;
     for (;;) {
         cidx = idx * 2;
-        if (cidx > size) {
+        if (cidx > queue->size) {
             break;   //it has no child
         }
-        if (cidx < size) {
+        if (cidx < queue->size) {
             if (heap[cidx]->priority > heap[cidx + 1]->priority) {
                 ++cidx;
             }
@@ -67,19 +67,19 @@ int prq_size(prq_handle * queue) {
 
 void prq_enqueue(prq_handle * queue, prq_node * node) {
     prq_node ** heap = queue->heap;
-    int index = node->index = size + 1;
+    int index = node->index = queue->size + 1;
     heap[index] = node;
     ++queue->size;
-    __prq_shift_up(heap, index);
+    __prq_shift_up(queue, index);
 }
 
-void prq_dequeue(prq_handle * queue, prq_node * node) {
+void prq_remove(prq_handle * queue, prq_node * node) {
     prq_node ** heap = queue->heap;
-    prq_node * end = heap[size];
+    prq_node * end = heap[queue->size];
     int index = (end->index = node->index);
     node->index = -1;
     heap[index] = end;
-    heap[size] = 0;
+    heap[queue->size] = 0;
     --queue->size;
     // FIXME optimize later
     __prq_shift_up(queue, index);
@@ -89,11 +89,11 @@ void prq_dequeue(prq_handle * queue, prq_node * node) {
 prq_node * prq_dequeue(prq_handle * queue) {
     prq_node ** heap = queue->heap;
     prq_node * top = heap[1];
-    prq_node * end = heap[size];
+    prq_node * end = heap[queue->size];
     end->index = 1;
     top->index = -1;
     heap[1] = end;
-    heap[size] = 0;
+    heap[queue->size] = 0;
     --queue->size;
     __prq_shift_down(queue, 1);
     return top;
