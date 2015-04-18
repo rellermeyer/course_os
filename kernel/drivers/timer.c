@@ -24,9 +24,6 @@ void timer_start(int timer_index) {
   enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
-  for(int i=0; i< 4; i++){
-    os_printf("Timer register = %x\n", timer_pointers[i]->timer_actual_value);
-  }
 }
 
 /* This function sets the value that the timer will begin at.
@@ -160,7 +157,14 @@ void print_control_status(int timer_index){
 }
 
 /*starts interrupts every start_val ticks */
-int start_interrupts(int timer_index,int start_val){
+//You give it a vallut and the specific timer you want to star.
+// YOu have four timers just start with timer zero
+// The speed of counter or number ticks depends on qemu hertz speed
+// we don't know he start of it but it should be around 10 milliseconds
+// per proccess.
+// ex: start_timer_interrupts(0,10) which means start timer(0)
+// and interrupt every 10 clicks.
+int start_timer_interrupts(int timer_index,int start_val){
 	initialize_timers();
 	timer_start(timer_index);
 	set_background_load_value(timer_index,start_val);
