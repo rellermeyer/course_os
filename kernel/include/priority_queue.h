@@ -8,20 +8,21 @@
 #ifndef KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 #define KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 
-#define PRQ_DEBUG 0
-
 typedef struct prq_node {
     int priority;
+    int index;
     void * data;
 } prq_node;
 
 typedef struct prq_handle {
-    prq_node * heap;
+    prq_node ** heap;
     int size;
 } prq_handle;
 
-void prq_enqueue(prq_node node, prq_handle * queue);
-prq_node prq_dequeue(prq_handle * queue);
+void prq_enqueue(prq_handle * queue, prq_node * node);
+void prq_dequeue(prq_handle * queue);
+void prq_dequeue(prq_handle * queue, prq_node * node);
 void prq_init(prq_handle * queue, int n);
-
+int prq_size(prq_handle * queue);
+int prq_peek(prq_handle * queue);
 #endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */
