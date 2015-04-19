@@ -6,6 +6,8 @@
 #define CMD 0x00C
 #define DCTRL 0x02C
 #define FIFO 0x080
+#define FIFO_CNT 0x048
+#define STATUS 0x34
 #define ARG 0x008
 #define RESP_0 0x14
 #define RESP_1 0x18
@@ -21,6 +23,9 @@
 #define SET_WRITE 1 | (9 << 4)
 #define SET_READ 3 | (9 << 4)
 #define DISABLE 0x0 | (9 << 4)
+#define READ_CNT read_mmci(STATUS) & (1 << 21)
+#define WRITE_CNT read_mmci(FIFO_CNT) > 0
+
 
 // Initializes SD card putting it in the transfer state; this should
 // be called when the kernel boots up; readies the SD card for 
@@ -81,11 +86,14 @@ uint32_t sd_capacity()
 // card; writes a single block; returns 0 if the
 // transmission was successful and 1 if there was 
 // an error
-int sd_transmit(uint32_t* buffer, uint32_t address)
+int sd_transmit(void* buffer, uint32_t* address)
 {
+    //Set address to write to 
     run_mmci(ARG, address);
+    //Clear out FIFO and set to write
     run_mmci(DCTRL, DISABLE);
     run_mmci(DCTRL, SET_WRITE);
+    //Set up the write command
     run_mmci(CMD, 24 | EXE | RESP);
     push_bytes(buffer);
 	// Return that write succeeded for now
@@ -95,11 +103,14 @@ int sd_transmit(uint32_t* buffer, uint32_t address)
 // Reads the contents of the FIFO buffer to the SD
 // card; reads a single block and returns 0 if the
 // transmission succeeded and 1 if there was an error
-int sd_receive(uint32_t* buffer, uint32_t address)
+int sd_receive(void* buffer, uint32_t* address)
 {
+    //Clear out FIFO and set to read
     run_mmci(DCTRL, DISABLE);
     run_mmci(DCTRL, SET_READ);
+    //Set address to read from
     run_mmci(ARG, address);
+    //Set up the read command
     run_mmci(CMD, 17 | EXE | RESP);
     pull_bytes(buffer);
 	// Return that read succeeded for now
@@ -124,8 +135,14 @@ int clear()
 // Push bits into FIFO buffer from the address passed 
 // into the push bits function; Returns 0 if successful 
 // and 1 if an error occurred
-int push_bytes(uint32_t* buffer)
+int push_bytes(void* buffer)
 {
+    int i = 0;
+    while(WRITE_CNT){
+        run_mmci(FIFO, ((uint32_t*)buffer)[i]);
+        i++;
+    }
+    run_mmci(CMD, 12 | EXE | RESP);
 	// Return that the push succeeded for now
 	return 0;
 }
@@ -133,8 +150,15 @@ int push_bytes(uint32_t* buffer)
 // Pull bits out of the FIFO buffer and store them at the 
 // address passed into the pull bits function; returns 0 
 // if successful and 1 if an error occurred
-int pull_bytes(uint32_t* buffer)
+int pull_bytes(void* buffer)
 {
+    int i = 0;
+    while(READ_CNT){  
+        ((uint32_t*) buffer)[i] = read_mmci(FIFO);
+        i++; 
+    }
+    buffer = read_mmci(FIFO);
+    run_mmci(CMD, 12 | EXE | RESP);
 	// Return that the pull succeeded for now
 	return 0;
 }
