@@ -86,7 +86,7 @@ uint32_t sd_capacity()
 // card; writes a single block; returns 0 if the
 // transmission was successful and 1 if there was 
 // an error
-int sd_transmit(void* buffer, uint32_t* address)
+int sd_transmit(void* buffer, uint32_t address)
 {
     //Set address to write to 
     run_mmci(ARG, address);
@@ -103,7 +103,7 @@ int sd_transmit(void* buffer, uint32_t* address)
 // Reads the contents of the FIFO buffer to the SD
 // card; reads a single block and returns 0 if the
 // transmission succeeded and 1 if there was an error
-int sd_receive(void* buffer, uint32_t* address)
+int sd_receive(void* buffer, uint32_t address)
 {
     //Clear out FIFO and set to read
     run_mmci(DCTRL, DISABLE);
