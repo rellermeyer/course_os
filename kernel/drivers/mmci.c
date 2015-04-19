@@ -4,6 +4,8 @@
 // MMCI Definitions
 #define MMCI_BASE 0x10005000
 #define CMD 0x00C
+#define DCTRL 0x02C
+#define FIFO 0x080
 #define ARG 0x008
 #define RESP_0 0x14
 #define RESP_1 0x18
@@ -16,6 +18,9 @@
 #define RESP (1 << 6)
 #define LRESP (1 << 7)
 #define RCA_MASK 0xFFFF0000
+#define SET_WRITE 1 | (9 << 4)
+#define SET_READ 3 | (9 << 4)
+#define DISABLE 0x0 | (9 << 4)
 
 // Initializes SD card putting it in the transfer state; this should
 // be called when the kernel boots up; readies the SD card for 
@@ -78,6 +83,11 @@ uint32_t sd_capacity()
 // an error
 int sd_transmit(uint32_t* buffer, uint32_t address)
 {
+    run_mmci(ARG, address);
+    run_mmci(DCTRL, DISABLE);
+    run_mmci(DCTRL, SET_WRITE);
+    run_mmci(CMD, 24 | EXE | RESP);
+    push_bytes(buffer);
 	// Return that write succeeded for now
 	return 0;
 }
@@ -87,6 +97,11 @@ int sd_transmit(uint32_t* buffer, uint32_t address)
 // transmission succeeded and 1 if there was an error
 int sd_receive(uint32_t* buffer, uint32_t address)
 {
+    run_mmci(DCTRL, DISABLE);
+    run_mmci(DCTRL, SET_READ);
+    run_mmci(ARG, address);
+    run_mmci(CMD, 17 | EXE | RESP);
+    pull_bytes(buffer);
 	// Return that read succeeded for now
 	return 0;
 }
@@ -109,7 +124,7 @@ int clear()
 // Push bits into FIFO buffer from the address passed 
 // into the push bits function; Returns 0 if successful 
 // and 1 if an error occurred
-int push_bits(uint32_t* buffer)
+int push_bytes(uint32_t* buffer)
 {
 	// Return that the push succeeded for now
 	return 0;
@@ -118,7 +133,7 @@ int push_bits(uint32_t* buffer)
 // Pull bits out of the FIFO buffer and store them at the 
 // address passed into the pull bits function; returns 0 
 // if successful and 1 if an error occurred
-int pull_bits(uint32_t* buffer)
+int pull_bytes(uint32_t* buffer)
 {
 	// Return that the pull succeeded for now
 	return 0;
