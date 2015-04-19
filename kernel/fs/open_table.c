@@ -49,7 +49,7 @@ struct* file_descriptor get_descriptor(int fd){
 
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
-int add_to_opentable(struct file * f, char perm) {
+int add_to_opentable(struct inode * f, char perm) {
         if (HEAD==NULL) //not enough space
                 return -1;
         int fd = HEAD->index; //take available fd

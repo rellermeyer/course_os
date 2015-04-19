@@ -16,6 +16,7 @@ const int MAX_BLOCKS;
 const int MAX_MEMORY;
 const int INODE_TABLE_CACHE_SIZE;
 const int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
+const int INODES_PER_BLOCK;
 
 // FAKE CONSTANTS:
 const int sd_card_capacity = 512000;
@@ -48,6 +49,7 @@ int kfs_init(int max_memory){
 	receive(superblock_spaceholder, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
 
 	FS = (struct superblock*) superblock_spaceholder; // super block is smaller than block size
+	INODES_PER_BLOCK = (int)(FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
 	void* inode_bitmap_temp = kmalloc(BLOCKSIZE); 
@@ -61,15 +63,17 @@ int kfs_init(int max_memory){
 	
 	//NEED TO LOOK THROUGH THIS AGAIN:
 	void* inode_table_temp = kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	struct inode** inode_table_cache = kmalloc((sizeof(struct inode*))* FS->max_inodes);
 	int i;
 	for(i = 0; i < FS->max_inodes; i++){
-		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * 4){
-			if(i % 4 == 0){
-				receive((inode_table_temp + ((i/4)*BLOCKSIZE)), ((FS->start_inode_table_loc) + (i/4)) * BLOCKSIZE);
+		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * INODES_PER_BLOCK){
+			if(i % INODES_PER_BLOCK == 0){
+				receive((inode_table_temp + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), ((FS->start_inode_table_loc) + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
 			}
-			inode_table_cache[i] = &((inode_table_temp + (((int)(i/4))*BLOCKSIZE)) + (int)(BLOCKSIZE/4));
+			inode_table_cache[i] = &((inode_table_temp + (((int)(i/INODES_PER_BLOCK))*BLOCKSIZE)) + ((i % INODES_PER_BLOCK)*FS->inode_size));
 		}
 		//each iteration through the loop will grab 4 inodes, since we can fit 4 inodes per block
+		inode_table_cache[i] = NULL;
 	}
 	// inode_table_cache = (inode*) inode_table_temp;  // cast the void pointer to an Inode pointer
 
@@ -80,12 +84,70 @@ int kfs_init(int max_memory){
 
 int kopen(char* filepath, char mode){
 	int fd;
-	//Get the inode for the root dir:
-	inode_table_cache[0]
+	int inum = 0;
+	struct inode cur_inode;
+	int exit_flag = 1;
+	while(exit_flag){
+		int k = 1;
+		char next_path[MAX_NAME_LENGTH] = {0};
+		while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
+			next_path[k] = filepath[k];
+			k++;
+		}
+		filepath += (k);
+		// Look up cur_inode inode in cached inode table
+		if(inode_table_cache[inum] != NULL){
+			// the inode is in the inode_cache_table, so get it:
+			cur_inode = *(inode_table_cache[inum]);	
+		}else{ 
+			// inode is not in the cache table, so get it from disk:
+			void* inode_spaceholder = kmalloc(BLOCKSIZE);
+			receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+			struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
+			cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+			// need to implement an eviction policy/function to update the inode_table_cache...
+			// this will function w/o it, but should be implemented for optimization
+		}
+		int i;
+		int file_found = 0; // initialize to false (i.e. file not found)
+		for(i = 0; i < cur_inode.blocks_in_file; i++){
+			void* dir_spaceholder = kmalloc(BLOCKSIZE);
+			receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
+			struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
+			int j;
+			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+				struct dir_entry file_dir = dir_data_block[j]; // 
+				int x;
+				int is_equal = 1; // initialize to true
+				for(x = 0; x < MAX_NAME_LENGTH; x++){
+					if(file_dir.name[x]  != next_path[x]){
+						is_equal = 0;
+						break;
+					}//end if
+				}//end for
+				if(is_equal){
+					file_found = 1; //we found the file, so break out of loop
+					break;
+				}
+			}//inner for
+			if(file_found){
+				break;
+			}
+		}//outer for
 
+		if(!file_found){//throw an error
+			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
+			return -1;
+		}
+		if(!(cur_inode->is_dir)){
+			/*	when we reach the portion of the filepath that is not a dir, we set the exit_flag
+			 	to 0 so that we exit the outermost while loop */
+			exit_flag = 0;
+		}//end if
+	}//outer most while loop
+	
 
-	// TODO reach filepath & return pointer to struct file
-
+	
 
 
 

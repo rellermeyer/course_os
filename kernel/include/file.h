@@ -37,7 +37,7 @@ struct inode // this is metadata
 	int usr_id;
 	int blocks_in_file;
 	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 27 right now
-	char mode;
+	char perms;
 };
 
 struct dir_entry
@@ -59,11 +59,11 @@ struct directory
 }; 
 */
 
-struct file
-{
-	struct inode inode;
-	// what to put here to avoid level of indirection?
-};
+// struct file
+// {
+// 	struct inode* inode;
+// 	// what to put here to avoid level of indirection?
+// };
 
 int kopen(char* filepath, char mode);
 int kread(int fd, void* buf, int numBytes);
