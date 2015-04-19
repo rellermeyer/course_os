@@ -2,10 +2,8 @@
 #include "../../include/linked_list.h"
 #include "../../include/bitvector.h"
 #include "../../include/open_table.h"
-#include "../../include/mmci.h" //TO BE MADE
+#include "../../include/mmci.h" 
 #include "../../include/klibc.h"
-
-//NOTES:
 
 //CONSTANTS:
 const int SUPERBLOCK = 1;
@@ -146,25 +144,9 @@ int kopen(char* filepath, char mode){
 		}//end if
 	}//outer most while loop
 	
+	//here we have the file we were looking for! it is cur_inode.
 
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//struct file* f = returned file
-	bitvector *p = f->perms;
+	bitvector *p = cur_inode->perms;
 	switch mode{
 		case 'r':
 			if(get(0, p) == 0){
@@ -195,8 +177,7 @@ int kopen(char* filepath, char mode){
 			os_printf("File permission passed\n");
 	}
 
-	fd = add_to_opentable(f, mode);
-
+	fd = add_to_opentable(cur_inode, mode);
 	return fd;
 }//end kopen()
 
@@ -229,7 +210,7 @@ int read_partial_block(int bytesLeft, void* buf_offset, file_descriptor* fd, voi
 		 transferSpace -= bytesLeft;
 		 return bytesLeft; // note, we are returning the number of bytes that were successfully transferred
 
-	} else if((local_offset > 0) && (bytesLeft >= (BLOCKSIZE - local_offset)) {
+	} else if((local_offset > 0) && (bytesLeft >= (BLOCKSIZE - local_offset))) {
 	/*	_____________________
 		|           |~~~~~~~~|
 		---------------------- */
@@ -244,7 +225,7 @@ int read_partial_block(int bytesLeft, void* buf_offset, file_descriptor* fd, voi
 		 transferSpace -= BLOCKSIZE;
 		 return (BLOCKSIZE - local_offset); // note, we are returning the number of bytes that were successfully transferred
 
-	} else if((local_offset > 0) && (bytesLeft < (BLOCKSIZE - local_offset)){
+	} else if((local_offset > 0) && (bytesLeft < (BLOCKSIZE - local_offset))){
 	/*	______________________
 		|      |~~~~|         |
 		----------------------- */
@@ -441,7 +422,5 @@ int kdelete(char* filepath) {
 	
 	return error;
 } // end kdelete();
-
-
 
 
