@@ -11,6 +11,7 @@ given int fd in order to get to its offset, etc. from file.c....? Thanks!
 
 #include "../include/file.h"
 #include "../include/klibc.h"
+#include "../include/open_table.h"
 
 //number of files that can fit in the table
 #define SYSTEM_SIZE 512; 
