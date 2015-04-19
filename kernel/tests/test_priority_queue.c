@@ -207,11 +207,11 @@ int test_prq_4() {
 
 void run_prq_tests() {
     Test *tests[NUM_TESTS];
-    tests[0] = create_test("test_prq_1", &test_prq_1);
-    tests[1] = create_test("test_prq_2", &test_prq_2);
-    tests[2] = create_test("test_prq_3", &test_prq_3);
-    tests[3] = create_test("test_prq_4", &test_prq_4);
+   // tests[0] = create_test("test_prq_1", &test_prq_1);
+    tests[0] = create_test("test_prq_2", &test_prq_2);
+    tests[1] = create_test("test_prq_3", &test_prq_3);
+   //  tests[3] = create_test("test_prq_4", &test_prq_4);
 
-    run_tests(tests, NUM_TESTS);
+    run_tests(tests, 2);
 }
 

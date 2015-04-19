@@ -17,6 +17,7 @@ typedef struct prq_node {
 typedef struct prq_handle {
     prq_node ** heap;
     int count;
+    int heap_size;
 } prq_handle;
 
 void prq_enqueue(prq_handle * queue, prq_node * node);
