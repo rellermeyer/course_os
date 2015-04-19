@@ -140,6 +140,7 @@ int kopen(char* filepath, char mode){
 		if(!(cur_inode->is_dir)){
 			/*	when we reach the portion of the filepath that is not a dir, we set the exit_flag
 			 	to 0 so that we exit the outermost while loop */
+			os_printf("Reached file directory  \n");
 			exit_flag = 0;
 		}//end if
 	}//outer most while loop
@@ -409,18 +410,173 @@ int kseek(int fd_int, int num_bytes) {
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, int mode) {
-	int error;
+       	int inum = 0;
+	char new_file_name[MAX_NAME_LENGTH] = {0};
+        struct inode cur_inode;
+        int exit_flag = 1;
+        while(exit_flag){
+                int k = 1;
+                char next_path[MAX_NAME_LENGTH] = {0};
+                while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
+                        next_path[k] = filepath[k];
+                        k++;
+                }
+                filepath += k;
 
-	return error;
-} // end kcreate();
+		if (filepath[0] != '/') { //next is end
+			new_file_name = next_path; //name of file to be made
+			break;
+		}
 
+                // Look up cur_inode inode in cached inode table
+                if(inode_table_cache[inum] != NULL){
+                        // the inode is in the inode_cache_table, so get it:
+                        cur_inode = *(inode_table_cache[inum]);
+                }else{
+                        // inode is not in the cache table, so get it from disk:
+                        void* inode_spaceholder = kmalloc(BLOCKSIZE);
+                        receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+                        struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
+                        cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+                        // need to implement an eviction policy/function to update the inode_table_cache...
+                        // this will function w/o it, but should be implemented for optimization
+                }
+                int i;
+                int file_found = 0; // initialize to false (i.e. file not found)
+                for(i = 0; i < cur_inode.blocks_in_file; i++){
+                        void* dir_spaceholder = kmalloc(BLOCKSIZE);
+                        receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
+                        struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
+                        int j;
+                        for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+                                struct dir_entry file_dir = dir_data_block[j]; // 
+                                int x;
+                                int is_equal = 1; // initialize to true
+                                for(x = 0; x < MAX_NAME_LENGTH; x++){
+                                        if(file_dir.name[x]  != next_path[x]){
+                                                is_equal = 0;
+                                                break;
+                                        }//end if
+                                }//end for
+                                if(is_equal){
+                                        file_found = 1; //we found the file, so break out of loop
+                                        break;
+                                }
+                        }//inner for
+                        if(file_found){
+                                break;
+                        }
+                }//outer for
+
+                if(!file_found){//throw an error
+                        os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
+                        return -1;
+                }
+                if(!(cur_inode->is_dir)){
+   			//not a valid directory
+			os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");   
+                        return -1;
+                }//end if
+        }//outer most while loop
+
+
+	// at this point, the name of the file or dir to be created is “new_file_name” and it has to be added to cur_inode (which is a directory)
+
+
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// REAL ADDING HAS TO BE MADE																	   |
+	// struct of inode has to be created and written to disk and fields of struct has to be initialized								   |
+	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
+
+	return 0;
+}
 
 
 /* delete the file with the path filepath. Return -1 if the file does not excist */
 int kdelete(char* filepath) {
-	int error;
+        int fd;
+        int inum = 0;
+        struct inode cur_inode;
+	char delete_name[MAX_NAME_LENGTH] = {0};
+        int exit_flag = 1;
+        while(exit_flag){
+                int k = 1;
+                char next_path[MAX_NAME_LENGTH] = {0};
+                while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
+                        next_path[k] = filepath[k];
+                        k++;
+                }
+                filepath += (k);
+
+                if (filepath[0] != '/') { //next is end
+                        delete_name = next_path; //name of file or directory to be removed
+                   	exit_flag = 0;
+                }
+
+                // Look up cur_inode inode in cached inode table
+                if(inode_table_cache[inum] != NULL){
+                        // the inode is in the inode_cache_table, so get it:
+                        cur_inode = *(inode_table_cache[inum]);
+                }else{
+                        // inode is not in the cache table, so get it from disk:
+                        void* inode_spaceholder = kmalloc(BLOCKSIZE);
+                        receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+                        struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
+                        cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+                        // need to implement an eviction policy/function to update the inode_table_cache...
+                        // this will function w/o it, but should be implemented for optimization
+                }
+	        int i;
+                int file_found = 0; // initialize to false (i.e. file not found)
+                for(i = 0; i < cur_inode.blocks_in_file; i++){
+                        void* dir_spaceholder = kmalloc(BLOCKSIZE);
+                        receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
+                        struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
+                        int j;
+                        for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+                                struct dir_entry file_dir = dir_data_block[j]; // 
+                                int x;
+                                int is_equal = 1; // initialize to true
+                                for(x = 0; x < MAX_NAME_LENGTH; x++){
+                                        if(file_dir.name[x]  != next_path[x]){
+                                                is_equal = 0;
+                                                break;
+                                        }//end if
+                                }//end for
+                                if(is_equal){
+                                        file_found = 1; //we found the file, so break out of loop
+                                        break;
+                                }
+                        }//inner for
+                        if(file_found){
+                                break;
+                        }
+             		if(!cur_inode->is_dir && exit_flag){ //dont care if what i need to delete is file or dir, rest has to be dir
+                        	//not a valid directory
+				os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
+                        	return -1;
+                	}//end if
+ 
+                }//outer for
+
+                if(!file_found){//throw an error
+                        os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root and no '/' is after the name \n");
+                        return -1;
+                }
+
+        }//outer most while loop
+
+
+	//At this point, cur_inode is what we need to delete, no matter if it is a directory or a file
+
+
+        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // REAL DELETING HAS TO BE MADE                                                                                                                                    |
+        // struct of inode has to be deleted from disk and removed from parents directory inode                                                                            |
+        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 	
-	return error;
+	return 0;
+
 } // end kdelete();
 
 
