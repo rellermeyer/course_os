@@ -97,6 +97,12 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     return task;
 }
 
+void sched_waitpid(uint32_t pid){
+   // vm_enable_kernel_vas();
+
+   //  while(hmap);
+}
+
 void sched_interrupt_handler() {
     if (ignore_interrupt) {
         return;
