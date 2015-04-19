@@ -2,6 +2,8 @@
 #include "klibc.h"
 
 #define AMORITIZED_CONSTANT 2
+#define DEFAULT_COUNT 10
+#define MAX(a,b) a > b ? a : b
 
 void __prq_shift_up(prq_handle * queue, int idx);
 void __prq_shift_down(prq_handle * queue, int idx);
@@ -68,16 +70,15 @@ int prq_count(prq_handle * queue) {
 }
 
 void __prq_amoritize(prq_handle * queue) {
-    if (queue->count == queue->heap_size) {
-        int new_heap_size = queue->count * AMORITIZED_CONSTANT;
-        prq_node** new_heap = (prq_node**) kmalloc(
-                sizeof(prq_node*) * new_heap_size);
-        os_memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
-                (os_size_t) queue->heap_size * sizeof(prq_node*));
-        kfree(queue->heap);
-        queue->heap = new_heap;
-        queue->heap_size = new_heap_size;
-    }
+    int new_heap_size = queue->heap_size * AMORITIZED_CONSTANT;
+    prq_node** new_heap = (prq_node**) kmalloc(
+            sizeof(prq_node*) * new_heap_size);
+    os_memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
+            (os_size_t) queue->heap_size * sizeof(prq_node*)
+                    / sizeof(os_size_t));
+    kfree(queue->heap);
+    queue->heap = new_heap;
+    queue->heap_size = new_heap_size;
 }
 
 void prq_enqueue(prq_handle * queue, prq_node * node) {
@@ -86,7 +87,10 @@ void prq_enqueue(prq_handle * queue, prq_node * node) {
     heap[index] = node;
     ++queue->count;
     __prq_shift_up(queue, index);
-    __prq_amoritize(queue);
+
+    if (queue->count + 1 == queue->heap_size) {
+        __prq_amoritize(queue);
+    }
 
 }
 
@@ -122,17 +126,19 @@ prq_node * prq_dequeue(prq_handle * queue) {
     return top;
 }
 
-// FIXME @CalvinBench
-// Add support for variable length priority queues
-// Add test cases as necessary
-prq_handle* prq_create(int n) {
-    n = 2;
+prq_handle* prq_create_fixed(int n) {
+    n = MAX(1, n);
     prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
     queue->count = 0;
     queue->heap_size = n + 1;
     queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * queue->heap_size);
     return queue;
 }
+
+prq_handle * prq_create(){
+    return prq_create(DEFAULT_COUNT);
+}
+
 
 void prq_free(prq_handle * queue) {
     if (queue) {

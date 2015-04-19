@@ -34,15 +34,23 @@ static sched_task * active_task;
 // round-robin timer-enabled scheduler that runs tasks in descending priority
 // with the help of a heap-based priority queue
 
+// supported syscalls
+// ---------
+// exec
+// waitpid
+
 uint32_t sched_init() {
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    all_tasks = prq_create(MAX_TASKS);
-    active_tasks = prq_create(MAX_ACTIVE_TASKS);
+    all_tasks = prq_create_fixed(MAX_TASKS);
+    active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
     return 1;
 }
 
+// contract
+// --------
+// file_p must be created by the kernel and is located in the kernel_vas
 sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     if (prq_count(all_tasks) >= MAX_TASKS) {
         last_err = "Too many tasks";
@@ -52,9 +60,7 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     ignore_interrupt = 1;
 
     // use the kernel memory
-    if (active_task != 0) {
-        vm_use_kernel_vas();
-    }
+    vm_use_kernel_vas();
 
     pcb * pcb_pointer = process_create(file_p);
 
@@ -73,8 +79,8 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     // call vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
     // not sure how to use it
 
-    niceness = MIN(MIN_NICENESS, niceness);
-    niceness = MAX(MAX_NICENESS, niceness);
+    niceness = MIN(MAX_NICENESS, niceness);
+    niceness = MAX(MIN_NICENESS, niceness);
 
     task->niceness = niceness;
     task->pcb = pcb_pointer;
@@ -99,9 +105,7 @@ void sched_interrupt_handler() {
     ignore_interrupt = 1; // prevent interrupts while handling another interrupt
 
     // use the kernel memory
-    if (active_task != 0) {
-        vm_use_kernel_vas();
-    }
+    vm_use_kernel_vas();
 
     if (prq_count(active_tasks) < MAX_ACTIVE_TASKS) {
         if (prq_count(all_tasks) > 0) {
@@ -123,7 +127,7 @@ void sched_interrupt_handler() {
     sched_task * task;
 
     // check if there is active task
-    if (active_task == 0) {
+    if (active_task != 0) {
         task = active_task;
     } else {
         prq_node * node = prq_peek(active_tasks);
@@ -132,8 +136,8 @@ void sched_interrupt_handler() {
 
     switch (task->state) {
         case TASK_STATE_INACTIVE: 				      // start running task->pcb
-            task->state = TASK_STATE_ACTIVE;	  // mark task process as active
-            active_task = task;					  // set the active_task pointer
+            active_task = task;                   // set the active_task pointer
+            active_task->state = TASK_STATE_ACTIVE;	// mark task process as active
             vm_enable_vas(active_task->vas_struct);
             ignore_interrupt = 0;				             // allow interrupts
             execute_process_no_vas(active_task->pcb); // start running the process function
@@ -180,9 +184,7 @@ uint32_t sched_add_task(sched_task * task) {
         }
 
         // use the kernel memory
-        if (active_task != 0) {
-            vm_use_kernel_vas();
-        }
+        vm_use_kernel_vas();
 
         prq_node * new_node = (prq_node*) kmalloc(sizeof(prq_node));
         new_node->data = task;
@@ -207,8 +209,8 @@ uint32_t sched_remove_task(sched_task * task) {
     return 1;
 }
 
-uint32_t sched_get_active_pid(){
-    if(active_task){
+uint32_t sched_get_active_pid() {
+    if (active_task) {
         return active_task->pcb->PID;
     }
 
