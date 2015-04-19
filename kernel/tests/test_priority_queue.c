@@ -3,6 +3,11 @@
 #include "../include/priority_queue.h"
 #include "klibc.h"
 
+// cd ~/Desktop/workspace/course_os
+// git add .
+// git commit -a -m 'message goes here'
+// git push
+
 #define NUM_TESTS 2
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
