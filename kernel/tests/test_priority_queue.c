@@ -8,7 +8,7 @@
 // git commit -a -m 'message goes here'
 // git push
 
-#define NUM_TESTS 2
+#define NUM_TESTS 5
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
 
@@ -17,7 +17,22 @@
 #define ret(q, e) {prq_free(q); return e;}
 
 //This is where you define the tests you want to run. They return 1 on success and 0 on failure.
+
+//Tests the create function
 int test_prq_1() {
+    prq_handle * queue;
+    queue = prq_create(1);
+    if (!queue) {
+        os_printf("expected value");
+        ret(queue, TEST_FAIL);
+    }
+
+    ret(queue, TEST_OK);
+
+}
+
+//Tests the enqueue and dequeue functions
+int test_prq_2() {
 
     prq_handle * queue;
     prq_node * hn;
@@ -50,8 +65,7 @@ int test_prq_1() {
         del(hn);
 
         if (priority_1 != priority_2) {
-            os_printf("[%d]: expected [%d]\n", priority_1,
-                    priority_2);
+            os_printf("[%d]: expected [%d]\n", priority_1, priority_2);
             ret(queue, TEST_FAIL);
         }
         if (priority_1 != i) {
@@ -67,7 +81,8 @@ int test_prq_1() {
     ret(queue, TEST_OK);
 }
 
-int test_prq_2() {
+//Tests the enqueue and dequeue functions
+int test_prq_3() {
     prq_handle * queue;
     prq_node * hn;
     int p;
@@ -149,10 +164,54 @@ int test_prq_2() {
 
 }
 
+//
+int test_prq_4() {
+    prq_handle * queue;
+    prq_node * hn;
+    queue = prq_create(1);
+
+    if (prq_peek(queue) && queue->count < 1) {
+        os_printf("expected [%d]\n", 0);
+        ret(queue, TEST_FAIL);
+    }
+
+    hn = new(prq_node);
+    hn->priority = 0;
+    prq_enqueue(queue, hn);
+
+    hn = new(prq_node);
+    hn->priority = 1;
+    prq_enqueue(queue, hn);
+
+    hn = new(prq_node);
+    hn->priority = 3;
+    prq_enqueue(queue, hn);
+
+    hn = prq_dequeue(queue);
+    del(hn);
+
+    hn = prq_dequeue(queue);
+    del(hn);
+
+    hn = prq_dequeue(queue);
+    del(hn);
+
+    if (prq_peek(queue) && queue->count < 1) {
+        os_printf("expected [%d]\n", 0);
+        ret(queue, TEST_FAIL);
+    }
+
+    ret(queue, TEST_OK);
+
+}
+
 void run_prq_tests() {
     Test *tests[NUM_TESTS];
     tests[0] = create_test("test_prq_1", &test_prq_1);
     tests[1] = create_test("test_prq_2", &test_prq_2);
+    tests[2] = create_test("test_prq_3", &test_prq_3);
+    tests[3] = create_test("test_prq_4", &test_prq_4);
+
     run_tests(tests, NUM_TESTS);
 }
 
