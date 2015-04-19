@@ -10,7 +10,7 @@
 // More fields can be added if necessary.
 struct file_descriptor {
 	char permission;
-        struct file* linked_file; //pointer to file struct 
+        struct inode* linked_file; //pointer to file struct 
         int offset; //keeps track of where we are reading
 };
 
@@ -25,7 +25,7 @@ struct free_index {
 
 void fs_table_init(); //initializes fs open table at boot up time
 
-int add_to_opentable(struct file*, char);  //adds a file to the opentable
+int add_to_opentable(struct inode*, char);  //adds a file to the opentable
 					//returns fd if successul
 					//and -1 if unsuccessful
 
