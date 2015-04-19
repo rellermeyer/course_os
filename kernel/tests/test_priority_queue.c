@@ -21,7 +21,7 @@
 //Tests the create function
 int test_prq_1() {
     prq_handle * queue;
-    queue = prq_create_fixed(1);
+    queue = prq_create();
     if (!queue) {
         os_printf("expected value");
         ret(queue, TEST_FAIL);
@@ -38,7 +38,7 @@ int test_prq_2() {
     prq_node * hn;
     int i;
 
-    queue = prq_create_fixed(100);
+    queue = prq_create();
 
     // Add reverse
     for (i = MIN_PRIORITY; i >= MAX_PRIORITY; i--) {
@@ -87,7 +87,7 @@ int test_prq_3() {
     prq_node * hn;
     int p;
 
-    queue = prq_create_fixed(10);
+    queue = prq_create();
 
     hn = new(prq_node);
     hn->priority = 0;
@@ -168,7 +168,7 @@ int test_prq_3() {
 int test_prq_4() {
     prq_handle * queue;
     prq_node * hn;
-    queue = prq_create_fixed(1);
+    queue = prq_create();
 
     if (prq_peek(queue) && queue->count < 1) {
         os_printf("expected [%d]\n", 0);

@@ -24,6 +24,7 @@ void prq_enqueue(prq_handle * queue, prq_node * node);
 prq_node * prq_dequeue(prq_handle * queue);
 void prq_remove(prq_handle * queue, prq_node * node);
 prq_handle* prq_create_fixed(int n);
+prq_handle* prq_create();
 void prq_free(prq_handle * queue);
 int prq_count(prq_handle * queue);
 prq_node * prq_peek(prq_handle * queue);
