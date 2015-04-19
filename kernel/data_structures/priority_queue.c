@@ -74,8 +74,7 @@ void __prq_amoritize(prq_handle * queue) {
     prq_node** new_heap = (prq_node**) kmalloc(
             sizeof(prq_node*) * new_heap_size);
     os_memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
-            (os_size_t) queue->heap_size * sizeof(prq_node*)
-                    / sizeof(os_size_t));
+            (os_size_t) queue->heap_size * sizeof(prq_node*));
     kfree(queue->heap);
     queue->heap = new_heap;
     queue->heap_size = new_heap_size;
@@ -87,11 +86,9 @@ void prq_enqueue(prq_handle * queue, prq_node * node) {
     heap[index] = node;
     ++queue->count;
     __prq_shift_up(queue, index);
-
     if (queue->count + 1 == queue->heap_size) {
         __prq_amoritize(queue);
     }
-
 }
 
 void prq_remove(prq_handle * queue, prq_node * node) {
@@ -135,10 +132,9 @@ prq_handle* prq_create_fixed(int n) {
     return queue;
 }
 
-prq_handle * prq_create(){
-    return prq_create(DEFAULT_COUNT);
+prq_handle * prq_create() {
+    return prq_create_fixed(DEFAULT_COUNT);
 }
-
 
 void prq_free(prq_handle * queue) {
     if (queue) {

@@ -60,11 +60,18 @@ int os_strcmp(const char *left, const char *right)
 //Responsibility is on the programmer to copy safely
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
-	int i = 0;
-	for (; i < size; i++)
-	{
-		*(dest + i) = *(source + i);
-	}
+    char * s = (char*) source;
+    char * d = (char*) dest;
+
+    while (size-- > 0) {
+        *(d++) = *(s++);
+    }
+
+//	int i = 0;
+//	for (; i < size; i++)
+//	{
+//		*(dest + i) = *(source + i);
+//	}
 }
 
 // base is between 2 and 16, inclusive
