@@ -1,3 +1,9 @@
+/*****************************************************************
+ * Crude SD Card (MMCI) Driver                                   *
+ * Programmed By: Joseph Bourque, Matt Davidson, Weston Selleck  *
+ * Framework, QC, and Support: Lane Kolbly                       *
+ * Completed: 4/20/2015    Last Updated: 4/20/2015               *
+ *****************************************************************/
 #ifndef HEADER_FILE
 #define HEADER_FILE
 

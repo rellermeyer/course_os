@@ -20,11 +20,12 @@ CFLAGS += -Wall
 
 run: flash.bin
 #	(cat uboot-commands.ubt; cat) | ${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -M versatilepb -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -sd sd.img -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 #boots the kernel at 0x210000
 #for now, sticks the hello binary at 0x240000
 flash.bin: kernel.img script.img
+	dd if=/dev/zero of=sd.img conv=notrunc bs=128M count=1
 	dd if=/dev/zero of=flash.bin bs=4k count=1536
 	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512

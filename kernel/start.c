@@ -25,6 +25,7 @@
 #include "process.h"
 #include "memory.h"
 #include "drivers/uart.h"
+#include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
