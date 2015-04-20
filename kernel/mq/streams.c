@@ -81,6 +81,20 @@ void q_send(int_least32_t qd, int_least32_t *data, int_least32_t datalength)
     q->receiver(q->subscriber->userdata, data, datalength);
 }
 
+int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t buflength)
+{
+    
+}
+
+void q_wait_for_reply(char msg[], int_least32_t buf, int_least32_t bulength)
+{
+    
+}
+
+void q_subscribe_to_reply(char msg[], (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength))
+{
+
+}
 void q_test()
 {
 
