@@ -37,8 +37,8 @@ kernel.elf: $(OBJS)
 
 kernel.bin: kernel.elf
 	dd if=/dev/zero of=kernel.bin bs=4k count=64
-	$(OBJCOPY) -O binary kernel.elf kernel.bin.2
-	dd if=kernel.bin.2 of=kernel.bin conv=notrunc bs=4k
+	$(OBJCOPY) -O binary kernel.elf kernel2.bin
+	dd if=kernel2.bin of=kernel.bin conv=notrunc bs=4k
 	dd if=../user/hello/hello of=kernel.bin conv=notrunc bs=4k seek=16
 
 kernel.img: kernel.bin
