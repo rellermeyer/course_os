@@ -9,6 +9,7 @@
 // git push
 
 #define NUM_TESTS 5
+#define DEFAULT_COUNT 10
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
 
@@ -217,7 +218,7 @@ int test_prq_5() {
 
     prq_handle * queue2;
     prq_node * hn2;
-    queue2 = prq_create_fixed(10);
+    queue2 = prq_create_fixed(DEFAULT_COUNT);
 
     hn2 = new(prq_node);
     hn2->priority = 0;
