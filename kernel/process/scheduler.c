@@ -14,11 +14,14 @@
 #define MAX(a, b) 	((a > b) ? a : b)
 #define MIN(a, b)   ((a < b) ? a : b)
 
+#define OK      1
+#define FAIL    0
+
 static char * last_err;
 static prq_handle * all_tasks;
 static prq_handle * active_tasks;
-static int ignore_interrupt;
 static sched_task * active_task;
+static hmap_handle * all_tasks_map;
 
 // NOTE
 // scheduler logic only. not tested
@@ -48,6 +51,9 @@ uint32_t sched_init() {
     return 1;
 }
 
+static void __sched_register_timer_irq();
+static void __sched_deregister_timer_irq();
+
 // contract
 // --------
 // file_p must be created by the kernel and is located in the kernel_vas
@@ -57,7 +63,7 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
         return 0;
     }
 
-    ignore_interrupt = 1;
+    __sched_deregister_timer_irq();
 
     // use the kernel memory
     vm_use_kernel_vas();
@@ -85,22 +91,25 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     task->niceness = niceness;
     task->pcb = pcb_pointer;
     task->state = TASK_STATE_NONE;
-    task->all_tasks_node = 0;
+    task->node = 0;
     task->vas_struct = vas_struct;
 
     if (active_task != 0) {
         vm_enable_vas(active_task->vas_struct);
     }
 
-    ignore_interrupt = 0;
+    __sched_register_timer_irq();
 
     return task;
 }
 
+// expecting access to kernel global level
 void sched_waitpid(uint32_t pid){
-   // vm_enable_kernel_vas();
-
-   //  while(hmap);
+    while(true) {
+        sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
+        if(task == 0 || task->state == TASK_STATE_FINSIHED) { break; }
+        sleep(500);
+    }
 }
 
 void sched_interrupt_handler() {
@@ -108,7 +117,7 @@ void sched_interrupt_handler() {
         return;
     }
 
-    ignore_interrupt = 1; // prevent interrupts while handling another interrupt
+    __sched_deregister_timer_irq(); // prevent interrupts while handling another interrupt
 
     // use the kernel memory
     vm_use_kernel_vas();
@@ -116,17 +125,13 @@ void sched_interrupt_handler() {
     if (prq_count(active_tasks) < MAX_ACTIVE_TASKS) {
         if (prq_count(all_tasks) > 0) {
             prq_node * node = prq_dequeue(all_tasks);
-            sched_task * task = (sched_task*) node->data;
-            prq_node * new_node = (prq_node*) kmalloc(sizeof(prq_node));
-            new_node->data = task;
-            new_node->priority = task->niceness;
-            task->active_tasks_node = new_node;
-            prq_enqueue(active_tasks, new_node); // add to active_tasks if the task
-            kfree(active_task->all_tasks_node);
+            prq_enqueue(active_tasks, node); // add to active_tasks if the task
+            kfree(active_task->node);
         }
     }
 
     if (prq_count(active_tasks) == 0) {
+        __sched_register_timer_irq();
         return;
     }
 
@@ -143,26 +148,19 @@ void sched_interrupt_handler() {
     switch (task->state) {
         case TASK_STATE_INACTIVE: 				      // start running task->pcb
             active_task = task;                   // set the active_task pointer
-            active_task->state = TASK_STATE_ACTIVE;	// mark task process as active
+            active_task->state = TASK_STATE_ACTIVE; // mark task process as active
             vm_enable_vas(active_task->vas_struct);
-            ignore_interrupt = 0;				             // allow interrupts
+            __sched_register_timer_irq();             // allow interrupts
             execute_process_no_vas(active_task->pcb); // start running the process function
-            ignore_interrupt = 1;				          // disallow interrupts
-            vm_use_kernel_vas();
-            active_task->state = TASK_STATE_FINSIHED;	    // process completed
-            free_PCB(active_task->pcb);				  // free process memory
-            prq_remove(active_tasks, active_task->active_tasks_node); // remove it from the queue
-            kfree(active_task->active_tasks_node);
-            active_task = 0;
-
+            sched_remove_task(active_task);
             // NOTE next interrupt will get the start the process
 
             break;
             // switch tasks; active task will go to sleep and let another task proceed
         case TASK_STATE_ACTIVE:
             if (prq_count(active_tasks) > 1) { // check if there at least one another task in the queue
-                prq_remove(active_tasks, active_task->active_tasks_node); // remove the running task from queue
-                prq_enqueue(active_tasks, active_task->active_tasks_node); // add it again to see if its position in the queue
+                prq_remove(active_tasks, active_task->node); // remove the running task from queue
+                prq_enqueue(active_tasks, active_task->node); // add it again to see if its position in the queue
                 sched_task * next = (sched_task*) prq_peek(active_tasks)->data;
 
                 if (active_task == next) {
@@ -179,14 +177,14 @@ void sched_interrupt_handler() {
             break;
     }
 
-    ignore_interrupt = 0;
+    __sched_register_timer_irq();
 }
 
 uint32_t sched_add_task(sched_task * task) {
     if (task) {
         if (task->state == TASK_STATE_NONE) {
             last_err = "Reusing task object not allowed";
-            return 0;
+            return FAIL;
         }
 
         // use the kernel memory
@@ -197,22 +195,55 @@ uint32_t sched_add_task(sched_task * task) {
         new_node->priority = task->niceness;
 
         task->state = TASK_STATE_INACTIVE;
-        task->all_tasks_node = new_node;
+        task->node = new_node;
         prq_enqueue(all_tasks, new_node);
 
         if (active_task != 0) {
             vm_enable_vas(active_task->vas_struct);
         }
 
-        return 1;
+        return OK;
     }
 
     last_err = "Invalid sched_task pointer";
-    return 0;
+    return FAIL;
 }
 
 uint32_t sched_remove_task(sched_task * task) {
-    return 1;
+    if(task != 0) { 
+        switch(task->state){
+            case TASK_STATE_INACTIVE:
+                __sched_deregister_timer_irq(); 
+                prq_remove(&all_tasks, task->node);
+                __sched_register_timer_irq(); 
+                break;
+            case TASK_STATE_ACTIVE:
+                __sched_deregister_timer_irq(); 
+                vm_use_kernel_vas();
+                active_task->state = TASK_STATE_FINSIHED;       // process completed
+                free_PCB(active_task->pcb);               // free process memory
+                prq_remove(active_tasks, active_task->node); // remove it from the queue
+                kfree(active_task->node);
+                active_task = 0;
+                __sched_register_timer_irq(); 
+                break;
+            case TASK_STATE_FINISHED:
+                break;
+        }
+
+        return task->state;
+    }
+
+    return FAIL;
+}
+
+uint32_t sched_remove_task(uint32_t * pid){
+    sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
+    if(task) {
+        return sched_remove_task(task);
+    }
+
+    return FAIL;
 }
 
 uint32_t sched_get_active_pid() {
