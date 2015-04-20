@@ -49,7 +49,7 @@ struct dir_entry
 
 struct dir_data_block
 {
-	struct dir_entry dir_entries[(int)(BLOCKSIZE/DIR_ENTRY_SIZE)]
+	struct dir_entry dir_entries[(int)(BLOCKSIZE/DIR_ENTRY_SIZE)];
 };
 
 /* 

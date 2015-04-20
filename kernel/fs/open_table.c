@@ -14,12 +14,14 @@ given int fd in order to get to its offset, etc. from file.c....? Thanks!
 #include "../include/open_table.h"
 
 //number of files that can fit in the table
-#define SYSTEM_SIZE 512; 
+// #define SYSTEM_SIZE 512; 
 
 // FIFO structure. When a file is closed, it is added to the tail. 
 // When requested to open a file, the index is taken from the head. 
-struct free_index * HEAD;
-struct free_index * TAIL;
+struct free_index* HEAD;
+struct free_index* TAIL;
+
+#define NULL 00 
 
 //called by start.c, will initialize the free list and the table
 void fs_table_init() {
@@ -42,7 +44,7 @@ void fs_table_init() {
 
 //returns struct of descriptor at index fd
 //if invalid, returns NULL.
-struct* file_descriptor get_descriptor(int fd){
+struct file_descriptor* get_descriptor(int fd){
 	if (file_is_open(fd))
 		return table[fd];
 	return NULL;
@@ -59,10 +61,16 @@ int add_to_opentable(struct inode * f, char perm) {
         struct free_index * free_me = HEAD;
         HEAD = HEAD->next; //dequeue
         kfree(free_me); //free old node
-        struct file_descriptor to_add; //initialize the struct
-        to_add.linked_file = f;
-	to_add.permission = perm;
-        to_add.offset = 0;
+        /*
+                WARNING YOU ARE GOING TO WANT TO MALLOC
+                EVERYTHING YOU WANT TO KEEP AFTER RETURNING
+                FROM THIS FUNCTION
+        */
+        struct file_descriptor* to_add = (struct file_descriptor*) kmalloc(sizeof(struct file_descriptor));
+        //initialize the struct
+        to_add->linked_file = f;
+	to_add->permission = perm;
+        to_add->offset = 0;
         table[fd] = to_add; //add to table
         return fd;
 }
@@ -78,13 +86,14 @@ int delete_from_opentable(int fd) {
         to_add->index = fd;
         TAIL->next = to_add;
         TAIL = to_add; //enqueue
+        // WARNING: There was no return so I added this one. Not sure is you want this or no...
+        return 0;
 }
 
 
 //this function checks whether the file is open or not
 int file_is_open(int fd) {
-	if (fd<0 || fd>=SYSTEM_SIZE)
-		return 0;
+	if (fd<0 || fd>=SYSTEM_SIZE) { return 0; }
         return (table[fd]!=NULL);
 }
 
