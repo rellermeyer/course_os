@@ -8,7 +8,7 @@
 // git commit -a -m 'message goes here'
 // git push
 
-#define NUM_TESTS 4
+#define NUM_TESTS 5
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
 
@@ -164,7 +164,7 @@ int test_prq_3() {
 
 }
 
-//
+//testing peek function
 int test_prq_4() {
     prq_handle * queue;
     prq_node * hn;
@@ -205,12 +205,40 @@ int test_prq_4() {
 
 }
 
+//testing functionality of prq_create vs prq_fixed_create
+int test_prq_5() {
+    prq_handle * queue1;
+    prq_node * hn1;
+    queue1 = prq_create();
+
+    hn1 = new(prq_node);
+    hn1->priority = 0;
+    prq_enqueue(queue1, hn1);
+
+    prq_handle * queue2;
+    prq_node * hn2;
+    queue2 = prq_create_fixed(10);
+
+    hn2 = new(prq_node);
+    hn2->priority = 0;
+    prq_enqueue(queue2, hn2);
+
+    if (queue1->heap_size != queue2->heap_size) {
+        os_printf("expected equal heap_size");
+        ret(queue1, TEST_FAIL);
+    }
+
+    ret(queue1, TEST_OK);
+}
+
+//function running tests
 void run_prq_tests() {
     Test *tests[NUM_TESTS];
     tests[0] = create_test("test_prq_1", &test_prq_1);
     tests[1] = create_test("test_prq_2", &test_prq_2);
     tests[2] = create_test("test_prq_3", &test_prq_3);
     tests[3] = create_test("test_prq_4", &test_prq_4);
+    tests[4] = create_test("test_prq_5", &test_prq_5);
 
     run_tests(tests, NUM_TESTS);
 }
