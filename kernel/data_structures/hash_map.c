@@ -1,4 +1,6 @@
 #include "../include/hash_map.h"
+#include "stdlib.h"
+#include "klibc.h"
 
 /* this should be prime */
 #define TABLE_STARTSIZE 1021
@@ -68,7 +70,10 @@ hmap_handle* hmap_create(int startsize) {
         startsize = __hmap_find_prime_greater_than(startsize - 2);
     }
 
-    hmap->table = (hmap_entry*) calloc(sizeof(hmap_entry), startsize);
+    hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry), startsize);
+
+    os_memset(hmap->table, 0, startsize);
+
     hmap->size = startsize;
     hmap->count = 0;
 
