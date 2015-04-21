@@ -19,7 +19,8 @@ typedef struct hmap_handle {
     long size, count;
 } hmap_handle;
 
-hmap_handle* hmap_create(int startsize);
+hmap_handle* hmap_create();
+hmap_handle* hmap_create_fixed(int startsize);
 void* hmap_get(hmap_handle* hmap, unsigned long key);
 void hmap_put(hmap_handle* hmap, unsigned long key, const void* data);
 void* hmap_remove(hmap_handle* hmap, unsigned long key);
