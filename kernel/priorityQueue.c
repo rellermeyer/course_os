@@ -12,7 +12,7 @@ Node *currentNode;
 /********************/
 
 /* Initializes all the global variables */
-void init() {
+void pqueue_init() {
     head = (Node *)mem_alloc(sizeof(Node));
     head->next = NULL;
     head->prev = NULL;
@@ -25,7 +25,7 @@ void init() {
 /* Add a PCB to the queue with a given priority.
    Return 1 if successful.
  */
-int add(void *PCB, int priority) {
+int pqueue_add(void *PCB, int priority) {
 	if(head == NULL) {
 		init();
 	}
@@ -65,7 +65,7 @@ int add(void *PCB, int priority) {
 
    Return a pointer to the PCB removed.
 */
-pcb* remove(pcb *PCB) {
+pcb* pqueue_remove(pcb *PCB) {
   //PCB abstraction will change the parameters, can search for processes by PID.
   currentNode = head;
   while(currentNode->next->PCB->PID != PCB->PID) {
@@ -79,7 +79,7 @@ pcb* remove(pcb *PCB) {
 }
 
 /* Wait for a task to finish. Then set the current task's state to READY */
-void join(pcb *other_PCB) {
+void pqueue_join(pcb *other_PCB) {
   // TODO: Do we need to store which task(s) we are blocked on?
   currentNode->PCB->current_state = PROCESS_BLOCKED;
 
