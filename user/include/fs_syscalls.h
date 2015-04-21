@@ -1,5 +1,14 @@
 #ifndef _FLOAT_H
 #define _FLOAT_H
 
+#define SYSCALL_CREATE 0
+#define SYSCALL_SWITCH 1
+#define SYSCALL_DELETE 2
+#define SYSCALL_OPEN 3
+#define SYSCALL_READ 4
+#define SYSCALL_WRITE 5
+#define SYSCALL_CLOSE 6
+#define SYSCALL_SET_PERM 7
+#define SYSCALL_MEM_MAP 8
 
 #endif
