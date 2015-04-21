@@ -17,15 +17,18 @@ const int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
 const int INODES_PER_BLOCK;
 
 // FAKE CONSTANTS:
-const int sd_card_capacity = 512000;
+const int sd_card_capacity = 128000000; // 128 MB
 const int root_inum = 0;
-const int max_inodes = 200; // will eventually be in superblock create
-const int inode_size = 128;
-const int max_data_blocks = 796;
-const int inode_bitmap_loc = 2 * BLOCKSIZE;
-const int data_bitmap_loc = 3 * BLOCKSIZE;
-const int start_inode_table_loc = 4;
-const int start_data_blocks_loc = 204;
+const int max_inodes = 4000; // will eventually be in superblock create
+const int inode_size = 512; // inodes will now be a full block size
+const int max_data_blocks = 200000;
+const int max_indirect_blocks = 25000;
+const int inode_bitmap_loc = 10 * BLOCKSIZE; // since we now have 250,000 blocks, we have plenty of space, so moving these to even start locations
+const int data_bitmap_loc = 50 * BLOCKSIZE;
+const int indirect_blocks_bitmap_loc = 100 * BLOCKSIZE; // note the indirect_blocks_bitmap will take 7 blocks bc 25000 max indirect blocks/512 block size ~ 6.1
+const int start_inode_table_loc = 1000;
+const int start_indirect_blocks_table_loc = 25000;
+const int start_data_blocks_loc = 50000;
 
 
 struct *superblock FS;
@@ -147,12 +150,11 @@ int kopen(char* filepath, char mode){
 	
 	//here we have the file we were looking for! it is cur_inode.
 
-	bitvector *p = cur_inode->perms;
+	bitVector *p = &(cur_inode->perms);
 	switch mode{
 		case 'r':
 			if(get(0, p) == 0){
 				os_printf("File Cannot Be Read\n");
-				
 				return -1;
 			}
 			break;
@@ -410,89 +412,113 @@ int kseek(int fd_int, int num_bytes) {
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, int mode) {
-       	int inum = 0;
+    int inum = 0;
 	char new_file_name[MAX_NAME_LENGTH] = {0};
-        struct inode cur_inode;
-        int exit_flag = 1;
-        while(exit_flag){
-                int k = 1;
-                char next_path[MAX_NAME_LENGTH] = {0};
-                while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
-                        next_path[k] = filepath[k];
-                        k++;
-                }
-                filepath += k;
+    struct inode cur_inode;
+    int exit_flag = 1;
+    while(exit_flag){
+        int k = 1;
+        char next_path[MAX_NAME_LENGTH] = {0};
+        while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
+                next_path[k] = filepath[k];
+                k++;
+        }
+        filepath += k;
 
 		if (filepath[0] != '/') { //next is end
 			new_file_name = next_path; //name of file to be made
 			break;
 		}
 
-                // Look up cur_inode inode in cached inode table
-                if(inode_table_cache[inum] != NULL){
-                        // the inode is in the inode_cache_table, so get it:
-                        cur_inode = *(inode_table_cache[inum]);
-                }else{
-                        // inode is not in the cache table, so get it from disk:
-                        void* inode_spaceholder = kmalloc(BLOCKSIZE);
-                        receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-                        struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-                        cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-                        // need to implement an eviction policy/function to update the inode_table_cache...
-                        // this will function w/o it, but should be implemented for optimization
+        // Look up cur_inode inode in cached inode table
+        if(inode_table_cache[inum] != NULL){
+                // the inode is in the inode_cache_table, so get it:
+                cur_inode = *(inode_table_cache[inum]);
+        }else{
+                // inode is not in the cache table, so get it from disk:
+                void* inode_spaceholder = kmalloc(BLOCKSIZE);
+                receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+                struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
+                cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+                // need to implement an eviction policy/function to update the inode_table_cache...
+                // this will function w/o it, but should be implemented for optimization
+        }
+        int i;
+        int file_found = 0; // initialize to false (i.e. file not found)
+        for(i = 0; i < cur_inode.blocks_in_file; i++){
+            void* dir_spaceholder = kmalloc(BLOCKSIZE);
+            receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
+            struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
+            int j;
+            for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+                struct dir_entry file_dir = dir_data_block[j]; // 
+                int x;
+                int is_equal = 1; // initialize to true
+                for(x = 0; x < MAX_NAME_LENGTH; x++){
+                    if(file_dir.name[x]  != next_path[x]){
+                            is_equal = 0;
+                            break;
+                    }//end if
+                }//end for
+                if(is_equal){
+                    file_found = 1; //we found the file, so break out of loop
+                    break;
                 }
-                int i;
-                int file_found = 0; // initialize to false (i.e. file not found)
-                for(i = 0; i < cur_inode.blocks_in_file; i++){
-                        void* dir_spaceholder = kmalloc(BLOCKSIZE);
-                        receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
-                        struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
-                        int j;
-                        for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-                                struct dir_entry file_dir = dir_data_block[j]; // 
-                                int x;
-                                int is_equal = 1; // initialize to true
-                                for(x = 0; x < MAX_NAME_LENGTH; x++){
-                                        if(file_dir.name[x]  != next_path[x]){
-                                                is_equal = 0;
-                                                break;
-                                        }//end if
-                                }//end for
-                                if(is_equal){
-                                        file_found = 1; //we found the file, so break out of loop
-                                        break;
-                                }
-                        }//inner for
-                        if(file_found){
-                                break;
-                        }
-                }//outer for
+            }//inner for
+            if(file_found){
+                    break;
+            }
+        }//outer for
 
-                if(!file_found){//throw an error
-                        os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
-                        return -1;
-                }
-                if(!(cur_inode->is_dir)){
-   			//not a valid directory
+        if(!file_found){//throw an error
+            os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
+            return -1;
+        }
+        if(!(cur_inode->is_dir)){
+			//not a valid directory
 			os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");   
-                        return -1;
-                }//end if
-        }//outer most while loop
+                return -1;
+        }//end if
+	}//outer most while loop
 
 
 	// at this point, the name of the file or dir to be created is “new_file_name” and it has to be added to cur_inode (which is a directory)
-
-
 	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// REAL ADDING HAS TO BE MADE																	   |
-	// struct of inode has to be created and written to disk and fields of struct has to be initialized								   |
+	// REAL ADDING HAS TO BE MADE: struct of inode has to be created and written to disk and fields of struct has to be initialized		
+	
+	//STEP 1: Consult the inode_bitmap to find a free space in the inode_table to add the new inode:
+	int free_inode_loc = firstFree(inode_bitmap);
+	//STEP 2: Create the new inode:
+	inode* new_inode = (inode*) kmalloc(sizeof(inode));
+	new_inode->size = 0; // new file is initially empty (i.e. contains no data), so its size is 0 initially
+	new_inode->is_dir = 0; // create is always used to create a file, not a directory...us kmkdir() to create a diretory
+	new_inode->usr_id = 0; // not actively using this field at the moment...
+	new_inode->blocks_in_file = 0; // file is initially empty
+	new_inode->data_blocks = {}; // is this the correct syntax???
+	new_inode->
+	new_inode->
+
+
+	nt size;
+	int is_dir;
+	int usr_id;
+	int blocks_in_file;
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 27 right now
+	char perms;
+							   |
 	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 
 	return 0;
 }
 
 
-/* delete the file with the path filepath. Return -1 if the file does not excist */
+/* create a new directory, if we are unsuccessful return -1 */
+int kmkdir(char* filepath, int mode) {
+
+}//end kmkdir
+
+
+/* delete the file with the path filepath. Return -1 if the file does not exist */
 int kdelete(char* filepath) {
         int fd;
         int inum = 0;
@@ -578,5 +604,10 @@ int kdelete(char* filepath) {
 	return 0;
 
 } // end kdelete();
+
+/* delete/remove the directory with the path filepath. Return -1 if the directory does not exist */
+int krmdir(char* filepath) {
+
+}//end krmdir
 
 
