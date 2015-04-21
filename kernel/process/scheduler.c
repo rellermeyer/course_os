@@ -18,7 +18,6 @@ static prq_handle * inactive_tasks;
 static prq_handle * active_tasks;
 static sched_task * active_task;
 static hmap_handle * all_tasks_map;
-static hmap_handle * pid_handlers;
 
 // NOTE
 // scheduler logic only. not tested
@@ -60,7 +59,6 @@ STATUS sched_init() {
     os_printf("Initializing scheduler\n");
     last_err = "No error";
     inactive_tasks = prq_create_fixed(MAX_TASKS);
-    pid_handlers = hmap_create(pid_handlers);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
 
@@ -70,14 +68,14 @@ STATUS sched_init() {
 }
 
 STATUS sched_register_callback_handler(callback_handler cb_handler) {
-    hmap_put(pid_handlers, sched_get_active_pid(), cb_handler);
+    sched_task * task = hmap_get(all_tasks_map, sched_get_active_pid());
+    task->cb_handler = cb_handler;
     return STATUS_OK;
 }
 
 STATUS sched_deregister_callback_handler() {
-    if (hmap_contains(pid_handlers, sched_get_active_pid())) {
-        hmap_remove(pid_handlers, sched_get_active_pid());
-    }
+    sched_task * task = hmap_get(all_tasks_map, sched_get_active_pid());
+    task->cb_handler = 0;
 
     return STATUS_OK;
 }
@@ -136,6 +134,7 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     task->vas_struct = vas_struct;
     task->parent_pid = 0;
     task->children_pids = arrl_create();
+    task->cb_handler = 0;
 
     if (active_task) {
         task->parent_pid = active_task->pcb->PID;
@@ -239,13 +238,12 @@ void __sched_interrupt_handler() {
 
                 // issue messages before the process starts
                 // works only in a single-threaded environment
-                if (hmap_contains(pid_handlers, active_task->pcb->PID)) {
+                if (active_task->cb_handler) {
                     sched_message_chunk * chunk;
-                    callback_handler cb_handler = hmap_get(pid_handlers,
-                            active_task->pcb->PID);
                     while ((chunk = llist_dequeue(active_task)) != 0) {
-                        cb_handler(chunk->src_pid, chunk->event, chunk->data,
-                                chunk->chunk_length, chunk->remain_length);
+                        active_task->cb_handler(chunk->src_pid, chunk->event,
+                                chunk->data, chunk->chunk_length,
+                                chunk->remain_length);
                         if (chunk) {
                             kfree(chunk);
                         }
