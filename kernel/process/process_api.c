@@ -18,17 +18,17 @@ STATUS prcs_kill(uint32_t pid) {
 
 // sends a message to a process (ipc)
 STATUS prcs_send_message(message msg) {
-    return msg_send_message(msg);
+    return sched_send_message(msg);
 }
 
 // receives messages from processes
 STATUS prcs_register_message_callback_handler(callback_handler cb_handler) {
-    return msg_register_callback_handler(cb_handler);
+    return sched_register_callback_handler(cb_handler);
 }
 
 // receives messages from processes
 STATUS prcs_deregister_message_callback_handler() {
-    return msg_deregister_callback_handler();
+    return sched_deregister_callback_handler();
 }
 
 // set the niceness of a process

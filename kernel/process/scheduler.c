@@ -18,6 +18,7 @@ static prq_handle * all_tasks;
 static prq_handle * active_tasks;
 static sched_task * active_task;
 static hmap_handle * all_tasks_map;
+static hmap_handle * pid_handlers;
 
 // NOTE
 // scheduler logic only. not tested
@@ -58,11 +59,26 @@ STATUS sched_init() {
 
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    all_tasks = prq_create(MAX_TASKS);
-    active_tasks = prq_create(MAX_ACTIVE_TASKS);
+    all_tasks = prq_create_fixed(MAX_TASKS);
+    pid_handlers = hmap_create(pid_handlers);
+    active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
 
     _sched_register_timer_irq();
+
+    return STATUS_OK;
+}
+
+
+STATUS sched_register_callback_handler(callback_handler cb_handler) {
+    hmap_put(pid_handlers, sched_get_active_pid(), cb_handler);
+    return STATUS_OK;
+}
+
+STATUS sched_deregister_callback_handler() {
+    if (hmap_contains(pid_handlers, sched_get_active_pid())) {
+        hmap_remove(pid_handlers, sched_get_active_pid());
+    }
 
     return STATUS_OK;
 }
@@ -145,13 +161,8 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid) {
     for (; i < arrl_count(parent_task->children_pids); i++) {
         uint32_t child_pid = arrl_count(parent_task, i);
         sched_task * child_task = hmap_get(all_tasks_map, child_pid);
-        if (child_task) {
-            if (child_pid == pid) {
-                return child_task;
-            }
-            if ((child_task = __sched_contains_pid(child_task, pid))) {
-                return child_task;
-            }
+        if ((child_task = __sched_contains_pid(child_task, pid))) {
+            return child_task;
         }
     }
 
@@ -181,7 +192,7 @@ void __sched_interrupt_handler() {
         if (prq_count(all_tasks) > 0) {
             prq_node * node = prq_dequeue(all_tasks);
             prq_enqueue(active_tasks, node); // add to active_tasks if the task
-            kfree(active_task->node);
+            prq_free_node(active_task->node);
         }
     }
 
@@ -208,6 +219,7 @@ void __sched_interrupt_handler() {
             __sched_resume_timer_irq();             // allow interrupts
             execute_process_no_vas(active_task->pcb); // start running the process function
             sched_remove_task(active_task);
+            active_task = 0;
             // NOTE next interrupt will get the start the process
 
             break;
@@ -225,23 +237,28 @@ void __sched_interrupt_handler() {
 
                 active_task = next;
                 save_process_state(task->pcb->PID); // save the current state of the process
-                load_process_state(active_task->pcb->PID); // continue with the next process
                 vm_enable_vas(active_task->vas_struct);
+
+                // issue messages before the process starts
+                // works only in a single-threaded environment
+                if(hmap_contains(pid_handlers, active_task->pcb->PID)){
+                    sched_message_chunk * chunk;
+                    callback_handler cb_handler = hmap_get(pid_handlers, active_task->pcb->PID);
+                    while((chunk = llist_dequeue(active_task)) != 0){
+                        cb_handler(chunk->src_pid, chunk->event, chunk->data, chunk->chunk_length, chunk->remain_length);
+                        if(chunk) {
+                            kfree(chunk);
+                        }
+                    }
+                }
+
+                load_process_state(active_task->pcb->PID); // continue with the next process
             }
 
             break;
     }
 
     __sched_resume_timer_irq();
-}
-
-uint32_t * sched_get_children() {
-    if (active_task) {
-        // FIXME check if these exists in the hashmap before returning
-        return arrl_to_arr(active_task->children_pids);
-    }
-
-    return STATUS_FAIL;
 }
 
 // start process
@@ -276,26 +293,32 @@ uint32_t sched_add_task(sched_task * task) {
     return STATUS_FAIL;
 }
 
+// contract
+// --------
+// must disable timer_interrupt
 uint32_t __sched_remove_task(sched_task * task) {
     if (task != 0) {
         switch (task->state) {
             // FIXME Not sure if it is recommended to remove the task even before it
             // runs
             case TASK_STATE_INACTIVE:
-                __sched_pause_timer_irq();
                 prq_remove(&all_tasks, task->node);
+                prq_free_node(task->node);
                 __sched_resume_timer_irq();
                 break;
             case TASK_STATE_ACTIVE:
-                __sched_pause_timer_irq();
                 vm_use_kernel_vas();
-                active_task->state = TASK_STATE_FINISHED;   // process completed
-                hmap_remove(active_task->pcb->PID);
-                free_PCB(active_task->pcb);               // free process memory
-                prq_remove(active_tasks, active_task->node); // remove it from the queue
-                kfree(active_task->node);
-                active_task = 0;
-                __sched_resume_timer_irq();
+                task->state = TASK_STATE_FINISHED;   // process completed
+                hmap_remove(task->pcb->PID);
+                free_PCB(task->pcb);               // free process memory
+                prq_remove(active_tasks, task->node); // remove it from the queue
+                prq_free_node(task->node);
+
+                // remove children
+                int i = 0;
+                for (; i < arrl_count(task->children_pids); i++) {
+                    sched_remove_task(arrl_get(task->children_pids, 1)); // not to be confused with __sched_remove_task
+                }
                 break;
             case TASK_STATE_FINISHED:
                 break;
@@ -311,7 +334,10 @@ uint32_t __sched_remove_task(sched_task * task) {
 uint32_t sched_remove_task(uint32_t * pid) {
     sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
     if (task) {
-        return __sched_remove_task(task);
+        __sched_pause_timer_irq();
+        STATUS status = __sched_remove_task(task);
+        __sched_resume_timer_irq();
+        return status;
     }
 
     return STATUS_FAIL;
@@ -330,7 +356,12 @@ const char * sched_last_err() {
     return last_err;
 }
 
-void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len) {
+STATUS sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len) {
+    sched_task * dest_task;
+
+    if(!(dest_task = hmap_get(&all_tasks_map, dest_pid))){
+        return STATUS_FAIL;
+    }
     __sched_pause_timer_irq();
 
     vm_use_kernel_vas();
@@ -366,6 +397,7 @@ void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len)
         chunk->chunk_length = cpy_len;
         chunk->remain_length = len;
         chunk->event = event;
+        chunk->src_pid = active_task ? active_task->pcb->PID : 0;
 
         llist_enqueue(dest_task->message_queue, chunk);
     }
@@ -375,4 +407,6 @@ void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len)
     }
 
     __sched_resume_timer_irq();
+
+    return STATUS_OK;
 }

@@ -24,7 +24,7 @@ struct llist_node {
 typedef struct {
     llist_node *head;
     llist_node *tail;
-    int size;
+    int count;
 } llist_handle;
 
 /* prepend (because of speed) to the list. */
@@ -39,5 +39,6 @@ void llist_remove_at(llist_handle *l, int index);
 void* llist_get_by_index(llist_handle *l, int index);
 llist_node* llist_get_node(llist_handle *l, int index);
 void llist_set_data(llist_node *l, void *data);
+void llist_count(llist_node *l);
 
 #endif

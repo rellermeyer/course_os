@@ -22,7 +22,7 @@
 
 llist_handle* llist_create(void *data) { /* create more space than needed -- less resizing */
     llist_handle *result = (llist_handle *) kmalloc(sizeof(llist_node));
-    result->size = 0;
+    result->count = 0;
     llist_insert(result, llist_create_node(data), 0);
     return result;
 }
@@ -64,7 +64,7 @@ void llist_insert(llist_handle *l, void *data, int index) {
     int i;
     llist_node *next = l->head;
     llist_node *prev;
-    l->size++;
+    l->count++;
     for (i = 0; i < index; i++) {
         prev = next;
         next = next->next;
@@ -75,6 +75,10 @@ void llist_insert(llist_handle *l, void *data, int index) {
     if (l->tail->next) {
         l->tail = l->tail->next;
     }
+}
+
+int llist_count(llist_handle *l){
+    return l->count;
 }
 
 void llist_remove_at(llist_handle *l, int index) {
