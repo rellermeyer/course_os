@@ -98,9 +98,12 @@ void prq_remove(prq_handle * queue, prq_node * node) {
     prq_node ** heap = queue->heap;
     prq_node * end = heap[queue->count];
     int index = (end->index = node->index);
+    if (index == -1) {
+        return;
+    }
     node->index = -1;
     heap[index] = end;
-    heap[queue->count] = 0;
+    heap[queue->count+1] = 0;
     --queue->count;
     // FIXME optimize later
     __prq_shift_up(queue, index);
