@@ -12,9 +12,9 @@
 #define TASK_STATE_INACTIVE  2  // task is in the wait queue (about to be executed)
 #define TASK_STATE_ACTIVE 1     // task is part of the running tasks; it is being interleaved and executed atm
 #define TASK_STATE_NONE 0       // task is just created (no real state)
-
+#define SAFE_NICE(n) MAX(MIN(MAX_NICENESS, n), n)
 static char * last_err;
-static prq_handle * all_tasks;
+static prq_handle * inactive_tasks;
 static prq_handle * active_tasks;
 static sched_task * active_task;
 static hmap_handle * all_tasks_map;
@@ -59,7 +59,7 @@ STATUS sched_init() {
 
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    all_tasks = prq_create_fixed(MAX_TASKS);
+    inactive_tasks = prq_create_fixed(MAX_TASKS);
     pid_handlers = hmap_create(pid_handlers);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
@@ -68,7 +68,6 @@ STATUS sched_init() {
 
     return STATUS_OK;
 }
-
 
 STATUS sched_register_callback_handler(callback_handler cb_handler) {
     hmap_put(pid_handlers, sched_get_active_pid(), cb_handler);
@@ -91,7 +90,7 @@ STATUS sched_free() {
 
     __sched_deregister_timer_irq();
 
-    prq_free(all_tasks);
+    prq_free(inactive_tasks);
     prq_free(active_tasks);
 
     return STATUS_OK;
@@ -101,7 +100,7 @@ STATUS sched_free() {
 // not to be confused with StartProcess
 // NOTE file_p must be created by the kernel and is located in the kernel_vas
 sched_task* sched_create_task(uint32_t* file_p, int niceness) {
-    if (prq_count(all_tasks) >= MAX_TASKS) {
+    if (prq_count(inactive_tasks) >= MAX_TASKS) {
         last_err = "Too many tasks";
         return STATUS_FAIL;
     }
@@ -128,8 +127,7 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     // call vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
     // not sure how to use it
 
-    niceness = MIN(MAX_NICENESS, niceness);
-    niceness = MAX(MIN_NICENESS, niceness);
+    niceness = MAX(MIN(MAX_NICENESS, niceness), niceness);
 
     task->niceness = niceness;
     task->pcb = pcb_pointer;
@@ -189,8 +187,8 @@ void __sched_interrupt_handler() {
     vm_use_kernel_vas();
 
     if (prq_count(active_tasks) < MAX_ACTIVE_TASKS) {
-        if (prq_count(all_tasks) > 0) {
-            prq_node * node = prq_dequeue(all_tasks);
+        if (prq_count(inactive_tasks) > 0) {
+            prq_node * node = prq_dequeue(inactive_tasks);
             prq_enqueue(active_tasks, node); // add to active_tasks if the task
             prq_free_node(active_task->node);
         }
@@ -241,12 +239,14 @@ void __sched_interrupt_handler() {
 
                 // issue messages before the process starts
                 // works only in a single-threaded environment
-                if(hmap_contains(pid_handlers, active_task->pcb->PID)){
+                if (hmap_contains(pid_handlers, active_task->pcb->PID)) {
                     sched_message_chunk * chunk;
-                    callback_handler cb_handler = hmap_get(pid_handlers, active_task->pcb->PID);
-                    while((chunk = llist_dequeue(active_task)) != 0){
-                        cb_handler(chunk->src_pid, chunk->event, chunk->data, chunk->chunk_length, chunk->remain_length);
-                        if(chunk) {
+                    callback_handler cb_handler = hmap_get(pid_handlers,
+                            active_task->pcb->PID);
+                    while ((chunk = llist_dequeue(active_task)) != 0) {
+                        cb_handler(chunk->src_pid, chunk->event, chunk->data,
+                                chunk->chunk_length, chunk->remain_length);
+                        if (chunk) {
                             kfree(chunk);
                         }
                     }
@@ -278,7 +278,7 @@ uint32_t sched_add_task(sched_task * task) {
 
         task->state = TASK_STATE_INACTIVE;
         task->node = new_node;
-        prq_enqueue(all_tasks, new_node);
+        prq_enqueue(inactive_tasks, new_node);
 
         hmap_put(active_task->pcb->PID, active_task);
 
@@ -302,7 +302,7 @@ uint32_t __sched_remove_task(sched_task * task) {
             // FIXME Not sure if it is recommended to remove the task even before it
             // runs
             case TASK_STATE_INACTIVE:
-                prq_remove(&all_tasks, task->node);
+                prq_remove(&inactive_tasks, task->node);
                 prq_free_node(task->node);
                 __sched_resume_timer_irq();
                 break;
@@ -356,10 +356,46 @@ const char * sched_last_err() {
     return last_err;
 }
 
-STATUS sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len) {
+STATUS sched_set_niceness(uint32_t pid, uint32_t niceness) {
+
+    sched_task * task;
+
+    if (!(task = hmap_get(&all_tasks_map, pid))) {
+        return STATUS_FAIL;
+    }
+
+    __sched_pause_timer_irq();
+
+    prq_handle * tasks;
+
+    switch (task->state) {
+        case TASK_STATE_ACTIVE:
+            tasks = active_tasks;
+            break;
+        case TASK_STATE_INACTIVE:
+            tasks = inactive_tasks;
+            break;
+        case TASK_STATE_FINISHED:
+            break;
+    }
+
+    if (tasks) {
+        prq_remove(tasks, task->node); // remove the running task from queue
+        task->node->priority = SAFE_NICE(niceness);
+        prq_enqueue(tasks, task->node); // add it again to see if its position in the queue
+
+    }
+
+    __sched_resume_timer_irq();
+
+    return STATUS_OK;
+}
+
+STATUS sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
+        int len) {
     sched_task * dest_task;
 
-    if(!(dest_task = hmap_get(&all_tasks_map, dest_pid))){
+    if (!(dest_task = hmap_get(&all_tasks_map, dest_pid))) {
         return STATUS_FAIL;
     }
     __sched_pause_timer_irq();
