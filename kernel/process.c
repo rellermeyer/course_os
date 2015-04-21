@@ -9,7 +9,8 @@ static uint32_t GLOBAL_PID;
 uint32_t sample_func(uint32_t);
 
 int init_all_processes() {
-    pcb_table = kmalloc(MAX_PROCESSES*4);
+	pcb_table = kmalloc(MAX_PROCESSES*4);
+	os_memset(pcb_table, 0, sizeof(int)*MAX_PROCESSES);
 	GLOBAL_PID = 0;
 	return 0;
 } 
@@ -27,7 +28,7 @@ pcb* process_create(uint32_t* file_p) {
 
 	
 	//This used to be == 0, which doesn't seem correct
-	if(*free_space_in_pcb_table != 0) {
+	if(free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
@@ -66,7 +67,6 @@ uint32_t* next_free_slot_in_pcb_table() {
 	uint32_t* current_address = pcb_table;
 	uint32_t i;
 	for(i = 0; i < MAX_PROCESSES; ++i) {
-		
 		if((*(int*)current_address) == 0){
 			return current_address;
 		}
