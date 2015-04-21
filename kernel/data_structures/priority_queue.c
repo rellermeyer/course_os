@@ -123,17 +123,13 @@ prq_node * prq_dequeue(prq_handle * queue) {
     return top;
 }
 
-prq_handle* prq_create_fixed(int n) {
+prq_handle * prq_create() {
     n = MAX(1, n);
     prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
     queue->count = 0;
     queue->heap_size = n + 1;
     queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * queue->heap_size);
     return queue;
-}
-
-prq_handle * prq_create() {
-    return prq_create_fixed(DEFAULT_COUNT);
 }
 
 void prq_free(prq_handle * queue) {
