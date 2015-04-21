@@ -1,5 +1,4 @@
 #include "scheduler.h"
-#include "message.h"
 #include "klibc.h"
 
 // Process / Scheduler API
@@ -17,8 +16,8 @@ STATUS prcs_kill(uint32_t pid) {
 }
 
 // sends a message to a process (ipc)
-STATUS prcs_send_message(message msg) {
-    return sched_send_message(msg);
+STATUS prcs_send_message(uint32_t dest_pid, uint32_t event, char * data, int len) {
+    return sched_send_message(dest_pid, event, data, len);
 }
 
 // receives messages from processes
