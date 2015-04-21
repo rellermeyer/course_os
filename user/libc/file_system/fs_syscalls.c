@@ -1,30 +1,33 @@
 // #include <stdio.h>
 #include <stdint.h>
-#include "../../kernel/include/hw_handlers.h"
-#include "../../kernel/include/open_table.h"
-#include "../../kernel/include/klibc.h"
+// #include "../../kernel/include/hw_handlers.h"
+// #include "../../kernel/include/open_table.h"
+// #include "../../kernel/include/klibc.h"
+
+#include "../../include/fs_syscalls.h"
+#include "../arch/arm/syscall_arch.h"
 
 /*open() returns a file descriptor, an int used to call later fuctions.
 A return value of -1 tells that an error occurred and the file cannot be opened*/
-int open(char* filepath, char mode){
+long open(char* filepath, char mode){
 	if(mode != 'r' || mode != 'w' || mode != 'a' || mode!='b'){
 		os_printf("mode is not a valid option. \n");
 		os_printf("r=read, w=write, b=both read and write, a=append.\n");
 		return -1;
 	}//end if
 
-	int fd =0;
+	long fd = __syscall2(SYSCALL_OPEN, (long)filepath, (long)mode);
 
 	// move the arguments into registers for kopen() to use:
-	  asm volatile("mov %[filepath1], r1"::[filepath1]"r" (filepath): "r1");
-	  asm volatile("mov %[mode1], r2"::[mode1]"r" (mode): "r2");
+	//  asm volatile("mov %[filepath1], r1"::[filepath1]"r" (filepath): "r1");
+	//  asm volatile("mov %[mode1], r2"::[mode1]"r" (mode): "r2");
 
 	// trigger the software_interrupt_handler in hw_handler.c:
-	  asm volatile("swi SYSCALL_OPEN");
+	//  asm volatile("swi SYSCALL_OPEN");
 	// kopen() gets called from within hw_handler.c
 
 	// retrieve the return values from kopen to pass back to user:
-	  asm volatile("mov r1, %[fd1]":[fd1]"=r" (fd)::);
+	//  asm volatile("mov r1, %[fd1]":[fd1]"=r" (fd)::);
 
 	return fd;
 }//end open syscall
