@@ -1,7 +1,7 @@
 
-typedef void (*callback_handler)(msg_handle);
+typedef void (*callback_handler)(message);
 
-void msg_send(msg_handle msg) {
+void msg_send(message msg) {
 	sched_post_message(to_pid, data, len);
 }
 

@@ -283,7 +283,7 @@ const char * sched_last_err() {
     return last_err;
 }
 
-void sched_post_message(uint32_t dest_pid, char * data, int len){
+void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len){
     __sched_deregister_timer_irq();
 
     vm_use_kernel_vas();
@@ -306,12 +306,21 @@ void sched_post_message(uint32_t dest_pid, char * data, int len){
         // switch to dest vas
         vm_enable_vas(dest_task->vas_struct);
         // copy from global kernel stack to process heap
-        char* task_mem = kmalloc(cpy_len);
-        os_memcpy(data_cpy, task_mem, cpy_len);
+        char* task_mem_data_cpy = kmalloc(cpy_len);
+        os_memcpy(data_cpy, task_mem_data_cpy, cpy_len);
 
         vm_use_kernel_vas();
 
-        llist_enqueue(&dest_task->message_queue, task_mem);
+        // FIXME create the message object and pass it in
+        // messages will be broken up into chunks since we have to 
+        // copy into kernel stack first.
+        sched_message_chunk * chunk = kmalloc(sizeof(sched_message_chunk));
+        chunk->data = task_mem_data_cpy;
+        chunk->chunk_length = cpy_len;
+        chunk->remain_length = len;
+        chunk->event = event;
+
+        llist_enqueue(&dest_task->message_queue, chunk);
     }
 
     if(active_task) {
