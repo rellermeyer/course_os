@@ -8,15 +8,10 @@
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
 #define MAX_NICENESS -20
 #define MIN_NICENESS 20
-#define TASK_STATE_FINSIHED 3
-#define TASK_STATE_INACTIVE  2
-#define TASK_STATE_ACTIVE 1
-#define TASK_STATE_NONE 0
-#define MAX(a, b) 	((a > b) ? a : b)
-#define MIN(a, b)   ((a < b) ? a : b)
-
-#define OK      1
-#define FAIL    0
+#define TASK_STATE_FINISHED 3   // task has run by the scheduler and finished
+#define TASK_STATE_INACTIVE  2  // task is in the wait queue (about to be executed)
+#define TASK_STATE_ACTIVE 1     // task is part of the running tasks; it is being interleaved and executed atm
+#define TASK_STATE_NONE 0       // task is just created (no real state)
 
 static char * last_err;
 static prq_handle * all_tasks;
@@ -33,6 +28,8 @@ static hmap_handle * all_tasks_map;
 // - deregister interrupts instead of flag
 // - optimize
 // - add error messages
+// - remove a task (and children)
+// - emitting and receiving messages!
 
 // scheduler
 // ---------
@@ -41,31 +38,59 @@ static hmap_handle * all_tasks_map;
 
 // supported syscalls
 // ---------
-// exec
-// waitpid
+// create: create a process (not execute)
+// exec: start a process which you created before
+// waitpid: wait for a process (i.e. child) to finish
+// kill: kill a process and its children processes
+//
 
-uint32_t sched_init() {
+void __sched_register_timer_irq();
+void __sched_deregister_timer_irq();
+void __sched_pause_timer_irq();
+void __sched_resume_timer_irq();
+void __sched_interrupt_handler();
+sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
+uint32_t __sched_remove_task(sched_task * task);
+
+// Initialize the scheduler. Should be called by the kernel ONLY
+STATUS sched_init() {
+    vm_enable_kernel_vas();
+
     os_printf("Initializing scheduler\n");
     last_err = "No error";
-    all_tasks = prq_create_fixed(MAX_TASKS);
-    active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
+    all_tasks = prq_create(MAX_TASKS);
+    active_tasks = prq_create(MAX_ACTIVE_TASKS);
     active_task = 0;
-    return 1;
+
+    _sched_register_timer_irq();
+
+    return STATUS_OK;
 }
 
-static void __sched_register_timer_irq();
-static void __sched_deregister_timer_irq();
+// Free the resources used the scheduler
+STATUS sched_free() {
+    vm_enable_kernel_vas();
 
-// contract
-// --------
-// file_p must be created by the kernel and is located in the kernel_vas
+    // FIXME kill active tasks
+
+    __sched_deregister_timer_irq();
+
+    prq_free(all_tasks);
+    prq_free(active_tasks);
+
+    return STATUS_OK;
+}
+
+// Create a task which can be scheduled. Function is similar to CreateProcess and
+// not to be confused with StartProcess
+// NOTE file_p must be created by the kernel and is located in the kernel_vas
 sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     if (prq_count(all_tasks) >= MAX_TASKS) {
         last_err = "Too many tasks";
-        return 0;
+        return STATUS_FAIL;
     }
 
-    __sched_deregister_timer_irq();
+    __sched_pause_timer_irq();
 
     // use the kernel memory
     vm_use_kernel_vas();
@@ -74,8 +99,8 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
 
     if (!pcb_pointer) {
         last_err = "Process create error";
-        ignore_interrupt = 0;
-        return 0;
+        __sched_resume_timer_irq();
+        return STATUS_FAIL;
     }
 
     struct vas * vas_struct = vm_new_vas();
@@ -95,39 +120,59 @@ sched_task* sched_create_task(uint32_t* file_p, int niceness) {
     task->state = TASK_STATE_NONE;
     task->node = 0;
     task->vas_struct = vas_struct;
-    task->parent = 0;
-    task->children = arrl_create();
+    task->parent_pid = 0;
+    task->children_pids = arrl_create();
 
     if (active_task) {
-        task->parent = active_task->pid;
-        __sched_propogate_pid(active_task, pid);
+        task->parent_pid = active_task->pcb->PID;
+        arrl_add(active_task->children_pids, task->pcb->PID);
         vm_enable_vas(active_task->vas_struct);
     }
 
-    __sched_register_timer_irq();
+    __sched_resume_timer_irq();
 
     return task;
 }
 
-void __sched_propogate_pid(sched_task * parent_task, uint32_t pid){
-    if(parent_task && parent_task->children) {
-        arrl_add(parent_task->children, pid);
-        __sched_propogate_pid(parent_task->parent, pid);
+// Helper function used by the scheduler internally. It will traverse the parent/child
+// list to find a subtask.
+sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid) {
+    if (parent_task && parent_task->pcb->PID == pid) {
+        return parent_task;
     }
+
+    int i = 0;
+    for (; i < arrl_count(parent_task->children_pids); i++) {
+        uint32_t child_pid = arrl_count(parent_task, i);
+        sched_task * child_task = hmap_get(all_tasks_map, child_pid);
+        if (child_task) {
+            if (child_pid == pid) {
+                return child_task;
+            }
+            if ((child_task = __sched_contains_pid(child_task, pid))) {
+                return child_task;
+            }
+        }
+    }
+
+    return 0;
 }
 
-// expecting access to kernel global vars
-void sched_waitpid(uint32_t pid){
-    while(true) {
+//
+// NOTE expecting access to kernel global vars
+void sched_waitpid(uint32_t pid) {
+    while (1) {
         sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
-        if(task == 0 || task->state == TASK_STATE_FINSIHED) { break; }
+        if (task == 0 || task->state == TASK_STATE_FINISHED) {
+            break;
+        }
         sleep(500);
     }
 }
 
 void __sched_interrupt_handler() {
     // prevent interrupts while handling another interrupt
-    __sched_deregister_timer_irq(); 
+    __sched_pause_timer_irq();
 
     // use the kernel memory
     vm_use_kernel_vas();
@@ -141,7 +186,7 @@ void __sched_interrupt_handler() {
     }
 
     if (prq_count(active_tasks) == 0) {
-        __sched_register_timer_irq();
+        __sched_resume_timer_irq();
         return;
     }
 
@@ -160,7 +205,7 @@ void __sched_interrupt_handler() {
             active_task = task;                   // set the active_task pointer
             active_task->state = TASK_STATE_ACTIVE; // mark task process as active
             vm_enable_vas(active_task->vas_struct);
-            __sched_register_timer_irq();             // allow interrupts
+            __sched_resume_timer_irq();             // allow interrupts
             execute_process_no_vas(active_task->pcb); // start running the process function
             sched_remove_task(active_task);
             // NOTE next interrupt will get the start the process
@@ -187,16 +232,16 @@ void __sched_interrupt_handler() {
             break;
     }
 
-    __sched_register_timer_irq();
+    __sched_resume_timer_irq();
 }
 
-uint32_t * sched_get_children(){
-    if(active_task){
+uint32_t * sched_get_children() {
+    if (active_task) {
         // FIXME check if these exists in the hashmap before returning
-        return arrl_to_arr(active_task->children);
+        return arrl_to_arr(active_task->children_pids);
     }
 
-    return FAIL;
+    return STATUS_FAIL;
 }
 
 // start process
@@ -204,7 +249,7 @@ uint32_t sched_add_task(sched_task * task) {
     if (task) {
         if (task->state == TASK_STATE_NONE) {
             last_err = "Reusing task object not allowed";
-            return FAIL;
+            return STATUS_FAIL;
         }
 
         // use the kernel memory
@@ -218,7 +263,7 @@ uint32_t sched_add_task(sched_task * task) {
         task->node = new_node;
         prq_enqueue(all_tasks, new_node);
 
-        hmap_put(active_task->pcb->pid, active_task);
+        hmap_put(active_task->pcb->PID, active_task);
 
         if (active_task) {
             vm_enable_vas(active_task->vas_struct);
@@ -228,27 +273,29 @@ uint32_t sched_add_task(sched_task * task) {
     }
 
     last_err = "Invalid sched_task pointer";
-    return FAIL;
+    return STATUS_FAIL;
 }
 
 uint32_t __sched_remove_task(sched_task * task) {
-    if(task != 0) { 
-        switch(task->state){
+    if (task != 0) {
+        switch (task->state) {
+            // FIXME Not sure if it is recommended to remove the task even before it
+            // runs
             case TASK_STATE_INACTIVE:
-                __sched_deregister_timer_irq(); 
+                __sched_pause_timer_irq();
                 prq_remove(&all_tasks, task->node);
-                __sched_register_timer_irq(); 
+                __sched_resume_timer_irq();
                 break;
             case TASK_STATE_ACTIVE:
-                __sched_deregister_timer_irq(); 
+                __sched_pause_timer_irq();
                 vm_use_kernel_vas();
-                active_task->state = TASK_STATE_FINSIHED;       // process completed
-                hmap_remove(active_task->pcb->pid);
+                active_task->state = TASK_STATE_FINISHED;   // process completed
+                hmap_remove(active_task->pcb->PID);
                 free_PCB(active_task->pcb);               // free process memory
                 prq_remove(active_tasks, active_task->node); // remove it from the queue
                 kfree(active_task->node);
                 active_task = 0;
-                __sched_register_timer_irq(); 
+                __sched_resume_timer_irq();
                 break;
             case TASK_STATE_FINISHED:
                 break;
@@ -257,17 +304,17 @@ uint32_t __sched_remove_task(sched_task * task) {
         return task->state;
     }
 
-    return FAIL;
+    return STATUS_FAIL;
 }
 
 // essentially a kill process
-uint32_t sched_remove_task(uint32_t * pid){
+uint32_t sched_remove_task(uint32_t * pid) {
     sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
-    if(task) {
+    if (task) {
         return __sched_remove_task(task);
     }
 
-    return FAIL;
+    return STATUS_FAIL;
 }
 
 // get the current process id
@@ -276,31 +323,31 @@ uint32_t sched_get_active_pid() {
         return active_task->pcb->PID;
     }
 
-    return FAIL;
+    return STATUS_FAIL;
 }
 
 const char * sched_last_err() {
     return last_err;
 }
 
-void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len){
-    __sched_deregister_timer_irq();
+void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len) {
+    __sched_pause_timer_irq();
 
     vm_use_kernel_vas();
 
     // create space on kernel stack
     char data_cpy[512];
-    while(len > 0){
+    while (len > 0) {
         // get length to cpy
-        int cpy_len = min(len, 512);
+        int cpy_len = MIN(len, 512);
         // enable orignal struct
         vm_enable_vas(active_task->vas_struct);
         // copy to stack
         os_memcpy(data, data_cpy, cpy_len);
         // remaining bytes
-        len - = cpy_len;
+        len -= cpy_len;
         // increment data pointer
-        data = (char*)(data + cpy_len / 4);
+        data = (char*) (data + cpy_len / 4);
         // get the dest_task
         sched_task * dest_task = hmap_get(&all_tasks_map, dest_pid);
         // switch to dest vas
@@ -312,7 +359,7 @@ void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len)
         vm_use_kernel_vas();
 
         // FIXME create the message object and pass it in
-        // messages will be broken up into chunks since we have to 
+        // messages will be broken up into chunks since we have to
         // copy into kernel stack first.
         sched_message_chunk * chunk = kmalloc(sizeof(sched_message_chunk));
         chunk->data = task_mem_data_cpy;
@@ -320,12 +367,12 @@ void sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len)
         chunk->remain_length = len;
         chunk->event = event;
 
-        llist_enqueue(&dest_task->message_queue, chunk);
+        llist_enqueue(dest_task->message_queue, chunk);
     }
 
-    if(active_task) {
+    if (active_task) {
         vm_enable_vas(active_task->vas_struct);
     }
 
-    __sched_register_timer_irq();   
+    __sched_resume_timer_irq();
 }
