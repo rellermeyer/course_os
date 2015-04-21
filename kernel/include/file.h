@@ -8,8 +8,9 @@
 
 #define BLOCKSIZE 512
 #define MAX_NAME_LENGTH 32
-#define MAX_DATABLOCKS_PER_INODE 27
+#define MAX_DATABLOCKS_PER_INODE 71
 #define DIR_ENTRY_SIZE 40
+#define NUM_INDIRECT_BLOCKS 50
 
 
 struct superblock
@@ -25,19 +26,23 @@ struct superblock
 	int max_data_blocks; // 66 bytes
 	int inode_bitmap_loc; // 70 bytes
 	int data_bitmap_loc; // 74 bytes
+	int indirect_blocks_bitmap_loc; //
 	int start_inode_table_loc; // 78 bytes
 	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
+	int start_indirect_blocks_table_loc; //
+	int max_indirect_blocks;
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };
 
 struct inode // this is metadata
 {
-	int size;
-	int is_dir;
-	int usr_id;
-	int blocks_in_file;
-	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 27 right now
-	char perms;
+	int size; // 4 bytes
+	int is_dir; // 4 bytes
+	int usr_id; // 4 bytes
+	int blocks_in_file; // 4 bytes
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 71 right now
+	int indirect_blocks[NUM_INDIRECT_BLOCKS] // 50*4 = 200 bytes ....50 indirect blocks right now
+	bitVector perms; // 12 bytes
 };
 
 struct dir_entry
