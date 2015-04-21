@@ -12,10 +12,10 @@ typedef struct {
 } Node;
 
 
-void init();
-int add(void *PCB, int priority);
-pcb* remove(pcb *PCB);
-void join(pcb *other_PCB);
+void pqueue_init();
+int pqueue_add(void *PCB, int priority);
+pcb* pqueue_remove(pcb *PCB);
+void pqueue_join(pcb *other_PCB);
 void dispatch(pcb *PCB);
 void schedule();
 void task_yield();
