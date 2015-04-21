@@ -1,8 +1,8 @@
 
-typedef void (*callback_handler)(uint32_t /* from_pid */, uint32_t /* event*/, uint32_t /**/, uint32_t);
+typedef void (*callback_handler)(msg_handle);
 
-void msg_send(uint32_t pid, uint32_t event, uint32_t data2) {
-
+void msg_send(msg_handle msg) {
+	sched_post_message(to_pid, data, len);
 }
 
 void msg_register_callback_handler() {
