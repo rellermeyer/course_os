@@ -8,7 +8,7 @@
 
 #define BLOCKSIZE 512
 #define MAX_NAME_LENGTH 32
-#define MAX_DATABLOCKS_PER_INODE 71
+#define MAX_DATABLOCKS_PER_INODE 70
 #define DIR_ENTRY_SIZE 40
 #define NUM_INDIRECT_BLOCKS 50
 
@@ -40,9 +40,15 @@ struct inode // this is metadata
 	int is_dir; // 4 bytes
 	int usr_id; // 4 bytes
 	int blocks_in_file; // 4 bytes
-	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 71 right now
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 70 right now
+	int indirect_blocks_in_file; // 4 bytes
 	int indirect_blocks[NUM_INDIRECT_BLOCKS] // 50*4 = 200 bytes ....50 indirect blocks right now
 	bitVector perms; // 12 bytes
+};
+
+struct indirect_block // total size is 1 block
+{
+	int data_blocks[BLOCKSIZE/4]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
 };
 
 struct dir_entry
