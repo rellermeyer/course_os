@@ -35,11 +35,11 @@ pcb* process_create(uint32_t* file_p) {
 		//will return -1 if not an ELF file or other error
 		Boolean success = load_file(pcb_pointer, file_p);
 
-		os_printf("PROCESS_CREATE_DEBUG: 41\n");
+		os_printf("PROCESS_CREATE_DEBUG: 38\n");
 		if(!success) {
 		 	return (pcb*) -1;
 		}
-		os_printf("PROCESS_CREATE_DEBUG: 45\n");
+		os_printf("PROCESS_CREATE_DEBUG: 42\n");
 
 		//fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
@@ -50,7 +50,7 @@ pcb* process_create(uint32_t* file_p) {
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
 		pcb_pointer->function = &sample_func;
 		pcb_pointer->has_executed = 0;
-
+		os_printf("PROCESS_CREATE_DEBUG: 53\n");
 		return pcb_pointer;
 		
 
