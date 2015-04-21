@@ -29,7 +29,7 @@
 #include "vm.h"
 #include "mem_alloc.h"
 #include "tests.h"
-#include "scheduler.h"
+// #include "scheduler.h"
 
 // Tests
 #include "tests/test_priority_queue.h"
@@ -101,7 +101,7 @@ void start2(uint32_t *p_bootargs)
 	run_prq_tests();
 	run_hmap_tests();
 
-	sched_init();
+	//  sched_init();
 
 	asm volatile("swi 1");
 	while (1);

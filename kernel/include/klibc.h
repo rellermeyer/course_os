@@ -68,6 +68,7 @@ void* kmalloc(uint32_t);
 void kfree(void*);
 
 int32_t abs(int32_t);
+unsigned int rand();
 
 #endif
 
