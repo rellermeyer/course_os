@@ -1,5 +1,4 @@
 #include "../include/hash_map.h"
-#include "stdlib.h"
 #include "klibc.h"
 
 /* this should be prime */
@@ -49,19 +48,24 @@ static void __hmap_rehash(hmap_handle* hmap) {
     hmap_entry* table = hmap->table;
 
     hmap->size = __hmap_find_prime_greater_than(size << 1);
-    hmap->table = (hmap_entry*) calloc(sizeof(hmap_entry), hmap->size);
+    hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry) * hmap->size);
+    os_memset(hmap->table, 0, sizeof(hmap_entry) * hmap->size);
     hmap->count = 0;
 
     while (--size >= 0) {
         if (table[size].flags == ACTIVE) {
-            hmap_handleInsert(hmap, table[size].data, table[size].key);
+            hmap_put(hmap, table[size].key, table[size].data);
         }
     }
 
     kfree(table);
 }
 
-hmap_handle* hmap_create(int startsize) {
+hmap_handle* hmap_create(){
+    return hmap_create_fixed(TABLE_STARTSIZE);
+};
+
+hmap_handle* hmap_create_fixed(int startsize) {
     hmap_handle* hmap = (hmap_handle*) kmalloc(sizeof(hmap_handle));
 
     if (!startsize) {
@@ -70,7 +74,7 @@ hmap_handle* hmap_create(int startsize) {
         startsize = __hmap_find_prime_greater_than(startsize - 2);
     }
 
-    hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry), startsize);
+    hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry) * startsize);
 
     os_memset(hmap->table, 0, startsize);
 

@@ -8,7 +8,7 @@
 // git commit -a -m 'message goes here'
 // git push
 
-#define NUM_TESTS 5
+#define NUM_TESTS 6
 #define DEFAULT_COUNT 10
 #define MIN_PRIORITY 20
 #define MAX_PRIORITY -20
@@ -232,6 +232,73 @@ int test_prq_5() {
     ret(queue1, TEST_OK);
 }
 
+// Test remove function
+int test_prq_6() {
+    prq_handle * queue1;
+    prq_handle * queue2;
+    prq_node * hn1;
+    prq_node * hn2;
+    prq_node * hn3;
+    prq_node * hn4;
+    prq_node * tmp1;
+    prq_node * tmp2;
+
+    queue1 = prq_create();
+    queue2 = prq_create();
+
+    hn1 = new(prq_node);
+    hn1->priority = 1;
+
+    hn2 = new(prq_node);
+    hn2->priority = 2;
+
+    hn3 = new(prq_node);
+    hn3->priority = 3;
+
+    hn4 = new(prq_node);
+    hn4->priority = 4;
+
+    prq_enqueue(queue1, hn1);
+    prq_enqueue(queue1, hn2);
+    prq_enqueue(queue1, hn3);
+    prq_enqueue(queue1, hn4);
+    prq_remove(queue1, hn1);
+    prq_remove(queue1, hn3);
+    // Double remove
+    prq_remove(queue1, hn3);
+
+    prq_enqueue(queue2, hn2);
+    prq_enqueue(queue2, hn4);
+
+
+    if (queue1->count != queue2->count) {
+        os_printf("expected equal heap_size");
+        for(int i = 0; i < queue1->count; ++i) {
+            prq_node * tmp = prq_dequeue(queue1);
+            del(tmp);
+        }
+        del(queue2);
+        ret(queue1, TEST_FAIL);
+    }
+
+    for (int size = 0; size < queue1->count; ++size) {
+        tmp1 = prq_dequeue(queue1);
+        tmp2 = prq_dequeue(queue2);
+        if (tmp1->priority != tmp2->priority) {
+            del(tmp1);
+            for(int i = 0; i < queue1->count; ++i) {
+                prq_node * tmp = prq_dequeue(queue1);
+                del(tmp);
+            }
+            del(queue2);
+            ret(queue1, TEST_FAIL);
+        }
+        del(tmp1);
+    }
+    del(queue2);
+    ret(queue1, TEST_OK);
+}
+
 //function running tests
 void run_prq_tests() {
     Test *tests[NUM_TESTS];
@@ -240,6 +307,7 @@ void run_prq_tests() {
     tests[2] = create_test("test_prq_3", &test_prq_3);
     tests[3] = create_test("test_prq_4", &test_prq_4);
     tests[4] = create_test("test_prq_5", &test_prq_5);
+    tests[5] = create_test("test_prq_6", &test_prq_6);
 
     run_tests(tests, NUM_TESTS);
 }

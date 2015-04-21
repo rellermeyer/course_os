@@ -33,6 +33,7 @@
 
 // Tests
 #include "tests/test_priority_queue.h"
+#include "tests/test_hash_map.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -98,6 +99,7 @@ void start2(uint32_t *p_bootargs)
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
 
 	run_prq_tests();
+	run_hmap_tests();
 
 	sched_init();
 

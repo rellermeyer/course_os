@@ -23,7 +23,6 @@ hmap_handle* hmap_create(int startsize);
 void* hmap_get(hmap_handle* hmap, unsigned long key);
 void hmap_put(hmap_handle* hmap, unsigned long key, const void* data);
 void* hmap_remove(hmap_handle* hmap, unsigned long key);
-void* hmap_get(hmap_handle* hmap, unsigned long key);
 long hmap_count(hmap_handle* hash);
 void hmap_free(hmap_handle* hash);
 
