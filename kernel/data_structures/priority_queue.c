@@ -51,6 +51,16 @@ void __prq_shift_down(prq_handle * queue, int idx) {
     }
 }
 
+prq_node * prq_create_node() {
+    return kmalloc(sizeof(prq_node));
+}
+
+void prq_free_node(prq_node * node) {
+    if (node) {
+        kfree(node);
+    }
+}
+
 prq_node * prq_peek(prq_handle * queue) {
     if (queue) {
         if (queue->count > 0) {
@@ -103,7 +113,7 @@ void prq_remove(prq_handle * queue, prq_node * node) {
     }
     node->index = -1;
     heap[index] = end;
-    heap[queue->count+1] = 0;
+    heap[queue->count + 1] = 0;
     --queue->count;
     // FIXME optimize later
     __prq_shift_up(queue, index);

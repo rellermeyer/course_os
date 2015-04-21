@@ -28,4 +28,6 @@ prq_handle* prq_create_fixed(int n);
 void prq_free(prq_handle * queue);
 int prq_count(prq_handle * queue);
 prq_node * prq_peek(prq_handle * queue);
+prq_node * prq_create_node();
+void prq_free_node(prq_node * node);
 #endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */
