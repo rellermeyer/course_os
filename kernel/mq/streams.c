@@ -144,7 +144,7 @@ void q_test()
 
 	os_printf("***** Test code for message queue (q_test()): *****\n");
 	os_printf("haha, as if we had tests. ;)\n");
-	// os_printf("***************************************************\n");
+	os_printf("*********************************************************************\n");
 }
 
 
