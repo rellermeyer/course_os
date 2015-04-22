@@ -501,6 +501,39 @@ void* kmalloc(uint32_t size)
 	return block;
 }
 
+void* kmalloc_aligned(uint32_t size)
+{	if (alignment == 4)
+	{
+		void* block = kmalloc(size + 4);
+		void* ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+		return ptr;
+	}
+
+	else if (alignment == 1024)
+	{
+		void* block = kmalloc(size + 1024);
+		void* ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+		return ptr;
+	}
+
+	else if (alignment == 4096)
+	{
+		void* block = kmalloc(size + 4096);
+		void* ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+		return ptr;
+	}
+
+	else if (alignment == 16 * 1024)
+	{
+		void* block = kmalloc(size + 16 * 1024);
+		void* ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+		return ptr;
+	}
+	else {
+		return kmalloc(size);
+	}
+}
+
 void kfree(void* ptr)
 {
 	deallocate((uint32_t*) ptr, heap, heap_size);
