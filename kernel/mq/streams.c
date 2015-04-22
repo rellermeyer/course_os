@@ -13,7 +13,7 @@ int_least32_t next;
 
 void q_create(char q_name[], char options[])
 {
-    if (initialized < 0){//ask why it's not getting inialized to zero. Change this hack...
+    if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
         initialized = 0;
     }
     os_printf("init is %d \n", initialized);
@@ -65,7 +65,7 @@ int_least32_t q_open(char q_name[])
     
 	return qd;
 }
-
+// Adding message to queue
 int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t datalen)
 {
 	int kilo = 1024;
@@ -73,7 +73,7 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 		//TODO: throw an error
         os_printf("datalen too large\n");
         return 0x0;
-	}else{
+	} else {
         os_printf("datalen okay. data is \"%s\"\n", data);
     }
 
@@ -110,10 +110,13 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
     return 0x0;
 }
 
+// access the message is being sent but do it in a way where it's blocking. Waits to see if it succeeds
+// or fails. If buffer is too small. 
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
     
 }
+
 
 void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength))
 {
