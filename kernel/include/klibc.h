@@ -92,6 +92,7 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
 void* kmalloc(uint32_t);
+void *kmalloc_aligned(size_t, size_t);
 void kfree(void*);
 
 int32_t abs(int32_t);
