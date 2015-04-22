@@ -15,12 +15,10 @@ void q_create(char q_name[], char options[])
 {
 	struct queue *q;
 	os_memset(&q, 0, sizeof(q));
+	ht_add(q_table, q_name, (void*)q);
 	if (!initialized) {
 		initialized = 1;
-        q_table = ht_alloc(100);
-        ht_add(q_table, q_name, (void*)q);
-	}else{
-        ht_add(q_table, q_name, (void*)q);
+        q_table = ht_alloc(100);      
     }
     //implement the below if we increase # of subscribers
 	if (!os_strcmp(options,"rr")) {
@@ -44,7 +42,7 @@ int_least32_t q_open(char q_name[])
     result->qd = result;
     q_map[next] = result;
     int_least32_t qd = next;
-    next ++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
+    next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
     
 	return qd;
 }
@@ -53,7 +51,7 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 {
 	int kilo = 1024;
 	if (datalen > 128 * kilo) {
-		//TODO: throw an error
+		// TODO: throw an error
         return 0x0;
 	}
 
