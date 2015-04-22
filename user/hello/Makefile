@@ -1,4 +1,4 @@
-include $(CURDIR)/../../config.mk
+linclude $(CURDIR)/../../config.mk
 
 TOOLCHAIN_PATH:=$(CURDIR)/../../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
