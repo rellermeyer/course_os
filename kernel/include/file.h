@@ -48,7 +48,8 @@ struct inode // this is metadata
 
 struct indirect_block // total size is 1 block
 {
-	int data_blocks[BLOCKSIZE/4]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
+	int blocks_in_file;
+	int data_blocks[(BLOCKSIZE/4)-1]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
 };
 
 struct dir_entry
@@ -61,6 +62,12 @@ struct dir_entry
 struct dir_data_block
 {
 	struct dir_entry dir_entries[(int)(BLOCKSIZE/DIR_ENTRY_SIZE)];
+};
+
+struct dir_helper
+{
+	char* truncated_path;
+	int dir_levels;
 };
 
 /* 
