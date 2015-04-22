@@ -140,71 +140,13 @@ int kfs_shutdown(){
 
 int kopen(char* filepath, char mode){
 	int fd;
-	int inum = 0;
-	struct inode cur_inode;
-	int exit_flag = 1;
-	while(exit_flag){
-		int k = 1;
-		char next_path[MAX_NAME_LENGTH] = {0};
-		while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
-			next_path[k] = filepath[k];
-			k++;
-		}
-		filepath += (k);
-		// Look up cur_inode inode in cached inode table
-		if(inode_table_cache[inum] != NULL){
-			// the inode is in the inode_cache_table, so get it:
-			cur_inode = *(inode_table_cache[inum]);	
-		}else{ 
-			// inode is not in the cache table, so get it from disk:
-			void* inode_spaceholder = kmalloc(BLOCKSIZE);
-			receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-			struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-			cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-			// need to implement an eviction policy/function to update the inode_table_cache...
-			// this will function w/o it, but should be implemented for optimization
-		}
-		int i;
-		int file_found = 0; // initialize to false (i.e. file not found)
-		for(i = 0; i < cur_inode.blocks_in_file; i++){
-			void* dir_spaceholder = kmalloc(BLOCKSIZE);
-			receive(dir_spaceholder, (cur_inode.data_blocks[i])*BLOCKSIZE);
-			struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
-			int j;
-			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-				struct dir_entry file_dir = dir_data_block[j]; // 
-				int x;
-				int is_equal = 1; // initialize to true
-				for(x = 0; x < MAX_NAME_LENGTH; x++){
-					if(file_dir.name[x]  != next_path[x]){
-						is_equal = 0;
-						break;
-					}//end if
-				}//end for
-				if(is_equal){
-					file_found = 1; //we found the file, so break out of loop
-					break;
-				}
-			}//inner for
-			if(file_found){
-				break;
-			}
-		}//outer for
-
-		if(!file_found){//throw an error
-			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
-			return -1;
-		}
-		if(!(cur_inode->is_dir)){
-			/*	when we reach the portion of the filepath that is not a dir, we set the exit_flag
-			 	to 0 so that we exit the outermost while loop */
-			os_printf("Reached file directory  \n");
-			exit_flag = 0;
-		}//end if
-	}//outer most while loop
+	int inum;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode*));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	kfind_inode(filepath, 0, (result->dir_levels + 1));
 	
 	//here we have the file we were looking for! it is cur_inode.
-
 	bitVector *p = &(cur_inode->perms);
 	switch mode{
 		case 'r':
@@ -234,6 +176,8 @@ int kopen(char* filepath, char mode){
 		default:
 			os_printf("File permission passed\n");
 	}
+	kfree(cur_inode);
+	kfree(result);
 
 	fd = add_to_opentable(cur_inode, mode);
 	return fd;
@@ -659,12 +603,8 @@ int kdelete(char* filepath) {
 // --------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
 
-int kfind_leaf_dir_inum(char* filepath, int starting_inum){
-	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
-	result = kfind_dir(filepath, result);
-	int fd;
+int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* cur_inode){//filepath and starting inum must correspond...
 	int inum = starting_inum;
-	struct inode cur_inode;
 	int a;
 	for(a = 0; a < result->dir_levels; a++){
 		int k = 1;
@@ -675,23 +615,13 @@ int kfind_leaf_dir_inum(char* filepath, int starting_inum){
 		}//litte while to find next_path
 		filepath += (k);
 		// Look up cur_inode inode in cached inode table
-		if(inode_table_cache[inum] != NULL){
-			// the inode is in the inode_cache_table, so get it:
-			cur_inode = *(inode_table_cache[inum]);	
-		}else{ 
-			// inode is not in the cache table, so get it from disk:
-			void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
-			receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-			struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-			cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-			// need to implement an eviction policy/function to update the inode_table_cache...
-			// this will function w/o it, but should be implemented for optimization
-		}
+		get_inode(inum, cur_inode);
+
 		int i;
 		int file_found = 0; // initialize to false (i.e. file not found)
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		for(i = 0; i < cur_inode.blocks_in_file; i++){
-			receive(dir_spaceholder, (cur_inode.data_blocks[i])*BLOCKSIZE);
+		for(i = 0; i < cur_inode->blocks_in_file; i++){
+			receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int j;
 			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
@@ -706,9 +636,16 @@ int kfind_leaf_dir_inum(char* filepath, int starting_inum){
 				}//end for
 				if(is_equal){
 					file_found = 1; //we found the file, so break out of loop
-					return file_dir.inum;
+					inum = file_dir.inum;
+					break;
+				}
+				if(file_found){
+					break;
 				}
 			}//inner for
+			if(file_found){
+				break;
+			}
 		}//outer for
 		kfree(dir_spaceholder);
 
@@ -716,8 +653,8 @@ int kfind_leaf_dir_inum(char* filepath, int starting_inum){
 			int i;
 			int cur_indirect_block_num = -1;
 			struct indirect_block cur_indirect_block;
-			for(i = 0; i < cur_inode.indirect_blocks_in_file; i++){
-				cur_indirect_block_num = cur_inode.indirect_blocks[i]
+			for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
+				cur_indirect_block_num = cur_inode->indirect_blocks[i]
 
 				if(indirect_block_table_cache[cur_indirect_block_num] != NULL){
 					// the indirect_block is in the indirect_block_table_cache, so get it:
@@ -749,11 +686,18 @@ int kfind_leaf_dir_inum(char* filepath, int starting_inum){
 						}//end for
 						if(is_equal){
 							file_found = 1; //we found the file, so break out of loop
-							return file_dir.inum;
+							inum = file_dir.inum;
+							break;
 						}
 					}//inner for
+					if(file_found){
+						break;
+					}
 				}//outer for
 				kfree(dir_spaceholder);
+				if(file_found){
+					break;
+				}
 			}//end for
 
 		if(!file_found){//throw an error
@@ -761,10 +705,11 @@ int kfind_leaf_dir_inum(char* filepath, int starting_inum){
 			return -1;
 		}
 	}//outer most for loop
-	return -1;
-}//end kfind_leaf_dir_inum() helper function
+	get_inode(inum, cur_inode);
+	return 0;
+}//end kfind_inode() helper function
 
-struct dir_helper* kfind_dir(char* filepath, struct dir_helper* result){
+void kfind_dir(char* filepath, struct dir_helper* result){
 	// struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	int dir_levels = 0;
 	int total_chars = 0;
@@ -790,5 +735,21 @@ struct dir_helper* kfind_dir(char* filepath, struct dir_helper* result){
 	}
 	result->dir_levels = dir_levels;
 	result->truncated_path = truncated_path;
-	return result; //caller of function is responsible for freeing memory for truncated_path and filepath
+	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
+
+void get_inode(int inum, struct inode* cur_inode){
+	if(inode_table_cache[inum] != NULL){
+		// the inode is in the inode_cache_table, so get it:
+		cur_inode = *(inode_table_cache[inum]);	
+	}else{ 
+		// inode is not in the cache table, so get it from disk:
+		void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
+		receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+		struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
+		*cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+		kfree(indirect_block_spaceholder);
+		// need to implement an eviction policy/function to update the inode_table_cache...
+		// this will function w/o it, but should be implemented for optimization
+	}//end if else
+}//end get_indoe() helper function
