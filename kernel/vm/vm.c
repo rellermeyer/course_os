@@ -35,13 +35,12 @@ struct vm_free_list *vm_vas_free_list = 0x0;
 struct vm_free_list *vm_l1pt_free_list = 0x0;
 
 void vm_init() {
-	// Initialize the VAS structures stored in the first PAGE_TABLE_SIZE
-	// of our alloted MB.
+	// Initialize the VAS structures. We allocate enough for 4096 VASs.
 	struct vm_free_list *free_vas = (struct vm_free_list*)P_L1PTBASE;
 	//vm_vas_free_list = free_vas;
 	vm_vas_free_list = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
-	while ((uint32_t)free_vas<P_L1PTBASE+PAGE_TABLE_SIZE) {
+	while ((uint32_t)free_vas<P_L1PTBASE+sizeof(struct vas)*4096) {
 		free_vas->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
@@ -51,7 +50,7 @@ void vm_init() {
 	}
 
 	// Initialize the L1 page tables
-	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + sizeof(struct vas)*4096);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE) {
