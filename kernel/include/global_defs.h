@@ -14,4 +14,8 @@ typedef unsigned int size_t;
 
 #define NBBY 8
 
+typedef uint32_t STATUS;
+#define STATUS_OK 1
+#define STATUS_FAIL 0
+
 #endif //defined _GLOBAL_DEFS_H_

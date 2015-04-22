@@ -1,18 +1,18 @@
 /********************************************************************
-*	libc.h
-*
-*       (Any collaborators, please add your name)
-*	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
-*
-*	Last edited: 20 April 2014
-*
-*	Purpose:	Provide basic libc funtionality for CourseOS
-*				This header provides function skeletons
-*				for libc.c
-*
-*	Usage:	Compile into kernel. Adaptations of normal libc functions
-*			can be used by prepending os_ suffix.
-********************************************************************/
+ *	libc.h
+ *
+ *       (Any collaborators, please add your name)
+ *	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
+ *
+ *	Last edited: 20 April 2014
+ *
+ *	Purpose:	Provide basic libc funtionality for CourseOS
+ *				This header provides function skeletons
+ *				for libc.c
+ *
+ *	Usage:	Compile into kernel. Adaptations of normal libc functions
+ *			can be used by prepending os_ suffix.
+ ********************************************************************/
 
 /* LOG:
  * 3/30 added os_printf function - Taylor Smith
@@ -26,10 +26,6 @@
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
-
-#define NULL 0
-#define true 1
-#define false 0
 
 // useful macros
 #define MAX(a, b) ((a) > (b) ? a : b)
@@ -51,13 +47,9 @@ typedef unsigned int os_size_t;
 #define M_SQRT2 1.41421356237309504880
 #define M_SQRT_2 0.707106781186547524401
 
-typedef uint32_t STATUS;
-#define STATUS_OK 1
-#define STATUS_FAIL 0
-
 /* string.h type functionality for comparing strings or mem blocks */
-int os_memcmp ( const void *left, const void *right, os_size_t num );
-int os_strcmp ( const char *left, const char *right);
+int os_memcmp(const void *left, const void *right, os_size_t num);
+int os_strcmp(const char *left, const char *right);
 
 /**
  * Note: os_printf is restricted to printing only 256 characters.
@@ -77,7 +69,7 @@ int os_strcmp ( const char *left, const char *right);
  */
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
-int os_printf (const char *str_buf, ...);
+int os_printf(const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);
 char *__strchrnul(const char *s, char c);
@@ -92,8 +84,9 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
 void* kmalloc(uint32_t);
-void *kmalloc_aligned(size_t, size_t);
+void* kmalloc_aligned(uint32_t, uint32_t);
 void kfree(void*);
+STATUS kmcheck();
 
 int32_t abs(int32_t);
 unsigned int rand();

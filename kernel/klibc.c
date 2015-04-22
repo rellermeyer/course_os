@@ -497,46 +497,41 @@ int32_t abs(int32_t val)
 
 void* kmalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, heap, heap_size);
+	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
 	return block;
 }
 
-void* kmalloc_aligned(uint32_t size)
-{	if (alignment == 4)
-	{
-		void* block = kmalloc(size + 4);
-		void* ptr = (void*) (((uint32_t) block + 4) & ~0x3);
-		return ptr;
-	}
+STATUS kmcheck(){
+    return mem_check();
+}
 
-	else if (alignment == 1024)
-	{
-		void* block = kmalloc(size + 1024);
-		void* ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
-		return ptr;
-	}
-
-	else if (alignment == 4096)
-	{
-		void* block = kmalloc(size + 4096);
-		void* ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
-		return ptr;
-	}
-
-	else if (alignment == 16 * 1024)
-	{
-		void* block = kmalloc(size + 16 * 1024);
-		void* ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
-		return ptr;
-	}
-	else {
-		return kmalloc(size);
-	}
+void* kmalloc_aligned(uint32_t size, uint32_t alignment)
+{
+    switch (alignment) {
+        case 4:
+            void* block = kmalloc(size + 4);
+            void* ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+            return ptr;
+        case 1024:
+            void* block = kmalloc(size + 1024);
+            void* ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+            return ptr;
+        case 4096:
+            void* block = kmalloc(size + 4096);
+            void* ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+            return ptr;
+        case 16 * 1024:
+            void* block = kmalloc(size + 16 * 1024);
+            void* ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+            return ptr;
+        default:
+            return kmalloc(size);
+    }
 }
 
 void kfree(void* ptr)
 {
-	deallocate((uint32_t*) ptr, heap, heap_size);
+	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
 }
 
 unsigned int rand()

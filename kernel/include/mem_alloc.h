@@ -12,16 +12,13 @@ Log
 
 #define MEM_START 0x500000
 
-uint32_t *heap;
-uint32_t heap_size;
-
 void *aligned_mem_alloc(size_t, size_t);
 
-void *init_heap();
-void *allocate(uint32_t, uint32_t*, int32_t);
-void deallocate(void*, uint32_t*, int32_t);
-
-int mcheck();
+STATUS init_heap();
+void *allocate(uint32_t, uint32_t* /*unused*/, int32_t/*unused*/);
+void deallocate(void*, uint32_t*/*unused*/, int32_t/*unused*/);
 void test_allocate();
+alloc_handle* mem_get_allocator();
+STATUS mem_check();
 
 #endif
