@@ -140,11 +140,11 @@ void q_test()
     char* userdata = "Some userdata";
     int_least32_t *castUserdata = (int_least32_t*) userdata;// what should this really be?
     q_subscribe(qd, &sample_receiver, castUserdata);
-    q_send(qd, castData, sizeof(data)); 
+    q_send(qd, castData, sizeof(data));
 
 	os_printf("***** Test code for message queue (q_test()): *****\n");
 	os_printf("haha, as if we had tests. ;)\n");
-	os_printf("***************************************************\n");
+	// os_printf("***************************************************\n");
 }
 
 
