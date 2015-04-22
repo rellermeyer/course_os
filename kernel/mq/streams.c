@@ -81,11 +81,15 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 	struct queue *q = q_map[qd];
     q->data = data;
 	q->datalen = datalen;
+    //Accessing elements of q throws an error
+    os_printf("q is %d\n", q);
+    //os_printf("data from q is \"%s\"\n", q->data);
 	return 0;
 }
 
 int_least32_t q_subscribe(int_least32_t qd, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
+    os_printf("Currently in q_subscribe\n");
     struct subscriber *user;
     os_memset(&user, 0, sizeof(user));
     user->userdata = userdata;
@@ -115,6 +119,12 @@ void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, 
 {
 
 }
+
+void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)
+{
+    os_printf("data: %s\n", data);
+}
+
 void q_test()
 {
     os_printf("about to call q_create\n");
@@ -122,7 +132,13 @@ void q_test()
     int_least32_t qd = q_open("my_q");
     os_printf("qd is %d\n", qd);
     char* data = "This is a message";
-    q_publish(qd, (int_least32_t*) data, sizeof(data));
+    int_least32_t *castData = (int_least32_t*) data;
+    q_publish(qd, castData, sizeof(data));
+    char* userdata = "Some userdata";
+    int_least32_t *castUserdata = (int_least32_t*) userdata;// what should this really be?
+    q_subscribe(qd, &sample_receiver, castUserdata);
+    q_send(qd, castData, sizeof(data)); 
+
 	os_printf("***** Test code for message queue (q_test()): *****\n");
 	os_printf("haha, as if we had tests. ;)\n");
 	os_printf("***************************************************\n");
