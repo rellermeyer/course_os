@@ -132,6 +132,7 @@ int kfs_shutdown(){
 	kfree(indirect_block_table_cache);
 
 	//TODO: free anything else that needs to be freed...
+	//TODO: free every element of the free list of open_table.c
 
 }//end kfs_shutdown() function
 
@@ -167,7 +168,7 @@ int kopen(char* filepath, char mode){
 		int file_found = 0; // initialize to false (i.e. file not found)
 		for(i = 0; i < cur_inode.blocks_in_file; i++){
 			void* dir_spaceholder = kmalloc(BLOCKSIZE);
-			receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
+			receive(dir_spaceholder, (cur_inode.data_blocks[i])*BLOCKSIZE);
 			struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int j;
 			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
@@ -658,18 +659,20 @@ int kdelete(char* filepath) {
 // --------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
 
-int kfind_inode(char* filepath){
+int kfind_leaf_dir_inum(char* filepath, int starting_inum){
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	result = kfind_dir(filepath, result);
 	int fd;
-	int inum = 0;
+	int inum = starting_inum;
 	struct inode cur_inode;
-	int exit_flag = 1;
-	while(exit_flag){
+	int a;
+	for(a = 0; a < result->dir_levels; a++){
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
 		while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
 			next_path[k] = filepath[k];
 			k++;
-		}
+		}//litte while to find next_path
 		filepath += (k);
 		// Look up cur_inode inode in cached inode table
 		if(inode_table_cache[inum] != NULL){
@@ -677,7 +680,7 @@ int kfind_inode(char* filepath){
 			cur_inode = *(inode_table_cache[inum]);	
 		}else{ 
 			// inode is not in the cache table, so get it from disk:
-			char* inode_spaceholder = (char*) kmalloc(BLOCKSIZE);
+			void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
 			receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
 			struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
 			cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
@@ -686,13 +689,13 @@ int kfind_inode(char* filepath){
 		}
 		int i;
 		int file_found = 0; // initialize to false (i.e. file not found)
-		char* dir_spaceholder = (char*) kmalloc(BLOCKSIZE);
+		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		for(i = 0; i < cur_inode.blocks_in_file; i++){
-			receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
-			struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
+			receive(dir_spaceholder, (cur_inode.data_blocks[i])*BLOCKSIZE);
+			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int j;
 			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-				struct dir_entry file_dir = dir_data_block[j]; // 
+				struct dir_entry file_dir = cur_data_block[j]; // 
 				int k;
 				int is_equal = 1; // initialize to true
 				for(k = 0; k < MAX_NAME_LENGTH; k++){
@@ -703,74 +706,89 @@ int kfind_inode(char* filepath){
 				}//end for
 				if(is_equal){
 					file_found = 1; //we found the file, so break out of loop
-					break;
+					return file_dir.inum;
 				}
 			}//inner for
-			if(file_found){
-				break;
-			}
 		}//outer for
 		kfree(dir_spaceholder);
-		// if(!file_found){//if we haven't found the file yet, then we need to search through the indirect blocks to look through the rest of the data blocks:
-		// 	struct indirect_block cur_indirect_block;
-		// 	for(i = 0; i < cur_inode.indirect_blocks_in_file; i++){
-		// 		cur_indirect_block_num = cur_inode.indirect_blocks[i]
 
-		// 		if(indirect_block_table_cache[cur_indirect_block_num] != NULL){
-		// 			// the indirect_block is in the indirect_block_table_cache, so get it:
-		// 			cur_indirect_block = *(indirect_block_table_cache[cur_indirect_block_num]);	
-		// 		}else{ //RIGHT HERE
-		// 			// inode is not in the cache table, so get it from disk:
-		// 			char* inode_spaceholder = (char*) kmalloc(BLOCKSIZE);
-		// 			receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-		// 			struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-		// 			cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-		// 			// need to implement an eviction policy/function to update the inode_table_cache...
-		// 			// this will function w/o it, but should be implemented for optimization
-		// 		}
+		if(!file_found){//if we haven't found the file yet, then we need to search through the indirect blocks to look through the rest of the data blocks:
+			int i;
+			int cur_indirect_block_num = -1;
+			struct indirect_block cur_indirect_block;
+			for(i = 0; i < cur_inode.indirect_blocks_in_file; i++){
+				cur_indirect_block_num = cur_inode.indirect_blocks[i]
 
-		// 		char* indirect_block_spaceholder = (char*) kmalloc(BLOCKSIZE);
-		// 		for(i = 0; i < cur_inode.blocks_in_file; i++){
-		// 			receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
-		// 			struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
-		// 			int j;
-		// 			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-		// 				struct dir_entry file_dir = dir_data_block[j]; // 
-		// 				int k;
-		// 				int is_equal = 1; // initialize to true
-		// 				for(k = 0; k < MAX_NAME_LENGTH; k++){
-		// 					if(file_dir.name[k]  != next_path[k]){
-		// 						is_equal = 0;
-		// 						break;
-		// 					}//end if
-		// 				}//end for
-		// 				if(is_equal){
-		// 					file_found = 1; //we found the file, so break out of loop
-		// 					break;
-		// 				}
-		// 			}//inner for
-		// 			if(file_found){
-		// 				break;
-		// 			}
-		// 		}//outer for
-		// 	}
-		// }//end if
+				if(indirect_block_table_cache[cur_indirect_block_num] != NULL){
+					// the indirect_block is in the indirect_block_table_cache, so get it:
+					cur_indirect_block = *(indirect_block_table_cache[cur_indirect_block_num]);	
+				}else{ //RIGHT HERE
+					// indirect_block is not in the cache table, so get it from disk:
+					void* indirect_block_spaceholder = kmalloc(BLOCKSIZE);
+					receive(indirect_block_spaceholder, (cur_indirect_block_num + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
+					cur_indirect_block = *((struct indirect_block*) indirect_block_spaceholder);
+					// need to implement an eviction policy/function to update the indirect_block_table_cache...
+					// this will function w/o it, but should be implemented for optimization
+				}//end if else
 
-
-
-
-
+				void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
+				int j;
+				for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
+					receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
+					struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
+					int k;
+					for(k = 0; k < (BLOCKSIZE/DIR_ENTRY_SIZE); k++){
+						struct dir_entry file_dir = cur_data_block[k]; // 
+						int m;
+						int is_equal = 1; // initialize to true
+						for(m = 0; m < MAX_NAME_LENGTH; m++){
+							if(file_dir.name[m]  != next_path[m]){
+								is_equal = 0;
+								break;
+							}//end if
+						}//end for
+						if(is_equal){
+							file_found = 1; //we found the file, so break out of loop
+							return file_dir.inum;
+						}
+					}//inner for
+				}//outer for
+				kfree(dir_spaceholder);
+			}//end for
 
 		if(!file_found){//throw an error
 			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
 			return -1;
 		}
-		if(!(cur_inode->is_dir)){
-			/*	when we reach the portion of the filepath that is not a dir, we set the exit_flag
-			 	to 0 so that we exit the outermost while loop */
-			os_printf("Reached file directory  \n");
-			exit_flag = 0;
-		}//end if
-	}//outer most while loop
+	}//outer most for loop
+	return -1;
+}//end kfind_leaf_dir_inum() helper function
 
-}//end kfind_inode() helper function
+struct dir_helper* kfind_dir(char* filepath, struct dir_helper* result){
+	// struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	int dir_levels = 0;
+	int total_chars = 0;
+	char* iterator = filepath;
+	int index = 0;
+	while(index < MAX_NAME_LENGTH){
+		if(iterator[0] == '/'){
+			dir_levels++;
+			index = 0;
+		}else{
+			index++;
+		}
+		iterator++;
+		total_chars++;
+	}//end while
+
+	total_chars -= 32;
+
+	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
+	int i;
+	for(i = 0; i < total_chars; i++){
+		truncated_path[i] = filepath[i];
+	}
+	result->dir_levels = dir_levels;
+	result->truncated_path = truncated_path;
+	return result; //caller of function is responsible for freeing memory for truncated_path and filepath
+}//end kfind_dir() function
