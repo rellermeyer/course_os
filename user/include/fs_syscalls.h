@@ -10,5 +10,6 @@
 #define SYSCALL_CLOSE 6
 #define SYSCALL_SET_PERM 7
 #define SYSCALL_MEM_MAP 8
+#define SYSCALL_SEEK 9
 
 #endif
