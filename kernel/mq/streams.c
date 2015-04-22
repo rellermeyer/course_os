@@ -22,6 +22,12 @@ void q_create(char q_name[], char options[])
     os_printf("\n");
 	struct queue *q;
 	os_memset(&q, 0, sizeof(q));
+<<<<<<< HEAD
+	ht_add(q_table, q_name, (void*)q);
+	if (!initialized) {
+		initialized = 1;
+        q_table = ht_alloc(100);      
+=======
     if (initialized == 0) {
         os_printf("not initialized\n");
 		initialized = 1;
@@ -31,6 +37,7 @@ void q_create(char q_name[], char options[])
         os_printf("%d\n", initialized);
         os_printf("initialized");
         ht_add(q_table, q_name, (void*)q);
+>>>>>>> d1a7b3d8d7844a4fbae026fbf937ede3af124184
     }
 
 
@@ -61,7 +68,7 @@ int_least32_t q_open(char q_name[])
     result->qd = result;
     q_map[next] = result;
     int_least32_t qd = next;
-    next ++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
+    next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
     
 	return qd;
 }
@@ -70,8 +77,12 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 {
 	int kilo = 1024;
 	if (datalen > 128 * kilo) {
+<<<<<<< HEAD
+		// TODO: throw an error
+=======
 		//TODO: throw an error
         os_printf("datalen too large\n");
+>>>>>>> d1a7b3d8d7844a4fbae026fbf937ede3af124184
         return 0x0;
 	}else{
         os_printf("datalen okay. data is \"%s\"\n", data);
