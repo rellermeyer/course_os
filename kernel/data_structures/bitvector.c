@@ -1,74 +1,102 @@
 #include <stdint.h>
-#include <math.h>
-#include <mem_alloc.h>
-#include <bitvector.h>
+#include "../include/klibc.h"
+#include "../include/bitvector.h"
 
-// set is 1
-// lowered is 0 (free)
+uint32_t const WORD_SIZE = 32;
 
-uint64_t const WORD_SIZE = 64;
-uint64_t length;
-uint64_t *bitVec;
-
-uint64_t *makeVector(uint32_t size) {
+/* return a pointer to a bitVector struct of length size */
+bitVector *makeVector(uint32_t size) {
 	// make the array 
-	uint64_t bitVec = (uint64_t*) mem_alloc(ceil(size/64)); // Can I use ceil in the kernel?
-	length = size;
-	return bitVec;
+	bitVector *BV = (bitVector*) kmalloc(sizeof(bitVector));
+	uint32_t val = size % 32;
+	if((size % 32) == 0) {
+		uint32_t array[size >> 5];
+		uint32_t x;
+		for(x = 0; (x < (size >> 5)); x++){
+			array[x] = 0;
+		}
+		uint32_t *bitVec = (uint32_t*) kmalloc(sizeof(array)); 
+		BV->vector = bitVec;
+		BV->length = size;
+		BV->actualLength = (size >> 5);
+		return BV;
+	} else {
+		uint32_t array[(size >> 5) + 1]; 
+		uint32_t y;
+		for(y = 0; (y < ((size >> 5)+1)); y++){
+			array[y] = 0;
+		}
+		uint32_t *bitVec = (uint32_t*) kmalloc(sizeof(array)); 
+		BV->vector = bitVec;
+		BV->length = size;
+		BV->actualLength = (size >> 5) + 1;
+		return BV;
+	}
 }
 
-uint32_t get (uint32_t index) {
-	if(index < size) {
-		uint64_t val = floor(index/WORD_SIZE); // can I use floor in the kernel?
-		uint64_t oneWord = bitVec[val];
-		oneWord >> 63 - (index % WORD_SIZE);
-		uint64_t mask = 0x1;
+/* return a whatever number, 1 or 0 is at position index */
+int32_t get (uint32_t index, bitVector* bitVec) {
+	os_printf("index is: %u\n", index);
+	if(index < bitVec->length && index >= 0) {
+		os_printf("We are in the wrong place...\n");
+		uint32_t val = (index >> 5);
+		uint32_t oneWord = bitVec->vector[val];
+		oneWord = oneWord >> (31 - (index % WORD_SIZE));
+		uint32_t mask = 0x1;
 		return oneWord & mask;
-	} else {return 0;}
+	} else {return -1;} // invalid index
 }
 
-// toggles a given bit
-uint32_t toggle (uint32_t index) {
-	if(index < size) {
-		uint64_t val = floor(index/WORD_SIZE); // can I use floor in the kernel?
-		uint64_t oneWord = bitVec[val];
-		uint64_t mask = 0x1 << 63 - (index % WORD_SIZE);
-		bitVec[val] = oneWord ^ mask;
+/* toggles the bit a position index */
+int32_t toggle (uint32_t index, bitVector* bitVec) {
+	if(index < bitVec->length && index >= 0) {
+		uint32_t val = (index >> 5);
+		uint32_t oneWord = bitVec->vector[val];
+		uint32_t mask = 0x1 << (31 - (index % WORD_SIZE));
+		bitVec->vector[val] = oneWord ^ mask;
 		return 1;
-	} else { return 0;}  // invalid index
+	} else {return -1;}  // invalid index
 }
 
-uint32_t set (uint32_t index) {
-	if(index < size) {
-		uint64_t val = floor(index/WORD_SIZE);
-		uint64_t oneWord = bitVec[val];
-		uint64_t mask = 0x1 << 63 - (index % WORD_SIZE);
-		bitVec[val] = oneWord | mask;
+/* puts a 1 at the position index */
+int32_t set (uint32_t index, bitVector* bitVec) {
+	if(index < bitVec->length && index >= 0) {
+		uint32_t val = (index >> 5);
+		uint32_t oneWord = bitVec->vector[val];
+		uint32_t mask = 0x1 << (31 - (index % WORD_SIZE));
+		bitVec->vector[val] = oneWord | mask;
 		return 1;
-	} else {return 0;}
+	} else {return -1;} // invalid index
 }
 
-uint32_t lower (uint32_t index) {
-	if(index < size) {
-		uint64_t val = floor(index/WORD_SIZE);
-		uint64_t oneWord = bitVec[val];
-		uint64_t mask = !(0x1 << 63 - (index % WORD_SIZE));
-		bitVec[val] = oneWord & mask;
+/* puts a 0 at the position index */
+int32_t lower (uint32_t index, bitVector* bitVec) {
+	if(index < bitVec->length && index >= 0) {
+		uint32_t val = (index >> 5);
+		uint32_t oneWord = bitVec->vector[val];
+		uint32_t mask = !(0x1 << (31 - (index % WORD_SIZE)));
+		bitVec->vector[val] = oneWord & mask;
 		return 1; 
-	} else {return 0}
+	} else {return -1;} // invalid index
 }
 
-uint32_t firstFree () {
-	uint64_t mask = 0x1;
+/* returns the first free index, if none are free return -1 */
+int32_t firstFree (bitVector* bitVec) {
+	uint32_t mask = 0x1;
 	uint32_t returner = 0;
-	uint64_t oneWord;
-	for(uint64_t x = 0; x < length; x++) {
-		uint64_t index = 0;
+	uint32_t oneWord;
+	uint32_t x;
+	oneWord = bitVec->vector[0];
+	for(x = 0; x < bitVec->actualLength; x++) {
+		uint32_t index = 0;
 		while(index < WORD_SIZE) {
-			oneWord =  bitVec[x];
-			if(!(oneWord >> 63 - index) & mask) {
+			oneWord = bitVec->vector[x];
+			oneWord = (oneWord >> (31 - index)) & mask;
+			if(!oneWord) {
 				return returner += index;
 			} 
+			index++;
 		} returner += WORD_SIZE;
 	}
+	return -1; //no free spots
 }
