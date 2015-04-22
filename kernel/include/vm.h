@@ -104,6 +104,8 @@ int vm_unpin(struct vas *vas, void *vptr);
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
 int vm_free_mapping(struct vas *vas, void *vptr);
 
+int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr);
+
 /**
  * This enabled the given VAS.
  */
