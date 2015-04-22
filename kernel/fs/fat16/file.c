@@ -282,9 +282,12 @@ int kread(int fd_int, void* buf, int numBytes) {
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
 	file_descriptor* fd = get_file_descriptor(fd_int); // note, get_file_descriptor() function has not yet been implemented...will be in open_table.c
-
-	if (fd->permission != 'r' || fd->permission != 'b') {
-		os_printf("no permission \n");
+	if(!file_is_open(fd)) {
+		os_printf("file not open\n");
+		return -1;
+	}
+	if ((fd->permission != 'r' || fd->permission != 'b')) {
+		os_printf("no permission\n");
 		return -1;
 	}
 
@@ -320,9 +323,12 @@ int kread(int fd_int, void* buf, int numBytes) {
 int kwrite(int fd_int, void* buf, int num_bytes) {
 	int bytes_written;
         file_descriptor* fd = get_file_descriptor(fd_int);
-        if (fd->permission != 'w' || fd->permission != 'b') {
-                os_printf("no permission \n");
-                return -1;
+        if(!file_is_open(fd)) {
+        	os_printf("file not open\n");
+        }
+        else if ((fd->permission != 'w' || fd->permission != 'b')) {
+            os_printf("no permission\n");
+            return -1;
         }
 
     int total_bytes_left = num_bytes;
@@ -389,20 +395,25 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 /* close the file fd, return 1 if the close was successful */
 int kclose(int fd) {
 	int error;
+	if(!file_is_open(fd)) { os_printf("file not open"); return -1; }
 	error = delete_from_opentable(fd);
 	return error;
 } // end kclose();
-
-
 
 /* seek within the file, return an error if you are outside the boundaries */
 int kseek(int fd_int, int num_bytes) {
 	int error;
         file_descriptor* fd = get_file_descriptor(fd_int);
         if (fd->permission != 'r' || fd->permission != 'w' || fd->permission != 'b') {
-                os_printf("no permission \n");
-                return -1;
-        }
+            os_printf("no permission \n");
+            return -1;
+        } else if ((numBytes > 0) && ((fd->offset + num_Bytes) > ((fd->linked_file)->size))){
+        	os_printf("Error! file offset exceeds file size \n");
+			return -1;
+        } else if ((numBytes < 0) && ((fd->offset + num_Bytes) < 0)){
+			os_printf("Error! file offset exceeds beginning of file \n");
+			return -1;
+		}//end if else  */
 	fd->offset += num_bytes;	
 	return 0;
 } // end kseek();
