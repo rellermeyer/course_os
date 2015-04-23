@@ -18,13 +18,6 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
-void timer_start(int timer_index) {
-  os_printf("Timer driver loaded\n");
-  set_prescale(timer_index,2);
-  enable_timer(timer_index);
-  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
-  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
-}
 
 /* This function sets the value that the timer will begin at.
  * This operation also resets the timer to this new value.
@@ -38,6 +31,7 @@ int set_load_value(int timer_index, int value){
   return -1;
 }
 
+//returns the current control register value (configuration of timer) 
 int get_timer_control_value(int timer_index){
   if(timer_index < 4 && timer_index  >= 0){
     return timer_pointers[timer_index]->control;
@@ -156,6 +150,14 @@ int print_control_status(int timer_index){
   return -1;
 }
 
+void timer_start(int timer_index) {
+  os_printf("Timer driver loaded\n");
+  set_prescale(timer_index,2);
+  enable_timer(timer_index);
+  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
+  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
+}
+
 /*starts interrupts every start_val ticks */
 //You give it a vallut and the specific timer you want to star.
 // YOu have four timers just start with timer zero
@@ -184,11 +186,11 @@ int start_timer_interrupts(int timer_index,int start_val){
                 }
         } */
 
-/*
+
 void timer_test(){
 	initialize_timers();
-	start_interrupts(1,5);
-	print_control_status(timer_index);
+	start_timer_interrupts(1,5);
+	print_control_status(1);
 		
 	return;
-  }*/
+  }
