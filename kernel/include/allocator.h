@@ -18,8 +18,7 @@ typedef struct alloc_handle {
     uint32_t *heap;
     uint32_t heap_size;
     heap_extend_handler extend_handler;
-    uint32_t __align_0; // help align to 64-bit boundary. not sure if needed?
-}__attribute__((packed)) alloc_handle;
+} alloc_handle;
 
 alloc_handle* alloc_create(uint32_t * heap, uint32_t size,
         heap_extend_handler extend_handler);
