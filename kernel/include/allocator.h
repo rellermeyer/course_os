@@ -12,7 +12,7 @@
 
 #define MEM_START 0x500000
 
-typedef uint32_t* (*heap_extend_handler)(uint32_t amount);
+typedef uint32_t (*heap_extend_handler)(uint32_t amount);
 
 typedef struct alloc_handle {
     uint32_t *heap;
@@ -25,7 +25,7 @@ alloc_handle* alloc_create(uint32_t * heap, uint32_t size,
         heap_extend_handler extend_handler);
 void* alloc_allocate(alloc_handle * allocator, uint32_t size);
 void alloc_deallocate(alloc_handle* allocator, void* ptr);
-uint32_t alloc_get_heap(alloc_handle* allocator);
+uint32_t* alloc_get_heap(alloc_handle* allocator);
 uint32_t alloc_get_heap_size(alloc_handle* allocator);
 STATUS alloc_check(alloc_handle* allocator);
 

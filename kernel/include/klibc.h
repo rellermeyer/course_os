@@ -23,6 +23,7 @@
  */
 #include <stdint.h>
 #include <stdarg.h>
+#include <global_defs.h>
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
@@ -86,6 +87,7 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 void* kmalloc(uint32_t);
 void* kmalloc_aligned(uint32_t, uint32_t);
 void kfree(void*);
+uint32_t km_size();
 STATUS kmcheck();
 
 int32_t abs(int32_t);

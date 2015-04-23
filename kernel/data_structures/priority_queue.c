@@ -3,7 +3,6 @@
 
 #define AMORITIZED_CONSTANT 2
 #define DEFAULT_COUNT 10
-#define MAX(a,b) a > b ? a : b
 
 void __prq_shift_up(prq_handle * queue, int idx);
 void __prq_shift_down(prq_handle * queue, int idx);

@@ -13,7 +13,7 @@
 #define TASK_STATE_ACTIVE 1     // task is part of the running tasks; it is being interleaved and executed atm
 #define TASK_STATE_NONE 0       // task is just created (no real state)
 #define SAFE_NICE(n) MAX(MIN(MAX_NICENESS, n), n)
-static char * last_err;
+static char last_err[200];
 static prq_handle * inactive_tasks;
 static prq_handle * active_tasks;
 static sched_task * active_task;
