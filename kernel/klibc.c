@@ -518,7 +518,7 @@ int32_t abs(int32_t val)
 
 void* kmalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, heap, heap_size);
+	void* block = (void*) allocate(size, heap, heap_size, 1);
 	return block;
 }
 
