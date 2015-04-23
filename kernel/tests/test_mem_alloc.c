@@ -4,6 +4,7 @@
 #include "vm.h"
 
 #define NUM_TESTS 1
+#define VERBOSE
 
 int vm_count_free_frames();
 
@@ -30,16 +31,6 @@ int test_mem_alloc_1() {
 
     if (!kmcheck()) {
         os_printf("allocate(15) failed.\n\n");
-        int i;
-        for (i = 0; i < 8; i++) {
-            int j;
-            for (j = 0; j < 8; j++) {
-//                os_printf("%X ",
-//                        ((char*) alloc_get_heap(allocator))[i * 8 + j]);
-            }
-            os_printf("\n");
-        }
-
         return TEST_FAIL;
     }
 
@@ -55,13 +46,10 @@ int test_mem_alloc_1() {
         uint32_t size = gen_rand(&rng, 15);
         pntrs[i] = kmalloc(size);
         alloced += size;
+#ifdef VERBOSE
         os_printf("%u %u %u %u %d\n", i, km_size(), size, alloced,
                 vm_count_free_frames());
-
-        /*if (alloc_check(allocator)) {
-         os_printf("Memory is inconsistent. Stopping test.\n");
-         break;
-         }*/
+#endif
     }
 
     // Test one of them
