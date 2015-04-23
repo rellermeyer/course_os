@@ -505,24 +505,33 @@ STATUS kmcheck(){
     return mem_check();
 }
 
+// NOTE potentially expand these features. offer more
+// memory stats
+uint32_t km_size(){
+    return mem_get_heap_size();
+}
+
 void* kmalloc_aligned(uint32_t size, uint32_t alignment)
 {
+    void* block;
+    void* ptr;
+
     switch (alignment) {
         case 4:
-            void* block = kmalloc(size + 4);
-            void* ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+            block = kmalloc(size + 4);
+            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
             return ptr;
         case 1024:
-            void* block = kmalloc(size + 1024);
-            void* ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+            block = kmalloc(size + 1024);
+            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
             return ptr;
         case 4096:
-            void* block = kmalloc(size + 4096);
-            void* ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+            block = kmalloc(size + 4096);
+            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
             return ptr;
         case 16 * 1024:
-            void* block = kmalloc(size + 16 * 1024);
-            void* ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+            block = kmalloc(size + 16 * 1024);
+            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
             return ptr;
         default:
             return kmalloc(size);

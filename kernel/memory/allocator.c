@@ -1,5 +1,8 @@
 #include "allocator.h"
 #include <global_defs.h>
+#include "klibc.h"
+
+uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 
 /*
  * The kernel heap is organized in blocks. Each block has a header and a
@@ -17,16 +20,37 @@
  */
 alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
         heap_extend_handler extend_handler) {
-    alloc_handle* alloc_handle_ptr;
+
     if (buffer_size <= sizeof(alloc_handle)) {
         return 0;
     }
 
-    char * heap_start = buffer + sizeof(alloc_handle);
+    alloc_handle* alloc_handle_ptr;
+    char * cbuffer = (char*) buffer;
+    char * heap_start = cbuffer + sizeof(alloc_handle);
     alloc_handle_ptr = (alloc_handle*) &buffer[0];
-    buffer[0] = heap_start;
-    buffer[sizeof(uint32_t*)] = buffer_size - sizeof(alloc_handle);
-    buffer[sizeof(uint32_t*) + sizeof(uint32_t*)] = extend_handler;
+
+    // storing the alloc_handle struct
+    // inside the heading of the buffer
+    buffer = (uint32_t*) &cbuffer[0];
+    *buffer = (uint32_t) heap_start;
+    buffer = (uint32_t*) &cbuffer[sizeof(uint32_t*)];
+    *buffer = (uint32_t) buffer_size - sizeof(alloc_handle);
+    buffer = (uint32_t*) &cbuffer[sizeof(uint32_t*) + sizeof(uint32_t*)];
+    *buffer = (uint32_t) extend_handler;
+
+    uint32_t* heap_header = alloc_handle_ptr->heap;
+    uint32_t* heap_footer = (uint32_t*) ((void*) alloc_handle_ptr->heap
+            + alloc_handle_ptr->heap_size - sizeof(int));
+
+    *heap_header = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
+    *heap_footer = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
+
+    os_printf("X: 0x%X\n", heap_header);
+    os_printf("X: 0x%X\n", heap_footer);
+    os_printf("X: %d\n", *heap_header);
+    os_printf("X: %d\n", *heap_footer);
+
     return alloc_handle_ptr;
 }
 
@@ -40,8 +64,10 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
         return 0;
     }
 
+    os_printf("T: %d\n", amount_added);
+
     // Now extend the footer block
-    uint32_t *orig_footer = (uint32_t*) ((void*) MEM_START + start_size
+    uint32_t *orig_footer = (uint32_t*) ((void*) allocator->heap + start_size
             - sizeof(uint32_t));
 
     allocator->heap_size += amount_added;
@@ -49,21 +75,33 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
     // If it's free, simply move it (and update the header)
     // If it's used, add a free block to the end
     if (*orig_footer > 0) {
-        uint32_t *orig_header = (uint32_t*) (MEM_START + start_size
-                - 2 * sizeof(uint32_t) - *orig_footer);
-        uint32_t *new_footer = (uint32_t*) (MEM_START + allocator->heap_size
-                - sizeof(uint32_t));
+        uint32_t *orig_header = (uint32_t*) ((void*) allocator->heap
+                + start_size - 2 * sizeof(uint32_t) - *orig_footer);
+        uint32_t *new_footer = (uint32_t*) ((void*) allocator->heap
+                + allocator->heap_size - sizeof(uint32_t));
+//
+//        os_printf("A: 0x%X\n", orig_header);
+//        os_printf("A: 0x%X\n", orig_footer);
+//        os_printf("A: 0x%X\n", new_footer);
+//        os_printf("A: %d\n", *orig_header);
+//        os_printf("A: %d\n", *orig_footer);
+//        os_printf("A: %d\n", *new_footer);
+//
+//        while(1);
+
         *new_footer = *orig_footer + amount_added;
         *orig_header += amount_added;
         return orig_header;
     } else {
-        uint32_t *new_header = (uint32_t*) (MEM_START + start_size);
-        uint32_t *new_footer = (uint32_t*) (MEM_START + allocator->heap_size
-                - sizeof(uint32_t));
+
+        uint32_t *new_header = (uint32_t*) ((void*) allocator->heap + start_size);
+        uint32_t *new_footer = (uint32_t*) ((void*) allocator->heap
+                + allocator->heap_size - sizeof(uint32_t));
         *new_header = amount_added - 2 * sizeof(uint32_t);
         *new_footer = amount_added - 2 * sizeof(uint32_t);
         return new_header;
     }
+
     return 0x0;
 }
 
@@ -127,7 +165,7 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
 
     // Allocate some more memory.
     uint32_t new_amt = size + 2 * sizeof(uint32_t);
-    uint32_t *header = __alloc_extend_heap(new_amt);
+    uint32_t *header = __alloc_extend_heap(allocator, new_amt);
 
     if (header == 0) {
         return 0;
@@ -296,13 +334,14 @@ STATUS alloc_check(alloc_handle* allocator) {
             return STATUS_OK;
         }
     }
+
     return STATUS_OK;
 }
 
-uint32_t alloc_get_heap(alloc_handle* allocator){
+uint32_t* alloc_get_heap(alloc_handle* allocator) {
     return allocator->heap;
 }
 
-uint32_t alloc_get_heap_size(alloc_handle* allocator){
+uint32_t alloc_get_heap_size(alloc_handle* allocator) {
     return allocator->heap_size;
 }

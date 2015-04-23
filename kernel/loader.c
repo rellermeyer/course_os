@@ -38,7 +38,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	void * process_mem = aligned_mem_alloc(process_size, 4096);
+	void * process_mem = kmalloc_aligned(process_size, 4096);
 	void * current_pointer = process_mem;
 
 	os_printf("process size= %x\n", process_size);

@@ -7,18 +7,17 @@ Log
 #ifndef __MEM_ALLOC_H__
 #define __MEM_ALLOC_H__
 
+#include "allocator.h"
 #include <stdint.h>
 #include <global_defs.h>
 
 #define MEM_START 0x500000
 
-void *aligned_mem_alloc(size_t, size_t);
-
 STATUS init_heap();
 void *allocate(uint32_t, uint32_t* /*unused*/, int32_t/*unused*/);
 void deallocate(void*, uint32_t*/*unused*/, int32_t/*unused*/);
-void test_allocate();
 alloc_handle* mem_get_allocator();
 STATUS mem_check();
+uint32_t mem_get_heap_size();
 
 #endif
