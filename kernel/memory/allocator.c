@@ -4,11 +4,6 @@
 
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 
-alloc_handle* alloc_create_fixed(uint32_t * buffer, uint32_t buffer_size,
-        heap_extend_handler extend_handler) {
-    return alloc_create(buffer, buffer_size, NULL);
-}
-
 /*
  * The kernel heap is organized in blocks. Each block has a header and a
  * footer each a 4 byte integer, at the beginning and end of the block.
@@ -30,19 +25,13 @@ alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
         return 0;
     }
 
-    alloc_handle* alloc_handle_ptr;
-    char * cbuffer = (char*) buffer;
-    char * heap_start = cbuffer + sizeof(alloc_handle);
-    alloc_handle_ptr = (alloc_handle*) &buffer[0];
+    alloc_handle* alloc_handle_ptr = (alloc_handle*) &buffer[0];
 
     // storing the alloc_handle struct
     // inside the heading of the buffer
-    buffer = (uint32_t*) &cbuffer[0];
-    *buffer = (uint32_t) heap_start;
-    buffer = (uint32_t*) &cbuffer[sizeof(uint32_t*)];
-    *buffer = (uint32_t) buffer_size - sizeof(alloc_handle);
-    buffer = (uint32_t*) &cbuffer[sizeof(uint32_t*) + sizeof(uint32_t*)];
-    *buffer = (uint32_t) extend_handler;
+    alloc_handle_ptr->heap = ((void*) buffer) + sizeof(alloc_handle);
+    alloc_handle_ptr->heap_size = buffer_size - sizeof(alloc_handle);
+    alloc_handle_ptr->extend_handler = extend_handler;
 
     uint32_t* heap_header = alloc_handle_ptr->heap;
     uint32_t* heap_footer = (uint32_t*) ((void*) alloc_handle_ptr->heap
@@ -51,12 +40,11 @@ alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
     *heap_header = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
     *heap_footer = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
 
-    os_printf("X: 0x%X\n", heap_header);
-    os_printf("X: 0x%X\n", heap_footer);
-    os_printf("X: %d\n", *heap_header);
-    os_printf("X: %d\n", *heap_footer);
-
     return alloc_handle_ptr;
+}
+
+alloc_handle* alloc_create_fixed(uint32_t * buffer, uint32_t buffer_size) {
+    return alloc_create(buffer, buffer_size, NULL);
 }
 
 // TODO: what if there's an error allocating the page?
@@ -73,8 +61,6 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
         return 0;
     }
 
-    os_printf("T: %d\n", amount_added);
-
     // Now extend the footer block
     uint32_t *orig_footer = (uint32_t*) ((void*) allocator->heap + start_size
             - sizeof(uint32_t));
@@ -88,15 +74,6 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
                 + start_size - 2 * sizeof(uint32_t) - *orig_footer);
         uint32_t *new_footer = (uint32_t*) ((void*) allocator->heap
                 + allocator->heap_size - sizeof(uint32_t));
-//
-//        os_printf("A: 0x%X\n", orig_header);
-//        os_printf("A: 0x%X\n", orig_footer);
-//        os_printf("A: 0x%X\n", new_footer);
-//        os_printf("A: %d\n", *orig_header);
-//        os_printf("A: %d\n", *orig_footer);
-//        os_printf("A: %d\n", *new_footer);
-//
-//        while(1);
 
         *new_footer = *orig_footer + amount_added;
         *orig_header += amount_added;
