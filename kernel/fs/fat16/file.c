@@ -1,8 +1,8 @@
-#include <stdint>
+#include <stdint.h>
 #include "../../include/linked_list.h"
 #include "../../include/bitvector.h"
 #include "../../include/open_table.h"
-#include "../../include/mmci.h" 
+// #include "../../include/mmci.h" What is this? mmci isnt in include...
 #include "../../include/klibc.h"
 
 //CONSTANTS:
@@ -32,10 +32,9 @@ const int start_inode_table_loc = 1000;
 const int start_indirect_blocks_table_loc = 25000;
 const int start_data_blocks_loc = 50000;
 
-
-struct *superblock FS;
-bitvector* inode_bitmap;
-bitvector* data_block_bitmap;
+struct superblock* FS;
+bitVector* inode_bitmap;
+bitVector* data_block_bitmap;
 struct inode** inode_table_cache; //is this right? we want an array of inode pointers...
 struct indirect_block** indirect_block_table_cache; // an array of pointers to indirect_blocks
 // void* data_table; not sure what this is or why we had/needed/wanted it...
