@@ -611,6 +611,43 @@ int kdelete(char* filepath) {
 
 // --------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
+int get_inum_from_direct_data_block(struct inode* cur_inode){
+	int inum =1;
+	int i;
+	int file_found = 0; // initialize to false (i.e. file not found)
+	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
+	for(i = 0; i < cur_inode->blocks_in_file; i++){
+		receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
+		struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
+		int j;
+		for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+			struct dir_entry file_dir = cur_data_block[j]; // 
+			int k;
+			int is_equal = 1; // initialize to true
+			for(k = 0; k < MAX_NAME_LENGTH; k++){
+				if(file_dir.name[k]  != next_path[k]){
+					is_equal = 0;
+					break;
+				}//end if
+			}//end for
+			if(is_equal){
+				file_found = 1; //we found the file, so break out of loop
+				inum = file_dir.inum;
+				break;
+			}
+			if(file_found){
+				break;
+			}
+		}//inner for
+		if(file_found){
+			break;
+		}
+	}//outer for
+	kfree(dir_spaceholder);
+	return inum;
+}//end get_inum_from_direct_data_block() helper helper function
+
+
 
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* cur_inode){//filepath and starting inum must correspond...
 	int inum = starting_inum;
@@ -625,38 +662,43 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 		filepath += (k);
 		// Look up cur_inode inode in cached inode table
 		get_inode(inum, cur_inode);
+		inum = get_inum_from_direct_data_block(cur_inode);
 
-		int i;
-		int file_found = 0; // initialize to false (i.e. file not found)
-		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		for(i = 0; i < cur_inode->blocks_in_file; i++){
-			receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
-			int j;
-			for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-				struct dir_entry file_dir = cur_data_block[j]; // 
-				int k;
-				int is_equal = 1; // initialize to true
-				for(k = 0; k < MAX_NAME_LENGTH; k++){
-					if(file_dir.name[k]  != next_path[k]){
-						is_equal = 0;
-						break;
-					}//end if
-				}//end for
-				if(is_equal){
-					file_found = 1; //we found the file, so break out of loop
-					inum = file_dir.inum;
-					break;
-				}
-				if(file_found){
-					break;
-				}
-			}//inner for
-			if(file_found){
-				break;
-			}
-		}//outer for
-		kfree(dir_spaceholder);
+		if(inum == -1){
+			
+		}
+
+		// int i;
+		// int file_found = 0; // initialize to false (i.e. file not found)
+		// void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
+		// for(i = 0; i < cur_inode->blocks_in_file; i++){
+		// 	receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
+		// 	struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
+		// 	int j;
+		// 	for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+		// 		struct dir_entry file_dir = cur_data_block[j]; // 
+		// 		int k;
+		// 		int is_equal = 1; // initialize to true
+		// 		for(k = 0; k < MAX_NAME_LENGTH; k++){
+		// 			if(file_dir.name[k]  != next_path[k]){
+		// 				is_equal = 0;
+		// 				break;
+		// 			}//end if
+		// 		}//end for
+		// 		if(is_equal){
+		// 			file_found = 1; //we found the file, so break out of loop
+		// 			inum = file_dir.inum;
+		// 			break;
+		// 		}
+		// 		if(file_found){
+		// 			break;
+		// 		}
+		// 	}//inner for
+		// 	if(file_found){
+		// 		break;
+		// 	}
+		// }//outer for
+		// kfree(dir_spaceholder);
 
 		if(!file_found){//if we haven't found the file yet, then we need to search through the indirect blocks to look through the rest of the data blocks:
 			int i;
