@@ -105,11 +105,11 @@ void start2(uint32_t *p_bootargs)
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
 
-	//test assert
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
 	argparse_process(p_bootargs);
+	
 
 	print_uart0("done parsing atag list\n");
 
