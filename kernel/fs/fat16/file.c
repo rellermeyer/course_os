@@ -50,24 +50,23 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	//initialize the SD Card driver:
 	init_sd();
 	//read in the super block from disk and store in memory:
-	void* superblock_spaceholder = kmalloc(BLOCKSIZE);
-	receive(superblock_spaceholder, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
+	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
+	receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
 
-	FS = (struct superblock*) superblock_spaceholder; // super block is smaller than block size
 	INODES_PER_BLOCK = (int)(FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
-	void* inode_bitmap_temp = kmalloc(BLOCKSIZE); 
-	receive(inode_bitmap_temp, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
-	inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
+	inode_bitmap = (bitVector*) kmalloc(BLOCKSIZE); 
+	receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
+	// inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
 
-	void* data_block_bitmap_temp = kmalloc(BLOCKSIZE);
-	receive(data_block_bitmap_temp, (FS->data_bitmap_loc) * BLOCKSIZE);
-	data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
+	data_block_bitmap = (bitVector*) kmalloc(BLOCKSIZE);
+	receive((void*) data_block_bitmap, (FS->data_bitmap_loc) * BLOCKSIZE);
+	// data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
 
 	
 	// initilize the inode_table_cache in memory:
-	char* inode_table_temp = (char*) kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	void* inode_table_temp = (void*) kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
 	inode_table_cache = (struct inode**) kmalloc((sizeof(struct inode*))* FS->max_inodes);
 	int i;
 	for(i = 0; i < FS->max_inodes; i++){
@@ -75,9 +74,9 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 			if(i % INODES_PER_BLOCK == 0){
 				receive((inode_table_temp + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), (FS->start_inode_table_loc + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
 			}
-			inode_table_cache[i] = &((inode_table_temp + (((int)(i/INODES_PER_BLOCK))*BLOCKSIZE)) + ((i % INODES_PER_BLOCK)*FS->inode_size));
+			inode_table_cache[i] = (struct inode*)((inode_table_temp + (((int)(i/INODES_PER_BLOCK))*BLOCKSIZE)) + ((i % INODES_PER_BLOCK)*FS->inode_size));
 		}
-		//each iteration through the loop will grab 4 inodes, since we can fit 4 inodes per block
+		//each iteration through the loop will grab 1 inodes, since we can fit 1 inodes per block
 		else{
 			inode_table_cache[i] = NULL;
 		}
@@ -86,12 +85,12 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 
 
 	// initilize the indirect_block_table_cache in memory:
-	char* indirect_block_table_temp = (char*) kmalloc(NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	void* indirect_block_table_temp = (void*) kmalloc(NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
 	indirect_block_table_cache = (struct indirect_block**) kmalloc((sizeof(struct indirect_block*))* FS->max_indirect_blocks);
 	for(i = 0; i < FS->max_indirect_blocks; i++){
 		if(i < NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE){
 			receive(indirect_block_table_temp + (i*BLOCKSIZE), (FS->start_indirect_block_table_loc) + (i*BLOCKSIZE));
-			indirect_block_table_cache[i] = &((indirect_block_table_temp + (i*BLOCKSIZE));
+			indirect_block_table_cache[i] = (struct indirect_block*)((indirect_block_table_temp + (i*BLOCKSIZE));
 		} else{
 			indirect_block_table_cache[i] = NULL;
 		}
@@ -140,7 +139,7 @@ int kfs_shutdown(){
 int kopen(char* filepath, char mode){
 	int fd;
 	int inum;
-	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode*));
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
 	kfind_inode(filepath, 0, (result->dir_levels + 1));
@@ -664,7 +663,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 			int cur_indirect_block_num = -1;
 			struct indirect_block cur_indirect_block;
 			for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
-				cur_indirect_block_num = cur_inode->indirect_blocks[i]
+				cur_indirect_block_num = cur_inode->indirect_blocks[i];
 
 				if(indirect_block_table_cache[cur_indirect_block_num] != NULL){
 					// the indirect_block is in the indirect_block_table_cache, so get it:
@@ -730,13 +729,15 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 			dir_levels++;
 			index = 0;
 		}else{
+			if(iterator[0] == '\0'){
+				break;
+			}
 			index++;
 		}
 		iterator++;
 		total_chars++;
 	}//end while
-
-	total_chars -= 32;
+	total_chars -= index;
 
 	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
 	int i;
@@ -751,14 +752,14 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 void get_inode(int inum, struct inode* cur_inode){
 	if(inode_table_cache[inum] != NULL){
 		// the inode is in the inode_cache_table, so get it:
-		cur_inode = *(inode_table_cache[inum]);	
+		cur_inode = (inode_table_cache[inum]);	
 	}else{ 
 		// inode is not in the cache table, so get it from disk:
 		void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
 		struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
 		*cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-		kfree(indirect_block_spaceholder);
+		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
 	}//end if else
