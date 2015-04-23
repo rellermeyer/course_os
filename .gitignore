@@ -2,6 +2,7 @@
 /kernel/kernel.bin
 /kernel/flash.bin
 /kernel/boot-commands
+/kernel/card.sd
 /toolchain/target/
 /u-boot/u-boot-*
 /qemu/
