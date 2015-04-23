@@ -4,6 +4,11 @@
 
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 
+alloc_handle* alloc_create_fixed(uint32_t * buffer, uint32_t buffer_size,
+        heap_extend_handler extend_handler) {
+    return alloc_create(buffer, buffer_size, NULL);
+}
+
 /*
  * The kernel heap is organized in blocks. Each block has a header and a
  * footer each a 4 byte integer, at the beginning and end of the block.
@@ -57,10 +62,14 @@ alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
 // TODO: what if there's an error allocating the page?
 // Returns a pointer to the new (big) free block's header
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
+    if(!allocator->extend_handler) {
+        return 0;
+    }
+
     uint32_t start_size = allocator->heap_size;
     uint32_t amount_added = allocator->extend_handler(amount);
 
-    if (amount_added == 0) {
+    if (amount_added <= 0) {
         return 0;
     }
 
