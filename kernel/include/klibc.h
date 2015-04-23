@@ -93,5 +93,16 @@ STATUS kmcheck();
 int32_t abs(int32_t);
 unsigned int rand();
 
+// as the codebase grows, it is important to use these macros
+// so that we can filter out unnecessary messages esp. during
+// development
+#define LOG_LEVEL 2
+
+#define DEBUG(...) if(LOG_LEVEL >= 5) os_printf(__VA_ARGS__)
+#define LOG(...) if(LOG_LEVEL >= 4) os_printf(__VA_ARGS__)
+#define INFO(...) if(LOG_LEVEL >= 3) os_printf(__VA_ARGS__)
+#define WARN(...) if(LOG_LEVEL >= 2) os_printf(__VA_ARGS__)
+#define ERROR(...) if(LOG_LEVEL >= 1) os_printf(__VA_ARGS__)
+
 #endif
 

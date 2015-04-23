@@ -300,17 +300,17 @@ STATUS alloc_check(alloc_handle* allocator) {
         int32_t block_footer = *footer_addr;
 
         if (block_header == block_footer && block_header < 0) {
-            os_printf("Block %d Allocated:", block);
-            os_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+            LOG("Block %d Allocated:", block);
+            LOG("\tsize = %d, address = %x\n", block_size, block_addr);
         } else if (block_header == block_footer && block_header > 0) {
-            os_printf("Block %d Free:", block);
-            os_printf("\tsize = %d, address = %x\n", block_size, block_addr);
+            LOG("Block %d Free:", block);
+            LOG("\tsize = %d, address = %x\n", block_size, block_addr);
         } else {
-            os_printf("INCONSISTENT HEAP\n");
-            os_printf("block_header = %d\n", block_header);
-            os_printf("block_footer = %d\n", block_footer);
-            os_printf("header addr = %x\n", header_addr);
-            os_printf("footer addr = %x\n", footer_addr);
+            ERROR("INCONSISTENT HEAP\n");
+            ERROR("block_header = %d\n", block_header);
+            ERROR("block_footer = %d\n", block_footer);
+            ERROR("header addr = %x\n", header_addr);
+            ERROR("footer addr = %x\n", footer_addr);
             return STATUS_FAIL;
         }
 
