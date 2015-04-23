@@ -148,7 +148,7 @@ int enable_timer(int timer_index){
   return -1;
 }
 //prints the configuration of the control byte
-void print_control_status(int timer_index){
+int print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
   	return 0;
@@ -165,12 +165,15 @@ void print_control_status(int timer_index){
 // ex: start_timer_interrupts(0,10) which means start timer(0)
 // and interrupt every 10 clicks.
 int start_timer_interrupts(int timer_index,int start_val){
-	initialize_timers();
-	timer_start(timer_index);
-	set_background_load_value(timer_index,start_val);
-	set_periodic_mode(timer_index);
-	enable_timer_interrupt(timer_index);     
-	return 0;
+  if(timer_index < 4 && timer_index >= 0){
+    initialize_timers();
+    timer_start(timer_index);
+    set_background_load_value(timer_index,start_val);
+    set_periodic_mode(timer_index);
+    enable_timer_interrupt(timer_index);     
+    return 0;
+  }
+  return -1;
 }
 //just testing code
 /*while(1){
@@ -188,4 +191,4 @@ void timer_test(){
 	print_control_status(timer_index);
 		
 	return;
-}*/
+  }*/
