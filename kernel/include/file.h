@@ -90,12 +90,14 @@ int kclose(int fd);
 int kseek(int fd, int num_bytes);
 int kdelete(char* filepath);
 
-#endif //__FILE_H__
-
-
-
 
 // in the header file write it with extern. And in one of the c files declare it without extern.
+
+
+
+#endif 
+
+
 
 
 
