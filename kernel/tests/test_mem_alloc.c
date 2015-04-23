@@ -4,7 +4,6 @@
 #include "vm.h"
 
 #define NUM_TESTS 1
-#define VERBOSE
 
 int vm_count_free_frames();
 
@@ -19,7 +18,7 @@ uint32_t gen_rand(uint64_t *state, int nbits) {
 //Tests the create function
 int test_mem_alloc_1() {
     if (!kmcheck()) {
-        os_printf("Inconsistent memory to begin with...\n");
+        ERROR("Inconsistent memory to begin with...\n");
         return TEST_FAIL;
     }
 
@@ -27,10 +26,11 @@ int test_mem_alloc_1() {
     char *p = kmalloc(15);
     p = kmalloc(15);
     os_strcpy(p, "Hello!");
-    os_printf("%s\n", p);
+
+    DEBUG("%s\n", p);
 
     if (!kmcheck()) {
-        os_printf("allocate(15) failed.\n\n");
+        ERROR("allocate(15) failed.\n\n");
         return TEST_FAIL;
     }
 
@@ -40,27 +40,27 @@ int test_mem_alloc_1() {
     char *pntrs[256];
     uint32_t alloced = 0;
     int i;
-    os_printf("Starting out w/ %u bytes of heap\n", km_size());
+    DEBUG("Starting out w/ %u bytes of heap\n", km_size());
 
     for (i = 0; i < 256; i++) {
         uint32_t size = gen_rand(&rng, 15);
         pntrs[i] = kmalloc(size);
         alloced += size;
-#ifdef VERBOSE
-        os_printf("%u %u %u %u %d\n", i, km_size(), size, alloced,
+        DEBUG("%u %u %u %u %d\n", i, km_size(), size, alloced,
                 vm_count_free_frames());
-#endif
     }
 
     // Test one of them
     pntrs[230][0] = 1;
-    os_printf("%d == 1?\n", pntrs[230][0]);
+
+    if(pntrs[230][0] != 1){
+        ERROR("%d != 1\n", pntrs[230][0]);
+        return TEST_FAIL;
+    }
 
     if (!kmcheck()) {
-        os_printf("Memory is inconsistent :-(\n");
+        ERROR("Memory is inconsistent :-(\n");
         return TEST_FAIL;
-    } else {
-        os_printf("Memory is consistent :-)\n");
     }
 
     // Free all the pntrs
@@ -73,12 +73,10 @@ int test_mem_alloc_1() {
     kfree(p);
 
     if (!kmcheck()) {
-        os_printf("Memory is inconsistent :-(\n");
-    } else {
-        os_printf("Memory is consistent :-)\n");
+        ERROR("Memory is inconsistent :-(\n");
     }
 
-    os_printf("heap_size = %d bytes\n", km_size());
+    DEBUG("heap_size = %d bytes\n", km_size());
 
     return TEST_OK;
 }
@@ -87,7 +85,6 @@ int test_mem_alloc_1() {
 void run_mem_alloc_tests() {
     Test *tests[NUM_TESTS];
     tests[0] = create_test("test_mem_alloc_1", &test_mem_alloc_1);
-
     run_tests(tests, NUM_TESTS);
 }
 

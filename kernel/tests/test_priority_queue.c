@@ -24,7 +24,7 @@ int test_prq_1() {
     prq_handle * queue;
     queue = prq_create();
     if (!queue) {
-        os_printf("expected value");
+        ERROR("expected value");
         ret(queue, TEST_FAIL);
     }
 
@@ -66,15 +66,15 @@ int test_prq_2() {
         del(hn);
 
         if (priority_1 != priority_2) {
-            os_printf("[%d]: expected [%d]\n", priority_1, priority_2);
+            ERROR("[%d]: expected [%d]\n", priority_1, priority_2);
             ret(queue, TEST_FAIL);
         }
         if (priority_1 != i) {
-            os_printf("[%d]: expected [%d]\n", priority_1, i);
+            ERROR("[%d]: expected [%d]\n", priority_1, i);
             ret(queue, TEST_FAIL);
         }
         if (priority_2 != i) {
-            os_printf("[%d]: expected [%d]\n", priority_2, i);
+            ERROR("[%d]: expected [%d]\n", priority_2, i);
             ret(queue, TEST_FAIL);
         }
     }
@@ -115,7 +115,7 @@ int test_prq_3() {
     del(hn);
 
     if (p != -10) {
-        os_printf("[%d]: expected [%d]\n", p, -10);
+        ERROR("[%d]: expected [%d]\n", p, -10);
         ret(queue, TEST_FAIL);
     }
 
@@ -124,7 +124,7 @@ int test_prq_3() {
     del(hn);
 
     if (p != -2) {
-        os_printf("[%d]: expected [%d]\n", p, -2);
+        ERROR("[%d]: expected [%d]\n", p, -2);
         ret(queue, TEST_FAIL);
     }
 
@@ -137,7 +137,7 @@ int test_prq_3() {
     del(hn);
 
     if (p != 0) {
-        os_printf("[%d]: expected [%d]\n", p, 0);
+        ERROR("[%d]: expected [%d]\n", p, 0);
         ret(queue, TEST_FAIL);
     }
 
@@ -148,7 +148,7 @@ int test_prq_3() {
     del(hn);
 
     if (p != 2) {
-        os_printf("[%d]: expected [%d]\n", p, 2);
+        ERROR("[%d]: expected [%d]\n", p, 2);
         ret(queue, TEST_FAIL);
     }
 
@@ -157,7 +157,7 @@ int test_prq_3() {
     del(hn);
 
     if (p != 30) {
-        os_printf("[%d]: expected [%d]\n", p, 30);
+        ERROR("[%d]: expected [%d]\n", p, 30);
         ret(queue, TEST_FAIL);
     }
 
@@ -172,7 +172,7 @@ int test_prq_4() {
     queue = prq_create();
 
     if (prq_peek(queue) && queue->count < 1) {
-        os_printf("expected [%d]\n", 0);
+        ERROR("expected [%d]\n", 0);
         ret(queue, TEST_FAIL);
     }
 
@@ -198,7 +198,7 @@ int test_prq_4() {
     del(hn);
 
     if (prq_peek(queue) && queue->count < 1) {
-        os_printf("expected [%d]\n", 0);
+        ERROR("expected [%d]\n", 0);
         ret(queue, TEST_FAIL);
     }
 
@@ -225,7 +225,7 @@ int test_prq_5() {
     prq_enqueue(queue2, hn2);
 
     if (queue1->heap_size != queue2->heap_size) {
-        os_printf("expected equal heap_size");
+        ERROR("expected equal heap_size");
         ret(queue1, TEST_FAIL);
     }
 
@@ -272,7 +272,7 @@ int test_prq_6() {
 
 
     if (queue1->count != queue2->count) {
-        os_printf("expected equal heap_size");
+        ERROR("expected equal heap_size");
         for(int i = 0; i < queue1->count; ++i) {
             prq_node * tmp = prq_dequeue(queue1);
             del(tmp);
