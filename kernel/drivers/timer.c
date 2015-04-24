@@ -20,7 +20,7 @@ void initialize_timers(){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  set_prescale(timer_index,2);
+  //set_prescale(timer_index,2);
   enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
@@ -91,6 +91,23 @@ int set_periodic_mode(int timer_index){
     return 0;
   }
   return -1;
+}
+
+//converts ms into ticks
+//assumes modes are valid, if not, should return 0
+long int conversion(int ms){
+	int mode = timer_pointers[timer_index]->control & 0xC;
+	int ticks = 0;
+	if(mode == 0){
+		ticks = 32;
+	}
+	else if(mode == 1){
+		ticks = 256;
+	}
+	else if(mode == 2){
+		ticks = 1000;
+	}
+	return ms * ticks;
 }
 
 //function to set timer to different timer clock rates... 0 -> 1 (default), 1 -> 16, 2 -> 256...
