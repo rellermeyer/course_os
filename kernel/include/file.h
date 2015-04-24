@@ -8,9 +8,11 @@
 
 #define BLOCKSIZE 512
 #define MAX_NAME_LENGTH 32
-#define MAX_DATABLOCKS_PER_INODE 70
+#define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define NUM_INDIRECT_BLOCKS 50
+#define NULL 0x0
+
 
 struct superblock
 {
@@ -18,7 +20,7 @@ struct superblock
 	int fs_version; // 36 bytes
 	int magic_num; // 40 bytes
 	int sd_card_capacity; // 44 bytes
-	int block_size; // 48 bytes
+	int blocksize; // 48 bytes
 	int root_inum; // 52 bytes
 	int max_inodes; // 56 bytes
 	int inode_size;
@@ -28,18 +30,20 @@ struct superblock
 	int indirect_blocks_bitmap_loc; //
 	int start_inode_table_loc; // 78 bytes
 	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
-	int start_indirect_block_table_loc; //
+	int start_indirect_blocks_table_loc; //
 	int max_indirect_blocks;
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };
 
 struct inode // this is metadata
 {
+	int inum; //4 bytes
+	int fd_refs; 
 	int size; // 4 bytes
 	int is_dir; // 4 bytes
 	int usr_id; // 4 bytes
 	int blocks_in_file; // 4 bytes
-	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 70 right now
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 68 right now
 	int indirect_blocks_in_file; // 4 bytes
 	int indirect_blocks[NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now
 	bitVector* perms; // 12 bytes
@@ -65,16 +69,30 @@ struct dir_data_block
 
 struct dir_helper
 {
-	char* truncated_path;
 	int dir_levels;
+	char* truncated_path;
+	char* last;
 };
 
-int kopen(char*, char);
-int kread(int, void*, int);
-int kwrite(int, void*, int);
-int kclose(int);
-int kseek(int, int);
-int kdelete(char*);
+/* 
+struct directory
+{
+	struct inode inode;
+}; 
+*/
+
+// struct file
+// {
+// 	struct inode* inode;
+// 	// what to put here to avoid level of indirection?
+// };
+
+int kopen(char* filepath, char mode);
+int kread(int fd, void* buf, int numBytes);
+int kwrite(int fd, void* buf, int num_bytes);
+int kclose(int fd);
+int kseek(int fd, int num_bytes);
+int kdelete(char* filepath);
 
 
 // in the header file write it with extern. And in one of the c files declare it without extern.
@@ -82,8 +100,4 @@ int kdelete(char*);
 
 
 #endif 
-
-
-
-
 

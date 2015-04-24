@@ -157,7 +157,7 @@ int kopen(char* filepath, char mode){
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	kfind_inode(filepath, inum, (result->dir_levels + 1));
+	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	
 	//here we have the file we were looking for! it is cur_inode.
 	bitVector *p = &(cur_inode->perms);
@@ -175,22 +175,15 @@ int kopen(char* filepath, char mode){
 			}
 			break;
 		case 'a':
-			if(get(2, p) == 0){
+			if(get(1, p) == 0){
 				os_printf("File Cannot Be Appeneded To\n");
 				return -1;
 			}	
 			break;
-		case 'b':
-			if(get(3, p) == 0){
-				os_printf("File Cannot Be Read and Written\n");
-				return -1;
-			}	
-			break;
 		default:
-			os_printf("File permission passed\n");
+			os_printf("Please specify permission as r to read, w to write and a to append\n");
 	}
 	fd = add_to_opentable(cur_inode, mode);
-	kfree(cur_inode);
 	kfree(result->truncated_path);
 	kfree(result->last);
 	kfree(result);
@@ -435,38 +428,53 @@ int kseek(int fd_int, int num_bytes) {
 
 
 /* create a new file, if we are unsuccessful return -1 */
-int kcreate(char* filepath, int mode, int file_or_dir) {
+int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	int fd;
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	kfind_inode(result->truncated_path, inum, result->dir_levels);
+	kfind_inode(result->truncated_path, inum, result->dir_levels, cur_inode);
 
-	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode 
+	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
+	int free_inode_loc = firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
+	if (free_inode_loc == -1) {
+		os_printf("Disk has reached max number of files allowed. \n");
+		return -1;
+	}
+	set(free_inode_loc, inode_bitmap);
+	struct inode * new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
+	//initialize all fields of inode:
+	new_inode->inum = free_inode_loc;
+	new_inode->fd_refs = 0; //will be incremented in add to opentable
+	new_inode->size = 0; 
+	new_inode->is_dir = is_this_a_dir; 
+	new_inode->usr_id = 0; //or something
+	new_inode->blocks_in_file = 0; 
+	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = {NULL}; 
+	new_inode->indirect_blocks_in_file = 0; 
+	new_inode->indirect_blocks[NUM_INDIRECT_BLOCKS] = {NULL}; 
+	switch mode{
+		case 'r':
+			set(0, new_inode->perms);
+			lower(1, new_inode->perms);
+			break;
+		case 'w':
+			set(0, new_inode->perms);
+			set(1, new_inode->perms);
+			break;
+		default:
+			os_printf("Wrong permission. Please insert r for read and w for write\n");
+			return -1;
+	}
+	//UPDATE DISK by writing memory data structures to disk
+	transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
+	transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	
-	//STEP 1: Consult the inode_bitmap to find a free space in the inode_table to add the new inode:
-	int free_inode_loc = firstFree(inode_bitmap);
-	//STEP 2: Create the new inode:
-	inode* new_inode = (inode*) kmalloc(sizeof(inode));
-	new_inode->size = 0; // new file is initially empty (i.e. contains no data), so its size is 0 initially
-	new_inode->is_dir = 0; // create is always used to create a file, not a directory...us kmkdir() to create a diretory
-	new_inode->usr_id = 0; // not actively using this field at the moment...
-	new_inode->blocks_in_file = 0; // file is initially empty
-	new_inode->data_blocks = {}; // is this the correct syntax???
-	new_inode->
-	new_inode->
-
-
-	nt size;
-	int is_dir;
-	int usr_id;
-	int blocks_in_file;
-	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // how to get this dynamically? defined above as 27 right now
-	char perms;
-							   |
-	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+	//update cur_inode directory to make it have the new inode -------------------------------------------------------------------------------------
+	//HERE!!!! -----------------------------------------------------
+	
+	fd = add_to_opentable(new_inode, mode);
 	return 0;
 }
 
@@ -660,89 +668,6 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 		if(inum == -1){
 			inum = get_inum_from_indirect_data_block(cur_inode, next_path)
 		}
-
-		// int i;
-		// int file_found = 0; // initialize to false (i.e. file not found)
-		// void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		// for(i = 0; i < cur_inode->blocks_in_file; i++){
-		// 	receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		// 	struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
-		// 	int j;
-		// 	for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-		// 		struct dir_entry file_dir = cur_data_block[j]; // 
-		// 		int k;
-		// 		int is_equal = 1; // initialize to true
-		// 		for(k = 0; k < MAX_NAME_LENGTH; k++){
-		// 			if(file_dir.name[k]  != next_path[k]){
-		// 				is_equal = 0;
-		// 				break;
-		// 			}//end if
-		// 		}//end for
-		// 		if(is_equal){
-		// 			file_found = 1; //we found the file, so break out of loop
-		// 			inum = file_dir.inum;
-		// 			break;
-		// 		}
-		// 		if(file_found){
-		// 			break;
-		// 		}
-		// 	}//inner for
-		// 	if(file_found){
-		// 		break;
-		// 	}
-		// }//outer for
-		// kfree(dir_spaceholder);
-
-		// if(!file_found){//if we haven't found the file yet, then we need to search through the indirect blocks to look through the rest of the data blocks:
-			// int i;
-			// int cur_indirect_block_num = -1;
-			// struct indirect_block cur_indirect_block;
-			// for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
-			// 	cur_indirect_block_num = cur_inode->indirect_blocks[i];
-
-			// 	if(indirect_block_table_cache[cur_indirect_block_num] != NULL){
-			// 		// the indirect_block is in the indirect_block_table_cache, so get it:
-			// 		cur_indirect_block = *(indirect_block_table_cache[cur_indirect_block_num]);	
-			// 	}else{ //RIGHT HERE
-			// 		// indirect_block is not in the cache table, so get it from disk:
-			// 		void* indirect_block_spaceholder = kmalloc(BLOCKSIZE);
-			// 		receive(indirect_block_spaceholder, (cur_indirect_block_num + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
-			// 		cur_indirect_block = *((struct indirect_block*) indirect_block_spaceholder);
-			// 		// need to implement an eviction policy/function to update the indirect_block_table_cache...
-			// 		// this will function w/o it, but should be implemented for optimization
-			// 	}//end if else
-
-			// 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-			// 	int j;
-			// 	for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
-			// 		receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
-			// 		struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
-			// 		int k;
-			// 		for(k = 0; k < (BLOCKSIZE/DIR_ENTRY_SIZE); k++){
-			// 			struct dir_entry file_dir = cur_data_block[k]; // 
-			// 			int m;
-			// 			int is_equal = 1; // initialize to true
-			// 			for(m = 0; m < MAX_NAME_LENGTH; m++){
-			// 				if(file_dir.name[m]  != next_path[m]){
-			// 					is_equal = 0;
-			// 					break;
-			// 				}//end if
-			// 			}//end for
-			// 			if(is_equal){
-			// 				file_found = 1; //we found the file, so break out of loop
-			// 				inum = file_dir.inum;
-			// 				break;
-			// 			}
-			// 		}//inner for
-			// 		if(file_found){
-			// 			break;
-			// 		}
-			// 	}//outer for
-			// 	kfree(dir_spaceholder);
-			// 	if(file_found){
-			// 		break;
-			// 	}
-			// }//end for
 
 		if(inum == -1){//throw an error
 			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
