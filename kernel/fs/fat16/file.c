@@ -633,29 +633,65 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	sd_transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	
 	//update cur_inode directory to make it have the new inode 
+	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
-	if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+	if((cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
 		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
 	}else{
 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), indirect_block); // do you want cur_indirect_block?
+		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block); // do you want cur_indirect_block?
 		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
 		kfree(cur_indirect_block);
 	}
+
+	//creat the new dir_entry:
 	struct dir_entry new_dir_entry;
 	new_dir_entry.inum = free_inode_loc;
 	new_dir_entry.name = result->last;
-	// new_dir_entry.name_length = ??? // how to get this???
+	new_dir_entry.name_length = os_strlen(result->last);
+
+	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
 	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
 		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
+		dir_block->num_entries++;
 	}else{
+		/*need to add a new data block....either: 	(1) as a direct data block, 
+													(2) to the current indirect block or 
+													(3) add a new indirect block then add a new data block to that */
+		if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+			//Case (1):
+			//TODO: add a direct data block...
+		}else{
+			//add a data block to an indirect block:
+			// struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+			// get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 
+			// sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
+			// kfree(cur_indirect_block);
+			if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
+				//TODO: add a data block to indirect block...
+			
+			}else{
+				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
+					//add an indirect block
+
+				}else{
+					//file has reached max allowable size:
+					os_printf("ERROR! Operation failed because file has reached max allowable size\n");
+					return -1;
+				}
+			}
+		}
 		//RIGHT HERE...still need to:
 		//add new data block to indirect block array if dir_block->num_entries >= MAX_DIR_ENTRIES_PER_DATA_BLOCK
 		//add new indirect block AND new data block if cur_indirect_block->blocks_in_file >= MAX_DATABLOCKS_PER_INDIRECT_BLOCK
 		//then update memory/caches
 		//then write back out to disk
 		//should move all this stuff out to helper function...
+	}else{
+		//this should never happen
+		os_printf("ERROR! dir_block->num_entries > MAX_DIR_ENTRIES_PER_DATA_BLOCK\nThis should never happen!\n");
+		return -1;		
 	}
 	
 	if (!is_this_a_dir) {
