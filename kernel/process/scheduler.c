@@ -3,15 +3,18 @@
 #include "../include/klibc.h"
 #include "../include/process.h"
 #include "../include/linked_list.h"
+#include "../include/array_list.h"
+#include "../include/hash_map.h"
+#include "../include/kthreads.h"
 
 #define MAX_TASKS 100   // in the future, cap will be removed
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
 #define MAX_NICENESS -20
 #define MIN_NICENESS 20
-#define TASK_STATE_FINISHED 3   // task has run by the scheduler and finished
-#define TASK_STATE_INACTIVE  2  // task is in the wait queue (about to be executed)
-#define TASK_STATE_ACTIVE 1     // task is part of the running tasks; it is being interleaved and executed atm
-#define TASK_STATE_NONE 0       // task is just created (no real state)
+#define TASK_STATE_FINISHED 4   // task has run by the scheduler and finished
+#define TASK_STATE_INACTIVE  3  // task is in the wait queue (about to be executed)
+#define TASK_STATE_ACTIVE 2     // task is part of the running tasks; it is being interleaved and executed atm
+#define TASK_STATE_NONE 1       // task is just created (no real state)
 #define SAFE_NICE(n) MAX(MIN(MAX_NICENESS, n), n)
 #define KTHREAD 0
 #define PROCESS 1
@@ -59,18 +62,28 @@ void __sched_resume_timer_irq();
 void __sched_dispatch();
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type);
+void __sched_emit_messages();
+void __sched_register_timer_irq() {
+}
+void __sched_deregister_timer_irq() {
+}
+void __sched_pause_timer_irq() {
+}
+void __sched_resume_timer_irq() {
+}
 
 // Initialize the scheduler. Should be called by the kernel ONLY
 uint32_t sched_init() {
-    vm_enable_kernel_vas();
+    vm_use_kernel_vas();
 
     os_printf("Initializing scheduler\n");
-    last_err = "No error";
+    // last_err = "No error";
     inactive_tasks = prq_create_fixed(MAX_TASKS);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
 
-    _sched_register_timer_irq();
+    __sched_register_timer_irq();
 
     return STATUS_OK;
 }
@@ -90,7 +103,7 @@ uint32_t sched_deregister_callback_handler() {
 
 // Free the resources used the scheduler
 uint32_t sched_free() {
-    vm_enable_kernel_vas();
+    vm_use_kernel_vas();
 
     // FIXME kill active tasks
 
@@ -104,18 +117,17 @@ uint32_t sched_free() {
 
 static uint32_t sched_tid = 0;
 
-sched_task* sched_create_task_from_kthread(kthread_handle * kthread,
-        int niceness) {
+uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) {
     return __sched_create_task(kthread, niceness, KTHREAD);
 }
 
-sched_task* sched_create_task_from_process(pcb * pcb_pointer, int niceness) {
+uint32_t sched_create_task_from_process(pcb * pcb_pointer, int niceness) {
     return __sched_create_task(pcb_pointer, niceness, PROCESS);
 }
 
-sched_task* __sched_create_task(void * task_data, int niceness, uint32_t type) {
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
     if (prq_count(inactive_tasks) >= MAX_TASKS) {
-        last_err = "Too many tasks";
+        // last_err = "Too many tasks";
         return STATUS_FAIL;
     }
 
@@ -133,16 +145,19 @@ sched_task* __sched_create_task(void * task_data, int niceness, uint32_t type) {
     task->node = 0;
     task->parent_tid = 0;
     task->children_tids = arrl_create();
+    task->message_queue = llist_create();
     task->cb_handler = 0;
+
+    hmap_put(all_tasks_map, task->tid, task);
 
     if (active_task) {
         task->parent_tid = active_task->tid;
-        arrl_add(active_task->children_tids, task->tid);
+        arrl_append(active_task->children_tids, (void*) task->tid);
     }
 
     __sched_resume_timer_irq();
 
-    return task;
+    return task->tid;
 
 }
 
@@ -155,7 +170,7 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 
     int i = 0;
     for (; i < arrl_count(parent_task->children_tids); i++) {
-        uint32_t child_tid = arrl_count(parent_task, i);
+        uint32_t child_tid = (uint32_t) arrl_get(parent_task, i);
         sched_task * child_task = hmap_get(all_tasks_map, child_tid);
         if ((child_task = __sched_find_subtask(child_task, tid))) {
             return child_task;
@@ -169,11 +184,12 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 // NOTE expecting access to kernel global vars
 void sched_waittid(uint32_t tid) {
     while (1) {
-        sched_task * task = (sched_task*) hmap_get(&all_tasks_map, tid);
+        sched_task * task = (sched_task*) hmap_get(all_tasks_map, tid);
         if (task == 0 || task->state == TASK_STATE_FINISHED) {
             break;
         }
-        sleep(500);
+
+        // sleep(500);
     }
 }
 
@@ -219,7 +235,7 @@ void __sched_dispatch() {
             }
 
             __sched_pause_timer_irq();
-            sched_remove_task(active_task);
+            __sched_remove_task(active_task);
             active_task = 0;
 
             // NOTE next interrupt will get the start the process
@@ -230,7 +246,8 @@ void __sched_dispatch() {
             if (prq_count(active_tasks) > 1) {
                 prq_remove(active_tasks, active_task->node);
                 prq_enqueue(active_tasks, active_task->node);
-                sched_task * next_task = (sched_task*) prq_peek(active_tasks)->data;
+                sched_task * next_task =
+                        (sched_task*) prq_peek(active_tasks)->data;
 
                 // old task
                 if (IS_PROCESS(active_task)) {
@@ -251,7 +268,7 @@ void __sched_dispatch() {
                 active_task = next_task;
 
                 // new task
-                if (IS_PROCESS(active_task)){
+                if (IS_PROCESS(active_task)) {
                     vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                     __sched_emit_messages();
                     load_process_state(AS_PROCESS(active_task)->PID); // continue with the next process
@@ -271,7 +288,8 @@ void __sched_dispatch() {
 void __sched_emit_messages() {
     if (active_task->cb_handler) {
         sched_message_chunk * chunk;
-        while ((chunk = llist_dequeue(active_task)) != 0) {
+        while ((chunk = llist_dequeue(active_task->message_queue))
+                != 0) {
             active_task->cb_handler(chunk->src_pid, chunk->event, chunk->data,
                     chunk->chunk_length, chunk->remain_length);
             if (chunk) {
@@ -282,10 +300,12 @@ void __sched_emit_messages() {
 }
 
 // start process
-uint32_t sched_add_task(sched_task * task) {
+uint32_t sched_start_task(uint32_t tid) {
+    sched_task * task = hmap_get(all_tasks_map, tid);
+
     if (task) {
         if (task->state != TASK_STATE_NONE) {
-            last_err = "Reusing task object not allowed";
+            // last_err = "Reusing task object not allowed";
             return STATUS_FAIL;
         }
 
@@ -300,8 +320,6 @@ uint32_t sched_add_task(sched_task * task) {
         task->node = new_node;
         prq_enqueue(inactive_tasks, new_node);
 
-        hmap_put(active_task->tid, active_task);
-
         if (IS_PROCESS(active_task)) {
             vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
         } else if (IS_KTHREAD(active_task)) {
@@ -311,7 +329,20 @@ uint32_t sched_add_task(sched_task * task) {
         return active_task->tid;
     }
 
-    last_err = "Invalid sched_task pointer";
+    // last_err = "Invalid sched_task pointer";
+    return STATUS_FAIL;
+}
+
+// essentially a kill process
+uint32_t sched_remove_task(uint32_t tid) {
+    sched_task * task = (sched_task*) hmap_get(all_tasks_map, tid);
+    if (task) {
+        __sched_pause_timer_irq();
+        uint32_t status = __sched_remove_task(task);
+        __sched_resume_timer_irq();
+        return status;
+    }
+
     return STATUS_FAIL;
 }
 
@@ -326,7 +357,7 @@ uint32_t __sched_remove_task(sched_task * task) {
     switch (task->state) {
         case TASK_STATE_INACTIVE: {
             __sched_pause_timer_irq();
-            prq_remove(&inactive_tasks, task->node);
+            prq_remove(inactive_tasks, task->node);
             prq_free_node(task->node);
             __sched_resume_timer_irq();
             break;
@@ -343,7 +374,7 @@ uint32_t __sched_remove_task(sched_task * task) {
                 // FIXME add later
             }
 
-            hmap_remove(task->tid);
+            hmap_remove(all_tasks_map, task->tid);
             prq_remove(active_tasks, task->node);
             prq_free_node(task->node);
 
@@ -366,19 +397,6 @@ uint32_t __sched_remove_task(sched_task * task) {
     return task->state;
 }
 
-// essentially a kill process
-uint32_t sched_remove_task(uint32_t tid) {
-    sched_task * task = (sched_task*) hmap_get(&all_tasks_map, tid);
-    if (task) {
-        __sched_pause_timer_irq();
-        uint32_t status = __sched_remove_task(task);
-        __sched_resume_timer_irq();
-        return status;
-    }
-
-    return STATUS_FAIL;
-}
-
 // get the current process id
 uint32_t sched_get_active_tid() {
     if (active_task) {
@@ -396,7 +414,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 
     sched_task * task;
 
-    if (!(task = hmap_get(&all_tasks_map, pid))) {
+    if (!(task = (sched_task*) hmap_get(all_tasks_map, pid))) {
         return STATUS_FAIL;
     }
 
@@ -419,8 +437,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
         prq_remove(tasks, task->node); // remove the running task from queue
         task->node->priority = SAFE_NICE(niceness);
         prq_enqueue(tasks, task->node); // add it again to see if its position in the queue
-
-    }+
+    }
 
     __sched_resume_timer_irq();
 
@@ -431,7 +448,7 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
         int len) {
     /*sched_task * dest_task;
 
-     if (!(dest_task = hmap_get(&all_tasks_map, dest_pid))) {
+     if (!(dest_task = hmap_get(all_tasks_map, dest_pid))) {
      return STATUS_FAIL;
      }
      __sched_pause_timer_irq();
@@ -452,7 +469,7 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
      // increment data pointer
      data = (char*) (data + cpy_len / 4);
      // get the dest_task
-     sched_task * dest_task = hmap_get(&all_tasks_map, dest_pid);
+     sched_task * dest_task = hmap_get(all_tasks_map, dest_pid);
      // switch to dest vas
      vm_enable_vas(dest_task->pcb->stored_vas);
      // copy from global kernel stack to process heap

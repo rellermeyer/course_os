@@ -17,14 +17,34 @@
  *
  ********************************************************************/
 
-#include "include/linked_list.h"
-#include "include/klibc.h"
+#include "../include/linked_list.h"
+#include "../include/klibc.h"
 
-llist_handle* llist_create(void *data) { /* create more space than needed -- less resizing */
+llist_handle* llist_create() { /* create more space than needed -- less resizing */
     llist_handle *result = (llist_handle *) kmalloc(sizeof(llist_node));
     result->count = 0;
-    llist_insert(result, llist_create_node(data), 0);
     return result;
+}
+
+int llist_count(llist_handle *l) {
+    return l->count;
+}
+
+void* llist_get_data(llist_handle *l, int index) {
+    return llist_get_node(l, index)->data;
+}
+
+llist_node* llist_get_node(llist_handle *l, int index) {
+    int i;
+    llist_node *tmp = l->head;
+    for (i = 0; i < index; i++) {
+        tmp = tmp->next;
+    }
+    return tmp;
+}
+
+void llist_set_data(llist_node *l, void *data) {
+    l->data = data;
 }
 
 llist_node* llist_create_node(void *data) {
@@ -37,9 +57,16 @@ void llist_enqueue(llist_handle * list, void * data) {
     llist_insert(list, data, 0);
 }
 
+void llist_remove_at(llist_handle *l, int index) {
+    llist_node *prev = llist_get_node(l, index);
+    llist_node *to_delete = prev->next;
+    prev->next = to_delete->next;
+    llist_free_node(to_delete);
+}
+
 void* llist_dequeue(llist_handle * list) {
     void * data = llist_get_data(list, 0);
-    llist_remove_at(0);
+    llist_remove_at(list, 0);
     return data;
 }
 
@@ -75,32 +102,4 @@ void llist_insert(llist_handle *l, void *data, int index) {
     if (l->tail->next) {
         l->tail = l->tail->next;
     }
-}
-
-int llist_count(llist_handle *l){
-    return l->count;
-}
-
-void llist_remove_at(llist_handle *l, int index) {
-    llist_node *prev = llist_get_node(l, index);
-    llist_node *to_delete = prev->next;
-    prev->next = to_delete->next;
-    llist_free_node(to_delete);
-}
-
-void* llist_get_data(llist_handle *l, int index) {
-    return llist_get_node(l, index)->data;
-}
-
-llist_node* llist_get_node(llist_handle *l, int index) {
-    int i;
-    llist_node *tmp = l->head;
-    for (i = 0; i < index; i++) {
-        tmp = tmp->next;
-    }
-    return tmp;
-}
-
-void llist_set_data(llist_node *l, void *data) {
-    l->data = data;
 }
