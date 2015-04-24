@@ -65,8 +65,6 @@ void start2(uint32_t *p_bootargs)
 	asm volatile("swi 1");
 	//while (1);
 
-	fs_table_init(); //initializes fs opentable  
-
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
 	os_printf("%X\n",*p_bootargs);

@@ -3,12 +3,6 @@
 //Since methods are provided, other files should not touch neither the free LL or the arrray, 
 // but just use the premade methods. 
 
-/* GINEVERA PLEASE READ! We (Charlie and Joel) are thinking that this whole implementation
-should probably be converted to heap memory instead of done locally on the stack. Also,
-can you add a function like this, so that we can access the file_descriptor struct for a 
-given int fd in order to get to its offset, etc. from file.c....? Thanks!
-*/
-
 #include "../include/file.h"
 #include "../include/klibc.h"
 #include "../include/open_table.h"
@@ -35,8 +29,16 @@ void fs_table_init() {
         }
         behind->index = SYSTEM_SIZE-1;
         TAIL = behind;
-        //note: this memory should be freed with a cleanup function once the computer turns off
-        //since there is no turn off at the moment, the function is still fo be implemented
+}
+
+//at shutdown, memory with the free list is freed
+void fs_table_shutdown() {
+        struct free_index * to_free;
+        while (HEAD != 0x0) {
+                to_free = HEAD;
+                HEAD = HEAD->next;
+                kfree(to_free);
+        }
 }
 
 
