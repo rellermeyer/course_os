@@ -11,6 +11,8 @@
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define NUM_INDIRECT_BLOCKS 50
+#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-1
+#define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-1
 
 struct superblock
 {
@@ -50,7 +52,7 @@ struct inode // this is metadata
 struct indirect_block // total size is 1 block
 {
 	int blocks_in_file;
-	int data_blocks[(BLOCKSIZE/4)-1]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
+	int data_blocks[MAX_DATABLOCKS_PER_INDIRECT_BLOCK]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
 };
 
 struct dir_entry
@@ -62,7 +64,8 @@ struct dir_entry
 
 struct dir_data_block
 {
-	struct dir_entry dir_entries[(int)(BLOCKSIZE/DIR_ENTRY_SIZE)];
+	int num_entries;
+	struct dir_entry dir_entries[MAX_DIR_ENTRIES_PER_DATA_BLOCK];
 };
 
 struct dir_helper

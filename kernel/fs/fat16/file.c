@@ -194,7 +194,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 		receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 		struct dir_data_block* cur_data_block = (struct dir_data_block*) dir_spaceholder;
 		int j;
-		for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
+		for(j = 0; j < (cur_data_block->num_entries); j++){
 			struct dir_entry* file_dir = cur_data_block[j];  
 			// int k;
 			// int is_equal = 1; // initialize to true
@@ -238,7 +238,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 			receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
-			for(k = 0; k < (BLOCKSIZE/DIR_ENTRY_SIZE); k++){
+			for(k = 0; k < (cur_data_block->num_entries); k++){
 				struct dir_entry* file_dir = cur_data_block[k]; // 
 				// int m;
 				// int is_equal = 1; // initialize to true
@@ -646,7 +646,31 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	
 	//update cur_inode directory to make it have the new inode -------------------------------------------------------------------------------------
-	//HERE!!!! -----------------------------------------------------
+	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
+	if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+		receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
+	}else{
+		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), indirect_block);
+		receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
+		kfree(cur_indirect_block);
+	}
+	struct dir_entry new_dir_entry;
+	new_dir_entry.inum = free_inode_loc;
+	new_dir_entry.name = result->last;
+	// new_dir_entry.name_length = ??? // how to get this???
+	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
+		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
+	}else{
+
+		//RIGHT HERE...still need to:
+		//add new data block to indirect block array if dir_block->num_entries >= MAX_DIR_ENTRIES_PER_DATA_BLOCK
+		//add new indirect block AND new data block if cur_indirect_block->blocks_in_file >= MAX_DATABLOCKS_PER_INDIRECT_BLOCK
+		//then update memory/caches
+		//then write back out to disk
+		//should move all this stuff out to helper function...
+	}
+
 	
 	fd = add_to_opentable(new_inode, mode);
 	return 0;
