@@ -33,7 +33,7 @@ int ht_add(struct ht *table, const char *key, void *value) {
 	uint32_t hash = hash_string(key);
 	struct ht_entry *entry = &table->entries[hash%table->size];
 	while (1) {
-		if (!os_strcmp(entry->key.key, key)) {
+		if (entry->key.hash == hash && !os_strcmp(entry->key.key, key)) {
 			// Fill this entry
 			break;
 		}
