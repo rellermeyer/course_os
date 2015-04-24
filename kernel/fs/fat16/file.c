@@ -151,7 +151,6 @@ int kfs_shutdown(){
 }//end kfs_shutdown() function
 
 
-
 int kopen(char* filepath, char mode){
 	int fd;
 	int inum = 0;
