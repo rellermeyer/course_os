@@ -21,8 +21,6 @@ given int fd in order to get to its offset, etc. from file.c....? Thanks!
 struct free_index* HEAD;
 struct free_index* TAIL;
 
-#define NULL 00 
-
 //called by start.c, will initialize the free list and the table
 void fs_table_init() {
         struct free_index * behind = kmalloc(sizeof(struct free_index));
@@ -47,13 +45,13 @@ void fs_table_init() {
 struct file_descriptor* get_descriptor(int fd){
 	if (file_is_open(fd))
 		return table[fd];
-	return NULL;
+	return 0x0;
 }
 
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
 int add_to_opentable(struct inode * f, char perm) {
-        if (HEAD==NULL) //not enough space
+        if (HEAD==0x0) //not enough space
                 return -1;
         int fd = HEAD->index; //take available fd
 	if (fd<0 || fd>=SYSTEM_SIZE) //invalid index
@@ -79,9 +77,9 @@ int add_to_opentable(struct inode * f, char perm) {
 //this function can be used to delete a file from the list
 //returns 0 if all ok, -1 if wrong
 int delete_from_opentable(int fd) {
-        if (table[fd]==NULL)
+        if (table[fd]==0x0)
                 return -1; //invalid entry
-        table[fd]=NULL;
+        table[fd]=0x0;
         struct free_index * to_add = kmalloc(sizeof(struct free_index)); //create new node
         to_add->index = fd;
         TAIL->next = to_add;
@@ -94,6 +92,6 @@ int delete_from_opentable(int fd) {
 //this function checks whether the file is open or not
 int file_is_open(int fd) {
 	if (fd<0 || fd>=SYSTEM_SIZE) { return 0; }
-        return (table[fd]!=NULL);
+        return (table[fd]!=0x0);
 }
 
