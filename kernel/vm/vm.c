@@ -36,13 +36,12 @@ struct vm_free_list *vm_l1pt_free_list = 0x0;
 struct vm_free_list *vm_l2pt_free_list = 0x0;
 
 void vm_init() {
-	// Initialize the VAS structures stored in the first PAGE_TABLE_SIZE
-	// of our alloted MB.
+	// Initialize the VAS structures. We allocate enough for 4096 VASs.
 	struct vm_free_list *free_vas = (struct vm_free_list*)P_L1PTBASE;
 	//vm_vas_free_list = free_vas;
 	vm_vas_free_list = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
-	while ((uint32_t)free_vas<P_L1PTBASE+PAGE_TABLE_SIZE) {
+	while ((uint32_t)free_vas<P_L1PTBASE+sizeof(struct vas)*4096) {
 		free_vas->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
@@ -52,7 +51,7 @@ void vm_init() {
 	}
 
 	// Initialize the L1 page tables
-	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + sizeof(struct vas)*4096);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE - (BLOCK_SIZE>>2)) {
@@ -125,6 +124,15 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	}
 	vm_enable_vas(prev_vas);
 	return 0;
+}
+
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
+	unsigned char *p = (unsigned char*)vptr;
+	while (p-(unsigned char*)vptr < nbytes) {
+		vm_allocate_page(vas, p, permission);
+		p += BLOCK_SIZE;
+	}
+	return p;
 }
 
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
@@ -212,6 +220,34 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	return 0;
 }
 
+// We're going to have to switch to the kernel's VAS, then copy it over.
+int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission) {
+	if ((unsigned int)this_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
+
+	struct vas *prev_vas = vm_current_vas;
+	vm_enable_vas((struct vas*)V_L1PTBASE);
+
+	if (vas->l1_pagetable[(unsigned int)this_ptr>>20]) {
+		return VM_ERR_MAPPED;
+	}
+	if (!other_vas->l1_pagetable[(unsigned int)other_ptr>>20]) {
+		return VM_ERR_NOT_MAPPED;
+	}
+
+	int perm = perm_mapping[permission];
+	if (perm == -1) return VM_ERR_BADPERM;
+
+	// Well, this was remarkably easy.
+	unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
+	os_printf("pptr: %X\n",pptr);
+	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
+
+	vm_enable_vas(prev_vas);
+	return 0;
+}
+
 void vm_enable_vas(struct vas *vas) {
 	vm_current_vas = vas;
 
@@ -283,107 +319,4 @@ int vm_free_vas(struct vas *vas) {
 	n->next = vm_vas_free_list;
 	vm_vas_free_list = n;
 	return 0;
-}
-
-void vm_test_early() {
-	os_printf("Test code for VM (early).\n");
-
-#if 0
-	// Test 4KB pages
-	os_printf("0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
-	os_printf("entry at the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
-	unsigned int *p2 = (unsigned int*)(PMAPBASE+0x100000);
-	os_printf("0x%X\n",p2);
-	p2[1]++;
-	p2[1023]++;
-	os_printf("Should not have seen a page fault, should see one now.\n");
-	p2[1024]++;
-
-	// Hey, let's check the access bit now.
-	p2 = ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE));
-	os_printf("Entry is the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
-#endif
-
-	os_printf("Leaving early test code for VM.\n");
-	//while (1);
-}
-
-// TODO: Move this into a framework...
-void vm_test() {
-	os_printf("***** Test code for VM (vm_test()): *****\n");
-
-	struct vas *vas1 = vm_new_vas();
-	os_printf("Got new vas at 0x%X\n", vas1);
-
-	// We're part of the kernel, which is already mapped into vas1.
-	// But our stack isn't, so let's add that mapping.
-	unsigned int mystack = (unsigned int)&vas1;
-	mystack &= 0xFFF00000; // Round down to nearest MB
-	os_printf("Stack addr: 0x%X\n", mystack);
-
-	os_printf("Created page table w/ 0xFFF00000's entry = 0x%X\n", vas1->l1_pagetable[V_KDSBASE>>20]);
-
-	vm_enable_vas(vas1);
-
-	// Can we still print?
-	os_printf("Hey, I'm printing!\n");
-
-	// Do we still have the stack?
-	os_printf("This value better be the same as above: 0x%X\n", vas1);
-
-	struct vas *vas2 = (struct vas*)V_L1PTBASE;
-	os_printf("%X (%X)\n", vas2, &vas2);
-	os_printf("%X\n", *((unsigned int*)vas2));
-	os_printf("%X\n", vas2->l1_pagetable);
-	os_printf("Entry: %x\n", vas1->l1_pagetable[(unsigned int)vas2->l1_pagetable >> 20]);
-	os_printf("%X\n", vas2->l1_pagetable[0]);
-	os_printf("(deref: entry at 0x200000: 0x%X)\n", vas2->l1_pagetable[0x200000>>20]);
-
-	// Test making a thing in this thing
-	struct vas *vas3 = vm_new_vas();
-	vm_enable_vas(vas3);
-	os_printf("%X and %X and %X\n", vas1, vas2, vas3);
-
-	// Test allocating frames...
-	int retval = vm_allocate_page(vas3, (void*)0x25000000, VM_PERM_PRIVILEGED_RW);
-	if (retval) {
-		os_printf("ERROR: vm_allocate_page returned %x\n", retval);
-	}
-
-	{
-		int *p = (int*)0xFFFFFFF0;
-		p[0] = 1;
-		os_printf("0x%x == 1?\n", p[0]);
-	}
-
-	// Oh man! We should be able to write to there!
-	int *p = (int*)0x25000000;
-	p[0] = 1;
-	os_printf("%x %x\n", &p, p);
-	os_printf("%d == 1?\n", p[0]);
-
-	// Test allocating many frames...
-	p += BLOCK_SIZE;
-	while (!vm_allocate_page(vas3, (void*)p, 0)) {
-		p += BLOCK_SIZE;
-	}
-	p -= BLOCK_SIZE;
-	os_printf("Highest frame allocated: 0x%X\n",p);
-	while ((unsigned int)p > 0x25000000) {
-		vm_free_page(vas3, p);
-		p -= BLOCK_SIZE;
-	}
-
-	// Test the data abort...
-	os_printf("You should see a data abort...\n");
-	int i = p[-1];
-	os_printf("%d\n",i);
-
-	// Free the page!
-	vm_free_page(vas3, p);
-
-	// Clean up & switch back to the kernel's VAS before we return.
-	vm_enable_vas((struct vas*)V_L1PTBASE);
-
-	os_printf("*****************************\n");
 }

@@ -47,8 +47,9 @@ void mmap(void *p_bootargs) {
 
 	}
 */
-
+	//TODO:. Collin LOOOK HERE
 	first_level_pt = (unsigned int *)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	//first_level_pt = 0x00200000 + 0x4000 = 0x00204000
 	os_printf("first_level_pt=%X\n",first_level_pt);
 
 	int i;
@@ -58,9 +59,13 @@ void mmap(void *p_bootargs) {
 
 	//temporarily map where it is until we copy it in VAS
 	first_level_pt[P_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+	//first_level_pt[0x07f00000>>20] = first_level_pt[7F] = 0x07f00000 = 0x07f04010
+	//														0x00004000
+	//														0x00000010			
 
 	//1MB for static kernel data structures (stacks and l1 pt)
 	first_level_pt[V_KDSBASE>>20] = P_KDSBASE | 0x0400 | 2;
+	//first_level_pt[0xfff00000>>20] = first_level_pt[0xfff] = 0x0x7f04010
 
 	//map the kernel where its currently loaded in the same location temporarily
 	//should be less than a MB
@@ -91,8 +96,7 @@ void mmap(void *p_bootargs) {
 	unsigned int phys_addr = P_KERNTOP;
 	// +1 to skip L1PTBASE
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
-		first_level_pt[i] = phys_addr | 0x0400 | 2;//coarse_page_table_address | 1;
-		//break;
+		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
 	}
 
