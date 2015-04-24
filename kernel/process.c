@@ -30,25 +30,32 @@ pcb* process_create(uint32_t* file_p) {
 	//This used to be == 0, which doesn't seem correct
 	if(free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
+		//pcb_pointer->p_stack = (void*) kmalloc(4096);
 		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 
-		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
-		if(!success) {
+		Elf_Ehdr* elf_header = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
+		if(!elf_header) {
 		 	return (pcb*) -1;
 		}
 		//fill the free space with a pcb pointer
-		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
+		*free_space_in_pcb_table = (uint32_t) pcb_pointer;
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
         
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
-        uint32_t add = 0x2000;
-		pcb_pointer->function = file_p + (success->e_ehsize+(success->e_phentsize*success->e_phnum))/4 ;
+        uint32_t add = elf_header->e_ehsize+(elf_header->e_phentsize*elf_header->e_phnum);
+        //is this correct?
+		pcb_pointer->function = file_p + add;
 		os_printf("%X %X %X \n",file_p,&pcb_pointer->function , add);
-		//assert(1==3)
+
+		//4-23-15: set registers in here
+		//pcb_pointer->R15 = (uint32_t)(file_p + add);
+		os_printf("R13:%X R15:%X\n", pcb_pointer->R13, pcb_pointer->R15);
+		//pcb_pointer->R13 = (void*)pcb_pointer->p_stack;
+		//assert(1==3);
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
 		
@@ -140,9 +147,9 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r12, %0"::"r"(pcb_p->R12):);
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
 
-	//asm("MOV r14, %0"::"r"(pcb_p->R14):);
+	asm("MOV r14, %0"::"r"(pcb_p->R14):);
 
-	//asm("MOV r15, %0"::"r"(pcb_p->R15):);
+	asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
 	return 1;
 }
@@ -296,12 +303,13 @@ uint32_t execute_process(pcb* pcb_p) {
 
     //4-13-15: Store current program counter to new PCB's return register,
     //         then call load_process_state to switch to new process
-	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
-
-	load_process_state(pcb_p->PID);
-//	print_process_state(pcb_p->PID);
+    asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+    print_process_state(pcb_p->PID);
+	//save_process_state(pcb_p->PID);
+	//print_process_state(pcb_p->PID);
+	
 	//os_printf(" HELLO WORLD %X \n", pcb_p->function);
-//	assert(1==2);
+	//assert(1==2);
     //4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
     assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
     //4-13-15: Create new virtual address space for process and switch into it
@@ -311,7 +319,7 @@ uint32_t execute_process(pcb* pcb_p) {
 	pcb_p->current_state = PROCESS_RUNNING;
 
 	//Run main function (TODO: How do we run main functions that have input parameters?)
-    //pcb_p->function();
+    pcb_p->function();
     //os_printf("HELLO MY FRIEND");
     while(1);
 	return pcb_p->PID;
