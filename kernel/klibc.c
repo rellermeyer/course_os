@@ -81,11 +81,21 @@ int os_strcmp(const char *left, const char *right)
 //Responsibility is on the programmer to copy safely
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
-	int i = 0;
-	for (; i < size; i++)
-	{
-		*(dest + i) = *(source + i);
-	}
+    int limit = size / sizeof(uint32_t);
+
+    int i = 0;
+    for (; i < limit; i += 1) {
+        *(dest + i) = *(source + i);
+    }
+
+    char * d = (char*) (dest + i);
+    char * s = (char*) (source + i);
+
+    i *= sizeof(uint32_t);
+
+    for (; i < size; i++) {
+        *(d++) = *(s++);
+    }
 }
 
 // base is between 2 and 16, inclusive
@@ -508,7 +518,7 @@ int32_t abs(int32_t val)
 
 void* kmalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, heap, heap_size);
+	void* block = (void*) allocate(size, heap, heap_size, 1);
 	return block;
 }
 

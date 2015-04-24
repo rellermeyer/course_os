@@ -35,13 +35,12 @@ struct vm_free_list *vm_vas_free_list = 0x0;
 struct vm_free_list *vm_l1pt_free_list = 0x0;
 
 void vm_init() {
-	// Initialize the VAS structures stored in the first PAGE_TABLE_SIZE
-	// of our alloted MB.
+	// Initialize the VAS structures. We allocate enough for 4096 VASs.
 	struct vm_free_list *free_vas = (struct vm_free_list*)P_L1PTBASE;
 	//vm_vas_free_list = free_vas;
 	vm_vas_free_list = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
-	while ((uint32_t)free_vas<P_L1PTBASE+PAGE_TABLE_SIZE) {
+	while ((uint32_t)free_vas<P_L1PTBASE+sizeof(struct vas)*4096) {
 		free_vas->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
@@ -51,7 +50,7 @@ void vm_init() {
 	}
 
 	// Initialize the L1 page tables
-	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + sizeof(struct vas)*4096);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE) {
@@ -151,6 +150,34 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 	// TODO: If this is a paged frame, then we need to throw an error
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+	return 0;
+}
+
+// We're going to have to switch to the kernel's VAS, then copy it over.
+int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission) {
+	if ((unsigned int)this_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
+
+	struct vas *prev_vas = vm_current_vas;
+	vm_enable_vas((struct vas*)V_L1PTBASE);
+
+	if (vas->l1_pagetable[(unsigned int)this_ptr>>20]) {
+		return VM_ERR_MAPPED;
+	}
+	if (!other_vas->l1_pagetable[(unsigned int)other_ptr>>20]) {
+		return VM_ERR_NOT_MAPPED;
+	}
+
+	int perm = perm_mapping[permission];
+	if (perm == -1) return VM_ERR_BADPERM;
+
+	// Well, this was remarkably easy.
+	unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
+	os_printf("pptr: %X\n",pptr);
+	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
+
+	vm_enable_vas(prev_vas);
 	return 0;
 }
 
@@ -303,7 +330,7 @@ void vm_test() {
 	os_printf("%d == 1?\n", p[0]);
 
 	// Test allocating many frames...
-	p += BLOCK_SIZE;
+	/*p += BLOCK_SIZE;
 	while (!vm_allocate_page(vas3, (void*)p, 0)) {
 		p += BLOCK_SIZE;
 	}
@@ -312,15 +339,40 @@ void vm_test() {
 	while ((unsigned int)p > 0x25000000) {
 		vm_free_page(vas3, p);
 		p -= BLOCK_SIZE;
-	}
+	}*/
 
 	// Test the data abort...
 	os_printf("You should see a data abort...\n");
 	int i = p[-1];
-	os_printf("%d\n",i);
+	os_printf("%d %X\n",i,p);
 
-	// Free the page!
-	vm_free_page(vas3, p);
+	// Test sharing memory between vas1 and vas3
+	// Hey, let's share p.
+	int *p_1 = (int*)0x30000000;
+	int *p_3 = (int*)0x25000000;
+	int errcode = vm_map_shared_memory(vas1, p_1, vas3, p_3, VM_PERM_PRIVILEGED_RW);
+	os_printf("%d %X %X\n", errcode, vas3->l1_pagetable[592], vas1->l1_pagetable[768]);
+	p[1] = 123;
+
+	// We're in vas3, we should be able to set it
+	vm_enable_vas(vas1);
+	if (p_1[1] == 123) {
+		os_printf("1. :-)\n");
+	} else {
+		os_printf("1. :-( (got %d instead)\n", p_1[1]);
+	}
+	p_1[2] = 321;
+
+	vm_enable_vas(vas3);
+	if (p_3[2] == 321) {
+		os_printf("2. :-)\n");
+	} else {
+		os_printf("2. :-(\n");
+	}
+
+	// Free the page! (be sure to free it from both...)
+	vm_free_page(vas3, p_3);
+	vm_free_mapping(vas1, p_1);
 
 	// Clean up & switch back to the kernel's VAS before we return.
 	vm_enable_vas((struct vas*)V_L1PTBASE);
