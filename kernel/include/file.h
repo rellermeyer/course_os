@@ -11,6 +11,7 @@
 #define MAX_DATABLOCKS_PER_INODE 70
 #define DIR_ENTRY_SIZE 40
 #define NUM_INDIRECT_BLOCKS 50
+#define NULL 0x0
 
 
 struct superblock
