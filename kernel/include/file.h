@@ -10,7 +10,7 @@
 #define MAX_NAME_LENGTH 32
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
-#define NUM_INDIRECT_BLOCKS 50
+#define MAX_NUM_INDIRECT_BLOCKS 50
 #define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-1
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-1
 
@@ -46,7 +46,7 @@ struct inode {
 	int blocks_in_file; // how many direct block are being used  (4 bytes)
 	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // array of data (now long 68)
 	int indirect_blocks_in_file; // how many indirect block are being used  (4 bytes)
-	int indirect_blocks[NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now
+	int indirect_blocks[MAX_NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now
 	bitVector* perms; // permissions of the file (12 bytes)
 };
 
