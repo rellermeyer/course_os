@@ -1,10 +1,21 @@
+/*****************************************************************
+ * Crude SD Card (MMCI) Driver                                   *
+ * Programmed By: Joseph Bourque, Matt Davidson, Weston Selleck  *
+ * Framework, QC, and Support: Lane Kolbly                       *
+ * Completed: 4/20/2015    Last Updated: 4/20/2015               *
+ *****************************************************************/
 #include "klibc.h"
 #include "mmci.h"
 
 // MMCI Definitions
 #define MMCI_BASE 0x10005000
 #define CMD 0x00C
+#define DCTRL 0x02C
+#define FIFO 0x080
+#define FIFO_CNT 0x048
+#define STATUS 0x34
 #define ARG 0x008
+#define CLR 0x038
 #define RESP_0 0x14
 #define RESP_1 0x18
 #define RESP_2 0x1C
@@ -16,19 +27,26 @@
 #define RESP (1 << 6)
 #define LRESP (1 << 7)
 #define RCA_MASK 0xFFFF0000
+#define SET_WRITE 1 | (9 << 4)
+#define SET_READ 3 | (9 << 4)
+#define DISABLE 0x0 | (9 << 4)
+#define READ_CNT (read_mmci(STATUS) & (1 << 21))
+#define WRITE_CNT (read_mmci(FIFO_CNT) > 0)
+
 
 // Initializes SD card putting it in the transfer state; this should
 // be called when the kernel boots up; readies the SD card for 
 // data transfer
 void init_sd()
 {
+	asm volatile("cpsie if");
 	int rca = 0;
 
 	// let the SD card know you're about to call one of the ACMD commands
 	run_mmci(CMD, 55 | EXE);
 
 	// Set up the argument register for the next command
-	run_mmci(ARG, 1);
+	run_mmci(ARG, 123);
 
 	// Set & Execute the ACMD set voltage command
 	run_mmci(CMD, 41 | EXE);
@@ -42,14 +60,14 @@ void init_sd()
 	run_mmci(CMD, 3 | EXE | RESP);
 
         // obtain RCA address and mask out the status bits
-        rca = read_mmci(RESP_0) & RCA_MASK;
+        rca = (read_mmci(RESP_0) & RCA_MASK);
         
         // Load masked RCA address into the argument register
         run_mmci(ARG, rca);
 
 	// Run the select card command and point it at the card loaded
         // in the argument register
-	run_mmci(CMD, 7 | RESP);
+	run_mmci(CMD, 7 | EXE | RESP);
 
 	// Set the data length register to 512 to indicate the amount
 	// amount of data to be moved is 512 bytes
@@ -59,7 +77,7 @@ void init_sd()
 	// Eventually print some status message here if the SD card
 	// failed to initialize properly but for now just print 
 	// that it was loaded OK
-	os_printf("\n SD card ready for transfer\n");
+	os_printf("\nSD card ready for transfer\n");
 }
 
 // Returns the maximum capacity of the SD card; Since our SD card is
@@ -76,8 +94,17 @@ uint32_t sd_capacity()
 // card; writes a single block; returns 0 if the
 // transmission was successful and 1 if there was 
 // an error
-int sd_transmit(uint32_t* buffer, uint32_t address)
+int sd_transmit(void* buffer, uint32_t address)
 {
+	//Set the block length on the SD card
+	run_mmci(ARG, SD_BLOCK_SIZE);
+	run_mmci(CMD, 16 | EXE | RESP);
+
+	//Set up the write command
+	run_mmci(ARG, address);
+	run_mmci(CMD, 24 | EXE | RESP);
+	push_bytes(buffer);
+
 	// Return that write succeeded for now
 	return 0;
 }
@@ -85,8 +112,17 @@ int sd_transmit(uint32_t* buffer, uint32_t address)
 // Reads the contents of the FIFO buffer to the SD
 // card; reads a single block and returns 0 if the
 // transmission succeeded and 1 if there was an error
-int sd_receive(uint32_t* buffer, uint32_t address)
+int sd_receive(void* buffer, uint32_t address)
 {
+	//Clear out FIFO and set to read
+	run_mmci(DCTRL, DISABLE);
+	run_mmci(DCTRL, SET_READ);
+	//Set address to read from & send the command to read
+	run_mmci(ARG, address);
+	run_mmci(CMD, 17 | EXE | RESP);
+	
+	pull_bytes(buffer);
+
 	// Return that read succeeded for now
 	return 0;
 }
@@ -97,6 +133,8 @@ int sd_receive(uint32_t* buffer, uint32_t address)
 int clear()
 {
 	// Return that the clear succeeded for now
+	// Clear all status flags
+	run_mmci(CLR, 0x2FF);
 	return 0; 
 }
 
@@ -109,8 +147,17 @@ int clear()
 // Push bits into FIFO buffer from the address passed 
 // into the push bits function; Returns 0 if successful 
 // and 1 if an error occurred
-int push_bits(uint32_t* buffer)
+int push_bytes(void* buffer)
 {
+	//Clear out FIFO and set to write
+	run_mmci(DCTRL, DISABLE);
+	run_mmci(DCTRL, SET_WRITE);
+	int i = 0;
+	while(WRITE_CNT){
+		run_mmci(FIFO, ((uint32_t*)buffer)[i]);
+		i++;
+	}
+	
 	// Return that the push succeeded for now
 	return 0;
 }
@@ -118,8 +165,14 @@ int push_bits(uint32_t* buffer)
 // Pull bits out of the FIFO buffer and store them at the 
 // address passed into the pull bits function; returns 0 
 // if successful and 1 if an error occurred
-int pull_bits(uint32_t* buffer)
+int pull_bytes(void* buffer)
 {
+	int i = 0;
+	while(READ_CNT){  
+		((uint32_t*) buffer)[i] = read_mmci(FIFO);
+		i++; 
+	}
+	
 	// Return that the pull succeeded for now
 	return 0;
 }

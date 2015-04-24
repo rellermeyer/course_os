@@ -18,6 +18,7 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
+<<<<<<< HEAD
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
   //set_prescale(timer_index,2);
@@ -25,6 +26,8 @@ void timer_start(int timer_index) {
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
 }
+=======
+>>>>>>> 7018d081ce5a4e1fa087b2f87839042a83e716c0
 
 /* This function sets the value that the timer will begin at.
  * This operation also resets the timer to this new value.
@@ -38,6 +41,7 @@ int set_load_value(int timer_index, int value){
   return -1;
 }
 
+//returns the current control register value (configuration of timer) 
 int get_timer_control_value(int timer_index){
   if(timer_index < 4 && timer_index  >= 0){
     return timer_pointers[timer_index]->control;
@@ -165,12 +169,20 @@ int enable_timer(int timer_index){
   return -1;
 }
 //prints the configuration of the control byte
-void print_control_status(int timer_index){
+int print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
   	return 0;
   }
   return -1;
+}
+
+void timer_start(int timer_index) {
+  os_printf("Timer driver loaded\n");
+  set_prescale(timer_index,2);
+  enable_timer(timer_index);
+  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
+  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
 }
 
 /*starts interrupts every start_val ticks */
@@ -182,12 +194,15 @@ void print_control_status(int timer_index){
 // ex: start_timer_interrupts(0,10) which means start timer(0)
 // and interrupt every 10 clicks.
 int start_timer_interrupts(int timer_index,int start_val){
-	initialize_timers();
-	timer_start(timer_index);
-	set_background_load_value(timer_index,start_val);
-	set_periodic_mode(timer_index);
-	enable_timer_interrupt(timer_index);     
-	return 0;
+  if(timer_index < 4 && timer_index >= 0){
+    initialize_timers();
+    timer_start(timer_index);
+    set_background_load_value(timer_index,start_val);
+    set_periodic_mode(timer_index);
+    enable_timer_interrupt(timer_index);     
+    return 0;
+  }
+  return -1;
 }
 //just testing code
 /*while(1){
@@ -198,11 +213,11 @@ int start_timer_interrupts(int timer_index,int start_val){
                 }
         } */
 
-/*
+
 void timer_test(){
 	initialize_timers();
-	start_interrupts(1,5);
-	print_control_status(timer_index);
+	start_timer_interrupts(1,5);
+	print_control_status(1);
 		
 	return;
-}*/
+  }

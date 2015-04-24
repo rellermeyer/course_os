@@ -18,7 +18,7 @@ uint32_t heap_size;
 void *aligned_mem_alloc(size_t, size_t);
 
 void *init_heap();
-void *allocate(uint32_t, uint32_t*, int32_t);
+void *allocate(uint32_t, uint32_t*, int32_t, int);
 void deallocate(void*, uint32_t*, int32_t);
 
 int mcheck();

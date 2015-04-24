@@ -87,7 +87,7 @@ uint32_t *extend_heap(uint32_t amt)
 	return 0x0;
 }
 
-void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
+void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size, int can_extend)
 {
 	if (size > (heap_size + 2 * sizeof(int32_t)))
 		return 0;
@@ -145,24 +145,16 @@ void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 		}
 	}
 
+	if (!can_extend) {
+		return 0;
+	}
+
 	// Allocate some more memory.
 	uint32_t new_amt = size+2*sizeof(uint32_t);
-	uint32_t *header = extend_heap(new_amt);
+	extend_heap(new_amt);
 
 	// Recursive call. TODO: (relatively) Inefficient
-	return allocate(size, heap, heap_size);
-
-	uint32_t *new_footer = (uint32_t*)((void*)header + size + sizeof(uint32_t));
-	uint32_t *new_header = new_footer + 1;
-	uint32_t *old_footer = (void*)header + sizeof(uint32_t) + *header;
-
-	*new_header = *header - size - 2*sizeof(uint32_t);
-	*new_footer = *new_header;
-	*header = -size;
-	*old_footer = -size;
-
-	// The memory immediately after new_header
-	return (void*) (new_header+1);
+	return allocate(size, heap, heap_size, 1);
 }
 
 void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
@@ -385,8 +377,8 @@ void test_allocate()
 	}
 
 	// Allocate some memory
-	char *p = allocate(15, heap, heap_size);
-	p = allocate(15, heap, heap_size);
+	char *p = allocate(15, heap, heap_size, 1);
+	p = allocate(15, heap, heap_size, 1);
 	os_strcpy(p, "Hello!");
 	os_printf("%s\n", p);
 
@@ -411,7 +403,7 @@ void test_allocate()
 	os_printf("Starting out w/ %u bytes of heap\n", heap_size);
 	for (i=0; i<256; i++) {
 		uint32_t size = gen_rand(&rng, 15);
-		pntrs[i] = allocate(size, heap, heap_size);
+		pntrs[i] = allocate(size, heap, heap_size, 1);
 		alloced += size;
 		os_printf("%u %u %u %u %d\n", i, heap_size, size, alloced, vm_count_free_frames());
 

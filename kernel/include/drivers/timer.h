@@ -24,7 +24,12 @@ int set_free_running_mode(int timer_index);
 int start_timer(int timer_index);
 int set_prescale(int timer_index, int mode);
 int start_timer_interrupts( int timer_index, int star_val);
+<<<<<<< HEAD
 long int conversion(int ms);
+=======
+int enable_timer_interrupt(int timer_index);
+
+>>>>>>> 7018d081ce5a4e1fa087b2f87839042a83e716c0
 
 rasp_pi_timer *timer_pointers[4];
 
