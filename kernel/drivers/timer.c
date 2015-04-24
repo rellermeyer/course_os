@@ -158,6 +158,16 @@ int enable_timer(int timer_index){
   }
   return -1;
 }
+
+//pauses the timer
+int disable_timer(int timer_index){
+  if(timer_index < 4 && timer_index >= 0){
+    timer_pointers[timer_index]->control &= 0xFFFFFF7F;
+    return 0;
+  }
+  return -1;
+}
+
 //prints the configuration of the control byte
 int print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
