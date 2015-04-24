@@ -35,7 +35,7 @@ bitVector *makeVector(uint32_t size) {
 }
 
 /* return a whatever number, 1 or 0 is at position index */
-int32_t get (uint32_t index, bitVector* bitVec) {
+int32_t bv_get (uint32_t index, bitVector* bitVec) {
 	os_printf("index is: %u\n", index);
 	if(index < bitVec->length && index >= 0) {
 		os_printf("We are in the wrong place...\n");
@@ -48,7 +48,7 @@ int32_t get (uint32_t index, bitVector* bitVec) {
 }
 
 /* toggles the bit a position index */
-int32_t toggle (uint32_t index, bitVector* bitVec) {
+int32_t bv_toggle (uint32_t index, bitVector* bitVec) {
 	if(index < bitVec->length && index >= 0) {
 		uint32_t val = (index >> 5);
 		uint32_t oneWord = bitVec->vector[val];
@@ -59,7 +59,7 @@ int32_t toggle (uint32_t index, bitVector* bitVec) {
 }
 
 /* puts a 1 at the position index */
-int32_t set (uint32_t index, bitVector* bitVec) {
+int32_t bv_set (uint32_t index, bitVector* bitVec) {
 	if(index < bitVec->length && index >= 0) {
 		uint32_t val = (index >> 5);
 		uint32_t oneWord = bitVec->vector[val];
@@ -70,7 +70,7 @@ int32_t set (uint32_t index, bitVector* bitVec) {
 }
 
 /* puts a 0 at the position index */
-int32_t lower (uint32_t index, bitVector* bitVec) {
+int32_t bv_lower (uint32_t index, bitVector* bitVec) {
 	if(index < bitVec->length && index >= 0) {
 		uint32_t val = (index >> 5);
 		uint32_t oneWord = bitVec->vector[val];
@@ -81,7 +81,7 @@ int32_t lower (uint32_t index, bitVector* bitVec) {
 }
 
 /* returns the first free index, if none are free return -1 */
-int32_t firstFree (bitVector* bitVec) {
+int32_t bv_firstFree (bitVector* bitVec) {
 	uint32_t mask = 0x1;
 	uint32_t returner = 0;
 	uint32_t oneWord;
@@ -99,4 +99,10 @@ int32_t firstFree (bitVector* bitVec) {
 		} returner += WORD_SIZE;
 	}
 	return -1; //no free spots
+}
+
+int32_t bv_free(bitVector* bitVec){
+	kfree(bitVec->vector);
+	kfree(bitVec);
+	return 1;
 }

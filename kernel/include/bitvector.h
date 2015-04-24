@@ -10,10 +10,11 @@ typedef struct bitVector {
 } bitVector;
 
 bitVector *makeVector(uint32_t);
-int32_t get(uint32_t, bitVector*);
-int32_t toggle(uint32_t, bitVector*);
-int32_t set(uint32_t, bitVector*);
-int32_t lower(uint32_t, bitVector*);
-int32_t firstFree(bitVector*);
+int32_t bv_get(uint32_t, bitVector*);
+int32_t bv_toggle(uint32_t, bitVector*);
+int32_t bv_set(uint32_t, bitVector*);
+int32_t bv_lower(uint32_t, bitVector*);
+int32_t bv_firstFree(bitVector*);
+int32_t bv_free(bitVector*);
 
 #endif 
