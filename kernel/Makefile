@@ -63,5 +63,9 @@ clean:
 	rm -f *.map
 	rm -f drivers/*.o
 	rm -f vm/*.o
+	rm -f tests/*.o
+	rm -f memory/*.o
+	rm -f data_structures/*.o
+	rm -f mq/*.o
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
 	@echo "('rm sd.card')"
