@@ -1,8 +1,9 @@
+
 #include <stdint.h>
 #include "../../include/linked_list.h"
 #include "../../include/bitvector.h"
 #include "../../include/open_table.h"
-// #include "../../include/mmci.h" What is this? mmci isnt in include...
+#include "../../include/mmci.h" 
 #include "../../include/klibc.h"
 
 #define NULL 0x0
@@ -44,19 +45,6 @@ struct indirect_block** indirect_block_table_cache; // an array of pointers to i
 struct inode** inode_table_temp;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
-/* This is just for compile. Driver team has already done this */
-void init_sd(){
-
-}
-
-/* This is just for compile. Driver team has already done this */
-int receive(void* a,int b){
-	return 1;
-}
-
-int transmit(void* a, int b) {
-	return 1;
-}
 
 /* make the global varrible */
 // initialize the filesystem:
@@ -71,17 +59,17 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	init_sd();
 	//read in the super block from disk and store in memory:
 	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
-	receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
+	sd_receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
 
 	INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
 	inode_bitmap = (bitVector*) kmalloc(BLOCKSIZE); 
-	receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
+	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
 	// inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
 
 	data_block_bitmap = (bitVector*) kmalloc(BLOCKSIZE);
-	receive((void*) data_block_bitmap, (FS->data_bitmap_loc) * BLOCKSIZE);
+	sd_receive((void*) data_block_bitmap, (FS->data_bitmap_loc) * BLOCKSIZE);
 	// data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
 
 	
@@ -92,7 +80,7 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	for(i = 0; i < FS->max_inodes; i++){
 		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * INODES_PER_BLOCK){
 			if(i % INODES_PER_BLOCK == 0){
-				receive((((void*)inode_table_temp) + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), (FS->start_inode_table_loc + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
+				sd_receive((((void*)inode_table_temp) + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), (FS->start_inode_table_loc + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
 			}
 			inode_table_cache[i] = (struct inode*)((inode_table_temp + (((int)(i/INODES_PER_BLOCK))*BLOCKSIZE)) + ((i % INODES_PER_BLOCK)*FS->inode_size));
 		}
@@ -109,13 +97,14 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	indirect_block_table_cache = (struct indirect_block**) kmalloc((sizeof(struct indirect_block*))* FS->max_indirect_blocks);
 	for(i = 0; i < FS->max_indirect_blocks; i++){
 		if(i < NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE){
-			receive(indirect_block_table_temp + (i*BLOCKSIZE), (FS->start_indirect_block_table_loc) + (i*BLOCKSIZE));
+			sd_receive(indirect_block_table_temp + (i*BLOCKSIZE), (FS->start_indirect_block_table_loc) + (i*BLOCKSIZE));
 			indirect_block_table_cache[i] = (struct indirect_block*)(indirect_block_table_temp + (i*BLOCKSIZE));
 		} else{
 			indirect_block_table_cache[i] = NULL;
 		}
 	}//end for
 
+	fs_table_init(); //initializes the opentable 
 
 	//what was this for? don't think we need it...
 	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
@@ -150,7 +139,6 @@ int kfs_shutdown(){
 	kfree(indirect_block_table_cache);
 	kfree(inode_table_temp);
 	//TODO: free anything else that needs to be freed...
-	//TODO: free every element of the free list of open_table.c
 
 }//end kfs_shutdown() function
 
@@ -158,6 +146,7 @@ int kfs_shutdown(){
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
 
+//from the index, gets the corresponding indirect block, either from cache or from disk
 void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
 	if(indirect_block_table_cache[index] != NULL){
 		// the indirect_block is in the indirect_block_table_cache, so get it:
@@ -165,14 +154,14 @@ void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
 	}else{ //RIGHT HERE
 		// indirect_block is not in the cache table, so get it from disk:
 		void* indirect_block_spaceholder = kmalloc(BLOCKSIZE);
-		receive(indirect_block_spaceholder, (index + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
+		sd_receive(indirect_block_spaceholder, (index + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
 		*cur_indirect_block = *((struct indirect_block*) indirect_block_spaceholder);
 		kfree(indirect_block_spaceholder);
 		// need to implement an eviction policy/function to update the indirect_block_table_cache...
-		// this will function w/o it, but should be implemented for optimization
 	}//end if else
 }//end get_indirect_block helper
 
+//from the inum, gets corresponding inode, either from cache or disk
 void get_inode(int inum, struct inode* cur_inode){
 	if(inode_table_cache[inum] != NULL){
 		// the inode is in the inode_cache_table, so get it:
@@ -180,7 +169,7 @@ void get_inode(int inum, struct inode* cur_inode){
 	}else{ 
 		// inode is not in the cache table, so get it from disk:
 		void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+		sd_receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
 		struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
 		*cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
 		kfree(inode_spaceholder);
@@ -189,25 +178,18 @@ void get_inode(int inum, struct inode* cur_inode){
 	}//end if else
 }//end get_indoe() helper function
 
+
 int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int inum = -1;
 	int i;
 	int file_found = 0; // initialize to false (i.e. file not found)
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
-		receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
+		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 		struct dir_data_block* cur_data_block = (struct dir_data_block*) dir_spaceholder;
 		int j;
 		for(j = 0; j < (cur_data_block->num_entries); j++){
 			struct dir_entry* file_dir = cur_data_block[j];  
-			// int k;
-			// int is_equal = 1; // initialize to true
-			// for(k = 0; k < MAX_NAME_LENGTH; k++){
-			// 	if(file_dir.name[k]  != next_path[k]){
-			// 		is_equal = 0;
-			// 		break;
-			// 	}//end if
-			// }//end for
 			if(!os_strcmp(file_dir->name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
 				inum = file_dir->inum;
@@ -225,6 +207,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	return inum;
 }//end get_inum_from_direct_data_block() helper helper function
 
+
 int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path) {
 	int i;
 	int inum = -1;
@@ -239,19 +222,11 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		int j;
 		for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
-			receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
+			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
 			for(k = 0; k < (cur_data_block->num_entries); k++){
 				struct dir_entry* file_dir = cur_data_block[k]; // 
-				// int m;
-				// int is_equal = 1; // initialize to true
-				// for(m = 0; m < MAX_NAME_LENGTH; m++){
-				// 	if(file_dir.name[m]  != next_path[m]){
-				// 		is_equal = 0;
-				// 		break;
-				// 	}//end if
-				// }//end for
 				if(!os_strcmp(file_dir->name, next_path)){
 					file_found = 1; //we found the file, so break out of loop
 					inum = file_dir->inum;
@@ -270,6 +245,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 	return inum;
 }//end of get_inum_from_indirect_data_block
 
+//finds the inode (will be cur_inode) following filepath, going dir_levels down the path, starting from starting_inum
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* cur_inode) { //filepath and starting inum must correspond...
 	int inum = starting_inum;
 	int a;
@@ -298,6 +274,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 	return 0;
 }//end kfind_inode() helper function
 
+//finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
 void kfind_dir(char* filepath, struct dir_helper* result){
 	// struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	int dir_levels = 0;
@@ -334,7 +311,8 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
-//end of helpers ---------------------------------------------------------------------------------------------------------------------------------------------
+//end of helper functions
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 int kopen(char* filepath, char mode){
@@ -344,8 +322,8 @@ int kopen(char* filepath, char mode){
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
 	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	
 	//here we have the file we were looking for! it is cur_inode.
+
 	bitVector *p = cur_inode->perms;
 	switch (mode){
 		case 'r':
@@ -383,7 +361,7 @@ int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* 
 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int blockNum = fd->offset / BLOCKSIZE;
-	int success = receive(transferSpace, blockNum);
+	int success = sd_receive(transferSpace, blockNum);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	// os_printf("failed to receive block number %d\n", numBytes);
@@ -448,7 +426,7 @@ int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd,
 	// read BLOCKSIZE
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int blockNum = fd->offset / BLOCKSIZE;
-	int success = receive(transferSpace, blockNum);
+	int success = sd_receive(transferSpace, blockNum);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	os_printf("failed to receive block number %d\n", blockNum);
@@ -540,7 +518,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
 			transferSpace -= total_bytes_left;
 			// pointer to start, blockNum, where we are in file, length of write
-			transmit(transferSpace, blockNum);
+			sd_transmit(transferSpace, blockNum);
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
@@ -556,7 +534,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) bytes_left_in_block);
 			transferSpace -= bytes_left_in_block;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			transmit(transferSpace, blockNum);
+			sd_transmit(transferSpace, blockNum);
 
 			bytes_written += bytes_left_in_block;
 			total_bytes_left -= bytes_left_in_block;
@@ -565,7 +543,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) BLOCKSIZE);
 			transferSpace -= BLOCKSIZE;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			transmit(transferSpace, blockNum);
+			sd_transmit(transferSpace, blockNum);
 
 			bytes_written += BLOCKSIZE;
 			total_bytes_left -= BLOCKSIZE;
@@ -576,8 +554,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 } // end kwrite();
 
 
-
-/* close the file fd, return 1 if the close was successful */
+// close the file fd, return 1 if the close was successful 
 int kclose(int fd) {
 	int error;
 	if(!file_is_open(fd)) { os_printf("file not open"); return -1; }
@@ -585,10 +562,11 @@ int kclose(int fd) {
 	return error;
 } // end kclose();
 
-/* seek within the file, return an error if you are outside the boundaries */
+
+// seek within the file, return an error if you are outside the boundaries 
 int kseek(int fd_int, int num_bytes) {
         struct file_descriptor* fd = get_descriptor(fd_int);
-        if (fd->permission != 'r' || fd->permission != 'w' || fd->permission != 'b') {
+        if (fd->permission != 'r' || fd->permission != 'w') {
             os_printf("no permission \n");
             return -1;
         } else if ((num_Bytes > 0) && ((fd->offset + num_Bytes) > ((fd->linked_file)->size))){
@@ -645,17 +623,17 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 			return -1;
 	}
 	//UPDATE DISK by writing memory data structures to disk
-	transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
-	transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
+	sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
+	sd_transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	
-	//update cur_inode directory to make it have the new inode -------------------------------------------------------------------------------------
+	//update cur_inode directory to make it have the new inode 
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 	if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
-		receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
+		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
 	}else{
 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), indirect_block); // do you want cur_indirect_block?
-		receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
+		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
 		kfree(cur_indirect_block);
 	}
 	struct dir_entry new_dir_entry;
@@ -673,97 +651,29 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		//then write back out to disk
 		//should move all this stuff out to helper function...
 	}
-
 	
 	fd = add_to_opentable(new_inode, mode);
 	return 0;
 }
 
 
-
-/* delete the file with the path filepath. Return -1 if the file does not exist */
+//delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath) {
-        int fd;
-        int inum = 0;
-        struct inode cur_inode;
-	char delete_name[MAX_NAME_LENGTH] = {0};
-        int exit_flag = 1;
-        while(exit_flag){
-                int k = 1;
-                char next_path[MAX_NAME_LENGTH] = {0};
-                while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
-                        next_path[k] = filepath[k];
-                        k++;
-                }
-                filepath += (k);
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	//here we have the file we were looking for! it is cur_inode.
 
-                if (filepath[0] != '/') { //next is end
-                        delete_name = next_path; //name of file or directory to be removed
-                   	exit_flag = 0;
-                }
-
-                // Look up cur_inode inode in cached inode table
-                if(inode_table_cache[inum] != NULL){
-                        // the inode is in the inode_cache_table, so get it:
-                        cur_inode = *(inode_table_cache[inum]);
-                }else{
-                        // inode is not in the cache table, so get it from disk:
-                        void* inode_spaceholder = kmalloc(BLOCKSIZE);
-                        receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-                        struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-                        cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-                        // need to implement an eviction policy/function to update the inode_table_cache...
-                        // this will function w/o it, but should be implemented for optimization
-                }
-	        int i;
-                int file_found = 0; // initialize to false (i.e. file not found)
-                for(i = 0; i < cur_inode.blocks_in_file; i++){
-                        void* dir_spaceholder = kmalloc(BLOCKSIZE);
-                        receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
-                        struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
-                        int j;
-                        for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-                                struct dir_entry file_dir = dir_data_block[j]; // 
-                                int x;
-                                int is_equal = 1; // initialize to true
-                                for(x = 0; x < MAX_NAME_LENGTH; x++){
-                                        if(file_dir.name[x]  != next_path[x]){
-                                                is_equal = 0;
-                                                break;
-                                        }//end if
-                                }//end for
-                                if(is_equal){
-                                        file_found = 1; //we found the file, so break out of loop
-                                        break;
-                                }
-                        }//inner for
-                        if(file_found){
-                                break;
-                        }
-             		if(!cur_inode->is_dir && exit_flag){ //dont care if what i need to delete is file or dir, rest has to be dir
-                        	//not a valid directory
-				os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
-                        	return -1;
-                	}//end if
- 
-                }//outer for
-
-                if(!file_found){//throw an error
-                        os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root and no '/' is after the name \n");
-                        return -1;
-                }
-
-        }//outer most while loop
-
-
-	//At this point, cur_inode is what we need to delete, no matter if it is a directory or a file
-
-
-        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-        // REAL DELETING HAS TO BE MADE                                                                                                                                    |
-        // struct of inode has to be deleted from disk and removed from parents directory inode                                                                            |
-        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // REAL DELETING HAS TO BE MADE                                                                                                                                    |
+    // struct of inode has to be deleted from disk and removed from parents directory inode, and space has to be marked as free                                                                           |
+    // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 	
+	//also free direct and indirect data blocks
+	kfree(cur_inode);
+	kfree(dir_helper);
 	return 0;
 
 } // end kdelete();

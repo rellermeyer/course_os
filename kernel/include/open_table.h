@@ -3,9 +3,10 @@
 
 //header for the open table file
 //that implements the open table for the file system
-
 //please use provided functinos to add/remove items 
+
 #define SYSTEM_SIZE 512 
+
 // Each cell of the array is a struct with infos about the file.
 // More fields can be added if necessary.
 struct file_descriptor {
