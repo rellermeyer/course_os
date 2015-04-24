@@ -325,6 +325,10 @@ int kopen(char* filepath, char mode){
 	kfind_dir(filepath, result);
 	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	//here we have the file we were looking for! it is cur_inode.
+	if (cur_inode->is_dir) {
+		os_printf("cannot open a directory, make the path end to a file");
+		return -1;
+	}
 
 	bitVector *p = cur_inode->perms;
 	switch (mode){
@@ -654,8 +658,13 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		//should move all this stuff out to helper function...
 	}
 	
-	fd = add_to_opentable(new_inode, mode);
-	return 0;
+	if (!is_this_a_dir) {
+		fd = add_to_opentable(new_inode, mode);
+		return fd;
+	}
+	else { //directories are not added to open table
+		return 0;
+	}
 }
 
 
@@ -677,5 +686,23 @@ int kdelete(char* filepath) {
 	kfree(cur_inode);
 	kfree(dir_helper);
 	return 0;
-
 } // end kdelete();
+
+
+//copies contents of file
+int kcopy(char* source, char* dest, char mode) {
+
+	//to be implemented
+
+	return -1;
+}
+
+
+//prints the contents of a directory
+int kls(char* filepath) {
+
+	//to be implemented
+
+	return -1
+}
+
