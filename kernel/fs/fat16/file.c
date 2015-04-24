@@ -140,6 +140,8 @@ int kfs_shutdown(){
 	kfree(inode_table_temp);
 	//TODO: free anything else that needs to be freed...
 
+	fs_table_shutdown(); //frees the free list in open_table.c
+
 }//end kfs_shutdown() function
 
 
