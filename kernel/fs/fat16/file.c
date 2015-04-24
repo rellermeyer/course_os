@@ -54,6 +54,10 @@ int receive(void* a,int b){
 	return 1;
 }
 
+int transmit(void* a, int b) {
+	return 1;
+}
+
 /* make the global varrible */
 // initialize the filesystem:
 int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
@@ -536,7 +540,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
 			transferSpace -= total_bytes_left;
 			// pointer to start, blockNum, where we are in file, length of write
-			transmit(transferSpace, blockNum, fd->offset, total_bytes_left);
+			transmit(transferSpace, blockNum);
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
@@ -552,16 +556,16 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) bytes_left_in_block);
 			transferSpace -= bytes_left_in_block;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			transmit(transferSpace, blockNum, fd->offset, bytes_left_in_block);
+			transmit(transferSpace, blockNum);
 
 			bytes_written += bytes_left_in_block;
-			total_bytes_left -= tbytes_left_in_block;
+			total_bytes_left -= bytes_left_in_block;
 			fd->offset += bytes_left_in_block;
 		} else {
 			os_memcpy(buf_offset, transferSpace, (os_size_t) BLOCKSIZE);
 			transferSpace -= BLOCKSIZE;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			transmit(transferSpace, blockNum, fd->offset, BLOCKSIZE);
+			transmit(transferSpace, blockNum);
 
 			bytes_written += BLOCKSIZE;
 			total_bytes_left -= BLOCKSIZE;
@@ -583,15 +587,14 @@ int kclose(int fd) {
 
 /* seek within the file, return an error if you are outside the boundaries */
 int kseek(int fd_int, int num_bytes) {
-	int error;
-        file_descriptor* fd = get_file_descriptor(fd_int);
+        struct file_descriptor* fd = get_descriptor(fd_int);
         if (fd->permission != 'r' || fd->permission != 'w' || fd->permission != 'b') {
             os_printf("no permission \n");
             return -1;
-        } else if ((numBytes > 0) && ((fd->offset + num_Bytes) > ((fd->linked_file)->size))){
+        } else if ((num_Bytes > 0) && ((fd->offset + num_Bytes) > ((fd->linked_file)->size))){
         	os_printf("Error! file offset exceeds file size \n");
 			return -1;
-        } else if ((numBytes < 0) && ((fd->offset + num_Bytes) < 0)){
+        } else if ((num_Bytes < 0) && ((fd->offset + num_Bytes) < 0)){
 			os_printf("Error! file offset exceeds beginning of file \n");
 			return -1;
 		}//end if else  */
@@ -625,10 +628,10 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	new_inode->is_dir = is_this_a_dir; 
 	new_inode->usr_id = 0; //or something
 	new_inode->blocks_in_file = 0; 
-	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = {NULL}; 
+	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = NULL; 
 	new_inode->indirect_blocks_in_file = 0; 
-	new_inode->indirect_blocks[NUM_INDIRECT_BLOCKS] = {NULL}; 
-	switch mode{
+	new_inode->indirect_blocks[NUM_INDIRECT_BLOCKS] = NULL; 
+	switch (mode){
 		case 'r':
 			set(0, new_inode->perms);
 			lower(1, new_inode->perms);
@@ -651,7 +654,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
 	}else{
 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), indirect_block);
+		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), indirect_block); // do you want cur_indirect_block?
 		receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
 		kfree(cur_indirect_block);
 	}
