@@ -13,7 +13,7 @@ typedef struct file
 {
 	/* data */
 	char* fname;
-	list inode;
+	llist_handle inode;
 	uint16_t size;
 	bitvector perms; // a bitvector of length three to track: read, write, execute
 	time creation_time; // need to look up CourseOS specific data type
