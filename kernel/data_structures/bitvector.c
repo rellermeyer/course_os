@@ -101,7 +101,7 @@ int32_t bv_firstFree (bitVector* bitVec) {
 	return -1; //no free spots
 }
 
-int32_t bv_free(bitVector* bitVec){
+int32_t bv_free (bitVector* bitVec) {
 	kfree(bitVec->vector);
 	kfree(bitVec);
 	return 1;
