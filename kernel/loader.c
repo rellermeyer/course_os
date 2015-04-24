@@ -70,6 +70,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	*      | ***** | <- process_mem	
 	*/
 	//Puts all the relevant segments into allocated region
+
+	//TODO:4-23-15
 	int i = 0;
 	Boolean first_seg = TRUE;
 	uint32_t entry_point_offset = 0;
@@ -82,6 +84,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			if(first_seg)
 			{
 				entry_point_offset = h->e_entry - ph[i].p_vaddr;
+				os_printf("ENTRY POINT (e_entry): %X  P_VADDR: %X", h->e_entry, ph[i].p_vaddr);
+				assert(1==2);
 				first_seg = FALSE;
 
 				os_printf("entry addr = %x\n", h->e_entry);
