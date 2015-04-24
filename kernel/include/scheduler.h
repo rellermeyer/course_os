@@ -13,18 +13,19 @@
 #ifndef KERNEL_INCLUDE_SCHEDULER_H_
 #define KERNEL_INCLUDE_SCHEDULER_H_
 
-typedef void (*callback_handler)(uint32_t src_pid, uint32_t event, char * data, int chunk_length, int remain_length);
+typedef void (*sched_callback_handler)(uint32_t src_pid, uint32_t event, char * data, int chunk_length, int remain_length);
 
 typedef struct sched_task {
-    pcb * pcb;
-    prq_node * node;
-    uint32_t parent_pid;
-    arrl_handle * children_pids;
-    callback_handler cb_handler;
-    llist_handle * message_queue;
+    uint32_t parent_tid;
+    uint32_t tid;
+    uint32_t state;
+    uint32_t type;
     int niceness;
-    int state;
-    struct vas * vas_struct;
+    void * task;
+    prq_node * node;
+    arrl_handle * children_tids;
+    sched_callback_handler cb_handler;
+    llist_handle * message_queue;
 } sched_task;
 
 typedef struct sched_message_chunk {
@@ -34,7 +35,6 @@ typedef struct sched_message_chunk {
     uint32_t event;
     char * data;
 } sched_message_chunk;
-
 
 uint32_t sched_init();
 uint32_t sched_free();
@@ -46,7 +46,7 @@ void sched_waitpid(uint32_t pid);
 sched_task* sched_create_task(uint32_t* file_p, int niceness);
 sched_task* sched_get_active_task();
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len);
-uint32_t sched_register_callback_handler(callback_handler cb_handler);
+uint32_t sched_register_callback_handler(sched_callback_handler cb_handler);
 uint32_t sched_deregister_callback_handler();
 
 #endif /* KERNEL_INCLUDE_SCHEDULER_H_ */
