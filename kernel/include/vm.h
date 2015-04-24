@@ -2,6 +2,7 @@
 #define __VM_H 1
 
 #include "memory.h"
+#include<stdint.h>
 
 //#define BLOCK_SIZE (1<<20)
 #define BLOCK_SIZE (1<<12)
@@ -23,6 +24,7 @@ struct vas {
 #define VM_ERR_MAPPED -3
 #define VM_ERR_BADPERM -4
 #define VM_ERR_UNKNOWN -5
+#define VM_ERR_NOT_MAPPED -6
 
 #define KERNEL_VAS ((struct vas*)V_L1PTBASE)
 
@@ -73,6 +75,7 @@ void vm_init();
  * VM_ERR_NOT_MAPPED - vptr is not mapped in this VAS.
  */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission);
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission);
 int vm_free_page(struct vas *vas, void *vptr);
 
 /**
@@ -104,12 +107,49 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
 int vm_free_mapping(struct vas *vas, void *vptr);
 
 /**
+ * Will make the memory that accessible to other_vas at other_ptr
+ * accessible to vas at this_ptr.
+ * It can then be unmapped from either using a typical vm_free_mapping
+ * or vm_free_page. The behavior of vm_free_mapping and vm_free_page
+ * will be made equivalent.
+ * For both, the behavior will be to free the frame if a frame was
+ * allocated (via vm_allocate_page) and the page is not shared. If the
+ * page is shared, then both will behave like vm_free_mapping.
+ *
+ * It is an error for other_ptr to point to an area not mapped in other_vas.
+ *
+ * For example, given vas1 and vas2:
+ *
+ * vm_allocate_page(vas2,0x10)
+ * vm_map_shared_memory(vas1, 0x20, vas2, 0x10)
+ * // Now vas1's 0x20 points to the same memory as vas2's 0x10
+ * vm_free_page(vas2, 0x10)
+ * // Now vas1 is the sole owner of the memory at vas1's 0x20
+ * vm_free_mapping(vas1, 0x20)
+ * // Now that frame has been freed
+ *
+ * All the pointers have to be a multiple of BLOCK_SIZE.
+ *
+ * Return values:
+ * 0                 - success
+ * VM_ERR_BADV       - this_ptr was not a multiple of BLOCK_SIZE.
+ * VM_ERR_BADP       - other_ptr was not a multiple of BLOCK_SIZE.
+ * VM_ERR_NOT_MAPPED - other_ptr is not mapped in other_vas.
+ * VM_ERR_MAPPED     - this_ptr is already mapped in vas.
+ * VM_ERR_BADPERM    - permission is bad.
+ */
+int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission);
+
+/**
  * This enabled the given VAS.
  */
 void vm_enable_vas(struct vas *vas);
 
 /**
  * Allocates a new VAS.
+ *
+ * Note that there is a limit of 4096 VASs in the system, including the
+ * kernel's VAS.
  */
 struct vas *vm_new_vas();
 int vm_free_vas(struct vas *vas);
