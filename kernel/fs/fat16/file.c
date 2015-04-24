@@ -662,7 +662,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 			//Case (1):
 			//TODO: add a direct data block...
 		}else{
-			//add a data block to an indirect block:
+			//get the current indirect block and check to see if it has room to add another data block:
 			// struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 			// get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 
