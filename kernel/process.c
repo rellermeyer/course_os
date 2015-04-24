@@ -34,7 +34,6 @@ pcb* process_create(uint32_t* file_p) {
 		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-
 		Elf_Ehdr* elf_header = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 		if(!elf_header) {
 		 	return (pcb*) -1;
@@ -303,18 +302,25 @@ uint32_t execute_process(pcb* pcb_p) {
 
     //4-13-15: Store current program counter to new PCB's return register,
     //         then call load_process_state to switch to new process
+
     asm("MOV %0, r15":"=r"(pcb_p->R14)::);
     print_process_state(pcb_p->PID);
+
 	//save_process_state(pcb_p->PID);
 	//print_process_state(pcb_p->PID);
-	
-	//os_printf(" HELLO WORLD %X \n", pcb_p->function);
-	//assert(1==2);
+	//assert(1==2 && "process.c - We're stopping right after loading process state.");
     //4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
     assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
     //4-13-15: Create new virtual address space for process and switch into it
     pcb_p->stored_vas = vm_new_vas();
 	vm_enable_vas(pcb_p->stored_vas);
+
+    asm("SUB lr, lr, lr"); //Clear link register, why i dont know
+    asm("LDR r0, [sp]"); //Load argc
+    asm("ADD r1, sp, #4"); //Load argv
+    asm("ADD r2, r1, r0, LSL #2");
+	load_process_state(pcb_p->PID);
+
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
 
@@ -325,6 +331,18 @@ uint32_t execute_process(pcb* pcb_p) {
 	return pcb_p->PID;
 }
 
+//executes a process function
+//return 1 upon success
+//return 0 upon failure
+uint32_t execute_process_no_vas(pcb* pcb_p) {
+    if(!pcb_p) {
+        os_printf("Cannot execute process. Exiting.\n");
+        return 0;
+    }
+    pcb_p->has_executed = 1;
+    pcb_p->function(pcb_p->PID);
+    return 1;
+}
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {
