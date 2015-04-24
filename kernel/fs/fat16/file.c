@@ -138,11 +138,11 @@ int kfs_shutdown(){
 
 int kopen(char* filepath, char mode){
 	int fd;
-	int inum;
+	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	kfind_inode(filepath, 0, (result->dir_levels + 1));
+	kfind_inode(filepath, inum, (result->dir_levels + 1));
 	
 	//here we have the file we were looking for! it is cur_inode.
 	bitVector *p = &(cur_inode->perms);
@@ -174,10 +174,11 @@ int kopen(char* filepath, char mode){
 		default:
 			os_printf("File permission passed\n");
 	}
-	kfree(cur_inode);
-	kfree(result);
-
 	fd = add_to_opentable(cur_inode, mode);
+	kfree(cur_inode);
+	kfree(result->truncated_path);
+	kfree(result->last);
+	kfree(result);
 	return fd;
 }//end kopen()
 
@@ -419,80 +420,15 @@ int kseek(int fd_int, int num_bytes) {
 
 
 /* create a new file, if we are unsuccessful return -1 */
-int kcreate(char* filepath, int mode) {
-    int inum = 0;
-	char new_file_name[MAX_NAME_LENGTH] = {0};
-    struct inode cur_inode;
-    int exit_flag = 1;
-    while(exit_flag){
-        int k = 1;
-        char next_path[MAX_NAME_LENGTH] = {0};
-        while((filepath[k] != '/') && (k <= MAX_NAME_LENGTH)){
-                next_path[k] = filepath[k];
-                k++;
-        }
-        filepath += k;
+int kcreate(char* filepath, int mode, int file_or_dir) {
+	int fd;
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	kfind_inode(result->truncated_path, inum, result->dir_levels);
 
-		if (filepath[0] != '/') { //next is end
-			new_file_name = next_path; //name of file to be made
-			break;
-		}
-
-        // Look up cur_inode inode in cached inode table
-        if(inode_table_cache[inum] != NULL){
-                // the inode is in the inode_cache_table, so get it:
-                cur_inode = *(inode_table_cache[inum]);
-        }else{
-                // inode is not in the cache table, so get it from disk:
-                void* inode_spaceholder = kmalloc(BLOCKSIZE);
-                receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-                struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-                cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
-                // need to implement an eviction policy/function to update the inode_table_cache...
-                // this will function w/o it, but should be implemented for optimization
-        }
-        int i;
-        int file_found = 0; // initialize to false (i.e. file not found)
-        for(i = 0; i < cur_inode.blocks_in_file; i++){
-            void* dir_spaceholder = kmalloc(BLOCKSIZE);
-            receive(dir_spaceholder, (root.data_blocks[i])*BLOCKSIZE);
-            struct dir_data_block = *((struct dir_data_block*) dir_spaceholder);
-            int j;
-            for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-                struct dir_entry file_dir = dir_data_block[j]; // 
-                int x;
-                int is_equal = 1; // initialize to true
-                for(x = 0; x < MAX_NAME_LENGTH; x++){
-                    if(file_dir.name[x]  != next_path[x]){
-                            is_equal = 0;
-                            break;
-                    }//end if
-                }//end for
-                if(is_equal){
-                    file_found = 1; //we found the file, so break out of loop
-                    break;
-                }
-            }//inner for
-            if(file_found){
-                    break;
-            }
-        }//outer for
-
-        if(!file_found){//throw an error
-            os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");
-            return -1;
-        }
-        if(!(cur_inode->is_dir)){
-			//not a valid directory
-			os_printf("404 ERROR! Directory not found.\n Please ensure full filepath is specified starting from root, and no '/' follow the name \n");   
-                return -1;
-        }//end if
-	}//outer most while loop
-
-
-	// at this point, the name of the file or dir to be created is “new_file_name” and it has to be added to cur_inode (which is a directory)
-	// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// REAL ADDING HAS TO BE MADE: struct of inode has to be created and written to disk and fields of struct has to be initialized		
+	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode 
 	
 	//STEP 1: Consult the inode_bitmap to find a free space in the inode_table to add the new inode:
 	int free_inode_loc = firstFree(inode_bitmap);
@@ -824,12 +760,17 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	total_chars -= index;
 
 	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
+	char* last = (char*)kmalloc(index);
 	int i;
 	for(i = 0; i < total_chars; i++){
 		truncated_path[i] = filepath[i];
 	}
+	for(; i < index; i++){
+		last[i-total_chars] = filepath[i];
+	}
 	result->dir_levels = dir_levels;
 	result->truncated_path = truncated_path;
+	result->last = last;
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
