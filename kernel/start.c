@@ -97,7 +97,7 @@ void start2(uint32_t *p_bootargs)
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
 
-	//run_vm_tests();
+	run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_mem_alloc_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
