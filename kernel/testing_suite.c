@@ -1,6 +1,13 @@
+//in process: integrate testing_suite into tests
 #include "include/testing_suite.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+TEST create_test(char* name, int (*function_to_test)()) {
+    TEST test = {name, function_to_test};
+
+    return test;
+}
 
 TEST_SUITE create_test_suite() {
     TEST_SUITE tests = {malloc(sizeof(TEST)), 0};//malloc(sizeof(TEST_SUITE));
