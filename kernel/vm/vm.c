@@ -65,7 +65,6 @@ void vm_init() {
 
 	// Initialize the L2 coarse page tables
 	struct vm_free_list *free_l2pt = (struct vm_free_list*)(P_L1PTBASE + (1<<19));
-	os_printf("free_l2pt starts at %X\n", free_l2pt);
 	vm_l2pt_free_list = (struct vm_free_list*)((void*)free_l2pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t)free_l2pt < P_L1PTBASE + (1<<20)) {
@@ -86,11 +85,6 @@ uint32_t *vm_alloc_coarse_page_table()
 	vm_l2pt_free_list = ((struct vm_free_list*)vptr)->next;
 	os_memset((void*)vptr, 0, L2_PAGE_TABLE_SIZE);
 	return vptr;
-
-	/*uint32_t vptr = kmalloc(2*L2_PAGE_TABLE_SIZE);
-	vptr &= ~(L2_PAGE_TABLE_SIZE-1);
-	vptr += L2_PAGE_TABLE_SIZE;
-	return (uint32_t*)vptr;*/
 }
 
 struct vas *vm_get_current_vas() {
@@ -138,18 +132,24 @@ void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permis
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
 #define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
+#define VM_L2_ENTRY(l2pt,vptr) ((uint32_t*)l2pt)[((unsigned int)vptr&0x000FF000)>>12]
+#define VM_L2ENTRY_GET_FRAME(x) ((x)&0xFFFFF000)
 
 int vm_free_page(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*)V_L1PTBASE);
+	vm_enable_vas((struct vas*)KERNEL_VAS);
 
 	// TODO: Check if it was actually allocated
 	uint32_t entry = VM_L1_GET_ENTRY(vas->l1_pagetable, vptr);
-	vm_release_frame((void*)VM_ENTRY_GET_FRAME(entry));
-	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+
+	// Okay, it's a 4KB page. We need to walk the l2 page table.
+	uint32_t *l2pt = (uint32_t*)VM_ENTRY_GET_FRAME(entry);
+	vm_release_frame((void*)VM_L2ENTRY_GET_FRAME(entry));
+	VM_L2_ENTRY(l2pt,vptr) = 0;
+	//vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 
 	vm_enable_vas(prev_vas);
 	return 0;
@@ -184,7 +184,6 @@ uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	CHECK_VPTR;
 	CHECK_PPTR;
-	os_printf("Mapping %X to %X...\n", vptr, pptr);
 	int perm = perm_mapping[permission];
 	if (perm == -1)	return VM_ERR_BADPERM;
 	uint32_t cur_entry = vas->l1_pagetable[(unsigned int)vptr>>20];
@@ -200,7 +199,6 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)(cur_entry & ~0x3FF));
 	int l2_idx = ((unsigned int)vptr&0x000FF000)>>12;
-	os_printf("l2_idx = %d\n", l2_idx);
 	if (l2_pagetable[l2_idx]) {
 		return VM_ERR_MAPPED;
 	}
@@ -208,9 +206,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
-	os_printf("l2_idx: %d\n", l2_idx);
 	l2_pagetable[l2_idx] = (unsigned int)pptr | 0x20 | 2 | 0x10;
-	os_printf("Finished updating l2_pagetable.\n");
 	return 0;
 }
 
