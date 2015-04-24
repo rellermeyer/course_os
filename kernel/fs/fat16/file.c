@@ -5,43 +5,59 @@
 // #include "../../include/mmci.h" What is this? mmci isnt in include...
 #include "../../include/klibc.h"
 
+#define NULL 0x0
+
 //CONSTANTS:
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
-const int MAX_BLOCKS;
+int MAX_BLOCKS;
 // const int BLOCKSIZE = 512; moved this to a define...should be dynamic though...how?
 // const int INODE_SIZE = 128; shouldn't need this...should be able to do sizeof(Inode)
-const int MAX_MEMORY;
-const int INODE_TABLE_CACHE_SIZE;
-const int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
-const int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
-const int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
-const int INODES_PER_BLOCK;
+int MAX_MEMORY;
+int INODE_TABLE_CACHE_SIZE;
+int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
+int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
+int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
+int INODES_PER_BLOCK;
 
 // FAKE CONSTANTS:
-const int sd_card_capacity = 128000000; // 128 MB
-const int root_inum = 0;
-const int max_inodes = 4000; // will eventually be in superblock create
-const int inode_size = 512; // inodes will now be a full block size
-const int max_data_blocks = 200000;
-const int max_indirect_blocks = 25000;
-const int inode_bitmap_loc = 10 * BLOCKSIZE; // since we now have 250,000 blocks, we have plenty of space, so moving these to even start locations
-const int data_bitmap_loc = 50 * BLOCKSIZE;
-const int indirect_blocks_bitmap_loc = 100 * BLOCKSIZE; // note the indirect_blocks_bitmap will take 7 blocks bc 25000 max indirect blocks/512 block size ~ 6.1
-const int start_inode_table_loc = 1000;
-const int start_indirect_blocks_table_loc = 25000;
-const int start_data_blocks_loc = 50000;
+/* These should be read in the first time the FS is loaded */
+int sd_card_capacity = 128000000; // 128 MB
+int root_inum = 0;
+int max_inodes = 4000; // will eventually be in superblock create
+int inode_size = 512; // inodes will now be a full block size
+int max_data_blocks = 200000;
+int max_indirect_blocks = 25000;
+int inode_bitmap_loc = 10 * BLOCKSIZE; // since we now have 250,000 blocks, we have plenty of space, so moving these to even start locations
+int data_bitmap_loc = 50 * BLOCKSIZE;
+int indirect_blocks_bitmap_loc = 100 * BLOCKSIZE; // note the indirect_blocks_bitmap will take 7 blocks bc 25000 max indirect blocks/512 block size ~ 6.1
+int start_inode_table_loc = 1000;
+int start_indirect_blocks_table_loc = 25000;
+int start_data_blocks_loc = 50000;
 
 struct superblock* FS;
 bitVector* inode_bitmap;
 bitVector* data_block_bitmap;
+/* Need to as Luke about this */
 struct inode** inode_table_cache; //is this right? we want an array of inode pointers...
 struct indirect_block** indirect_block_table_cache; // an array of pointers to indirect_blocks
+struct inode** inode_table_temp;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
+/* This is just for compile. Driver team has already done this */
+void init_sd(){
+
+}
+
+/* This is just for compile. Driver team has already done this */
+void receive(void* a,int b){
+
+}
+
+/* make the global varrible */
 // initialize the filesystem:
 int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
-	MAX_MEMORY = max_memory;
+
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
 	INDIRECT_BLOCK_TABLE_CACHE_SIZE = indirect_block_table_cache_size;
 	NUM_INODE_TABLE_BLOCKS_TO_CACHE = ((int) INODE_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
@@ -53,7 +69,7 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
 	receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
 
-	INODES_PER_BLOCK = (int)(FS->block_size/FS->inode_size);
+	INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
 	inode_bitmap = (bitVector*) kmalloc(BLOCKSIZE); 
@@ -66,13 +82,13 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 
 	
 	// initilize the inode_table_cache in memory:
-	void* inode_table_temp = (void*) kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	inode_table_temp = (struct inode**)kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
 	inode_table_cache = (struct inode**) kmalloc((sizeof(struct inode*))* FS->max_inodes);
 	int i;
 	for(i = 0; i < FS->max_inodes; i++){
 		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * INODES_PER_BLOCK){
 			if(i % INODES_PER_BLOCK == 0){
-				receive((inode_table_temp + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), (FS->start_inode_table_loc + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
+				receive((((void*)inode_table_temp) + ((i/INODES_PER_BLOCK)*BLOCKSIZE)), (FS->start_inode_table_loc + (i/INODES_PER_BLOCK)) * BLOCKSIZE);
 			}
 			inode_table_cache[i] = (struct inode*)((inode_table_temp + (((int)(i/INODES_PER_BLOCK))*BLOCKSIZE)) + ((i % INODES_PER_BLOCK)*FS->inode_size));
 		}
@@ -90,7 +106,7 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	for(i = 0; i < FS->max_indirect_blocks; i++){
 		if(i < NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE){
 			receive(indirect_block_table_temp + (i*BLOCKSIZE), (FS->start_indirect_block_table_loc) + (i*BLOCKSIZE));
-			indirect_block_table_cache[i] = (struct indirect_block*)((indirect_block_table_temp + (i*BLOCKSIZE));
+			indirect_block_table_cache[i] = (struct indirect_block*)(indirect_block_table_temp + (i*BLOCKSIZE));
 		} else{
 			indirect_block_table_cache[i] = NULL;
 		}
@@ -111,7 +127,7 @@ int kfs_shutdown(){
 
 	//free inodes stored in inode_table_cache:
 	for(i = 0; i < NUM_INODE_TABLE_BLOCKS_TO_CACHE; i++){
-		if(inode_table_cache[i] != NULL{
+		if(inode_table_cache[i] != NULL){
 			kfree(inode_table_cache[i]);
 		}//end if
 	}//end for
@@ -121,14 +137,14 @@ int kfs_shutdown(){
 
 	//free indirect_blocks stored in indirect_block_table_cache:
 	for(i = 0; i < NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE; i++){
-		if(indirect_block_table_cache[i] != NULL{
+		if(indirect_block_table_cache[i] != NULL){
 			kfree(indirect_block_table_cache[i]);
 		}//end if
 	}//end for
 
 	//free indirect_block_table_cache itself:
 	kfree(indirect_block_table_cache);
-
+	kfree(inode_table_temp);
 	//TODO: free anything else that needs to be freed...
 	//TODO: free every element of the free list of open_table.c
 
