@@ -59,17 +59,28 @@ int add_to_opentable(struct inode * f, char perm) {
         struct free_index * free_me = HEAD;
         HEAD = HEAD->next; //dequeue
         kfree(free_me); //free old node
-        /*
-                WARNING YOU ARE GOING TO WANT TO MALLOC
-                EVERYTHING YOU WANT TO KEEP AFTER RETURNING
-                FROM THIS FUNCTION
-        */
         struct file_descriptor* to_add = (struct file_descriptor*) kmalloc(sizeof(struct file_descriptor));
         //initialize the struct
+        int i;
+        int inum = f->inum;
+        for (i=0; i<SYSTEM_SIZE; i++) {
+                if ((table[i]->linked_file)->inum == inum) {
+                        (to_add->linked_file)->fd_refs++;
+                        to_add->linked_file =  table[i]->linked_file  
+                        to_add->permission = perm;
+                        to_add->offset = 0;
+                        table[fd] = to_add; //add to table
+                        return fd;
+                }
+        }
         to_add->linked_file = f;
+        to_add->linked_file->fd_refs = 1;
 	to_add->permission = perm;
         to_add->offset = 0;
         table[fd] = to_add; //add to table
+        if (perm == 'a') {
+                table[fd]->offset = table[fd]->linked_file->size;
+        }
         return fd;
 }
 
@@ -79,12 +90,18 @@ int add_to_opentable(struct inode * f, char perm) {
 int delete_from_opentable(int fd) {
         if (table[fd]==0x0)
                 return -1; //invalid entry
-        table[fd]=0x0;
+        if (table[fd]->linked_file->fd_refs == 1) {
+                table[fd]->linked_file->fd_refs--;
+                kfree(table[fd]->linked_file);
+        }
+        else {
+                table[fd]->linked_file->fd_refs--;
+        }
+        kfree(table[fd]);
         struct free_index * to_add = kmalloc(sizeof(struct free_index)); //create new node
         to_add->index = fd;
         TAIL->next = to_add;
         TAIL = to_add; //enqueue
-        // WARNING: There was no return so I added this one. Not sure is you want this or no...
         return 0;
 }
 

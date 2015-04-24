@@ -15,7 +15,7 @@ struct file_descriptor {
 };
 
 // Array of open files 
-struct file_descriptor* table[SYSTEM_SIZE]; // THIS NEEDS TO BE KMALLOC'ED so that it's on the heap instead of local on the stack...?
+struct file_descriptor* table[SYSTEM_SIZE]; 
 
 // LL of free indexes at which we can place a newly opened file.
 struct free_index {
