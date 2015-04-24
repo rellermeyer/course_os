@@ -96,7 +96,7 @@ void* kmalloc(uint32_t);
 void* kmalloc_aligned(uint32_t, uint32_t);
 void kfree(void*);
 uint32_t km_size();
-STATUS kmcheck();
+uint32_t kmcheck();
 
 int32_t abs(int32_t);
 unsigned int rand();

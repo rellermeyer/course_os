@@ -283,7 +283,7 @@ void alloc_deallocate(alloc_handle* allocator, void* ptr) {
     }
 }
 
-STATUS alloc_check(alloc_handle* allocator) {
+uint32_t alloc_check(alloc_handle* allocator) {
     char* ptr = (char*) allocator->heap;
     uint32_t* end_ptr = (uint32_t*) ((void*) allocator->heap
             + allocator->heap_size);

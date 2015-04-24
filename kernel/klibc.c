@@ -522,7 +522,7 @@ void* kmalloc(uint32_t size)
 	return block;
 }
 
-STATUS kmcheck(){
+uint32_t kmcheck(){
     return mem_check();
 }
 

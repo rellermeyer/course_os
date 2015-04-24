@@ -58,7 +58,7 @@ uint32_t __mem_extend_heap(uint32_t amt)
     return amt_added;
 }
 
-STATUS init_heap()
+uint32_t init_heap()
 {
     int retval = vm_allocate_page(KERNEL_VAS, (void*) MEM_START,
             VM_PERM_PRIVILEGED_RW);
@@ -86,7 +86,7 @@ alloc_handle * mem_get_allocator(){
     return allocator;
 }
 
-STATUS mem_check(){
+uint32_t mem_check(){
     return alloc_check(allocator);
 }
 
