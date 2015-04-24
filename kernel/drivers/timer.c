@@ -18,16 +18,6 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
-<<<<<<< HEAD
-void timer_start(int timer_index) {
-  os_printf("Timer driver loaded\n");
-  //set_prescale(timer_index,2);
-  enable_timer(timer_index);
-  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
-  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
-}
-=======
->>>>>>> 7018d081ce5a4e1fa087b2f87839042a83e716c0
 
 /* This function sets the value that the timer will begin at.
  * This operation also resets the timer to this new value.
@@ -100,7 +90,7 @@ int set_periodic_mode(int timer_index){
 //converts ms into ticks
 //assumes modes are valid, if not, should return 0
 long int conversion(int ms){
-	int mode = timer_pointers[timer_index]->control & 0xC;
+	int mode = timer_pointers[0]->control & 0xC;
 	int ticks = 0;
 	if(mode == 0){
 		ticks = 32;
@@ -179,7 +169,7 @@ int print_control_status(int timer_index){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  set_prescale(timer_index,2);
+  //set_prescale(timer_index,2);
   enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
