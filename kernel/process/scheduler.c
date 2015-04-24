@@ -53,7 +53,7 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
 
 // Initialize the scheduler. Should be called by the kernel ONLY
-STATUS sched_init() {
+uint32_t sched_init() {
     vm_enable_kernel_vas();
 
     os_printf("Initializing scheduler\n");
@@ -67,13 +67,13 @@ STATUS sched_init() {
     return STATUS_OK;
 }
 
-STATUS sched_register_callback_handler(callback_handler cb_handler) {
+uint32_t sched_register_callback_handler(callback_handler cb_handler) {
     sched_task * task = hmap_get(all_tasks_map, sched_get_active_pid());
     task->cb_handler = cb_handler;
     return STATUS_OK;
 }
 
-STATUS sched_deregister_callback_handler() {
+uint32_t sched_deregister_callback_handler() {
     sched_task * task = hmap_get(all_tasks_map, sched_get_active_pid());
     task->cb_handler = 0;
 
@@ -81,7 +81,7 @@ STATUS sched_deregister_callback_handler() {
 }
 
 // Free the resources used the scheduler
-STATUS sched_free() {
+uint32_t sched_free() {
     vm_enable_kernel_vas();
 
     // FIXME kill active tasks
@@ -333,7 +333,7 @@ uint32_t sched_remove_task(uint32_t * pid) {
     sched_task * task = (sched_task*) hmap_get(&all_tasks_map, pid);
     if (task) {
         __sched_pause_timer_irq();
-        STATUS status = __sched_remove_task(task);
+        uint32_t status = __sched_remove_task(task);
         __sched_resume_timer_irq();
         return status;
     }
@@ -354,7 +354,7 @@ const char * sched_last_err() {
     return last_err;
 }
 
-STATUS sched_set_niceness(uint32_t pid, uint32_t niceness) {
+uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 
     sched_task * task;
 
@@ -389,7 +389,7 @@ STATUS sched_set_niceness(uint32_t pid, uint32_t niceness) {
     return STATUS_OK;
 }
 
-STATUS sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
+uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
         int len) {
     sched_task * dest_task;
 

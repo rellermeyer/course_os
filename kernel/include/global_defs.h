@@ -16,7 +16,6 @@ typedef uint32_t size_t;
 
 #define NBBY 8
 
-typedef uint32_t STATUS;
 #define STATUS_OK 1
 #define STATUS_FAIL 0
 
