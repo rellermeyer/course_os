@@ -11,8 +11,6 @@
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define NUM_INDIRECT_BLOCKS 50
-#define NULL 0x0
-
 
 struct superblock
 {
@@ -20,7 +18,7 @@ struct superblock
 	int fs_version; // 36 bytes
 	int magic_num; // 40 bytes
 	int sd_card_capacity; // 44 bytes
-	int blocksize; // 48 bytes
+	int block_size; // 48 bytes
 	int root_inum; // 52 bytes
 	int max_inodes; // 56 bytes
 	int inode_size;
@@ -30,7 +28,7 @@ struct superblock
 	int indirect_blocks_bitmap_loc; //
 	int start_inode_table_loc; // 78 bytes
 	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
-	int start_indirect_blocks_table_loc; //
+	int start_indirect_block_table_loc; //
 	int max_indirect_blocks;
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };

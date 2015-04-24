@@ -50,8 +50,8 @@ void init_sd(){
 }
 
 /* This is just for compile. Driver team has already done this */
-void receive(void* a,int b){
-
+int receive(void* a,int b){
+	return 1;
 }
 
 /* make the global varrible */
@@ -154,6 +154,21 @@ int kfs_shutdown(){
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
 
+void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
+	if(indirect_block_table_cache[index] != NULL){
+		// the indirect_block is in the indirect_block_table_cache, so get it:
+		*cur_indirect_block = *(indirect_block_table_cache[index]);	
+	}else{ //RIGHT HERE
+		// indirect_block is not in the cache table, so get it from disk:
+		void* indirect_block_spaceholder = kmalloc(BLOCKSIZE);
+		receive(indirect_block_spaceholder, (index + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
+		*cur_indirect_block = *((struct indirect_block*) indirect_block_spaceholder);
+		kfree(indirect_block_spaceholder);
+		// need to implement an eviction policy/function to update the indirect_block_table_cache...
+		// this will function w/o it, but should be implemented for optimization
+	}//end if else
+}//end get_indirect_block helper
+
 void get_inode(int inum, struct inode* cur_inode){
 	if(inode_table_cache[inum] != NULL){
 		// the inode is in the inode_cache_table, so get it:
@@ -177,10 +192,10 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
 		receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
+		struct dir_data_block* cur_data_block = (struct dir_data_block*) dir_spaceholder;
 		int j;
 		for(j = 0; j < (BLOCKSIZE/DIR_ENTRY_SIZE); j++){
-			struct dir_entry file_dir = cur_data_block[j];  
+			struct dir_entry* file_dir = cur_data_block[j];  
 			// int k;
 			// int is_equal = 1; // initialize to true
 			// for(k = 0; k < MAX_NAME_LENGTH; k++){
@@ -189,9 +204,9 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 			// 		break;
 			// 	}//end if
 			// }//end for
-			if(!os_strcmp(file_dir.name, next_path)){
+			if(!os_strcmp(file_dir->name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
-				inum = file_dir.inum;
+				inum = file_dir->inum;
 				break;
 			}
 			if(file_found){
@@ -210,11 +225,12 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 	int i;
 	int inum = -1;
 	int cur_indirect_block_num = -1;
+	int file_found = 0; // initialize to false (i.e. file not found)
 	struct indirect_block cur_indirect_block;
 	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
 
-		get_indirect_block(cur_indirect_block_num, &(cur_indirect_block);
+		get_indirect_block(cur_indirect_block_num, &cur_indirect_block);
 
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		int j;
@@ -223,7 +239,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
 			for(k = 0; k < (BLOCKSIZE/DIR_ENTRY_SIZE); k++){
-				struct dir_entry file_dir = cur_data_block[k]; // 
+				struct dir_entry* file_dir = cur_data_block[k]; // 
 				// int m;
 				// int is_equal = 1; // initialize to true
 				// for(m = 0; m < MAX_NAME_LENGTH; m++){
@@ -232,9 +248,9 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 				// 		break;
 				// 	}//end if
 				// }//end for
-				if(!os_strcmp(file_dir.name, next_path)){
+				if(!os_strcmp(file_dir->name, next_path)){
 					file_found = 1; //we found the file, so break out of loop
-					inum = file_dir.inum;
+					inum = file_dir->inum;
 					break;
 				}
 			}//inner for
@@ -266,7 +282,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 		inum = get_inum_from_direct_data_block(cur_inode, next_path);
 
 		if(inum == -1){
-			inum = get_inum_from_indirect_data_block(cur_inode, next_path)
+			inum = get_inum_from_indirect_data_block(cur_inode, next_path);
 		}
 
 		if(inum == -1){//throw an error
@@ -314,21 +330,6 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
-void get_indirect_block(int index, struct indirect_block * cur_indirect_block) {
-	if(indirect_block_table_cache[index] != NULL){
-		// the indirect_block is in the indirect_block_table_cache, so get it:
-		*cur_indirect_block = *(indirect_block_table_cache[index]);	
-	}else{ //RIGHT HERE
-		// indirect_block is not in the cache table, so get it from disk:
-		void* indirect_block_spaceholder = kmalloc(BLOCKSIZE);
-		receive(indirect_block_spaceholder, (cur_indirect_block_num + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
-		*cur_indirect_block = *((struct indirect_block*) indirect_block_spaceholder);
-		kfree(indirect_block_spaceholder);
-		// need to implement an eviction policy/function to update the indirect_block_table_cache...
-		// this will function w/o it, but should be implemented for optimization
-	}//end if else
-}//end get_indirect_block helper
-
 //end of helpers ---------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -341,8 +342,8 @@ int kopen(char* filepath, char mode){
 	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	
 	//here we have the file we were looking for! it is cur_inode.
-	bitVector *p = &(cur_inode->perms);
-	switch mode{
+	bitVector *p = cur_inode->perms;
+	switch (mode){
 		case 'r':
 			if(get(0, p) == 0){
 				os_printf("File Cannot Be Read\n");
@@ -373,15 +374,15 @@ int kopen(char* filepath, char mode){
 
 
 // Helper function for kread():
-int read_partial_block(int bytesLeft, void* buf_offset, file_descriptor* fd, void* transferSpace) {
+int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd, void* transferSpace) {
 	int local_offset = fd->offset % BLOCKSIZE; // local_offset is the leftmost point in the block
 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int blockNum = fd->offset / BLOCKSIZE;
-	int success = recieve(transferSpace, blockNum);
+	int success = receive(transferSpace, blockNum);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
-	 	os_printf("failed to receive block number %d\n", numBytes);
+	 	// os_printf("failed to receive block number %d\n", numBytes);
 	 	return -1;
 	}//end if
 
@@ -439,11 +440,11 @@ int read_partial_block(int bytesLeft, void* buf_offset, file_descriptor* fd, voi
 
 
 // Helper function for kread():
-int read_full_block(int bytesLeft, void* buf_offset, file_descriptor* fd, void* transferSpace) {
+int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd, void* transferSpace) {
 	// read BLOCKSIZE
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int blockNum = fd->offset / BLOCKSIZE;
-	int success = recieve(transferSpace, blockNum);
+	int success = receive(transferSpace, blockNum);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	os_printf("failed to receive block number %d\n", blockNum);
@@ -469,11 +470,8 @@ int kread(int fd_int, void* buf, int numBytes) {
 	int bytes_read = 0;
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
-	file_descriptor* fd = get_file_descriptor(fd_int); // note, get_file_descriptor() function has not yet been implemented...will be in open_table.c
-	if(!file_is_open(fd)) {
-		os_printf("file not open\n");
-		return -1;
-	}
+	struct file_descriptor* fd = get_descriptor(fd_int); // note, get_file_descriptor() function has not yet been implemented...will be in open_table.c
+
 	if ((fd->permission != 'r' || fd->permission != 'b')) {
 		os_printf("no permission\n");
 		return -1;
@@ -481,10 +479,8 @@ int kread(int fd_int, void* buf, int numBytes) {
 
 	// Allocate space for and create a bitvector to be used repeatedly to transfer the data:
 	uint32_t* transferSpace = kmalloc(BLOCKSIZE);
-	int blockNum = 0;
 
 	// start of higher-level algo:
-	int bytes_read = 0;
 	if(numBytes < BLOCKSIZE) {
 		while(bytes_read < numBytes) {
 			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transferSpace);
@@ -509,12 +505,9 @@ int kread(int fd_int, void* buf, int numBytes) {
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
 int kwrite(int fd_int, void* buf, int num_bytes) {
-	int bytes_written;
-        file_descriptor* fd = get_file_descriptor(fd_int);
-        if(!file_is_open(fd)) {
-        	os_printf("file not open\n");
-        }
-        else if ((fd->permission != 'w' || fd->permission != 'b')) {
+        struct file_descriptor* fd = get_descriptor(fd_int);
+
+        if ((fd->permission != 'w' || fd->permission != 'b')) {
             os_printf("no permission\n");
             return -1;
         }
