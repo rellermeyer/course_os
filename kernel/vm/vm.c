@@ -54,7 +54,7 @@ void vm_init() {
 	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + sizeof(struct vas)*4096);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
-	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE - (BLOCK_SIZE>>2)) {
+	while ((uint32_t)free_l1pt < P_L1PTBASE + (1<<20) - ((1<<20)>>2)) {
 		free_l1pt->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
@@ -68,7 +68,7 @@ void vm_init() {
 	os_printf("free_l2pt starts at %X\n", free_l2pt);
 	vm_l2pt_free_list = (struct vm_free_list*)((void*)free_l2pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
-	while ((uint32_t)free_l2pt < P_L1PTBASE + BLOCK_SIZE) {
+	while ((uint32_t)free_l2pt < P_L1PTBASE + (1<<20)) {
 		free_l2pt->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_l2pt + V_L1PTBASE-P_L1PTBASE);
@@ -164,7 +164,7 @@ int vm_unpin(struct vas *vas, void *vptr) {
 }
 
 uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
-	// Shitty hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
@@ -173,7 +173,7 @@ uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
 }
 
 uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
-	// Shitty hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
@@ -199,7 +199,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	}
 
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)(cur_entry & ~0x3FF));
-	int l2_idx = ((unsigned int)vptr&0x000FFC00)>>10;
+	int l2_idx = ((unsigned int)vptr&0x000FF000)>>12;
 	os_printf("l2_idx = %d\n", l2_idx);
 	if (l2_pagetable[l2_idx]) {
 		return VM_ERR_MAPPED;
@@ -209,7 +209,8 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
 	os_printf("l2_idx: %d\n", l2_idx);
-	l2_pagetable[l2_idx] = (unsigned int)pptr | 0x20 | 2;
+	l2_pagetable[l2_idx] = (unsigned int)pptr | 0x20 | 2 | 0x10;
+	os_printf("Finished updating l2_pagetable.\n");
 	return 0;
 }
 
@@ -277,6 +278,7 @@ struct vas *vm_new_vas() {
 	struct vas *p = (struct vas*)vm_vas_free_list;
 	vm_vas_free_list = vm_vas_free_list->next;
 
+	os_printf("vm_l1pt_free_list=%X\n",vm_l1pt_free_list);
 	p->l1_pagetable = (uint32_t*)vm_l1pt_free_list;
 	vm_l1pt_free_list = vm_l1pt_free_list->next;
 

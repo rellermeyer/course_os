@@ -1,5 +1,5 @@
-#include "../include/tests.h"
-#include "../include/tests/test_mem_alloc.h"
+#include "tests.h"
+#include "tests/test_mem_alloc.h"
 #include "klibc.h"
 #include "vm.h"
 
@@ -74,6 +74,7 @@ int test_mem_alloc_1() {
 
     if (!kmcheck()) {
         ERROR("Memory is inconsistent :-(\n");
+	return TEST_FAIL;
     }
 
     DEBUG("heap_size = %d bytes\n", km_size());
@@ -87,4 +88,3 @@ void run_mem_alloc_tests() {
     tests[0] = create_test("test_mem_alloc_1", &test_mem_alloc_1);
     run_tests(tests, NUM_TESTS);
 }
-
