@@ -35,7 +35,7 @@
 #define BRANCH_INSTRUCTION	0xe59ff018	// ldr pc, pc+offset
 
 // System Call Types
-#define SYSCALL_CREATE 0
+#define SYSCALL_CREATE 0  
 #define SYSCALL_SWITCH 1
 #define SYSCALL_DELETE 2
 #define SYSCALL_OPEN 3
@@ -45,6 +45,9 @@
 #define SYSCALL_SET_PERM 7
 #define SYSCALL_MEM_MAP 8
 #define SYSCALL_SEEK 9
+#define SYSCALL_MKDIR 10
+#define SYSCALL_COPY 11   
+#define SYSCALL_LS 12  
 
 void init_vector_table(void); 
 

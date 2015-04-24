@@ -96,6 +96,8 @@ int kclose(int fd); //closes the cpen file corresponding to fd
 int kseek(int fd, int num_bytes); //moves the offset of the open file fd
 int kdelete(char* filepath); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
+int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
+int kls(char* filepath); //shows contents of one directory
 
 
 // in the header file write it with extern. And in one of the c files declare it without extern.
