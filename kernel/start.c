@@ -25,10 +25,12 @@
 #include "process.h"
 #include "memory.h"
 #include "drivers/uart.h"
+#include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
 #include "tests.h"
+#include "drivers/timer.h"
 // #include "scheduler.h"
 
 // Tests
@@ -36,6 +38,7 @@
 #include "tests/test_hash_map.h"
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
+
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -101,10 +104,20 @@ void start2(uint32_t *p_bootargs)
 	run_prq_tests();
 	run_hmap_tests();
 
-	//  sched_init();
-
 	asm volatile("swi 1");
-	while (1);
+
+	/*
+	4-15-15: 	#Prakash: 	What happens if we let the program load here?
+							Let's make argparse_process() do its thing
+
+				Note: As of 4-15-15 this fails horribly with hello.o not being
+				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
+	*/
+
+	//test assert
+	//assert(1==2 && "Test assert please ignore");
+
+	init_all_processes();
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");

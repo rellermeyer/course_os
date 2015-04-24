@@ -35,13 +35,12 @@ struct vm_free_list *vm_vas_free_list = 0x0;
 struct vm_free_list *vm_l1pt_free_list = 0x0;
 
 void vm_init() {
-	// Initialize the VAS structures stored in the first PAGE_TABLE_SIZE
-	// of our alloted MB.
+	// Initialize the VAS structures. We allocate enough for 4096 VASs.
 	struct vm_free_list *free_vas = (struct vm_free_list*)P_L1PTBASE;
 	//vm_vas_free_list = free_vas;
 	vm_vas_free_list = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
-	while ((uint32_t)free_vas<P_L1PTBASE+PAGE_TABLE_SIZE) {
+	while ((uint32_t)free_vas<P_L1PTBASE+sizeof(struct vas)*4096) {
 		free_vas->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_vas + V_L1PTBASE-P_L1PTBASE);
@@ -51,7 +50,7 @@ void vm_init() {
 	}
 
 	// Initialize the L1 page tables
-	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + PAGE_TABLE_SIZE);
+	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + sizeof(struct vas)*4096);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE) {
@@ -94,6 +93,15 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	}
 	vm_enable_vas(prev_vas);
 	return 0;
+}
+
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
+	unsigned char *p = (unsigned char*)vptr;
+	while (p-(unsigned char*)vptr < nbytes) {
+		vm_allocate_page(vas, p, permission);
+		p += BLOCK_SIZE;
+	}
+	return p;
 }
 
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
@@ -142,6 +150,34 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 	// TODO: If this is a paged frame, then we need to throw an error
 	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+	return 0;
+}
+
+// We're going to have to switch to the kernel's VAS, then copy it over.
+int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission) {
+	if ((unsigned int)this_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
+	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
+
+	struct vas *prev_vas = vm_current_vas;
+	vm_enable_vas((struct vas*)V_L1PTBASE);
+
+	if (vas->l1_pagetable[(unsigned int)this_ptr>>20]) {
+		return VM_ERR_MAPPED;
+	}
+	if (!other_vas->l1_pagetable[(unsigned int)other_ptr>>20]) {
+		return VM_ERR_NOT_MAPPED;
+	}
+
+	int perm = perm_mapping[permission];
+	if (perm == -1) return VM_ERR_BADPERM;
+
+	// Well, this was remarkably easy.
+	unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
+	os_printf("pptr: %X\n",pptr);
+	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
+
+	vm_enable_vas(prev_vas);
 	return 0;
 }
 
