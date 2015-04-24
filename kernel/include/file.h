@@ -71,25 +71,12 @@ struct dir_helper
 	int dir_levels;
 };
 
-/* 
-struct directory
-{
-	struct inode inode;
-}; 
-*/
-
-// struct file
-// {
-// 	struct inode* inode;
-// 	// what to put here to avoid level of indirection?
-// };
-
-int kopen(char* filepath, char mode);
-int kread(int fd, void* buf, int numBytes);
-int kwrite(int fd, void* buf, int num_bytes);
-int kclose(int fd);
-int kseek(int fd, int num_bytes);
-int kdelete(char* filepath);
+int kopen(char*, char);
+int kread(int, void*, int);
+int kwrite(int, void*, int);
+int kclose(int);
+int kseek(int, int);
+int kdelete(char*);
 
 
 // in the header file write it with extern. And in one of the c files declare it without extern.
