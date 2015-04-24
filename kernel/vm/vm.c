@@ -33,6 +33,7 @@ struct vm_free_list {
 
 struct vm_free_list *vm_vas_free_list = 0x0;
 struct vm_free_list *vm_l1pt_free_list = 0x0;
+struct vm_free_list *vm_l2pt_free_list = 0x0;
 
 void vm_init() {
 	// Initialize the VAS structures stored in the first PAGE_TABLE_SIZE
@@ -54,7 +55,7 @@ void vm_init() {
 	struct vm_free_list *free_l1pt = (struct vm_free_list*)(P_L1PTBASE + PAGE_TABLE_SIZE);
 	vm_l1pt_free_list = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
 	last = 0x0;
-	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE) {
+	while ((uint32_t)free_l1pt < P_L1PTBASE + BLOCK_SIZE - (BLOCK_SIZE>>2)) {
 		free_l1pt->next = 0x0;
 		if (last) {
 			last->next = (struct vm_free_list*)((void*)free_l1pt + V_L1PTBASE-P_L1PTBASE);
@@ -62,6 +63,35 @@ void vm_init() {
 		last = free_l1pt;
 	        free_l1pt = (struct vm_free_list*)((void*)free_l1pt + PAGE_TABLE_SIZE);
 	}
+
+	// Initialize the L2 coarse page tables
+	struct vm_free_list *free_l2pt = (struct vm_free_list*)(P_L1PTBASE + (1<<19));
+	os_printf("free_l2pt starts at %X\n", free_l2pt);
+	vm_l2pt_free_list = (struct vm_free_list*)((void*)free_l2pt + V_L1PTBASE-P_L1PTBASE);
+	last = 0x0;
+	while ((uint32_t)free_l2pt < P_L1PTBASE + BLOCK_SIZE) {
+		free_l2pt->next = 0x0;
+		if (last) {
+			last->next = (struct vm_free_list*)((void*)free_l2pt + V_L1PTBASE-P_L1PTBASE);
+		}
+		last = free_l2pt;
+	        free_l2pt = (struct vm_free_list*)((void*)free_l2pt + L2_PAGE_TABLE_SIZE);
+	}
+}
+
+uint32_t *vm_alloc_coarse_page_table()
+{
+	// TODO: What if we run out?
+	uint32_t *vptr = (uint32_t*)vm_l2pt_free_list;
+	if (vptr == 0x0) return 0x0;
+	vm_l2pt_free_list = ((struct vm_free_list*)vptr)->next;
+	os_memset((void*)vptr, 0, L2_PAGE_TABLE_SIZE);
+	return vptr;
+
+	/*uint32_t vptr = kmalloc(2*L2_PAGE_TABLE_SIZE);
+	vptr &= ~(L2_PAGE_TABLE_SIZE-1);
+	vptr += L2_PAGE_TABLE_SIZE;
+	return (uint32_t*)vptr;*/
 }
 
 struct vas *vm_get_current_vas() {
@@ -88,6 +118,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
         if (retval) {
 		// Release the frame to prevent a memory leak
+		os_printf("vm_set_mapping returned %d\n",retval);
 		vm_release_frame(pptr);
 		vm_enable_vas(prev_vas);
 		return retval;
@@ -124,17 +155,53 @@ int vm_unpin(struct vas *vas, void *vptr) {
 	return 0;
 }
 
+uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
+	// Shitty hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	if (vas != KERNEL_VAS) {
+		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+		while (1);
+	}
+	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
+}
+
+uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
+	// Shitty hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	if (vas != KERNEL_VAS) {
+		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+		while (1);
+	}
+	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
+}
+
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	CHECK_VPTR;
 	CHECK_PPTR;
+	os_printf("Mapping %X to %X...\n", vptr, pptr);
 	int perm = perm_mapping[permission];
 	if (perm == -1)	return VM_ERR_BADPERM;
-	if (vas->l1_pagetable[(unsigned int)vptr>>20]) {
+	uint32_t cur_entry = vas->l1_pagetable[(unsigned int)vptr>>20];
+	if ((cur_entry&3) == 2) {
+		return VM_ERR_MAPPED;
+	}
+	if ((cur_entry&3) == 0) {
+		// We need to allocate a coarse page table
+		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
+		vas->l1_pagetable[(unsigned int)vptr>>20] = (uint32_t)vm_vtop(KERNEL_VAS, vptr_coarse_pt) | 1;
+		cur_entry = vas->l1_pagetable[(unsigned int)vptr>>20];
+	}
+
+	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)(cur_entry & ~0x3FF));
+	int l2_idx = ((unsigned int)vptr&0x000FFC00)>>10;
+	os_printf("l2_idx = %d\n", l2_idx);
+	if (l2_pagetable[l2_idx]) {
 		return VM_ERR_MAPPED;
 	}
 
 	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
-	vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
+	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
+	// TODO: Permissions!
+	os_printf("l2_idx: %d\n", l2_idx);
+	l2_pagetable[l2_idx] = (unsigned int)pptr | 0x20 | 2;
 	return 0;
 }
 
@@ -221,6 +288,7 @@ int vm_free_vas(struct vas *vas) {
 void vm_test_early() {
 	os_printf("Test code for VM (early).\n");
 
+#if 0
 	// Test 4KB pages
 	os_printf("0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
 	os_printf("entry at the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
@@ -234,9 +302,10 @@ void vm_test_early() {
 	// Hey, let's check the access bit now.
 	p2 = ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE));
 	os_printf("Entry is the address: 0x%X\n", ((unsigned int *)(V_L1PTBASE + PAGE_TABLE_SIZE))[(PMAPBASE+0x100000)>>20]);
+#endif
 
 	os_printf("Leaving early test code for VM.\n");
-	while (1);
+	//while (1);
 }
 
 // TODO: Move this into a framework...
