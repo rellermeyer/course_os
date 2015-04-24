@@ -60,7 +60,7 @@ struct dir_entry
 {
 	int inum;
 	int name_length; //including null terminating string
-	char name[MAX_NAME_LENGTH]; // 32 chars right now
+	char *name[MAX_NAME_LENGTH]; // 32 chars right now
 }; // 8 _ MAX_NAME_LENGTH bytes long...40 bytes right now
 
 struct dir_data_block
@@ -73,7 +73,7 @@ struct dir_helper //used by helper functions in file.c
 {
 	int dir_levels;
 	char* truncated_path;
-	char* last;
+	char* last[MAX_NAME_LENGTH];
 };
 
 /* 

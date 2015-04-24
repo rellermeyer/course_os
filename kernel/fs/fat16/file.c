@@ -105,7 +105,7 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	}//end for
 
 	fs_table_init(); //initializes the opentable 
-
+	return 0;
 	//what was this for? don't think we need it...
 	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
 	// receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
@@ -141,7 +141,7 @@ int kfs_shutdown(){
 	//TODO: free anything else that needs to be freed...
 
 	fs_table_shutdown(); //frees the free list in open_table.c
-
+	return 0;
 }//end kfs_shutdown() function
 
 
@@ -188,13 +188,13 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		struct dir_data_block* cur_data_block = (struct dir_data_block*) dir_spaceholder;
+		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
 		int j;
-		for(j = 0; j < (cur_data_block->num_entries); j++){
-			struct dir_entry* file_dir = cur_data_block[j];  
-			if(!os_strcmp(file_dir->name, next_path)){
+		for(j = 0; j < (cur_data_block.num_entries); j++){
+			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
+			if(!os_strcmp(*file_dir.name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
-				inum = file_dir->inum;
+				inum = file_dir.inum;
 				break;
 			}
 			if(file_found){
@@ -227,11 +227,11 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
-			for(k = 0; k < (cur_data_block->num_entries); k++){
-				struct dir_entry* file_dir = cur_data_block[k]; // 
-				if(!os_strcmp(file_dir->name, next_path)){
+			for(k = 0; k < (cur_data_block.num_entries); k++){
+				struct dir_entry file_dir = cur_data_block.dir_entries[k]; // 
+				if(!os_strcmp(*file_dir.name, next_path)){
 					file_found = 1; //we found the file, so break out of loop
-					inum = file_dir->inum;
+					inum = file_dir.inum;
 					break;
 				}
 			}//inner for
@@ -333,19 +333,19 @@ int kopen(char* filepath, char mode){
 	bitVector *p = cur_inode->perms;
 	switch (mode){
 		case 'r':
-			if(get(0, p) == 0){
+			if(bv_get(0, p) == 0){
 				os_printf("File Cannot Be Read\n");
 				return -1;
 			}
 			break;
 		case 'w':
-			if(get(1, p) == 0){
+			if(bv_get(1, p) == 0){
 				os_printf("File Cannot Be Written\n");
 				return -1;
 			}
 			break;
 		case 'a':
-			if(get(1, p) == 0){
+			if(bv_get(1, p) == 0){
 				os_printf("File Cannot Be Appeneded To\n");
 				return -1;
 			}	
@@ -575,10 +575,10 @@ int kseek(int fd_int, int num_bytes) {
         if (fd->permission != 'r' || fd->permission != 'w') {
             os_printf("no permission \n");
             return -1;
-        } else if ((num_Bytes > 0) && ((fd->offset + num_Bytes) > ((fd->linked_file)->size))){
+        } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
         	os_printf("Error! file offset exceeds file size \n");
 			return -1;
-        } else if ((num_Bytes < 0) && ((fd->offset + num_Bytes) < 0)){
+        } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
 			os_printf("Error! file offset exceeds beginning of file \n");
 			return -1;
 		}//end if else  */
@@ -598,12 +598,12 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	kfind_inode(result->truncated_path, inum, result->dir_levels, cur_inode);
 
 	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
-	int free_inode_loc = firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
+	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
 	if (free_inode_loc == -1) {
 		os_printf("Disk has reached max number of files allowed. \n");
 		return -1;
 	}
-	set(free_inode_loc, inode_bitmap);
+	bv_set(free_inode_loc, inode_bitmap);
 	struct inode * new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
 	//initialize all fields of inode:
 	new_inode->inum = free_inode_loc;
@@ -614,15 +614,15 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	new_inode->blocks_in_file = 0; 
 	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = NULL; 
 	new_inode->indirect_blocks_in_file = 0; 
-	new_inode->indirect_blocks[NUM_INDIRECT_BLOCKS] = NULL; 
+	new_inode->indirect_blocks[MAX_NUM_INDIRECT_BLOCKS] = NULL; 
 	switch (mode){
 		case 'r':
-			set(0, new_inode->perms);
-			lower(1, new_inode->perms);
+			bv_set(0, new_inode->perms);
+			bv_lower(1, new_inode->perms);
 			break;
 		case 'w':
-			set(0, new_inode->perms);
-			set(1, new_inode->perms);
+			bv_set(0, new_inode->perms);
+			bv_set(1, new_inode->perms);
 			break;
 		default:
 			os_printf("Wrong permission. Please insert r for read and w for write\n");
@@ -635,10 +635,11 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	//update cur_inode directory to make it have the new inode 
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
+	struct indirect_block* cur_indirect_block;
 	if((cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
 		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
 	}else{
-		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block); // do you want cur_indirect_block?
 		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
 		kfree(cur_indirect_block);
@@ -648,7 +649,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	struct dir_entry new_dir_entry;
 	new_dir_entry.inum = free_inode_loc;
 	new_dir_entry.name = result->last;
-	new_dir_entry.name_length = os_strlen(result->last);
+	new_dir_entry.name_length = os_strlen(*(result->last));
 
 	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
 	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
@@ -688,10 +689,6 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		//then update memory/caches
 		//then write back out to disk
 		//should move all this stuff out to helper function...
-	}else{
-		//this should never happen
-		os_printf("ERROR! dir_block->num_entries > MAX_DIR_ENTRIES_PER_DATA_BLOCK\nThis should never happen!\n");
-		return -1;		
 	}
 	
 	if (!is_this_a_dir) {
@@ -720,7 +717,7 @@ int kdelete(char* filepath) {
 	
 	//also free direct and indirect data blocks
 	kfree(cur_inode);
-	kfree(dir_helper);
+	kfree(result);
 	return 0;
 } // end kdelete();
 
@@ -739,6 +736,6 @@ int kls(char* filepath) {
 
 	//to be implemented
 
-	return -1
+	return -1;
 }
 
