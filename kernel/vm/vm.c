@@ -81,10 +81,31 @@ uint32_t *vm_alloc_coarse_page_table()
 {
 	// TODO: What if we run out?
 	uint32_t *vptr = (uint32_t*)vm_l2pt_free_list;
-	if (vptr == 0x0) return 0x0;
+	if (vptr == 0x0) {
+		LOG("Could not allocate a coarse page table, bad things will happen soon.\n");
+		return 0x0;
+	}
 	vm_l2pt_free_list = ((struct vm_free_list*)vptr)->next;
 	os_memset((void*)vptr, 0, L2_PAGE_TABLE_SIZE);
 	return vptr;
+}
+
+uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
+	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	if (vas != KERNEL_VAS) {
+		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+		while (1);
+	}
+	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
+}
+
+uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
+	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
+	if (vas != KERNEL_VAS) {
+		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+		while (1);
+	}
+	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
 struct vas *vm_get_current_vas() {
@@ -111,7 +132,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
         if (retval) {
 		// Release the frame to prevent a memory leak
-		os_printf("vm_set_mapping returned %d\n",retval);
+		os_printf("vm_set_mapping returned %d for 0x%X\n",retval, vptr);
 		vm_release_frame(pptr);
 		vm_enable_vas(prev_vas);
 		return retval;
@@ -132,6 +153,7 @@ void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permis
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
 #define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
+#define VM_ENTRY_GET_L2(x) ((x)&~0x1FF)
 #define VM_L2_ENTRY(l2pt,vptr) ((uint32_t*)l2pt)[((unsigned int)vptr&0x000FF000)>>12]
 #define VM_L2ENTRY_GET_FRAME(x) ((x)&0xFFFFF000)
 
@@ -146,7 +168,7 @@ int vm_free_page(struct vas *vas, void *vptr) {
 	uint32_t entry = VM_L1_GET_ENTRY(vas->l1_pagetable, vptr);
 
 	// Okay, it's a 4KB page. We need to walk the l2 page table.
-	uint32_t *l2pt = (uint32_t*)VM_ENTRY_GET_FRAME(entry);
+	uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(entry));
 	vm_release_frame((void*)VM_L2ENTRY_GET_FRAME(entry));
 	VM_L2_ENTRY(l2pt,vptr) = 0;
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
@@ -161,24 +183,6 @@ int vm_pin(struct vas *vas, void *vptr) {
 
 int vm_unpin(struct vas *vas, void *vptr) {
 	return 0;
-}
-
-uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
-	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
-	if (vas != KERNEL_VAS) {
-		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
-		while (1);
-	}
-	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
-}
-
-uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
-	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
-	if (vas != KERNEL_VAS) {
-		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
-		while (1);
-	}
-	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
@@ -213,7 +217,13 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 int vm_free_mapping(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 	// TODO: If this is a paged frame, then we need to throw an error
-	vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+	if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
+		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
+	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
+		// We have to free the mapping in the L2 page table
+		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		VM_L2_ENTRY(l2pt, vptr) = 0;
+	}
 	return 0;
 }
 
@@ -223,12 +233,28 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*)V_L1PTBASE);
+	vm_enable_vas(KERNEL_VAS);
 
-	if (vas->l1_pagetable[(unsigned int)this_ptr>>20]) {
+	if ((vas->l1_pagetable[(unsigned int)this_ptr>>20]&3) == 2) {
 		return VM_ERR_MAPPED;
 	}
 	if (!other_vas->l1_pagetable[(unsigned int)other_ptr>>20]) {
+		return VM_ERR_NOT_MAPPED;
+	}
+	if (!vas->l1_pagetable[(unsigned int)this_ptr>>20]) {
+		// We need to allocate a coarse page table...
+		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
+		vas->l1_pagetable[(unsigned int)this_ptr>>20] = (uint32_t)vm_vtop(KERNEL_VAS, vptr_coarse_pt) | 1;
+		//LOG("Allocated coarse page table.\n");
+		//LOG("Should be zero: %X (%X)\n", vptr_coarse_pt[0], vptr_coarse_pt);
+	}
+	uint32_t *this_l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(vas->l1_pagetable[(unsigned int)this_ptr>>20]));
+	if (VM_L2_ENTRY(this_l2pt, this_ptr)) {
+		//LOG("Should be zero: %X (this_l2pt=%X, idx=%d)\n", VM_L2_ENTRY(this_l2pt, this_ptr), this_l2pt, ((unsigned int)this_ptr&0x000FF000)>>12);
+		return VM_ERR_MAPPED;
+	}
+	uint32_t *other_l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]));
+	if (!VM_L2_ENTRY(other_l2pt, other_ptr)) {
 		return VM_ERR_NOT_MAPPED;
 	}
 
@@ -236,10 +262,13 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 	if (perm == -1) return VM_ERR_BADPERM;
 
 	// Well, this was remarkably easy.
-	unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
+	//unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
+	unsigned int pptr = VM_L2ENTRY_GET_FRAME(VM_L2_ENTRY(other_l2pt, other_ptr));
 	os_printf("pptr: %X\n",pptr);
-	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
-	vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
+	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	//vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
+	VM_L2_ENTRY(this_l2pt, this_ptr) = pptr | (1<<4) | 2;
+	LOG("%X\n", VM_L2_ENTRY(this_l2pt, this_ptr));
 
 	vm_enable_vas(prev_vas);
 	return 0;
