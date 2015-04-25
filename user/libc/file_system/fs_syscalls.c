@@ -109,6 +109,10 @@ int copy(char* source, char* dest, char mode) {
 
 //lists elements in a directory
 int ls(char* filepath) {
+	if (filepath == 0x0) {
+		//os_printf("enter a path! \n");
+		return -1;
+	}
 	long error = __syscall2(SYSCALL_LS, (long)filepath);
 	return (int)error;
 }
