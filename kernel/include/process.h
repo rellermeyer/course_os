@@ -58,7 +58,6 @@ typedef enum PROCESS_STATE
 
 typedef struct pcb
 {
-	void* p_stack;
 	//ID data
 	char* name; /* for debugging purposes */
 	uint32_t PID;
@@ -70,8 +69,6 @@ typedef struct pcb
 	uint32_t (*function)();
 	uint32_t has_executed;
 	struct vas* stored_vas;
-	int argc;
-	char** argv;
 	//CPU state data
 	PROCESS_STATE current_state;
 
