@@ -155,7 +155,7 @@ void mmap(void *p_bootargs) {
 	os_printf("Got here\n");
 
 	// Build the free frame list
-	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
+	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPTOP);//(void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");

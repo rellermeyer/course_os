@@ -92,10 +92,6 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
 }
 
 void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
-    if (size > (allocator->heap_size + 2 * sizeof(int32_t))) {
-        return 0;
-    }
-
     int32_t i, ret_ptr;
 
     for (i = 0; i < allocator->heap_size;) {

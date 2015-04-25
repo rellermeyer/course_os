@@ -129,6 +129,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 		// We need to swap! (or something...)
 		return VM_ERR_UNKNOWN; // For now, just fail
 	}
+	//LOG("Free frame is at: %X\n", pptr);
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
         if (retval) {
 		// Release the frame to prevent a memory leak
@@ -169,7 +170,9 @@ int vm_free_page(struct vas *vas, void *vptr) {
 
 	// Okay, it's a 4KB page. We need to walk the l2 page table.
 	uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(entry));
+	entry = VM_L2_ENTRY(l2pt, vptr);
 	vm_release_frame((void*)VM_L2ENTRY_GET_FRAME(entry));
+	//LOG("Releasing frame %X, l2pt=%X\n", VM_L2ENTRY_GET_FRAME(entry), l2pt);
 	VM_L2_ENTRY(l2pt,vptr) = 0;
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 
@@ -201,7 +204,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		cur_entry = vas->l1_pagetable[(unsigned int)vptr>>20];
 	}
 
-	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)(cur_entry & ~0x3FF));
+	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(cur_entry));
 	int l2_idx = ((unsigned int)vptr&0x000FF000)>>12;
 	if (l2_pagetable[l2_idx]) {
 		return VM_ERR_MAPPED;
@@ -210,7 +213,8 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
-	l2_pagetable[l2_idx] = (unsigned int)pptr | 0x20 | 2 | 0x10;
+	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
 
@@ -264,7 +268,7 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 	// Well, this was remarkably easy.
 	//unsigned int pptr = VM_ENTRY_GET_FRAME(other_vas->l1_pagetable[(unsigned int)other_ptr>>20]);
 	unsigned int pptr = VM_L2ENTRY_GET_FRAME(VM_L2_ENTRY(other_l2pt, other_ptr));
-	os_printf("pptr: %X\n",pptr);
+	//os_printf("pptr: %X\n",pptr);
 	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
 	VM_L2_ENTRY(this_l2pt, this_ptr) = pptr | (1<<4) | 2;
