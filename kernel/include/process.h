@@ -70,6 +70,8 @@ typedef struct pcb
 	uint32_t (*function)();
 	uint32_t has_executed;
 	struct vas* stored_vas;
+	int argc;
+	char** argv;
 	//CPU state data
 	PROCESS_STATE current_state;
 
