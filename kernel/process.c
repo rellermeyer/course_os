@@ -47,13 +47,8 @@ pcb* process_create(uint32_t* file_p) {
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
         uint32_t add = elf_header->e_ehsize+(elf_header->e_phentsize*elf_header->e_phnum);
         //is this correct?
-		pcb_pointer->function = file_p + add;
+		pcb_pointer->function = file_p + elf_header->e_ehsize+(elf_header->e_phentsize*elf_header->e_phnum);//file_p + add;
 		os_printf("%X %X %X \n",file_p,&pcb_pointer->function , add);
-
-		//4-23-15: set registers in here
-		//pcb_pointer->R15 = (uint32_t)(file_p + add);
-		os_printf("R13:%X R15:%X\n", pcb_pointer->R13, pcb_pointer->R15);
-		//pcb_pointer->R13 = (void*)pcb_pointer->p_stack;
 		//assert(1==3);
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
@@ -141,15 +136,12 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r8, %0"::"r"(pcb_p->R8):);
 	asm("MOV r9, %0"::"r"(pcb_p->R9):);
 	asm("MOV r10, %0"::"r"(pcb_p->R10):);
-
-	asm("MOV r11, %0"::"r"(pcb_p->R11):);
+	//asm("MOV r11, %0"::"r"(pcb_p->R11):);
 	asm("MOV r12, %0"::"r"(pcb_p->R12):);
-	asm("MOV r13, %0"::"r"(pcb_p->R13):);
-
+	//asm("MOV r13, %0"::"r"(pcb_p->R13):);
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
-
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
-
+	assert(1==2 && "Stopping inside load_process_state after loading all registers");
 	return 1;
 }
 
@@ -299,12 +291,11 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
-
+	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+	
+	pcb_p->R15 = 0x28020;
     //4-13-15: Store current program counter to new PCB's return register,
     //         then call load_process_state to switch to new process
-
-    asm("MOV %0, r15":"=r"(pcb_p->R14)::);
-    print_process_state(pcb_p->PID);
 
 	//save_process_state(pcb_p->PID);
 	//print_process_state(pcb_p->PID);
@@ -314,13 +305,18 @@ uint32_t execute_process(pcb* pcb_p) {
     //4-13-15: Create new virtual address space for process and switch into it
     pcb_p->stored_vas = vm_new_vas();
 	vm_enable_vas(pcb_p->stored_vas);
-
+	/*
     asm("SUB lr, lr, lr"); //Clear link register, why i dont know
     asm("LDR r0, [sp]"); //Load argc
     asm("ADD r1, sp, #4"); //Load argv
     asm("ADD r2, r1, r0, LSL #2");
-	load_process_state(pcb_p->PID);
 
+    asm("MOV %0, r0":"=r"(pcb_p->R0)::);
+    asm("MOV %0, r1":"=r"(pcb_p->R1)::);
+	*/
+    print_process_state(pcb_p->PID);
+    //assert(1==2);
+    load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
 

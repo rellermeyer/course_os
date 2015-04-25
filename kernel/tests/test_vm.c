@@ -91,7 +91,7 @@ int test_vm_1() {
     // Test the data abort...
     WARN("You should see a data abort...\n");
     int i = p[-1];
-    LOG("%d\n", i);
+    //LOG("%d\n", i);
 
     // Free the page!
     vm_free_page(vas3, p);
