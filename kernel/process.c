@@ -4,8 +4,11 @@
 #include "loader.h"
 #include "vm.h"
 #include "elf.h"
-
 static uint32_t GLOBAL_PID;
+
+#define STACK_BASE 0x9f000000
+#define STACK_TOP (STACK_BASE+BLOCK_SIZE) 
+
 
 uint32_t sample_func(uint32_t);
 
@@ -125,7 +128,7 @@ uint32_t load_process_state(uint32_t PID) {
 	}
 
 
-	asm("MOV r0, %0"::"r"(pcb_p->R0):);
+	/*asm("MOV r0, %0"::"r"(pcb_p->R0):);
 	asm("MOV r1, %0"::"r"(pcb_p->R1):);
 	asm("MOV r2, %0"::"r"(pcb_p->R2):);
 	asm("MOV r3, %0"::"r"(pcb_p->R3):);
@@ -143,17 +146,15 @@ uint32_t load_process_state(uint32_t PID) {
 	//asm("MOV r11, %0"::"r"(11):);
 
 	//assert(1==11);
-	asm("MOV r12, %0"::"r"(pcb_p->R12):);
+	asm("MOV r12, %0"::"r"(pcb_p->R12):);*/
 
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
-				os_printf("THIS IS R13 HERE: %X \n", pcb_p->R13);
 
 
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
 
-	asm("MOV r15, %0"::"r"(pcb_p->R15):);
+	//asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
-	assert(1==9);
 	return 1;
 }
 
@@ -304,21 +305,41 @@ uint32_t execute_process(pcb* pcb_p) {
 		return 0;
 	}
 
+
+	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+
+	pcb_p->R15 = 0x28020;
+
+	vm_allocate_page(pcb_p->stored_vas, (void*)STACK_BASE, VM_PERM_USER_RW);
+//	os_strcpy(STACK_BASE, "hello");
+
+	uint32_t* stack_top = (uint32_t*)STACK_TOP;
+	stack_top[-1] = 100;
+	stack_top[-2] = 0;
+	stack_top[-3] = 0;
+	stack_top[-4] = 0;
+	stack_top[-5] = STACK_BASE;
+	stack_top[-6] = 1;
+	int* xdv = stack_top-2;
+	os_printf("%x \n", (xdv));
+	 assert(1 == 2);
+
+	pcb_p->R13 = STACK_TOP - 4*6;
+
     //4-13-15: Store current program counter to new PCB's return register,
     //         then call load_process_state to switch to new process
-	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
-		os_printf("THIS IS R13: %X \n", pcb_p->R13);
+		os_printf("THIS IS R13: %X \n", BLOCK_SIZE);
 
-	load_process_state(pcb_p->PID);
-	assert(10==11);
+	//load_process_state(pcb_p->PID);
+	//assert(10==11);
 //	print_process_state(pcb_p->PID);
 	//os_printf(" HELLO WORLD %X \n", pcb_p->function);
 //	assert(1==2);
     //4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
     assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
     //4-13-15: Create new virtual address space for process and switch into it
-    pcb_p->stored_vas = vm_new_vas();
-	vm_enable_vas(pcb_p->stored_vas);
+    // pcb_p->stored_vas = vm_new_vas();
+	// vm_enable_vas(pcb_p->stored_vas);
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
 
@@ -332,15 +353,15 @@ uint32_t execute_process(pcb* pcb_p) {
 //executes a process function
 //return 1 upon success
 //return 0 upon failure
-uint32_t execute_process_no_vas(pcb* pcb_p) {
-    if(!pcb_p) {
-        os_printf("Cannot execute process. Exiting.\n");
-        return 0;
-    }
-    pcb_p->has_executed = 1;
-    pcb_p->function(pcb_p->PID);
-    return 1;
-}
+// uint32_t execute_process_no_vas(pcb* pcb_p) {
+//     if(!pcb_p) {
+//         os_printf("Cannot execute process. Exiting.\n");
+//         return 0;
+//     }
+//     pcb_p->has_executed = 1;
+//     pcb_p->function(pcb_p->PID);
+//     return 1;
+// }
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {
