@@ -75,7 +75,7 @@ struct dir_helper //used by helper functions in file.c
 {
 	int dir_levels;
 	char* truncated_path;
-	char last[MAX_NAME_LENGTH];
+	char* last;
 };
 
 /* 
