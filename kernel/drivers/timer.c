@@ -195,17 +195,17 @@ void timer_start(int timer_index) {
 // ex: start_timer_interrupts(0,10) which means start timer(0)
 // and interrupt every 10 clicks.
 int start_timer_interrupts(int timer_index,int milliseconds){
-	conversion(timer_index, milliseconds);
+//	conversion(timer_index, milliseconds);
   if(timer_index < 4 && timer_index >= 0){
     initialize_timers();
     timer_start(timer_index);
     set_background_load_value(timer_index, milliseconds);
     set_periodic_mode(timer_index);
     enable_timer_interrupt(timer_index);     
-    return 0;
+   // return 0;
   }
-  return -1;
-}
+ // return -1;
+
 //just testing code
 /*while(1){
                 os_printf("\n%d",get_current_timer_value(1));
@@ -213,11 +213,11 @@ int start_timer_interrupts(int timer_index,int milliseconds){
                         os_printf("\nInterrupt");
                         //i--;
                 }
-        } */
-
+        }*/
+	return 0;
+}
 
 void timer_test(){
-	_schedule_register_timer_irq();
 	initialize_timers();
 	start_timer_interrupts(1,5);
 	print_control_status(1);
