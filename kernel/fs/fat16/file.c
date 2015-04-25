@@ -178,9 +178,9 @@ void get_inode(int inum, struct inode* cur_inode){
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
 	}//end if else
-}//end get_indoe() helper function
+}//end get_inode() helper function
 
-
+//gets the inum of netxpath (file or dir) looking at the direct data blocks of cur_inode
 int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int inum = -1;
 	int i;
@@ -209,7 +209,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	return inum;
 }//end get_inum_from_direct_data_block() helper helper function
 
-
+//gets the inum of netxpath (file or dir) looking at the indirect data blocks of cur_inode
 int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path) {
 	int i;
 	int inum = -1;
@@ -907,12 +907,59 @@ int kls(char* filepath) {
 	kfind_dir(filepath, result); 
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	if (error == -1) {  //kfind_inode unsuccessful 
-		os_printf("kfind_inode unsuccessful \n");
+	if (error == -1 || cur_inode->is_dir == 0) {  //kfind_inode unsuccessful or cannot ls
+		if (error == -1) { //kfind
+			os_printf("kfind_inode unsuccessful \n"); 
+		}
+		else { //cannot ls
+			os_printf("this is not a directory but a file, cannot ls a file \n"); 
+		}
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
 		return -1;
 	}
-	
+	//at this point, cur_inode is a directory and we need to print all the names of its contents. 
 
-	return -1;
+	//1. print from direct blocks
+	int i;
+	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
+	for(i = 0; i < cur_inode->blocks_in_file; i++){
+		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
+		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
+		int j;
+		for(j = 0; j < (cur_data_block.num_entries); j++){
+			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
+			os_printf("entry: %s \n", file_dir.name);
+			}
+		}//inner for
+	}//outer for
+
+	//2. print from indirect blocks
+	struct indirect_block * cur_indirect_block = (struct indirect_block *) kmalloc(sizeof(struct indirect_block));
+	int cur_indirect_block_num;
+	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
+		cur_indirect_block_num = cur_inode->indirect_blocks[i];
+		get_indirect_block(cur_indirect_block_num, cur_indirect_block);
+		int j;
+		for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
+			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
+			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
+			int k;
+			for(k = 0; k < (cur_data_block.num_entries); k++){
+				struct dir_entry file_dir = cur_data_block.dir_entries[k];  
+				os_printf("entry: %s \n", file_dir.name);
+			}//inner for
+		}//outer for
+	}//end for
+	
+	kfree(cur_indirect_block);
+	kfree(dir_spaceholder);
+	kfree(cur_inode);
+	kfree(result->truncated_path);
+	kfree(result->last);
+	kfree(result);
+	return 0;
 }
 
