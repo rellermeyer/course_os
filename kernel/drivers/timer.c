@@ -198,7 +198,7 @@ int start_timer_interrupts(int timer_index,int milliseconds){
   if(timer_index < 4 && timer_index >= 0){
     initialize_timers();
     timer_start(timer_index);
-    set_background_load_value(timer_index,start_val);
+    set_background_load_value(timer_index, milliseconds);
     set_periodic_mode(timer_index);
     enable_timer_interrupt(timer_index);     
     return 0;
