@@ -313,6 +313,152 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
+int transmit_data_block_bitmap(){
+	int error = 0;
+	//TODO: implement this
+	return error;
+}//end transmit_data_block_bitmap() helper function
+
+
+/* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
+	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
+int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result){
+	int flag_free_new_dir_block = 0;
+	int flag_free_cur_indirect_block = 0;
+	int flag_free_new_indirect_block 0;
+	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
+	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
+	struct indirect_block* cur_indirect_block;
+	//if the cur_inode's array of direct data blocks has not reached max capacity, grab the last data block in the array to update:
+	if((cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
+		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
+	}else{
+		//all the direct data blocks are full, so grab the last indirect block in the array of indirect blocks:
+		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
+		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
+		flag_free_cur_indirect_block = 1;
+		// kfree(cur_indirect_block);
+	}
+	/* 	dir_block is now a direct data block that holds the content of the last data block in the file
+		either from cur_inode's array of direct data blocks or from its last indirect data block */
+	
+	//create the new dir_entry and populate it's fields:
+	struct dir_entry new_dir_entry;
+	new_dir_entry.inum = free_inode_loc;
+	new_dir_entry.name = result->last;
+	new_dir_entry.name_length = os_strlen(*(result->last));
+
+	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
+	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
+		//the data block has room to add the new dir_entry, so we add it:
+		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
+		dir_block->num_entries++;
+		cur_inode->size += sizeof(struct dir_entry);
+		sd_transmit((void*) dir_block, (dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
+	}else{
+		/* 	the data block doesn't have room to add the new dir_entry, so we need to add a new data block....
+			either by adding:		(1) as a direct data block, 
+									(2) to the current indirect block or 
+									(3) add a new indirect block then add a new data block to that */
+		//first kmalloc space for a new_dir_block:
+		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+		struct dir_data_block* new_dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
+		flag_free_new_dir_block = 1;
+		new_dir_block->num_entries = 0;
+		new_dir_block->block_num = new_data_block_loc;
+		new_dir_block->dir_entries = {NULL};
+
+		if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+			//Case (1): add a direct data block to cur_inode:
+			cur_inode->data_blocks[cur_inode->blocks_in_file] = new_dir_block->block_num;
+			cur_inode->blocks_in_file++;
+
+			new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
+			new_dir_block->num_entries++;
+			cur_inode->size += sizeof(struct dir_entry);
+			sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
+			transmit_data_block_bitmap();//TODO: create this helper function
+		
+		}else{
+			//get the current indirect block and check to see if it has room to add another data block:
+			if(!flag_free_cur_indirect_block){
+				//if we don't have the indirect block, we need to get it from disk:
+				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+				flag_free_cur_indirect_block = 1;
+				get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
+				sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
+				// kfree(cur_indirect_block);
+			}
+			if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
+				//Case (2): add a new data block to to the current indirect block, then add the new_dir entry to the new data block:
+				cur_indirect_block->data_blocks[cur_indirect_block->blocks_in_file] = new_dir_block->block_num;
+				cur_indirect_block->blocks_in_file++;
+
+				new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
+				new_dir_block->num_entries++;
+				cur_inode->size += sizeof(struct dir_entry);
+
+				if(indirect_block_table_cache[cur_indirect_block->block_num] == NULL){
+					//TODO: implement eviction policy...add the cur_inode to the cache:
+				}else{
+					*(indirect_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
+				}
+				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
+				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
+				transmit_data_block_bitmap();//TODO: create this helper function
+
+			}else{
+				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
+					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
+						then add the new dir_entry to the new data block: */
+					int new_indirect_block_loc = bv_firstFree(indirect_blocks_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+					struct indirect_block* new_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+					flag_free_new_indirect_block = 1;
+
+					new_indirect_block->blocks_in_file = 0;
+					new_indirect_block->block_num = new_indirect_block_loc;
+					new_indirect_block->data_blocks = {NULL};
+
+					new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_dir_block->block_num;
+					new_indirect_block->blocks_in_file++;
+
+					new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
+					new_dir_block->num_entries++;
+					cur_inode->size += sizeof(struct dir_entry);
+
+					if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
+						//TODO: implement eviction policy...add the cur_inode to the cache:
+					}else{
+						*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
+					}
+
+					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
+					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
+					transmit_data_block_bitmap();//TODO: create this helper function
+
+				}else{
+					//file has reached max allowable size:
+					os_printf("ERROR! Operation failed because file has reached max allowable size\n");
+					return -1;
+				}
+			}
+		}
+	}
+	kfree(dir_block);
+	if(flag_free_new dir_block){
+		kfree(new_dir_block);
+	}
+	if(flag_free_cur_indirect_block){
+		kfree(cur_indirect_block);
+	}
+	if(flag_free_new_indirect_block){
+		kfree(new_indirect_block);
+	}
+	return 0;
+}//end add_dir_entry() helper function
+
+
 //end of helper functions
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -629,68 +775,17 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 			return -1;
 	}
 	//UPDATE DISK by writing memory data structures to disk
-	sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
-	sd_transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
-	
-	//update cur_inode directory to make it have the new inode 
-	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
-	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
-	struct indirect_block* cur_indirect_block;
-	if((cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
-		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
-	}else{
-		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block); // do you want cur_indirect_block?
-		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
-		kfree(cur_indirect_block);
-	}
-
-	//creat the new dir_entry:
-	struct dir_entry new_dir_entry;
-	new_dir_entry.inum = free_inode_loc;
-	new_dir_entry.name = result->last;
-	new_dir_entry.name_length = os_strlen(*(result->last));
-
-	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
-	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
-		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
-		dir_block->num_entries++;
-	}else{
-		/*need to add a new data block....either: 	(1) as a direct data block, 
-													(2) to the current indirect block or 
-													(3) add a new indirect block then add a new data block to that */
-		if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
-			//Case (1):
-			//TODO: add a direct data block...
+	int error = add_dir_entry(cur_inode, free_inode_loc, result);
+	if(inode_table_cache[cur_inode->inum] == NULL){
+			//TODO: implement eviction policy...add the cur_inode to the cache:
 		}else{
-			//get the current indirect block and check to see if it has room to add another data block:
-			// struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-			// get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
-
-			// sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
-			// kfree(cur_indirect_block);
-			if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
-				//TODO: add a data block to indirect block...
-			
-			}else{
-				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
-					//add an indirect block
-
-				}else{
-					//file has reached max allowable size:
-					os_printf("ERROR! Operation failed because file has reached max allowable size\n");
-					return -1;
-				}
-			}
-		}
-		//RIGHT HERE...still need to:
-		//add new data block to indirect block array if dir_block->num_entries >= MAX_DIR_ENTRIES_PER_DATA_BLOCK
-		//add new indirect block AND new data block if cur_indirect_block->blocks_in_file >= MAX_DATABLOCKS_PER_INDIRECT_BLOCK
-		//then update memory/caches
-		//then write back out to disk
-		//should move all this stuff out to helper function...
+			*(inode_table_cache[cur_inode->inum]) = *(cur_inode);
 	}
-	
+	sd_transmit((void*) cur_inode, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
+	sd_transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
+	sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
+
+	kfree(cur_inode);
 	if (!is_this_a_dir) {
 		fd = add_to_opentable(new_inode, mode);
 		return fd;
@@ -698,7 +793,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	else { //directories are not added to open table
 		return 0;
 	}
-}
+}//end of kcreate() function
 
 
 //delete the file or directory at filepath. Return -1 if the file does not exist 

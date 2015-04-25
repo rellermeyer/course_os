@@ -11,8 +11,8 @@
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define MAX_NUM_INDIRECT_BLOCKS 50
-#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-1
-#define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-1
+#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-2
+#define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2
 
 //constants of file system, that wil be filled at boot time
 struct superblock 
@@ -52,6 +52,7 @@ struct inode {
 
 struct indirect_block // total size is 1 block
 {
+	int block_num;
 	int blocks_in_file;
 	int data_blocks[MAX_DATABLOCKS_PER_INDIRECT_BLOCK]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
 };
@@ -65,6 +66,7 @@ struct dir_entry
 
 struct dir_data_block
 {
+	int block_num;
 	int num_entries;
 	struct dir_entry dir_entries[MAX_DIR_ENTRIES_PER_DATA_BLOCK];
 };
