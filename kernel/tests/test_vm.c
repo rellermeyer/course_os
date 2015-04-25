@@ -119,6 +119,7 @@ int test_vm_1() {
 	LOG("%d\n", i);
 
 	// Free the page!
+	LOG("Freeing page at %X\n", p);
 	vm_free_page(vas3, p);
 
 	// Clean up & switch back to the kernel's VAS before we return.
