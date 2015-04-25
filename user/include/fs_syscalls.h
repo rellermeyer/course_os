@@ -43,7 +43,7 @@ int delete(char* filepath);
 //Deletes the file or directory specified by filepath. Returns -1 if unsuccessful
 
 int copy(char* source, char* dest, char mode);
-//Copies the contents of file or directory source into directory dest. The new file has permissions mode. Returns -1 if unsuccessful
+//Copies the contents of file or directory source into a new directory dest. The new file has permissions mode (if copying directory, put 0 as permission). Returns -1 if unsuccessful
 
 int ls(char* filepath);
 //Lists the contents of a given directory. Returns -1 if unsuccessful. 

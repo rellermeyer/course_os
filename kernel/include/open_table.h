@@ -11,7 +11,7 @@
 // More fields can be added if necessary.
 struct file_descriptor {
 	char permission;
-    struct inode* linked_file; //pointer to file struct 
+    struct inode* linked_file; //pointer to inode struct 
     int offset; //keeps track of where we are reading
 };
 

@@ -277,8 +277,8 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 }//end kfind_inode() helper function
 
 //finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
+//result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
 void kfind_dir(char* filepath, struct dir_helper* result){
-	// struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	int dir_levels = 0;
 	int total_chars = 0;
 	char* iterator = filepath;
@@ -709,8 +709,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 // close the file fd, return 1 if the close was successful 
 int kclose(int fd) {
 	int error;
-	if(!file_is_open(fd)) { os_printf("file not open"); return -1; }
-	error = delete_from_opentable(fd);
+	if(!file_is_open(fd)) { 
+		os_printf("file not open"); return -1; 
+	}
+	error = delete_from_opentable(fd); //this also frees inode
 	return error;
 } // end kclose();
 
@@ -791,7 +793,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		return fd;
 	}
 	else { //directories are not added to open table
-		return 0;
+		return error;
 	}
 }//end of kcreate() function
 
@@ -802,16 +804,24 @@ int kdelete(char* filepath) {
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	if (error == -1) {
+		os_printf("something wrong in kfind_inode \n");
+		return -1;
+	}
 	//here we have the file we were looking for! it is cur_inode.
 
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // REAL DELETING HAS TO BE MADE                                                                                                                                    |
-    // struct of inode has to be deleted from disk and removed from parents directory inode, and space has to be marked as free                                                                           |
+    // REAL DELETING HAS TO BE MADE                                                                                                                                    
+    // the inode has to be deleted from its directory.                                                                         
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 	
-	//also free direct and indirect data blocks
+	kfree(cur_inode->data_blocks);
+	kfree(cur_inode->indirect_blocks);
+	bv_free(cur_inode->perms);
 	kfree(cur_inode);
+	kfree(result->truncated_path);
+	kfree(result->last);
 	kfree(result);
 	return 0;
 } // end kdelete();
@@ -819,15 +829,55 @@ int kdelete(char* filepath) {
 
 //copies contents of file
 int kcopy(char* source, char* dest, char mode) {
+	int error = 0;
+	int inum = 0; //start from root
 
-	//to be implemented
+	//1. find source
+	struct dir_helper* source_result = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(source, source_result); 
+	struct inode* source_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	error = kfind_inode(source, inum, (source_result->dir_levels + 1), source_inode);
+	if (error == -1) {  //kfind_inode unsuccessful 
+		os_printf("kfind_inode unsuccessful \n");
+		return -1;
+	}
+	//at this point source_inode is the inode of the source
+	int copy_directory = source_inode->is_dir; //checks if we are copying a direcory or a file
 
+	//2. cerate destination
+	int dest_fd = 0;
+	dest_fd = kcreate(dest, mode, copy_directory); //creates the new file or directory
+	if (dest_fd == -1) { //some problem occurred in kcreate
+		os_printf("kcreate unsuccessful \n");
+		return -1;
+	}
+
+	//3. find destination
+	struct file_descriptor*  dest_fd_struct = get_descriptor(dest_fd);
+	if (dest_fd_struct == 0x0) {  //get_descriptor had problems
+		os_printf("get_descriptor unsuccessful \n");
+		return -1;
+	}
+	struct inode * dest_inode = dest_fd_struct->linked_file;
+	//at this point dest_inode is the inode of the created destination
+
+	//4. copy contents from source_inode to dest_inode
+	//-------------------------------------------------------------------------------------------------------------------------------------------------------
+	// NEED HELPER FUNCTIONS (THAT WILL BE USED ALSO IN READ AND WRITE) THAT READ/WRITE ME STUFF FROM A GIVEN INODE
+	// so the whole copying can actually happen!
+	//-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+	kfree(source_inode);
+	kfree(source_result->truncated_path);
+	kfree(source_result->last);
+	kfree(source_result);
 	return -1;
 }
 
 
 //prints the contents of a directory
 int kls(char* filepath) {
+
 
 	//to be implemented
 

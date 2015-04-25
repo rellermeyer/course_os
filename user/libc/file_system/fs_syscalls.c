@@ -5,7 +5,7 @@
 /* open() returns a file descriptor, a long used to call later fuctions.
 A return value of -1 tells that an error occurred and the file cannot be opened */
 int open(char* filepath, char mode){
-	if(mode != 'r' || mode != 'w' || mode != 'a' || mode!='b'){
+	if(mode != 'r' && mode != 'w' && mode != 'a' && mode!='b'){
 		
 		//os_printf("mode is not a valid option. \n");
 		//os_printf("r=read, w=write, b=both read and write, a=append.\n");
@@ -21,7 +21,7 @@ int open(char* filepath, char mode){
 /* create() returns a file descriptor to use in later functions */
 int create(char* filepath, char mode){
 
-	if(mode != 'r' || mode != 'w' || mode != 'a' || mode!='b'){
+	if(mode != 'r' && mode != 'w' && mode != 'a' && mode!='b'){
 		
 		//os_printf("mode is not a valid option. \n");
 		//os_printf("r=read, w=write, b=both read and write, a=append.\n");
@@ -99,6 +99,10 @@ int delete(char* filepath){
 
 //copies contents of a file
 int copy(char* source, char* dest, char mode) {
+	if (mode != '0' && mode != 'r' && mode != 'w') {
+		//os_printf("Enter mode of new file as r for read only or w for write, or 0 if copying a directory \n");
+		return -1;
+	}
 	long error = __syscall2(SYSCALL_COPY, (long)source, (long) dest, (long) mode);
 	return (int)error;
 }
