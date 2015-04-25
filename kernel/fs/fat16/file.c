@@ -473,6 +473,10 @@ int kopen(char* filepath, char mode){
 	//here we have the file we were looking for! it is cur_inode.
 	if (cur_inode->is_dir) {
 		os_printf("cannot open a directory, make the path end to a file");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
 		return -1;
 	}
 
@@ -749,6 +753,10 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
 	if (free_inode_loc == -1) {
 		os_printf("Disk has reached max number of files allowed. \n");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
 		return -1;
 	}
 	bv_set(free_inode_loc, inode_bitmap);
@@ -807,6 +815,10 @@ int kdelete(char* filepath) {
 	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	if (error == -1) {
 		os_printf("something wrong in kfind_inode \n");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
 		return -1;
 	}
 	//here we have the file we were looking for! it is cur_inode.
@@ -839,6 +851,10 @@ int kcopy(char* source, char* dest, char mode) {
 	error = kfind_inode(source, inum, (source_result->dir_levels + 1), source_inode);
 	if (error == -1) {  //kfind_inode unsuccessful 
 		os_printf("kfind_inode unsuccessful \n");
+		kfree(source_inode);
+		kfree(source_result->truncated_path);
+		kfree(source_result->last);
+		kfree(source_result);
 		return -1;
 	}
 	//at this point source_inode is the inode of the source
@@ -849,6 +865,10 @@ int kcopy(char* source, char* dest, char mode) {
 	dest_fd = kcreate(dest, mode, copy_directory); //creates the new file or directory
 	if (dest_fd == -1) { //some problem occurred in kcreate
 		os_printf("kcreate unsuccessful \n");
+		kfree(source_inode);
+		kfree(source_result->truncated_path);
+		kfree(source_result->last);
+		kfree(source_result);
 		return -1;
 	}
 
@@ -856,6 +876,10 @@ int kcopy(char* source, char* dest, char mode) {
 	struct file_descriptor*  dest_fd_struct = get_descriptor(dest_fd);
 	if (dest_fd_struct == 0x0) {  //get_descriptor had problems
 		os_printf("get_descriptor unsuccessful \n");
+		kfree(source_inode);
+		kfree(source_result->truncated_path);
+		kfree(source_result->last);
+		kfree(source_result);
 		return -1;
 	}
 	struct inode * dest_inode = dest_fd_struct->linked_file;
@@ -877,9 +901,17 @@ int kcopy(char* source, char* dest, char mode) {
 
 //prints the contents of a directory
 int kls(char* filepath) {
-
-
-	//to be implemented
+	int error = 0;
+	int inum = 0; //starting from root
+	struct dir_helper* result = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result); 
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	if (error == -1) {  //kfind_inode unsuccessful 
+		os_printf("kfind_inode unsuccessful \n");
+		return -1;
+	}
+	
 
 	return -1;
 }
