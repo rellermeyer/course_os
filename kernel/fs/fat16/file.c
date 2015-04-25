@@ -4,7 +4,6 @@
 #include "../../include/bitvector.h"
 #include "../../include/open_table.h"
 #include "../../include/mmci.h" 
-#include "../../include/klibc.h"
 
 #define NULL 0x0
 
