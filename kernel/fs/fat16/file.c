@@ -299,7 +299,7 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	total_chars -= index;
 
 	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
-	char* last = (char*)kmalloc(index);
+	char last[] = (char*)kmalloc(index);
 	int i;
 	for(i = 0; i < total_chars; i++){
 		truncated_path[i] = filepath[i];
@@ -446,7 +446,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		}
 	}
 	kfree(dir_block);
-	if(flag_free_new dir_block){
+	if(flag_free_new_dir_block){
 		kfree(new_dir_block);
 	}
 	if(flag_free_cur_indirect_block){
