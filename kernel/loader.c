@@ -103,11 +103,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
-	
-	
 	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
-
-	pcb_p->R15 = (uint32_t)(0x28020); // set PC
 
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	
@@ -132,9 +128,14 @@ Elf_Ehdr* load_file(pcb * process_control_block, uint32_t * file_pointer)
 	}
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
+	Elf_Shdr * sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
-	
+	//read_section_header_table(h, sh, (uint32_t*)file_pointer);
+	// /vm_enable_vas(process_control_block->stored_vas);
+
 	allocate_process_memory(process_control_block, h, ph, file_pointer);
+
+	//vm_use_kernel_vas();
 	return h;
 }
 

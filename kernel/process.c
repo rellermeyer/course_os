@@ -6,10 +6,6 @@
 #include "elf.h"
 static uint32_t GLOBAL_PID;
 
-#define STACK_BASE 0x9f000000
-#define STACK_TOP (STACK_BASE+BLOCK_SIZE) 
-
-
 uint32_t sample_func(uint32_t);
 
 int init_all_processes() {
@@ -36,23 +32,29 @@ pcb* process_create(uint32_t* file_p) {
 		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
+		pcb_pointer->stored_vas = vm_new_vas();
 
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
+
 		if(!success) {
 		 	return (pcb*) -1;
 		}
+
 		os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
+
+
 		//fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
-        
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
-        uint32_t add = 0x2000;
-		pcb_pointer->function = file_p + (success->e_ehsize+(success->e_phentsize*success->e_phnum))/4 ;
-		os_printf("%X %X %X \n",file_p,&pcb_pointer->function , add);
+		pcb_pointer->R15=success->e_entry;
+		//pcb_pointer->function = success->e_entry;
+		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
 		//assert(1==3)
+
+
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
 		
@@ -126,36 +128,27 @@ uint32_t load_process_state(uint32_t PID) {
 		os_printf("Invalid PID in load_process_state");
 		return 0;
 	}
-
-	int x = 1;
-	os_printf("Heads up, I'm going into a busy loop, so you'll have to skip past the loop using gdb.\n");
-	while (x);
-	int a = 0x28020;
-	//asm volatile("MOV r15, %0"::"r"(a));
-
-	/*asm("MOV r0, %0"::"r"(pcb_p->R0):);
+	//while(1);
+	asm("MOV r0, %0"::"r"(pcb_p->R0):);
 	asm("MOV r1, %0"::"r"(pcb_p->R1):);
 	asm("MOV r2, %0"::"r"(pcb_p->R2):);
 	asm("MOV r3, %0"::"r"(pcb_p->R3):);
 	asm("MOV r4, %0"::"r"(pcb_p->R4):);
 	asm("MOV r5, %0"::"r"(pcb_p->R5):);
-
 	asm("MOV r6, %0"::"r"(pcb_p->R6):);
 	asm("MOV r7, %0"::"r"(pcb_p->R7):);
 	asm("MOV r8, %0"::"r"(pcb_p->R8):);
 	asm("MOV r9, %0"::"r"(pcb_p->R9):);
 	asm("MOV r10, %0"::"r"(pcb_p->R10):);
-
 	//asm("MOV r11, %0"::"r"(11):);
-
 	//assert(1==11);
-	asm("MOV r12, %0"::"r"(pcb_p->R12):);*/
+	asm("MOV r12, %0"::"r"(pcb_p->R12):);
 
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
 
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
 
-	asm("MOV r15, %0"::"r"(a):);
+	asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
 	return 1;
 }
@@ -302,6 +295,7 @@ uint32_t free_PCB(pcb* pcb_p) {
    return 0 upon failure
 */
 uint32_t execute_process(pcb* pcb_p) {
+	
 	if(!pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
@@ -309,8 +303,9 @@ uint32_t execute_process(pcb* pcb_p) {
 
 
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+	vm_enable_vas(pcb_p->stored_vas);
 
-	pcb_p->R15 = 0x28020;
+
 	//4-13-15: Store current program counter to new PCB's return register,
 	//         then call load_process_state to switch to new process
 
@@ -318,19 +313,16 @@ uint32_t execute_process(pcb* pcb_p) {
 	//print_process_state(pcb_p->PID);
 	//assert(1==2 && "process.c - We're stopping right after loading process state.");
 	//4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
-	assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
+	// assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
 	//4-13-15: Create new virtual address space for process and switch into it
-	pcb_p->stored_vas = vm_new_vas();
-	vm_enable_vas(pcb_p->stored_vas);
+	
 
 	// Let's get a simple argc/argv layout going at 0x9f000000
-#define STACK_BASE 0x9f000000
-#define STACK_TOP (STACK_BASE + BLOCK_SIZE)
+
 	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)STACK_BASE, VM_PERM_USER_RW);
 	os_printf("%d\n", retval);
 
 	// Stick the program name at stack_base
-	os_strcpy(STACK_BASE, "hello");
 
 	// Stick a NULL at STACK_TOP-sizeof(int*)
 	uint32_t *stack_top = (uint32_t*)STACK_TOP;
@@ -340,21 +332,10 @@ uint32_t execute_process(pcb* pcb_p) {
 	stack_top[-4] = 0;
 	stack_top[-5] = STACK_BASE;
 	stack_top[-6] = 1;
-
+	os_strcpy(STACK_BASE, "name");
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4*6;
-
-	/*
-	  asm("SUB lr, lr, lr"); //Clear link register, why i dont know
-	  asm("LDR r0, [sp]"); //Load argc
-	  asm("ADD r1, sp, #4"); //Load argv
-	  asm("ADD r2, r1, r0, LSL #2");
-
-	  asm("MOV %0, r0":"=r"(pcb_p->R0)::);
-	  asm("MOV %0, r1":"=r"(pcb_p->R1)::);
-	*/
 	print_process_state(pcb_p->PID);
-	//assert(1==2);
 	load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
