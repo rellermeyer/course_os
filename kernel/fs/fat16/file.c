@@ -187,11 +187,11 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
+		struct dir_data_block *cur_data_block = (struct dir_data_block*) dir_spaceholder;
 		int j;
-		for(j = 0; j < (cur_data_block.num_entries); j++){
-			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
-			if(!os_strcmp(*file_dir.name, next_path)){
+		for(j = 0; j < (cur_data_block->num_entries); j++){
+			struct dir_entry file_dir = cur_data_block->dir_entries[j];  
+			if(!os_strcmp(file_dir.name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
 				inum = file_dir.inum;
 				break;
@@ -228,7 +228,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 			int k;
 			for(k = 0; k < (cur_data_block.num_entries); k++){
 				struct dir_entry file_dir = cur_data_block.dir_entries[k]; // 
-				if(!os_strcmp(*file_dir.name, next_path)){
+				if(!os_strcmp(file_dir.name, next_path)){
 					file_found = 1; //we found the file, so break out of loop
 					inum = file_dir.inum;
 					break;
@@ -346,7 +346,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	struct dir_entry new_dir_entry;
 	new_dir_entry.inum = free_inode_loc;
 	new_dir_entry.name = result->last;
-	new_dir_entry.name_length = os_strlen(*(result->last));
+	new_dir_entry.name_length = os_strlen(result->last);
 
 	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
 	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
@@ -366,7 +366,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		flag_free_new_dir_block = 1;
 		new_dir_block->num_entries = 0;
 		new_dir_block->block_num = new_data_block_loc;
-		new_dir_block->dir_entries = {NULL};
+		new_dir_block->dir_entries = NULL;
 
 		if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
 			//Case (1): add a direct data block to cur_inode:
@@ -417,7 +417,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 					new_indirect_block->blocks_in_file = 0;
 					new_indirect_block->block_num = new_indirect_block_loc;
-					new_indirect_block->data_blocks = {NULL};
+					new_indirect_block->data_blocks = NULL;
 
 					new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_dir_block->block_num;
 					new_indirect_block->blocks_in_file++;
@@ -435,6 +435,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
 					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					transmit_data_block_bitmap();//TODO: create this helper function
+					kfree(new_indirect_block);
 
 				}else{
 					//file has reached max allowable size:
@@ -443,16 +444,11 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				}
 			}
 		}
-	}
-	kfree(dir_block);
-	if(flag_free_new_dir_block){
 		kfree(new_dir_block);
 	}
+	kfree(dir_block);
 	if(flag_free_cur_indirect_block){
 		kfree(cur_indirect_block);
-	}
-	if(flag_free_new_indirect_block){
-		kfree(new_indirect_block);
 	}
 	return 0;
 }//end add_dir_entry() helper function
@@ -511,19 +507,19 @@ int kopen(char* filepath, char mode){
 
 
 // Helper function for kread():
-int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd, void* transferSpace) {
+int read_partial_block(int bytes_left, void* buf_offset, struct file_descriptor* fd, void* transfer_space) {
 	int local_offset = fd->offset % BLOCKSIZE; // local_offset is the leftmost point in the block
 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
-	int blockNum = fd->offset / BLOCKSIZE;
-	int success = sd_receive(transferSpace, blockNum);
+	int block_num = fd->offset / BLOCKSIZE;
+	int success = sd_receive(transfer_space, block_num);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	// os_printf("failed to receive block number %d\n", numBytes);
 	 	return -1;
 	}//end if
 
-	if((local_offset == 0) && (bytesLeft < BLOCKSIZE)) { 
+	if((local_offset == 0) && (bytes_left < BLOCKSIZE)) { 
 	/*	 ___________________
 		|~~~~~~~~~|			|
 		--------------------- */
@@ -531,14 +527,14 @@ int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* 
 		// source is transferSpace
 		// dest is users buffer
 
-		 os_memcpy(transferSpace, buf_offset, (os_size_t) bytesLeft); 	// note, this updates the buf_offset pointer as it transfer the data
+		 os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
-		 fd->offset += bytesLeft; // update the file descriptors file offset
+		 fd->offset += bytes_left; // update the file descriptors file offset
 		 // reset transferSpace pointer
-		 transferSpace -= bytesLeft;
-		 return bytesLeft; // note, we are returning the number of bytes that were successfully transferred
+		 transfer_space -= bytes_left;
+		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
-	} else if((local_offset > 0) && (bytesLeft >= (BLOCKSIZE - local_offset))) {
+	} else if((local_offset > 0) && (bytes_left >= (BLOCKSIZE - local_offset))) {
 	/*	_____________________
 		|           |~~~~~~~~|
 		---------------------- */
@@ -546,14 +542,14 @@ int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* 
 		// source is transferSpace
 		// dest is users buffer
 
-		 os_memcpy((transferSpace + local_offset), buf_offset, (os_size_t) (BLOCKSIZE - local_offset)); 	// note, this updates the buf_offset pointer as it transfer the data
+		 os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) (BLOCKSIZE - local_offset)); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
 		 fd->offset += (BLOCKSIZE - local_offset); // update the file descriptors file offset
 		 // reset transferSpace pointer
-		 transferSpace -= BLOCKSIZE;
+		 transfer_space -= BLOCKSIZE;
 		 return (BLOCKSIZE - local_offset); // note, we are returning the number of bytes that were successfully transferred
 
-	} else if((local_offset > 0) && (bytesLeft < (BLOCKSIZE - local_offset))){
+	} else if((local_offset > 0) && (bytes_left < (BLOCKSIZE - local_offset))){
 	/*	______________________
 		|      |~~~~|         |
 		----------------------- */
@@ -561,12 +557,12 @@ int read_partial_block(int bytesLeft, void* buf_offset, struct file_descriptor* 
 		// source is transferSpace
 		// dest is users buffer
 
-		 os_memcpy((transferSpace + local_offset), buf_offset, (os_size_t) bytesLeft); 	// note, this updates the buf_offset pointer as it transfer the data
+		 os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) bytes_left); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
-		 fd->offset += bytesLeft; // update the file descriptors file offset
+		 fd->offset += bytes_left; // update the file descriptors file offset
 		 // reset transferSpace pointer
-		 transferSpace -= (local_offset + bytesLeft);
-		 return bytesLeft; // note, we are returning the number of bytes that were successfully transferred
+		 transfer_space -= (local_offset + bytes_left);
+		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
 	} else{
 		//this should never happen...print for debugging. TODO: remove after debugged
