@@ -99,7 +99,8 @@ int delete_from_opentable(int fd) {
         else {
                 table[fd]->linked_file->fd_refs--;
         }
-        kfree(table[fd]);
+        kfree(table[fd]->linked_file); //free inode 
+        kfree(table[fd]); //free space in table
         struct free_index * to_add = kmalloc(sizeof(struct free_index)); //create new node
         to_add->index = fd;
         TAIL->next = to_add;
