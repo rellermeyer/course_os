@@ -48,7 +48,8 @@ int test_vm_1() {
 	INFO("%X and %X and %X\n", vas1, vas2, vas3);
 
 	// Test allocating frames...
-	int retval = vm_allocate_page(vas3, (void*) 0x25000000,
+#define P3_BASE 0x24000000
+	int retval = vm_allocate_page(vas3, (void*) P3_BASE,
 				      VM_PERM_PRIVILEGED_RW);
 
 	if (retval) {
@@ -65,7 +66,7 @@ int test_vm_1() {
 	}
 
 	// Oh man! We should be able to write to there!
-	p = (int*) 0x25000000;
+	p = (int*) P3_BASE;
 	p[0] = 1;
 
 	LOG("%x %x\n", &p, p);
@@ -75,16 +76,39 @@ int test_vm_1() {
 		return TEST_FAIL;
 	}
 
+	// Test shared memory...
+	LOG("Testing shared memory...\n");
+	int *p_3 = (int*) P3_BASE;//0x24000000;
+	int *p_1 = (int*) 0x31000000;
+	retval = vm_map_shared_memory(vas1, p_1, vas3, p_3, VM_PERM_PRIVILEGED_RW);
+	LOG("map_shared_memory returned %d\n", retval);
+
+	p_3[0] = 321;
+	vm_enable_vas(vas1);
+	if (p_1[0] != 321) {
+		ERROR("0x%x == 321?", p_1[0]);
+		return TEST_FAIL;
+	}
+	p_1[1] = 456;
+
+	vm_enable_vas(vas3);
+	if (p_3[1] != 456) {
+		ERROR("0x%x == 456?", p_3[1]);
+		return TEST_FAIL;
+	}
+
 	// Test allocating many frames...
 	/*p += BLOCK_SIZE;
 	while (!vm_allocate_page(vas3, (void*) p, 0)) {
+		//LOG("Allocated memory...\n");
 		p += BLOCK_SIZE;
 	}
 
 	p -= BLOCK_SIZE;
 	LOG("Highest frame allocated: 0x%X\n", p);
 
-	while ((unsigned int) p > 0x25000000) {
+	while ((unsigned int) p > P3_BASE) {
+		//LOG("Freed memory...\n");
 		vm_free_page(vas3, p);
 		p -= BLOCK_SIZE;
 	}*/
@@ -130,4 +154,6 @@ void run_vm_tests() {
 	Test *tests[NUM_TESTS];
 	tests[0] = create_test("test_vm_1", &test_vm_1);
 	run_tests(tests, NUM_TESTS);
+	// Just in case it returned in error...
+	vm_enable_vas((struct vas*) KERNEL_VAS);
 }
