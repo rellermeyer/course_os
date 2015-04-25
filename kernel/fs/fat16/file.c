@@ -284,13 +284,13 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	char* iterator = filepath;
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
-		if(iterator[0] == '/'){
+		if(iterator[0] == '\0'){
+			break;
+		}
+		else if(iterator[0] == '/'){
 			dir_levels++;
 			index = 0;
 		}else{
-			if(iterator[0] == '\0'){
-				break;
-			}
 			index++;
 		}
 		iterator++;
