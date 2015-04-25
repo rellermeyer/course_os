@@ -161,7 +161,7 @@ void _schedule_register_timer_irq(){
         interrupt_handler_t *timer;
         timer->handler=&timer_interrupt_handler;
         register_interrupt_handler(4,timer);
-        timer_start();
+        initialize_timers();
 }
 
 

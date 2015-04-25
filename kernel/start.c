@@ -88,7 +88,7 @@ void start2(uint32_t *p_bootargs)
 	/*int *p = (int*)0xFFFFFFF0;
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
-
+	_schedule_register_timer_irq();
 	timer_test();
 	vm_test();
 	os_printf("There are %d free frames.\n", vm_count_free_frames());

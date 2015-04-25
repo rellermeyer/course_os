@@ -26,6 +26,10 @@ int set_prescale(int timer_index, int mode);
 int start_timer_interrupts( int timer_index, int star_val);
 long int conversion(int timer_index, int milliseconds);
 int enable_timer_interrupt(int timer_index);
+int disable_timer(int timer_index);
+void timer_start(int timer_index);
+
+
 
 rasp_pi_timer *timer_pointers[4];
 
