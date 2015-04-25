@@ -5,6 +5,11 @@
 //that implements the open table for the file system
 //please use provided functinos to add/remove items 
 
+#include "../include/file.h"
+#include "../include/klibc.h"
+#include "../include/open_table.h"
+#include "../include/bitvector.h"
+
 #define SYSTEM_SIZE 512 //how many files can be open at the same time
 
 // Each cell of the array is a struct with infos about the file.
@@ -18,12 +23,9 @@ struct file_descriptor {
 // Array of open files 
 struct file_descriptor* table[SYSTEM_SIZE]; 
 
-// LL of free indexes at which we can place a newly opened file.
-// one day, this can be implemented with the bitvector. 
-struct free_index {
-    int index;
-    struct free_index* next;
-};
+//list of free indexes
+bitVector * free_list; 
+
 
 void fs_table_init(); //initializes fs open table at boot up time
 void fs_table_shutdown(); //closes the open table at shutdown time
@@ -35,7 +37,5 @@ int delete_from_opentable(int fd); //deletes a file from the opentable, returns 
 int file_is_open(int fd); //checks if there is an entry corrensponding to that fd
 
 struct file_descriptor* get_descriptor(int fd); //returns the filedescriptor struct linked to fd 
-
-#include "file.h"
 
 #endif 

@@ -104,7 +104,7 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 		}
 	}//end for
 
-	fs_table_init(); //initializes the opentable 
+	fs_table_init(); //initializes open_table stuff
 	return 0;
 	//what was this for? don't think we need it...
 	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
@@ -140,7 +140,7 @@ int kfs_shutdown(){
 	kfree(inode_table_temp);
 	//TODO: free anything else that needs to be freed...
 
-	fs_table_shutdown(); //frees the free list in open_table.c
+	fs_table_shutdown(); //frees open_table stuff
 	return 0;
 }//end kfs_shutdown() function
 
@@ -885,7 +885,7 @@ int kcopy(char* source, char* dest, char mode) {
 	struct inode * dest_inode = dest_fd_struct->linked_file;
 	//at this point dest_inode is the inode of the created destination
 
-	//4. copy contents from source_inode to dest_inode
+	//4. copy contents from source_inode to dest_inode (all contents)
 	//-------------------------------------------------------------------------------------------------------------------------------------------------------
 	// NEED HELPER FUNCTIONS (THAT WILL BE USED ALSO IN READ AND WRITE) THAT READ/WRITE ME STUFF FROM A GIVEN INODE
 	// so the whole copying can actually happen!
@@ -953,7 +953,7 @@ int kls(char* filepath) {
 			}//inner for
 		}//outer for
 	}//end for
-	
+
 	kfree(cur_indirect_block);
 	kfree(dir_spaceholder);
 	kfree(cur_inode);
