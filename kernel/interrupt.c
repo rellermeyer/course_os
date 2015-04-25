@@ -5,7 +5,7 @@
  */
 #include "interrupt.h"
 #include "klibc.h"
-
+#include "drivers/timer.h"
 
 // there are 32 kinds of interrupts on the VIC
 // this structure may need to be expanded if the secondary controller is incorporated
@@ -142,6 +142,26 @@ int get_proc_status(void) {
    disable_interrupt_save				     */
 void restore_proc_status(int cpsr) {
 	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
+}
+
+
+static void (*function)(void *args);
+
+void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
+{
+        function=callback_function;
+        start_timer_interrupts(0,time);
+}
+void timer_interrupt_handler(){
+os_printf("hello I'm interrupting");
+//function(args);
+}
+// Create the handler
+void _schedule_register_timer_irq(){
+        interrupt_handler_t *timer;
+        timer->handler=&timer_interrupt_handler;
+        register_interrupt_handler(4,timer);
+        timer_start();
 }
 
 

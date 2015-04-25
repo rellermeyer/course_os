@@ -1,9 +1,9 @@
+
 /* Device Driver for ARM Dual-Timer Module (SP804)
 Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.arm.doc.ddi0271d/DDI0271.pdf*/
-#include <stdint.h>
+//#include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
-
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
 void initialize_timers(){
@@ -185,6 +185,7 @@ void timer_start(int timer_index) {
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
 }
 
+
 /*starts interrupts every start_val ticks */
 //You give it a vallut and the specific timer you want to star.
 // YOu have four timers just start with timer zero
@@ -216,6 +217,7 @@ int start_timer_interrupts(int timer_index,int milliseconds){
 
 
 void timer_test(){
+	_schedule_register_timer_irq();
 	initialize_timers();
 	start_timer_interrupts(1,5);
 	print_control_status(1);
