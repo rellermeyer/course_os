@@ -89,8 +89,8 @@ int set_periodic_mode(int timer_index){
 
 //converts ms into ticks
 //assumes modes are valid, if not, should return 0
-long int conversion(int ms){
-	int mode = timer_pointers[0]->control & 0xC;
+long int conversion(int timer_index, int milliseconds){
+	int mode = timer_pointers[timer_index]->control & 0xC;
 	int ticks = 0;
 	if(mode == 0){
 		ticks = 32;
@@ -101,7 +101,7 @@ long int conversion(int ms){
 	else if(mode == 2){
 		ticks = 1000;
 	}
-	return ms * ticks;
+	return milliseconds * ticks;
 }
 
 //function to set timer to different timer clock rates... 0 -> 1 (default), 1 -> 16, 2 -> 256...
@@ -193,7 +193,8 @@ void timer_start(int timer_index) {
 // per proccess.
 // ex: start_timer_interrupts(0,10) which means start timer(0)
 // and interrupt every 10 clicks.
-int start_timer_interrupts(int timer_index,int start_val){
+int start_timer_interrupts(int timer_index,int milliseconds){
+	conversion(timer_index, milliseconds);
   if(timer_index < 4 && timer_index >= 0){
     initialize_timers();
     timer_start(timer_index);

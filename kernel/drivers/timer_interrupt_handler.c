@@ -1,6 +1,6 @@
 #include "include/interrupt.h"
 #include "klibc.h"
-#include "include/timer.c"
+#include "include/timer.h"
 
 
 // Create the handler
@@ -16,8 +16,7 @@ static void (*function)(void *args);
 void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
 {
 	function=callback_function;		
-	start_timer_interrupts(0,time)
-
+	start_timer_interrupts(0,time);
 }
 void timer_interrupt_handler(){
 function(args);
