@@ -22,6 +22,8 @@ arrl_handle* arrl_create_fixed(uint32_t bucket_size) {
     return result;
 }
 
+
+
 void arrl_append(arrl_handle* arrl, void* elem) {
     llist_node * curr_bucket;
     uint32_t list_size;
@@ -41,6 +43,24 @@ void arrl_append(arrl_handle* arrl, void* elem) {
         curr_bucket= curr_bucket->next;
     }
     *(((int**)curr_bucket->data) + last_bucket_size) = (int*)elem;
+}
+
+void* arrl_get(arrl_handle* arrl, uint32_t index) {
+    uint32_t list_index;
+    uint32_t bucket_index;
+    llist_node * curr_bucket;
+
+    if (index >= arrl->size) {
+        return 0;
+    }
+    list_index = arrl->size/index;
+    bucket_index = arrl->size%index;
+    curr_bucket = arrl->linked_list->head;
+
+    for (uint32_t index = 0; index < list_index; ++index) {
+        curr_bucket = curr_bucket->next;
+    }
+    return *(((int**)curr_bucket->data) + bucket_index);
 }
 
 void arrl_remove(arrl_handle* arrl, void* elem) {

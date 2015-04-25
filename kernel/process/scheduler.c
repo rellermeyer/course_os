@@ -170,7 +170,7 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 
     int i = 0;
     for (; i < arrl_count(parent_task->children_tids); i++) {
-        uint32_t child_tid = (uint32_t) arrl_get(parent_task, i);
+        uint32_t child_tid = (uint32_t) arrl_get(parent_task->children_tids, i);
         sched_task * child_task = hmap_get(all_tasks_map, child_tid);
         if ((child_task = __sched_find_subtask(child_task, tid))) {
             return child_task;
