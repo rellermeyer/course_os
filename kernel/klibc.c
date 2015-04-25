@@ -578,3 +578,21 @@ unsigned int rand()
     z4 = ((z4 & 4294967168U) << 13) ^ b;
     return (z1 ^ z2 ^ z3 ^ z4);
 }
+
+uint32_t kthr_create(sched_msg_callback_handler cb_handler){
+    kthread_handle * kthread = kthread_create(cb_handler);
+    sched_task * task = sched_create_task_from_kthread(kthread, 0);
+    return task->tid;
+}
+
+uint32_t kthr_start(uint32_t tid){
+    return sched_start_task(tid);
+}
+
+uint32_t kthr_kill(uint32_t tid){
+    return sched_remove_task(tid);
+}
+
+uint32_t kthr_wait(uint32_t tid){
+    return sched_waittid(tid);
+}

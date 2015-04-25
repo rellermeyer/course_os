@@ -22,8 +22,6 @@ arrl_handle* arrl_create_fixed(uint32_t bucket_size) {
     return result;
 }
 
-
-
 void arrl_append(arrl_handle* arrl, void* elem) {
     llist_node * curr_bucket;
     uint32_t list_size;
@@ -39,10 +37,10 @@ void arrl_append(arrl_handle* arrl, void* elem) {
     list_size = arrl->size / arrl->bucket_size;
     last_bucket_size = arrl->size % arrl->bucket_size;
 
-    for(uint32_t i=0; i < list_size; ++i) {
-        curr_bucket= curr_bucket->next;
+    for (uint32_t i = 0; i < list_size; ++i) {
+        curr_bucket = curr_bucket->next;
     }
-    *(((int**)curr_bucket->data) + last_bucket_size) = (int*)elem;
+    *(((int**) curr_bucket->data) + last_bucket_size) = (int*) elem;
 }
 
 void* arrl_get(arrl_handle* arrl, uint32_t index) {
@@ -53,14 +51,14 @@ void* arrl_get(arrl_handle* arrl, uint32_t index) {
     if (index >= arrl->size) {
         return 0;
     }
-    list_index = arrl->size/index;
-    bucket_index = arrl->size%index;
+    list_index = arrl->size / index;
+    bucket_index = arrl->size % index;
     curr_bucket = arrl->linked_list->head;
 
     for (uint32_t index = 0; index < list_index; ++index) {
         curr_bucket = curr_bucket->next;
     }
-    return *(((int**)curr_bucket->data) + bucket_index);
+    return *(((int**) curr_bucket->data) + bucket_index);
 }
 
 void arrl_remove(arrl_handle* arrl, void* elem) {
@@ -79,8 +77,8 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
     for (list_index = 0; list_index < list_size; ++list_index) {
         for (bucket_index = 0; bucket_index < bucket_size; ++bucket_index) {
             //if (elem == curr_bucket->data[bucket_index]) {
-                kfree(elem);
-                goto out;
+            kfree(elem);
+            goto out;
             //}
         }
         curr_bucket = curr_bucket->next;
@@ -88,11 +86,12 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
 
     // Except the last bucket, shift each bucket up by one and copy first element of the next bucket to the last cell of the current bucket
     out: while (curr_bucket != tail) {
-        os_memcpy(*(((uint32_t**)curr_bucket->data) + bucket_index + 1),
-                  *(((uint32_t**)curr_bucket->data) + bucket_index + 0),
+        os_memcpy(*(((uint32_t**) curr_bucket->data) + bucket_index + 1),
+                *(((uint32_t**) curr_bucket->data) + bucket_index + 0),
                 bucket_size - bucket_index - 1);
         bucket_index = 0;
-        *(((int**)curr_bucket->data) + bucket_size - 1) = *((int**)curr_bucket->next->data);
+        *(((int**) curr_bucket->data) + bucket_size - 1) =
+                *((int**) curr_bucket->next->data);
         curr_bucket = curr_bucket->next;
     }
 
@@ -108,7 +107,7 @@ uint32_t arrl_contains(arrl_handle* arrl, void* elem) {
         for (uint32_t bucket_index = 0; bucket_index < bucket_size;
                 ++bucket_index) {
             //if (elem == bucket->data[bucket_index]) {
-                return 1;
+            return 1;
             //}
         }
         bucket = bucket->next;
@@ -122,10 +121,9 @@ uint32_t arrl_index_of(arrl_handle* arrl, void* elem) {
     llist_node* bucket = arrl->linked_list->head;
 
     for (int list_index = 0; list_index < list_size; ++list_index) {
-        for (int bucket_index = 0; bucket_index < bucket_size;
-                ++bucket_index) {
+        for (int bucket_index = 0; bucket_index < bucket_size; ++bucket_index) {
             //if (elem == bucket->data[bucket_index]) {
-                return list_index * DEFAULT_BUCKET_SIZE + bucket_index;
+            return list_index * DEFAULT_BUCKET_SIZE + bucket_index;
             //}
         }
         bucket = bucket->next;

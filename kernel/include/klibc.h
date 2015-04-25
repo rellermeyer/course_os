@@ -23,11 +23,17 @@
  * --------------Spring 2015---------------
  * 4/15/15: Added implementation of assert() 
  */
+
 #include <stdint.h>
 #include <stdarg.h>
 #include <global_defs.h>
+#include "scheduler.h"
+
 #ifndef __klibc_h
 #define __klibc_h
+
+#include "kthreads.h"
+
 typedef unsigned int os_size_t;
 
 // useful macros
@@ -115,6 +121,12 @@ unsigned int rand();
 //4-17-15: Initial panic * assert_fail functions added
 void panic();
 int _assert_fail(char *_file, unsigned int _line, char *_func);
-    //__attribute__ ((__noreturn__));
+    //__attribute__ ((__noreturn__));uint32_t kthr_kill(uint32_t tid);
+
+// kernel level threads
+uint32_t kthr_create(kthread_callback_handler cb_handler);
+uint32_t kthr_wait(uint32_t tid);
+uint32_t kthr_start(uint32_t tid);
+uint32_t kthr_kill(uint32_t tid);
 
 #endif

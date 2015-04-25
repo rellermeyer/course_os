@@ -21,7 +21,7 @@ uint32_t prcs_send_message(uint32_t dest_pid, uint32_t event, char * data, int l
 }
 
 // receives messages from processes
-uint32_t prcs_register_message_callback_handler(sched_callback_handler cb_handler) {
+uint32_t prcs_register_message_callback_handler(sched_msg_callback_handler cb_handler) {
     return sched_register_callback_handler(cb_handler);
 }
 

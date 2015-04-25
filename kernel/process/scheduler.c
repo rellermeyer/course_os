@@ -88,7 +88,7 @@ uint32_t sched_init() {
     return STATUS_OK;
 }
 
-uint32_t sched_register_callback_handler(sched_callback_handler cb_handler) {
+uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler) {
     sched_task * task = hmap_get(all_tasks_map, sched_get_active_tid());
     task->cb_handler = cb_handler;
     return STATUS_OK;
@@ -380,7 +380,7 @@ uint32_t __sched_remove_task(sched_task * task) {
 
             int i = 0;
             for (; i < arrl_count(task->children_tids); i++) {
-                sched_remove_task(arrl_get(task->children_tids, i));
+                sched_remove_task((uint32_t)arrl_get(task->children_tids, i));
             }
 
             __sched_resume_timer_irq();
