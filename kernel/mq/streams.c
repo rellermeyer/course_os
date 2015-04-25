@@ -129,7 +129,7 @@ void q_call(char q_name[], int_least32_t* data, void(*receiver)(int_least32_t * 
     q_subscribe(qd, &receiver, (int_least32_t*) userdata);
     os_printf("at this point it still works. data is: \n");
     print_uart0(data);
-    //q_send(qd, (int_least32_t*) data, sizeof(data));
+    q_send(qd, (int_least32_t*) data, sizeof(data));
 }
 
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)

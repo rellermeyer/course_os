@@ -29,13 +29,10 @@
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
-<<<<<<< HEAD
 #include "drivers/timer.h"
 
-=======
 #include "hashtable.h"
 #include "streams.h"
->>>>>>> c3c81b51cdb589114b0e48b8e0a2f24ed0a47280
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 

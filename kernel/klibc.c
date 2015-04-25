@@ -263,6 +263,11 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 	return n;
 }
 
+void printf_receiver(int_least32_t * userdata, int_least32_t *data, int_least32_t datalength)
+{
+    print_uart0(data);
+}
+
 int os_printf(const char *str_buf, ...)
 {
 	va_list args;
@@ -271,6 +276,18 @@ int os_printf(const char *str_buf, ...)
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
 	print_uart0(buf);
+	return n;
+}
+
+int os_printf_v2(const char *str_buf, ...)
+{
+	va_list args;
+	va_start(args, str_buf);
+	char buf[256];
+	int n = os_vsnprintf(buf, 255, str_buf, args);
+	va_end(args);
+    q_call("printf", buf, &printf_receiver, "printf_flag");
+    //	print_uart0(buf);
 	return n;
 }
 
