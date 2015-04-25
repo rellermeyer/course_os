@@ -298,7 +298,7 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	total_chars -= index;
 
 	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
-	char last[] = (char*)kmalloc(index);
+	char* last = (char*)kmalloc(index);
 	int i;
 	for(i = 0; i < total_chars; i++){
 		truncated_path[i] = filepath[i];
@@ -324,7 +324,7 @@ int transmit_data_block_bitmap(){
 int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result){
 	int flag_free_new_dir_block = 0;
 	int flag_free_cur_indirect_block = 0;
-	int flag_free_new_indirect_block 0;
+	int flag_free_new_indirect_block = 0;
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 	struct indirect_block* cur_indirect_block;
