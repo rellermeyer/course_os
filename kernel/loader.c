@@ -84,12 +84,12 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			if(first_seg)
 			{
 				entry_point_offset = h->e_entry - ph[i].p_vaddr;
-				os_printf("ENTRY POINT (e_entry): %X  P_VADDR: %X", h->e_entry, ph[i].p_vaddr);
-				assert(1==2);
+				//os_printf("ENTRY POINT (e_entry): %X  P_VADDR: %X", h->e_entry, ph[i].p_vaddr);
+				//assert(1==2);
 				first_seg = FALSE;
 
-				os_printf("entry addr = %x\n", h->e_entry);
-				os_printf("prog header addr = %x\n", ph[i].p_vaddr);
+				//os_printf("entry addr = %x\n", h->e_entry);
+				//os_printf("prog header addr = %x\n", ph[i].p_vaddr);
 			}
 			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
@@ -104,6 +104,8 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
 	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
+
+	pcb_p->R11 = pcb_p->R13;
 	
 	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
