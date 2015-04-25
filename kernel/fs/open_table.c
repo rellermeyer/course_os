@@ -12,13 +12,13 @@
 
 //called by file.c initialization function, initializes free list and table
 void fs_table_init() {
-        free_list = makeVector(SYSTEM_SIZE); //create bitvector of free indexes
+        open_table_free_list = makeVector(SYSTEM_SIZE); //create bitvector of free indexes
         table = kmalloc(SYSTEM_SIZE * (sizeof(struct file_descriptor*))); //malloc the table
 }
 
 //at shutdown, memory with the free list is freed
 void fs_table_shutdown() {
-        bv_free(free_list);
+        bv_free(open_table_free_list);
         int i;
         for (i = 0; i < SYSTEM_SIZE; i++) {
                 if (table[i] != 0x0) { //deal with users that forget to close files
@@ -43,11 +43,11 @@ struct file_descriptor* get_descriptor(int fd){
 // this function can be used to insert a file in the table
 // and returns the requested index if successful, else -1 
 int add_to_opentable(struct inode * f, char perm) {
-        int fd = (int) bv_firstFree(free_list); //gets free index from bitvector
+        int fd = (int) bv_firstFree(open_table_free_list); //gets free index from bitvector
         if (fd == -1) {
                 return -1; //reached max num of files open
         }
-        bv_set((uint32_t)fd, free_list); //index is now taken
+        bv_set((uint32_t)fd, open_table_free_list); //index is now taken
         struct file_descriptor* to_add = (struct file_descriptor*) kmalloc(sizeof(struct file_descriptor)); //malloc new struct
         int inum = f->inum;
         int i;
@@ -84,7 +84,7 @@ int delete_from_opentable(int fd) {
                 kfree(table[fd]->linked_file);
         }
         kfree(table[fd]); //free space in table
-        bv_lower ((uint32_t)fd, free_list); //index is not taken anymore
+        bv_lower ((uint32_t)fd, open_table_free_list); //index is not taken anymore
         return 0;
 }
 
