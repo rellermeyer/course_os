@@ -539,12 +539,12 @@ int kopen(char* filepath, char mode){
 
 
 // Helper function for kread():
-int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space) {
+int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytes_left, void* transfer_space) {
 	int local_offset = offset % BLOCKSIZE; // local_offset is the leftmost point in the block
 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
-	int block_num = fd->offset / BLOCKSIZE;
-	int block_address = get_block_address(fd->linked_file, block_num);
+	int block_num = offset / BLOCKSIZE;
+	int block_address = get_block_address(c_inode, block_num);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
@@ -563,7 +563,6 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 		// note, this updates the buf_offset pointer as it transfer the data
 		// os_memcpy takes uint32_t* as arguments
 		 os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	
-		 fd->offset += bytes_left; // update the file descriptors file offset
 		 // reset transferSpace pointer
 		 //transfer_space -= bytes_left; //Purpose of this?
 		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
@@ -578,9 +577,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 
 		 os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) (BLOCKSIZE - local_offset)); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
-		 fd->offset += (BLOCKSIZE - local_offset); // update the file descriptors file offset
 		 // reset transferSpace pointer
-		 transfer_space -= BLOCKSIZE;
+		// transfer_space -= BLOCKSIZE;
 		 return (BLOCKSIZE - local_offset); // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left < (BLOCKSIZE - local_offset))){
@@ -593,16 +591,15 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 
 		 os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) bytes_left); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
-		 fd->offset += bytes_left; // update the file descriptors file offset
 		 // reset transferSpace pointer
 		 transfer_space -= (local_offset + bytes_left);
 		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
-	} else{
-		//this should never happen...print for debugging. TODO: remove after debugged
-		os_printf("Error! In f1() in kread()...this should never happend!");
-		return 0;
-	}//end if else block
+	}
+	//this should never happen...print for debugging. TODO: remove after debugged
+	os_printf("Error! In f1() in kread()...this should never happend!");
+	return 0;
+
 }//end of read_partial_block() helper function
 
 
@@ -626,7 +623,6 @@ int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int byt
 	// dest is users buffer
 	 os_memcpy(transfer_space, buf_offset, (os_size_t) BLOCKSIZE); 	// note, this updates the buf_offset pointer as it transfer the data
 	 																// os_memcpy takes uint32_t* as arguments
-	 fd->offset += BLOCKSIZE; // update the file descriptors file offset
 	 // reset transferSpace pointer
 	 //transfer_space -= BLOCKSIZE; //Purpose of this?
 	 return BLOCKSIZE; // note, we are returning the number of bytes that were successfully transferred
@@ -639,19 +635,19 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 
 	// start of higher-level algo:
 	if(num_bytes < BLOCKSIZE) {
-		while(bytes_read < numBytes) {
-			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf_offset, (num_bytes-bytes_read),transfer_space);
+		while(bytes_read < num_bytes) {
+			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		}
 	} else if(num_bytes >= BLOCKSIZE) {
 		//Read in remainder of current block
-		bytes_read += read_partial_block(c_inode, offset + bytes_read, buf_offset, (num_bytes-bytes_read),transfer_space);
+		bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		//Read in maximum number of full blocks
 		while((num_bytes - bytes_read) > BLOCKSIZE) {
-			bytes_read += read_full_block(c_inode, offset + bytes_read, buf_offset, (num_bytes-bytes_read),transfer_space);
+			bytes_read += read_full_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		}
 		//If not completely read yet, read in remainder
 		if(bytes_read < num_bytes) {
-			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf_offset, (num_bytes-bytes_read),transfer_space);
+			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		}
 	}//end else if
 	return bytes_read;
@@ -670,6 +666,7 @@ int kread(int fd_int, void* buf, int num_bytes) {
 	}
 
 	bytes_read = read_inode(fd->linked_file, fd->offset, buf_offset, num_bytes);
+	fd->offset += bytes_read;
 	if(bytes_read != num_bytes){
 		return bytes_read;
 	}else{
@@ -936,11 +933,11 @@ int kcopy(char* source, char* dest, char mode) {
 	// so the whole copying can actually happen!
 	//-------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	void* buffer = (void*) kmalloc(source_inode->size);
+	void *buffer = (void*) kmalloc(source_inode->size);
+	read_inode(source_inode, 0, buffer, source_inode->size);
+	kwrite(dest_fd, buffer, source_inode->size);
 
-
-
-
+	kfree(buffer);
 	kfree(source_inode);
 	kfree(source_dir_helper->truncated_path);
 	kfree(source_dir_helper->last);
