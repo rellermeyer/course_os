@@ -103,13 +103,11 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
-	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
-
-	pcb_p->R11 = pcb_p->R13;
+	
 	
 	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
-	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
+	pcb_p->R15 = (uint32_t)(0x28020); // set PC
 
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	

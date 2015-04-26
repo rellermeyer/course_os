@@ -4,8 +4,11 @@
 #include "loader.h"
 #include "vm.h"
 #include "elf.h"
-
 static uint32_t GLOBAL_PID;
+
+#define STACK_BASE 0x9f000000
+#define STACK_TOP (STACK_BASE+BLOCK_SIZE) 
+
 
 uint32_t sample_func(uint32_t);
 
@@ -30,26 +33,26 @@ pcb* process_create(uint32_t* file_p) {
 	//This used to be == 0, which doesn't seem correct
 	if(free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
-		//pcb_pointer->p_stack = (void*) kmalloc(4096);
 		os_printf("PROCESS_CREATE_DEBUG: 36\n");
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
-		Elf_Ehdr* elf_header = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
-		if(!elf_header) {
+
+		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
+		if(!success) {
 		 	return (pcb*) -1;
 		}
+		os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
 		//fill the free space with a pcb pointer
-		*free_space_in_pcb_table = (uint32_t) pcb_pointer;
+		*free_space_in_pcb_table = (uint32_t) pcb_pointer; 
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
         
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
-        uint32_t add = elf_header->e_ehsize+(elf_header->e_phentsize*elf_header->e_phnum);
-        //is this correct?
-		pcb_pointer->function = file_p + elf_header->e_ehsize+(elf_header->e_phentsize*elf_header->e_phnum);//file_p + add;
+        uint32_t add = 0x2000;
+		pcb_pointer->function = file_p + (success->e_ehsize+(success->e_phentsize*success->e_phnum))/4 ;
 		os_printf("%X %X %X \n",file_p,&pcb_pointer->function , add);
-		//assert(1==3);
+		//assert(1==3)
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
 		
@@ -125,8 +128,9 @@ uint32_t load_process_state(uint32_t PID) {
 	}
 
 	int x = 1;
+	os_printf("Heads up, I'm going into a busy loop, so you'll have to skip past the loop using gdb.\n");
 	while (x);
-	//int a = 0x28020;
+	int a = 0x28020;
 	//asm volatile("MOV r15, %0"::"r"(a));
 
 	/*asm("MOV r0, %0"::"r"(pcb_p->R0):);
@@ -141,12 +145,18 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r8, %0"::"r"(pcb_p->R8):);
 	asm("MOV r9, %0"::"r"(pcb_p->R9):);
 	asm("MOV r10, %0"::"r"(pcb_p->R10):);
-	//asm("MOV r11, %0"::"r"(pcb_p->R11):);
+
+	//asm("MOV r11, %0"::"r"(11):);
+
+	//assert(1==11);
 	asm("MOV r12, %0"::"r"(pcb_p->R12):);*/
+
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
+
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
-	asm("MOV r15, %0"::"r"(pcb_p->R15):);
-	assert(1==2 && "Stopping inside load_process_state after loading all registers");
+
+	asm("MOV r15, %0"::"r"(a):);
+
 	return 1;
 }
 
@@ -296,8 +306,10 @@ uint32_t execute_process(pcb* pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
 	}
+
+
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
-	
+
 	pcb_p->R15 = 0x28020;
 	//4-13-15: Store current program counter to new PCB's return register,
 	//         then call load_process_state to switch to new process
@@ -348,7 +360,7 @@ uint32_t execute_process(pcb* pcb_p) {
 	pcb_p->current_state = PROCESS_RUNNING;
 
 	//Run main function (TODO: How do we run main functions that have input parameters?)
-	pcb_p->function();
+	//pcb_p->function();
 	//os_printf("HELLO MY FRIEND");
 	while(1);
 	return pcb_p->PID;
@@ -357,15 +369,15 @@ uint32_t execute_process(pcb* pcb_p) {
 //executes a process function
 //return 1 upon success
 //return 0 upon failure
-uint32_t execute_process_no_vas(pcb* pcb_p) {
-    if(!pcb_p) {
-        os_printf("Cannot execute process. Exiting.\n");
-        return 0;
-    }
-    pcb_p->has_executed = 1;
-    pcb_p->function(pcb_p->PID);
-    return 1;
-}
+// uint32_t execute_process_no_vas(pcb* pcb_p) {
+//     if(!pcb_p) {
+//         os_printf("Cannot execute process. Exiting.\n");
+//         return 0;
+//     }
+//     pcb_p->has_executed = 1;
+//     pcb_p->function(pcb_p->PID);
+//     return 1;
+// }
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {

@@ -1,6 +1,8 @@
 #ifndef __ARGPARSE_H__
 #define __ARGPARSE_H__
 
+
+
 #define ATAG_NONE	0x00000000
 #define ATAG_CORE	0x54410001
 
