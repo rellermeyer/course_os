@@ -5,10 +5,7 @@
 #include "../../include/open_table.h"
 #include "../../include/mmci.h" 
 
-#define NULL 0x0
-
 //CONSTANTS:
-<<<<<<< HEAD
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
 int MAX_BLOCKS;
