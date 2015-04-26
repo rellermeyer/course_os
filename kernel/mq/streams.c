@@ -117,7 +117,10 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
 // waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
-
+    // why char msg[]? unlike int qd
+    // block while waiting for reply (condition variable)
+    struct queue *reply_q = q_map[msg[0]];
+    reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
 }
 
 // opposite of q_send and q_subscribe, attaches an asynchronous receiver to the reply
