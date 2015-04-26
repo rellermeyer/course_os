@@ -16,8 +16,8 @@ int MAX_BLOCKS;
 int MAX_MEMORY;
 int INODE_TABLE_CACHE_SIZE;
 int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
-int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
-int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
+int DATA_BLOCK_TABLE_CACHE_SIZE;
+int NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE;
 int INODES_PER_BLOCK;
 
 // FAKE CONSTANTS:
@@ -27,12 +27,12 @@ int root_inum = 0;
 int max_inodes = 4000; // will eventually be in superblock create
 int inode_size = 512; // inodes will now be a full block size
 int max_data_blocks = 200000;
-int max_indirect_blocks = 25000;
+//int max_indirect_blocks = 25000;
 int inode_bitmap_loc = 10 * BLOCKSIZE; // since we now have 250,000 blocks, we have plenty of space, so moving these to even start locations
 int data_bitmap_loc = 50 * BLOCKSIZE;
-int indirect_blocks_bitmap_loc = 100 * BLOCKSIZE; // note the indirect_blocks_bitmap will take 7 blocks bc 25000 max indirect blocks/512 block size ~ 6.1
+//int indirect_blocks_bitmap_loc = 100 * BLOCKSIZE; // note the indirect_blocks_bitmap will take 7 blocks bc 25000 max indirect blocks/512 block size ~ 6.1
 int start_inode_table_loc = 1000;
-int start_indirect_blocks_table_loc = 25000;
+//int start_indirect_blocks_table_loc = 25000;
 int start_data_blocks_loc = 50000;
 
 struct superblock* FS;
@@ -40,7 +40,7 @@ bit_vector* inode_bitmap;
 bit_vector* data_block_bitmap;
 /* Need to as Luke about this */
 struct inode** inode_table_cache; //is this right? we want an array of inode pointers...
-struct indirect_block** indirect_block_table_cache; // an array of pointers to indirect_blocks
+struct data_block** data_block_table_cache; // an array of pointers to indirect_blocks
 struct inode** inode_table_temp;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
@@ -465,7 +465,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 int get_block_address(struct inode *file_inode, int block_num){
 	if(block_num < 0){
-		os_printf("Invalid block number");
+		os_printf("Invalid block number\n");
 		return -1;
 	}
 	if(block_num < MAX_DATABLOCKS_PER_INODE){
@@ -475,10 +475,11 @@ int get_block_address(struct inode *file_inode, int block_num){
 
 	//Get the indirect block num that contain the target block
 	int indirect_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
-	if(indirect_block_num < file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
-		os_printf("block_num out of range");
+	if(indirect_block_num > file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
+		os_printf("block_num out of range\n");
 		return -1;
 	}
+
 
 	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]);
 	int indirect_block_direct_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
@@ -564,7 +565,7 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 		// os_memcpy takes uint32_t* as arguments
 		 os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	
 		 // reset transferSpace pointer
-		 //transfer_space -= bytes_left; //Purpose of this?
+		 transfer_space -= bytes_left; //Purpose of this? memcpy moves the pointer so we set it back. -> idea: fix memcpy
 		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left >= (BLOCKSIZE - local_offset))) {
@@ -575,10 +576,10 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 		// source is transferSpace
 		// dest is users buffer
 
-		 os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) (BLOCKSIZE - local_offset)); 	// note, this updates the buf_offset pointer as it transfer the data
+		os_memcpy((transfer_space + local_offset), buf_offset, (os_size_t) (BLOCKSIZE - local_offset)); 	// note, this updates the buf_offset pointer as it transfer the data
 		 																// os_memcpy takes uint32_t* as arguments
 		 // reset transferSpace pointer
-		// transfer_space -= BLOCKSIZE;
+		transfer_space -= BLOCKSIZE;
 		 return (BLOCKSIZE - local_offset); // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left < (BLOCKSIZE - local_offset))){
