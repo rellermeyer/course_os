@@ -7,19 +7,20 @@
 #define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
 static const int perm_mapping[16] = {
+    // Permissions for L2
 	0,  // 0000 Nothing
-	5,  // 0001 Privileged RO, nothing otherwise
-	6,  // 0010 User RO, privileged RO.
-	6,  // 0011 User RO, privileged RO.
-	1,  // 0100 Privileged RW, nothing otherwise
-	-1, // 0101 ???
-	2,  // 0110 Privileged RW, user RO
-	-1, // 0111 ???
-	3,  // 1000 User RW, privileged RW
+	16,  // 0000010000 Privileged RW, nothing otherwise
+	32,  // 0000100000 Privileged RW,  User RO
+	48,  //  0000110000 Privileged RW, User RW
+	512,  //  1000000000 Reserved, Reserved... For what? 
+	528, //  1000010000 Priv RO, User No Access
+	544,  //  1000100000 Priv RO, User RO
+	560, //  1000110000 Priv RO, User RO 
+	-1,  // 1000 ???
 	-1, // 1001 ???
 	-1, // 1010 ???
 	-1, // 1011 ???
-	3,  // 1100 User RW, privileged RW
+	-1,  // 1100 ???
 	-1, // 1101 ???
 	-1, // 1110 ???
 	-1, // 1111 ???
@@ -214,7 +215,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
-	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (permission) | 2;
 	return 0;
 }
 
