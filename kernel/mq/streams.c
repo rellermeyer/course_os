@@ -98,6 +98,7 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
     struct queue *current_queue = q_map[qd];
     // wait until the queue delivers a message
     // since NULL is undefined in the kernel, use 0x0 instead
+    // need to use condition variables
     while (current_queue->data == 0x0)
         // BLOCK!
     
@@ -112,14 +113,13 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
     return 0;
 }
 
-// access the message is being sent but do it in a way where it's blocking. Waits to see if it succeeds
-// or fails. If buffer is too small, fail
+// waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
 
 }
 
-
+// opposite of q_send and q_subscribe, attaches an asynchronous receiver to the reply
 void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength))
 {
 
