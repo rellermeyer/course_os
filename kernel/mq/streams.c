@@ -97,21 +97,25 @@ void q_send(int_least32_t qd, int_least32_t *data, int_least32_t datalength)
 int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t buflength)
 {
     struct queue *current_queue = q_map[qd];
-    // wait until the queue delivers a message
     // since NULL is undefined in the kernel, use 0x0 instead
     // need to use condition variables
     while (current_queue->data == 0x0)
-        // BLOCK!
+        // BLOCK! FIX
     
     // check to see if data length is acceptable
     if (current_queue->datalen <= buflength) {
-        // read data
-        buf = current_queue->data;
-        // success
-        return 1;
+
+        int_least32_t buf_index = *buf;
+        // read to buffer
+        for (int_least32_t data_index = 0; data_index < current_queue->datalen; data_index++) {
+            buf[buf_index] = current_queue->data[data_index];
+            buf_index++;
+        }
+
+        return current_queue->data;
     }
     // data too big
-    os_printf_v2("Writing to buffer failed\n");
+    os_printf_v2("Read to buffer failed\n");
     return 0;
 }
 
@@ -123,15 +127,20 @@ void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
     struct queue *reply_q = q_map[msg[0]];
     // success data fits into buffer
     if (reply_q->datalen <= buflength) {
-        buf = reply_q->data;
+        int_least32_t buf_index = *buf;
+        // read to buffer
+        for (int_least32_t data_index = 0; data_index < reply_q->datalen; data_index++) {
+            buf[buf_index] = reply_q->data[data_index];
+            buf_index++;
+        }
         reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
     }
     // data is too big for buffer
     else
-        os_printf_v2("Writing to buffer failed\n");
+        os_printf_v2("Read to buffer failed\n");
 }
 
-// opposite of q_send and q_subscribe, attaches an asynchronous receiver to the reply
+// attaches an asynchronous receiver to the reply
 void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength))
 {
 
