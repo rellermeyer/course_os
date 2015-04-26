@@ -14,6 +14,8 @@ struct vas {
 	// A pointer to the first level of the pagetable.
 	unsigned int *l1_pagetable;
 	unsigned int *l1_pagetable_phys; // The physical address to it
+	unsigned int *l2_pagetable;
+	unsigned int *l2_pagetable_phys;
 
 	// A pointer to the next VAS (it's a linked list)
 	struct vas *next;
