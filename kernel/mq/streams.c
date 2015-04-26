@@ -111,6 +111,7 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
         return 1;
     }
     // data too big
+    os_printf_v2("Writing to buffer failed\n");
     return 0;
 }
 
@@ -120,7 +121,14 @@ void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
     // why char msg[]? unlike int qd
     // block while waiting for reply (condition variable)
     struct queue *reply_q = q_map[msg[0]];
-    reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
+    // success data fits into buffer
+    if (reply_q->datalen <= buflength) {
+        buf = reply_q->data;
+        reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
+    }
+    // data is too big for buffer
+    else
+        os_printf_v2("Writing to buffer failed\n");
 }
 
 // opposite of q_send and q_subscribe, attaches an asynchronous receiver to the reply
