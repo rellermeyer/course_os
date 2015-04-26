@@ -9,18 +9,19 @@
 
 static int initialized;
 struct ht *q_table;
-struct queue *q_map[100];
+struct queue *q_map[5000];
 int_least32_t next;
 
 void q_create(char q_name[]/*, char options[]*/)
 {
-	if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
-		initialized = 0;
-	}
 	struct queue *q = 0x0;
+    if (initialized < 0){
+        initialized = 0;
+    }
+
 	if (initialized == 0) {
 		initialized = 1;
-		q_table = ht_alloc(100);
+		q_table = ht_alloc(5000);
 		ht_add(q_table, q_name, (void*)q);
 	}else{
 		ht_add(q_table, q_name, (void*)q);
@@ -118,6 +119,14 @@ void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, 
 //    q_subscribe(qd, &receiver, (int_least32_t*) userdata);
 //    q_send(qd, (int_least32_t*) data, sizeof(data));
 //}
+
+void q_init(char q_name[], int_least32_t* data, void(*receiver)(int_least32_t * userdata, int_least32_t * data, int_least32_t datalength), int_least32_t* userdata)
+{
+    q_create(q_name);
+    int_least32_t qd = q_open(q_name);
+    q_publish(qd, (int_least32_t*) data, sizeof(data));
+    q_subscribe(qd, &receiver, (int_least32_t*) userdata);
+}
 
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)
 {
