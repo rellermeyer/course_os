@@ -83,7 +83,7 @@ void start2(uint32_t *p_bootargs)
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
-	asm volatile("swi 1");
+	//asm volatile("swi 1");
 	//while (1);
 
 	print_uart0("\nCourseOS!\n");
@@ -106,7 +106,7 @@ void start2(uint32_t *p_bootargs)
 	run_prq_tests();
 	run_hmap_tests();
 
-	asm volatile("swi 1");
+	//asm volatile("swi 1");
 
 	/*
 	4-15-15: 	#Prakash: 	What happens if we let the program load here?
