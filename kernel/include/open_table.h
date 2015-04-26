@@ -24,7 +24,7 @@ struct file_descriptor {
 struct file_descriptor* table[SYSTEM_SIZE]; 
 
 //list of free indexes
-bitVector * open_table_free_list; 
+bit_vector * open_table_free_list; 
 
 
 void fs_table_init(); //initializes fs open table at boot up time
