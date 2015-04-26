@@ -1,50 +1,33 @@
-#ifndef __PQUEUE__H__
-#define __PQUEUE__H__
+/*
+ * priority_queue.h
+ *
+ *  Created on: Apr 16, 2015
+ *      Author: mwkurian
+ */
 
-/**
-* Debugging macro .
-*
-* Checks for a NULL pointer, and prints the error message, source file and
-* line via 'stderr' .
-* If the check fails the program exits with error code (-1) .
-*/
-#define DEBUG(msg) printf("%s\n", msg)
+#ifndef KERNEL_INCLUDE_PRIORITY_QUEUE_H_
+#define KERNEL_INCLUDE_PRIORITY_QUEUE_H_
 
-#define NP_CHECK(ptr) \
-    { \
-        if (NULL == (ptr)) { \
-            DEBUG("NULL"); \
-            exit(-1); \
-        } \
-    } \
+typedef struct prq_node {
+    int index;  // FIXME double underscore
+    int priority;
+    void * data;
+} prq_node;
 
-/**
-* Priority Queue Structure
-*/
-typedef struct PQueue_s {
-    /* The actual size of heap at a certain time */
-    size_t size;
-    /* The amount of allocated memory for the heap */
-    size_t capacity;
-    /* An array of (void*), the actual max-heap */
-    void **data;
-    /* A pointer to a comparator function, used to prioritize elements */
-    int (*cmp)(const void *d1, const void *d2);
-} PQueue;
+typedef struct prq_handle {
+    prq_node ** heap;
+    int count;
+    int heap_size;
+} prq_handle;
 
-/** Allocates memory for a new Priority Queue .
-Needs a pointer to a comparator function, thus establishing priorities .
-*/
-PQueue *pqueue_new(int (*cmp)(const void *d1, const void *d2),
-                   size_t capacity);
-
-/** De-allocates memory for a given Priority Queue */
-void pqueue_delete(PQueue *q);
-
-/** Add an element inside the Priority Queue */
-void pqueue_enqueue(PQueue *q, const void *data);
-
-/** Removes the element with the greatest priority from within the Queue */
-void *pqueue_dequeue(PQueue *q);
-
-#endif
+void prq_enqueue(prq_handle * queue, prq_node * node);
+prq_node * prq_dequeue(prq_handle * queue);
+void prq_remove(prq_handle * queue, prq_node * node);
+prq_handle* prq_create();
+prq_handle* prq_create_fixed(int n);
+void prq_free(prq_handle * queue);
+int prq_count(prq_handle * queue);
+prq_node * prq_peek(prq_handle * queue);
+prq_node * prq_create_node();
+void prq_free_node(prq_node * node);
+#endif /* KERNEL_INCLUDE_PRIORITY_QUEUE_H_ */
