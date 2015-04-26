@@ -14,6 +14,11 @@
 #define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-2
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2
 
+//IMPORTANT!! ---------------------------------------------------------------------------------------------------
+//all constants are in units of block NUMBER																	|
+//the indexes of arrays are also in units of block NUMBER relative to the starting offset of their cathegory.   |
+//---------------------------------------------------------------------------------------------------------------
+
 //constants of file system, that wil be filled at boot time
 struct superblock 
 {
@@ -29,7 +34,7 @@ struct superblock
 	int inode_bitmap_loc; // 70 bytes
 	int data_bitmap_loc; // 74 bytes
 	int indirect_blocks_bitmap_loc; //
-	int start_inode_table_loc; // 78 bytes
+	int start_inode_table_loc; // 78 bytes  
 	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
 	int start_indirect_block_table_loc; //
 	int max_indirect_blocks;
@@ -46,15 +51,15 @@ struct inode {
 	int direct_blocks_in_file; // how many direct block are being used  (4 bytes)
 	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // array of data (now long 68)
 	int indirect_blocks_in_file; // how many indirect block are being used  (4 bytes)
-	int indirect_blocks[MAX_NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now
+	int indirect_blocks[MAX_NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now 
 	bit_vector* perms; // permissions of the file (12 bytes)
 };
 
 struct indirect_block // total size is 1 block
 {
 	int block_num;
-	int blocks_in_file;
-	int data_blocks[MAX_DATABLOCKS_PER_INDIRECT_BLOCK]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes
+	int blocks_in_file; //blocks actually used
+	int data_blocks[MAX_DATABLOCKS_PER_INDIRECT_BLOCK]; // because this is just an array of ints, so it's BLOCKSIZE/4 bytes bc each int is 4 bytes 
 };
 
 struct dir_entry 
