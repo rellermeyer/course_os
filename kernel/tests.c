@@ -1,5 +1,3 @@
-//#include <stdio.h>
-//#include <stdlib.h>
 #include "global_defs.h"
 #include "tests.h"
 #include "klibc.h"
@@ -27,7 +25,7 @@ void run_tests(Test *tests[], int num_tests)
 
 Test* create_test(char *name, int (*test_function)(void*))
 {
-  Test *test = (Test*) mem_alloc(sizeof(Test));
+  Test *test = (Test*) kmalloc(sizeof(Test));
   test->test_name = name;
   test->testptr = test_function;
   return test;

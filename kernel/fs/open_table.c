@@ -12,8 +12,8 @@
 
 //called by file.c initialization function, initializes free list and table
 void fs_table_init() {
-        open_table_free_list = makeVector(SYSTEM_SIZE); //create bitvector of free indexes
-        table = kmalloc(SYSTEM_SIZE * (sizeof(struct file_descriptor*))); //malloc the table
+        open_table_free_list = make_vector(SYSTEM_SIZE); //create bitvector of free indexes
+        table = (struct file_descriptor**)kmalloc(SYSTEM_SIZE * (sizeof(struct file_descriptor*))); //malloc the table
 }
 
 //at shutdown, memory with the free list is freed
@@ -54,7 +54,7 @@ int add_to_opentable(struct inode * f, char perm) {
         for (i=0; i<SYSTEM_SIZE; i++) {  //checks if file is already open in the table. If so, the linked file is the same. 
                 if (table[i]->linked_file->inum == inum) {
                         to_add->linked_file->fd_refs++; //increment the number of references
-                        to_add->linked_file =  table[i]->linked_file  //point to same file
+                        to_add->linked_file =  table[i]->linked_file;  //point to same file
                         to_add->permission = perm; //assign new permission
                         to_add->offset = 0; //restart offset from 0
                         table[fd] = to_add; //add to table

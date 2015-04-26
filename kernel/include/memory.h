@@ -1,6 +1,3 @@
-
-
-
 //Physical location of kernel
 #define P_KERNBASE		0x00010000
 #define P_KERNTOP		0x00200000
@@ -8,31 +5,10 @@
 #define V_KERNBASE		0xf0000000
 #define V_KERNTOP		0xf0200000
 
-//Physical region managed by kmalloc
-//#define P_KHEAPBASE		0x04000000
-#define P_KHEAPBASE		0x04100000
-#define P_KHEAPTOP		0x05f00000
-//Vitual region managed by kmalloc
-//#define V_KHEAPBASE		0xee100000
-#define V_KHEAPBASE		0xee200000
-#define V_KHEAPTOP		V_KERNBASE
-
-//Physical region managed by umalloc
-#define P_UHEAPBASE		P_KHEAPTOP
-#define P_UHEAPTOP		0x07f00000
-//Virtual region managed by umalloc
-#define V_UHEAPBASE		0x00200000
-#define V_UHEAPTOP 		0x02200000
-
 //All static kernel data structures
 //Total space=1MB, currently used=44kB	
 #define P_KDSBASE		0x07f00000
-	//#define	KERNSTKBASE		0x07ff9000	//7 stacks 4K each = 28K
-//#define	P_L1PTBASE		0x07f00000	//16K (16K boundary required also)
-// Right before KHEAPBASE
-//#define	P_L1PTBASE		0x00200000	//16K (16K boundary required also)
-#define	P_L1PTBASE	        P_KERNTOP	//16K (16K boundary required also)
-//#define V_L1PTBASE (1<<20)
+#define	P_L1PTBASE	        P_KERNTOP
 
 #define V_KDSBASE		0xfff00000
 #define V_L1PTBASE	        V_KERNTOP
@@ -45,14 +21,11 @@
 
 //remapped physical memory for direct access
 #define PMAPBASE 		0xf0200000
-#define PMAPTOP			0xf4000000
+#define PMAPTOP			0xf7f00000
+
+// Region where we use 4K pages.
+#define P_4K_BASE (P_L1PTBASE+0x200000)
+#define P_4K_TOP (PMAPTOP - 0xf0000000)
 
 //High vectors are enabled by setting V bit in the control register
 #define HIVECTABLE		0xffff0000
-
-//FIXME: unused
-//static unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
-//static unsigned int * v_first_level_pt = (unsigned int*)V_L1PTBASE;
-
-//Physical address (between P_KERNTOP and P_KHEAPBASE)
-#define pa2va(pa)		(pa+V_KERNBASE)
