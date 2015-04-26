@@ -1,6 +1,9 @@
+/* Device Driver for ARM Dual-Timer Module (SP804)
+Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.arm.doc.ddi0271d/DDI0271.pdf*/
 #include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
+
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
 void initialize_timers(){
@@ -15,15 +18,12 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
-void timer_start() {
+void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  timer_pointers[0]->timer_load_value = 1000;
-  os_printf("control address:%x\n", &(timer_pointers[0]->control));
-  timer_pointers[0]->control |= 0x1;
-  os_printf("control value:%x\n", timer_pointers[0]->control);
-  for(int i=0; i< 10; i++){
-    os_printf("Timer register = %x\n", timer_pointers[0]->timer_actual_value);
-  }
+  set_prescale(timer_index,2);
+  enable_timer(timer_index);
+  os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
+  os_printf("control value:%x\n", timer_pointers[timer_index]->control);
 }
 
 /* This function sets the value that the timer will begin at.
@@ -58,7 +58,7 @@ int set_background_load_value(int timer_index, int value){
 /* Clear any interrupt data for the timer.
  * note: writing to the clear timer register clears
  * the interrupt status completely. */
-int clear_interupt(int timer_index){
+int clear_interrupt(int timer_index){
   if(timer_index < 4 && timer_index  >= 0){
     timer_pointers[timer_index]->interrupt_clear = 0x1;
     return 0;
@@ -66,9 +66,10 @@ int clear_interupt(int timer_index){
   return -1;
 }
 
+//enable 32 bit mode in the specified timer index 
 int set_32_bit_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;
+    timer_pointers[timer_index]->control |= 0x2;
     return 0;
   }
   return -1;
@@ -81,25 +82,50 @@ int get_current_timer_value(int timer_index){
   return -1;
 }
 
+//enable periodic mode of specified timer index
 int set_periodic_mode(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control ^=0x1;// &=0xFFFFFFFD;
+    timer_pointers[timer_index]->control &= 0xFFFFFFBE;
+    timer_pointers[timer_index]->control &=0xFFFFFFBE;
+		timer_pointers[timer_index]->control |=0x40;
     return 0;
   }
   return -1;
 }
 
+//function to set timer to different timer clock rates... 0 -> 1 (default), 1 -> 16, 2 -> 256...
+//any other modes are invalid and will do nothing
+int set_prescale(int timer_index, int mode){
+	if(timer_index < 4 && timer_index >= 0 && mode <= 2 && mode >= 0){
+		if(mode == 0)
+			timer_pointers[timer_index]->control &= 0xFFFFFFF3;
+		else if(mode == 1)
+		{
+			timer_pointers[timer_index]->control |= 0x4;
+			timer_pointers[timer_index]->control &= 0xFFFFFFF7;
+		}
+		else if(mode == 2){
+			timer_pointers[timer_index]->control |= 0x8;
+			timer_pointers[timer_index]->control &= 0xFFFFFFFB;
+		}
+		return 0;
+	}
+	return -1;
+}
+
+//enables timer interrupt of the given timer index
 int enable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x20;//0x40;
+    timer_pointers[timer_index]->control |= 0x20;
     return 0;
   }
   return -1;
 }
 
+//disables timer interrupt of the given timer index
 int disable_timer_interrupt(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control &= 0xFFFFFFFE;
+    timer_pointers[timer_index]->control &= 0xFFFFFFDF;
     return 0;
   }
   return -1;
@@ -107,70 +133,59 @@ int disable_timer_interrupt(int timer_index){
 
 
 int set_free_running_mode(int timer_index){
-  //Documentation is wrong
-  //control register bit 1 is for one shot or wrapping mode (assuming 0 index counting)
   if(timer_index < 4 && timer_index  >= 0){
-    timer_pointers[timer_index]->control |= 0x2;
+    timer_pointers[timer_index]->control |= 0x1;
     return 0;
   }
   return -1;
 }
-
-int start_timer(int timer_index){
+//starts the timer, countdown from load value
+int enable_timer(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    timer_pointers[timer_index]->control |= 0x40;
+    timer_pointers[timer_index]->control |= 0x80;
     return 0;
   }
   return -1;
 }
-
+//prints the configuration of the control byte
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
+  	return 0;
   }
+  return -1;
 }
-//testing timer code
-int start_interrupts(int start_val){
-        initialize_timers();
-        timer_start();
-        set_background_load_value(0,start_val);
-        set_periodic_mode(0);
-        enable_timer_interrupt(0);
-	print_control_status(0);
-        start_timer(0);
-	// int i=10;
-	while(1){
-                os_printf("\n%d",get_current_timer_value(0));
-		if(get_current_timer_value(0)==0){
+
+/*starts interrupts every start_val ticks */
+//You give it a vallut and the specific timer you want to star.
+// YOu have four timers just start with timer zero
+// The speed of counter or number ticks depends on qemu hertz speed
+// we don't know he start of it but it should be around 10 milliseconds
+// per proccess.
+// ex: start_timer_interrupts(0,10) which means start timer(0)
+// and interrupt every 10 clicks.
+int start_timer_interrupts(int timer_index,int start_val){
+	initialize_timers();
+	timer_start(timer_index);
+	set_background_load_value(timer_index,start_val);
+	set_periodic_mode(timer_index);
+	enable_timer_interrupt(timer_index);     
+	return 0;
+}
+//just testing code
+/*while(1){
+                os_printf("\n%d",get_current_timer_value(1));
+                if(get_current_timer_value(1)==0){
                         os_printf("\nInterrupt");
-        //        	i--;
-		}
-	}       
-        return 0;
-}
+                        //i--;
+                }
+        } */
+
+/*
 void timer_test(){
 	initialize_timers();
-
-	os_printf("time %d\n",get_current_timer_value(0));
-	start_interrupts(5);
-	//timer_start();
-	//start_timer(1);
-	//start_timer(2);
-	//start_timer(3);
-	//set_periodic_mode(0);
-	//set_load_value(0, 10);
-	//enable_timer_interrupt(0);	
-	//set_periodic_mode(0);
-  	//print_control_status(0);
-        //int val=9;
-	//os_printf("starting%d\n",start_timer(0));
-	//for(int i=0;i<1000;i++){
-	//	if(get_current_timer_value(0)!=val){
-	//		os_printf("time %d\n",get_current_timer_value(0));
-	//		val=get_current_timer_value(0);
- 	//	}
-	//	os_printf("time %d\n",get_current_timer_value(1));
-	//	os_printf("time %d\n",get_current_timer_value(2));
-	//	os_printf("time %d\n",get_current_timer_value(3));		
+	start_interrupts(1,5);
+	print_control_status(timer_index);
+		
 	return;
-}
+}*/
