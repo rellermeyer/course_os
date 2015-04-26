@@ -287,7 +287,7 @@ int os_printf_v2(const char *str_buf, ...)
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
     q_init("printf", buf, &printf_receiver, "printf_user");
-    q_send("printf", (int_least32_t*) buf, sizeof(buf));
+    //q_send("printf", (int_least32_t*) buf, sizeof(buf));
 
 	return n;
 }
