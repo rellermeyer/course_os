@@ -1,122 +1,156 @@
-#include "include/priority_queue.h"
-#include "include/mem_alloc.h"
+#include "../include/priority_queue.h"
+#include "klibc.h"
 
-/* Util macros */
-#define LEFT(x) (2 * (x) + 1)
-#define RIGHT(x) (2 * (x) + 2)
-#define PARENT(x) ((x) / 2)
+#define AMORITIZED_CONSTANT 2
+#define DEFAULT_COUNT 10
 
-void pqueue_heapify(PQueue *q, size_t idx);
+void __prq_shift_up(prq_handle * queue, int idx);
+void __prq_shift_down(prq_handle * queue, int idx);
 
-/**
-* Allocates memory for a new Priority Queue structure .
-
-* 'cmp' function:
-*   returns 0 if d1 and d2 have the same priorities
-*   returns [negative value] if d1 have a smaller priority than d2
-*   returns [positive value] if d1 have a greater priority than d2
-*/
-PQueue *pqueue_new(int (*cmp)(const void *d1, const void *d2),
-                   size_t capacity) {
-    PQueue *res = NULL;
-    NP_CHECK(cmp);
-    res = malloc(sizeof(*res));
-    NP_CHECK(res);
-    res->cmp = cmp;
-    /* The inner representation of data inside the queue is an array of void* */
-    res->data = malloc(capacity * sizeof(*(res->data)));
-    NP_CHECK(res->data);
-    res->size = 0;
-    return (res);
+void __prq_shift_up(prq_handle * queue, int idx) {
+    prq_node ** heap = queue->heap;
+    prq_node * node, *parent;
+    while (heap[idx]->priority < heap[idx / 2]->priority && idx > 1) {
+        node = heap[idx];
+        parent = heap[idx / 2];
+        parent->index = idx;
+        node->index = idx / 2;
+        heap[idx] = parent;
+        heap[idx / 2] = node;
+        idx /= 2;
+    }
 }
 
-/**
-* De-allocates memory for a given Priority Queue structure .
-*/
-void pqueue_delete(PQueue *q) {
-    if (NULL != q) {
-        DEBUG("Priority Queue is already NULL. Nothing to free.");
+void __prq_shift_down(prq_handle * queue, int idx) {
+    int cidx;        //index for child
+    prq_node ** heap = queue->heap;
+    prq_node * node, *child;
+    for (;;) {
+        cidx = idx * 2;
+        if (cidx > queue->count) {
+            break;   //it has no child
+        }
+        if (cidx < queue->count) {
+            if (heap[cidx]->priority > heap[cidx + 1]->priority) {
+                ++cidx;
+            }
+        }
+        //swap if necessary
+        if (heap[cidx]->priority < heap[idx]->priority) {
+            node = heap[cidx];
+            child = heap[idx];
+            node->index = idx;
+            child->index = cidx;
+            heap[cidx] = child;
+            heap[idx] = node;
+            idx = cidx;
+        } else {
+            break;
+        }
+    }
+}
+
+prq_node * prq_create_node() {
+    return kmalloc(sizeof(prq_node));
+}
+
+void prq_free_node(prq_node * node) {
+    if (node) {
+        kfree(node);
+    }
+}
+
+prq_node * prq_peek(prq_handle * queue) {
+    if (queue) {
+        if (queue->count > 0) {
+            return queue->heap[1];
+        }
+    }
+
+    return 0;
+}
+
+int prq_count(prq_handle * queue) {
+    if (queue) {
+        return queue->count;
+    }
+
+    return 0;
+}
+
+void __prq_amoritize(prq_handle * queue) {
+    int new_heap_size = queue->heap_size * AMORITIZED_CONSTANT;
+    prq_node** new_heap = (prq_node**) kmalloc(
+            sizeof(prq_node*) * new_heap_size);
+    os_memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
+            (os_size_t) queue->heap_size * sizeof(prq_node*));
+    kfree(queue->heap);
+    queue->heap = new_heap;
+    queue->heap_size = new_heap_size;
+}
+
+void prq_enqueue(prq_handle * queue, prq_node * node) {
+    prq_node ** heap = queue->heap;
+    int index = (node->index = queue->count + 1);
+    heap[index] = node;
+    ++queue->count;
+    __prq_shift_up(queue, index);
+    if (queue->count + 1 == queue->heap_size) {
+        __prq_amoritize(queue);
+    }
+}
+
+void prq_remove(prq_handle * queue, prq_node * node) {
+    if (!queue->count) {
         return;
     }
-    free(q->data);
-    free(q);
-}
-
-/**
-* Adds a new element to the Priority Queue .
-*/
-void pqueue_enqueue(PQueue *q, const void *data) {
-    size_t i;
-    void *tmp = NULL;
-    NP_CHECK(q);
-    if (q->size >= q->capacity) {
-        DEBUG("Priority Queue is full. Cannot add another element .");
+    prq_node ** heap = queue->heap;
+    prq_node * end = heap[queue->count];
+    int index = (end->index = node->index);
+    if (index == -1) {
         return;
     }
-    /* Adds element last */
-    q->data[q->size] = (void*) data;
-    i = q->size;
-    q->size++;
-    /* The new element is swapped with its parent as long as its
-    precedence is higher */
-    while(i > 0 && q->cmp(q->data[i], q->data[PARENT(i)]) > 0) {
-        tmp = q->data[i];
-        q->data[i] = q->data[PARENT(i)];
-        q->data[PARENT(i)] = tmp;
-        i = PARENT(i);
-    }
+    node->index = -1;
+    heap[index] = end;
+    heap[queue->count + 1] = 0;
+    --queue->count;
+    // FIXME optimize later
+    __prq_shift_up(queue, index);
+    __prq_shift_down(queue, index);
 }
 
-/**
-* Returns the element with the biggest priority from the queue .
-*/
-void *pqueue_dequeue(PQueue *q) {
-    void *data = NULL;
-    NP_CHECK(q);
-    if (q->size < 1) {         
-         /* Priority Queue is empty */         
-         DEBUG("Priority Queue underflow . Cannot remove another element .");         
-         return NULL;     
-    }     
-    data = q->data[0];
-    q->data[0] = q->data[q->size-1];
-    q->size--;
-    /* Restore heap property */
-    pqueue_heapify(q, 0);
-    return (data);
+prq_node * prq_dequeue(prq_handle * queue) {
+    if (!queue->count) {
+        return 0;
+    }
+    prq_node ** heap = queue->heap;
+    prq_node * top = heap[1];
+    prq_node * end = heap[queue->count];
+    end->index = 1;
+    top->index = -1;
+    heap[1] = end;
+    heap[queue->count] = 0;
+    --queue->count;
+    __prq_shift_down(queue, 1);
+    return top;
 }
 
-/**
-* Turn an "almost-heap" into a heap .
-*/
-void pqueue_heapify(PQueue *q, size_t idx) {
-    /* left index, right index, largest */
-    void *tmp = NULL;
-    size_t l_idx, r_idx, lrg_idx;
-    NP_CHECK(q);
+prq_handle * prq_create_fixed(int n) {
+    n = MAX(1, n);
+    prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
+    queue->count = 0;
+    queue->heap_size = n + 1;
+    queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * queue->heap_size);
+    return queue;
+}
 
-    l_idx = LEFT(idx);
-    r_idx = RIGHT(idx);
+prq_handle * prq_create() {
+    return prq_create_fixed(DEFAULT_COUNT);
+}
 
-    /* Left child exists, compare left child with its parent */
-    if (l_idx < q->size && q->cmp(q->data[l_idx], q->data[idx]) > 0) {
-        lrg_idx = l_idx;
-    } else {
-        lrg_idx = idx;
-    }
-
-    /* Right child exists, compare right child with the largest element */
-    if (r_idx < q->size && q->cmp(q->data[r_idx], q->data[lrg_idx]) > 0) {
-        lrg_idx = r_idx;
-    }
-
-    /* At this point largest element was determined */
-    if (lrg_idx != idx) {
-        /* Swap between the index at the largest element */
-        tmp = q->data[lrg_idx];
-        q->data[lrg_idx] = q->data[idx];
-        q->data[idx] = tmp;
-        /* Heapify again */
-        pqueue_heapify(q, lrg_idx);
+void prq_free(prq_handle * queue) {
+    if (queue) {
+        kfree(queue->heap);
+        kfree(queue);
     }
 }

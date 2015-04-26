@@ -29,7 +29,15 @@
 #include "klibc.h"
 #include "vm.h"
 #include "mem_alloc.h"
+#include "tests.h"
 #include "drivers/timer.h"
+// #include "scheduler.h"
+
+// Tests
+#include "tests/test_priority_queue.h"
+#include "tests/test_hash_map.h"
+#include "tests/test_mem_alloc.h"
+#include "tests/test_vm.h"
 
 #include "hashtable.h"
 #include "streams.h"
@@ -77,12 +85,12 @@ void start2(uint32_t *p_bootargs)
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
-	asm volatile("swi 1");
+	//asm volatile("swi 1");
 	//while (1);
 
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
-	os_printf("%X\n",*p_bootargs);
+	INFO("Bootargs: %X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
 
@@ -91,10 +99,12 @@ void start2(uint32_t *p_bootargs)
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
 
-//	timer_test();
-	vm_test();
-	os_printf("There are %d free frames.\n", vm_count_free_frames());
-	test_allocate();
+	run_vm_tests();
+	INFO("There are %d free frames.\n", vm_count_free_frames());
+	run_mem_alloc_tests();
+	INFO("There are %d free frames.\n", vm_count_free_frames());
+	run_prq_tests();
+	run_hmap_tests();
 
 	ht_test();
 	q_test();

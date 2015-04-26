@@ -156,6 +156,7 @@ pcb* get_PCB(uint32_t PID);
 uint32_t free_PCB(pcb* pcb_p);
 uint32_t* get_address_of_PCB(uint32_t PID);
 uint32_t execute_process(pcb* pcb_p);
+uint32_t execute_process_no_vas(pcb* pcb_p);
 uint32_t load_process_state(uint32_t PID);
 uint32_t save_process_state(uint32_t PID);
 uint32_t print_process_state(uint32_t PID);
