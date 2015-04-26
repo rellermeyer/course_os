@@ -13,25 +13,23 @@ int_least32_t next;
 
 void q_create(char q_name[], char options[])
 {
-    if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
-        initialized = 0;
-    }
-    os_printf("init is %d \n", initialized);
-    os_printf("in q_create\n");
-    os_printf(q_name);
-    os_printf("\n");
-	struct queue *q;
-	os_memset(&q, 0, sizeof(q));
-    if (initialized == 0) {
-        os_printf("not initialized\n");
+	if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
+		initialized = 0;
+	}
+	os_printf("init is %d \n", initialized);
+	os_printf("in q_create\n");
+	os_printf("%s\n", q_name);
+	struct queue *q = 0x0;
+	if (initialized == 0) {
+		os_printf("not initialized\n");
 		initialized = 1;
-        q_table = ht_alloc(100);
-        ht_add(q_table, q_name, (void*)q);
+		q_table = ht_alloc(100);
+		ht_add(q_table, q_name, (void*)q);
 	}else{
-        os_printf("%d\n", initialized);
-        os_printf("initialized");
-        ht_add(q_table, q_name, (void*)q);
-    }
+		os_printf("%d\n", initialized);
+		os_printf("initialized\n");
+		ht_add(q_table, q_name, (void*)q);
+	}
 
 
 
@@ -90,8 +88,7 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 int_least32_t q_subscribe(int_least32_t qd, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
     os_printf("Currently in q_subscribe\n");
-    struct subscriber *user;
-    os_memset(&user, 0, sizeof(user));
+    struct subscriber *user = 0x0;
     user->userdata = userdata;
 	struct queue *q = q_map[qd];
     q->subscriber = user;
@@ -105,31 +102,16 @@ void q_send(int_least32_t qd, int_least32_t *data, int_least32_t datalength)
     q->receiver(q->subscriber->userdata, data, datalength);
 }
 
-// block, waiting for a message from the queue
-// read entire message or no data at all
 int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t buflength)
 {
-    struct queue *current_queue = q_map[qd];
-    // wait until the queue delivers a message
-    // since NULL is undefined in the kernel, use 0x0 instead
-    while (current_queue->data == 0x0)
-        // BLOCK!
-    
-    // check to see if data length is acceptable
-    if (current_queue->datalen <= buflength) {
-        // read data
-        buf = current_queue->data;
-        // success
-        return 1;
-    }
-    // data too big
-    return 0;
+    return 0x0;
 }
 
 // access the message is being sent but do it in a way where it's blocking. Waits to see if it succeeds
-// or fails. If buffer is too small, fail
+// or fails. If buffer is too small. 
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
+    
 }
 
 
@@ -140,13 +122,15 @@ void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, 
 
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)
 {
-    os_printf("data: %s\n", data);
+	os_printf("foobar.\n");
+	os_printf("data: %s\n", data);
 }
 
 void q_test()
 {
     os_printf("about to call q_create\n");
     q_create("my_q", "rr");
+    os_printf("Calling q_open...\n");
     int_least32_t qd = q_open("my_q");
     os_printf("qd is %d\n", qd);
     char* data = "This is a message";
@@ -154,12 +138,21 @@ void q_test()
     q_publish(qd, castData, sizeof(data));
     char* userdata = "Some userdata";
     int_least32_t *castUserdata = (int_least32_t*) userdata;// what should this really be?
-    q_subscribe(qd, &sample_receiver, castUserdata);
+    void *fp = &sample_receiver;
+    //fp += 0x10000;
+    //os_printf("Function pointer is: %X\n", fp);
+    os_printf("First 4 bytes at %X are: %X\n", fp, *(uint32_t*)fp);
+    q_subscribe(qd, (void (*)(int_least32_t*, int_least32_t*, int_least32_t))fp, castUserdata);
+    os_printf("asdf\n");
     q_send(qd, castData, sizeof(data));
 
 	os_printf("***** Test code for message queue (q_test()): *****\n");
 	os_printf("haha, as if we had tests. ;)\n");
-    os_printf("This is the end of streams.\n");
+
+	os_printf("This is the end of streams.\n");
+
+	//os_printf("****************************************************************\n");
+
 }
 
 

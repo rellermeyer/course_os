@@ -105,31 +105,16 @@ void q_send(int_least32_t qd, int_least32_t *data, int_least32_t datalength)
     q->receiver(q->subscriber->userdata, data, datalength);
 }
 
-// block, waiting for a message from the queue
-// read entire message or no data at all
 int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t buflength)
 {
-    struct queue *current_queue = q_map[qd];
-    // wait until the queue delivers a message
-    // since NULL is undefined in the kernel, use 0x0 instead
-    while (current_queue->data == 0x0)
-        // BLOCK!
-    
-    // check to see if data length is acceptable
-    if (current_queue->datalen <= buflength) {
-        // read data
-        buf = current_queue->data;
-        // success
-        return 1;
-    }
-    // data too big
-    return 0;
+    return 0x0;
 }
 
 // access the message is being sent but do it in a way where it's blocking. Waits to see if it succeeds
-// or fails. If buffer is too small, fail
+// or fails. If buffer is too small. 
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
+    
 }
 
 
@@ -159,7 +144,7 @@ void q_test()
 
 	os_printf("***** Test code for message queue (q_test()): *****\n");
 	os_printf("haha, as if we had tests. ;)\n");
-    os_printf("This is the end of streams.\n");
+	// os_printf("***************************************************\n");
 }
 
 
