@@ -703,7 +703,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transfer_space, (os_size_t) total_bytes_left);
 			//transfer_space -= total_bytes_left; //Purpose of this?
 			// pointer to start, block_num, where we are in file, length of write
-			sd_transmit(transfer_space, block_address + offset_into_current_block;
+			sd_transmit(transfer_space, block_address + offset_into_current_block);
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
