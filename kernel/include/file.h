@@ -22,7 +22,7 @@
 //constants of file system, that wil be filled at boot time
 struct superblock 
 {
-	char* fs_name; // 32 bytes (max length for this field abides by MAX_NAME_LENGTH)
+	// char* fs_name; // 32 bytes (max length for this field abides by MAX_NAME_LENGTH)
 	int fs_version; // 36 bytes
 	int magic_num; // 40 bytes
 	int sd_card_capacity; // 44 bytes
@@ -33,11 +33,12 @@ struct superblock
 	int max_data_blocks; // 66 bytes
 	int inode_bitmap_loc; // 70 bytes
 	int data_bitmap_loc; // 74 bytes
-	int indirect_blocks_bitmap_loc; //
+	// int indirect_blocks_bitmap_loc; //
 	int start_inode_table_loc; // 78 bytes  
 	int start_data_blocks_loc; // 82 bytes, start_inode_table_loc + 200 b/c 200 inode bl
-	int start_indirect_block_table_loc; //
-	int max_indirect_blocks;
+	// int start_indirect_block_table_loc; //
+	// int max_indirect_blocks;
+	// char spaceholder[???]; Might need this to make the cast from memory to superblock work...not sure??? Don't think we need this, but not sure
 	// the rest of the superblock will be empty for now (BLOCKSIZE - 82 = 512 - 82 = 430 free/wasted bytes)
 };
 
@@ -74,6 +75,11 @@ struct dir_data_block
 	int block_num;
 	int num_entries;
 	struct dir_entry dir_entries[MAX_DIR_ENTRIES_PER_DATA_BLOCK];
+};
+
+struct data_block
+{
+	char data[BLOCKSIZE];
 };
 
 struct dir_helper //used by helper functions in file.c
