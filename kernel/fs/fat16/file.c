@@ -709,7 +709,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			total_bytes_left -= total_bytes_left;
 			fd->offset += total_bytes_left;
 		}
-		else if(bytes_left_in_block <= total_bytes_left) {
+		else if(total_bytes_left > bytes_left_in_block) {
 			/* 
 				------------
 				|	    |~~~|
@@ -726,6 +726,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			total_bytes_left -= bytes_left_in_block;
 			fd->offset += bytes_left_in_block;
 		} else {
+			// Is it possible to even reach here?
 			os_memcpy(buf_offset, transfer_space, (os_size_t) BLOCKSIZE);
 			transfer_space -= BLOCKSIZE;
 			// pointer to start, blockNum, where we are in file, lengh of write
