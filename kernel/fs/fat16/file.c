@@ -172,7 +172,7 @@ void get_inode(int inum, struct inode* result_inode){
 		void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		sd_receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
 		struct inode *block_of_inodes = (struct inode*) inode_spaceholder;
-		result_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+		*result_inode = block_of_inodes[inum % INODES_PER_BLOCK];
 		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
@@ -185,7 +185,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int i;
 	int file_found = 0; // initialize to false (i.e. file not found)
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-	for(i = 0; i < cur_inode->blocks_in_file; i++){
+	for(i = 0; i < cur_inode->direct_blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
 		int j;
@@ -222,7 +222,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		int j;
-		for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
+		for(j = 0; j < cur_indirect_blockss_in_file; j++){
 			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
@@ -246,32 +246,42 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 	return inum;
 }//end of get_inum_from_indirect_data_block
 
-//finds the inode (will be cur_inode) following filepath, going dir_levels down the path, starting from starting_inum
-int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* cur_inode) { //filepath and starting inum must correspond...
-	int inum = starting_inum;
+//finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
+int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
+	int current_inum = starting_inum;
 	int a;
 	for(a = 0; a < dir_levels; a++) {
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
+
+		//get path of next inode
 		while ((filepath[k] != '/') && (k <= MAX_NAME_LENGTH) && (filepath[k] != '\0')) {
 			next_path[k] = filepath[k];
 			k++;
 		}//end of litte while to find next_path
+
 		filepath += k;
-		// Look up cur_inode inode in cached inode table
-		get_inode(inum, cur_inode);
-		inum = get_inum_from_direct_data_block(cur_inode, next_path);
+
+		// Store inode with inum current_inum in result_inode 
+		get_inode(current_inum, result_inode);
+
+		//Set new inum to the next_path's inum
+		inum = get_inum_from_direct_data_block(result_inode, next_path);
 
 		if(inum == -1){
+			//inum not found in any direct blocks of result_inode
+			//look for it in the indirect blocks now
 			inum = get_inum_from_indirect_data_block(cur_inode, next_path);
 		}
 
-		if(inum == -1){//throw an error
+		if(inum == -1){
+			//next_path not found in current_inode
 			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
 			return -1;
 		}
 	}//outer most for loop
-	get_inode(inum, cur_inode);
+	//inum of target inode found, store that inode in result_inode
+	get_inode(inum, result_inode);
 	return 0;
 }//end kfind_inode() helper function
 
@@ -329,7 +339,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 	struct indirect_block* cur_indirect_block;
 	//if the cur_inode's array of direct data blocks has not reached max capacity, grab the last data block in the array to update:
-	if((cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
+	if((cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->direct_blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
 		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
 	}else{
 		//all the direct data blocks are full, so grab the last indirect block in the array of indirect blocks:
@@ -368,10 +378,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		new_dir_block->block_num = new_data_block_loc;
 		new_dir_block->dir_entries = NULL;
 
-		if(cur_inode->blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+		if(cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE){
 			//Case (1): add a direct data block to cur_inode:
-			cur_inode->data_blocks[cur_inode->blocks_in_file] = new_dir_block->block_num;
-			cur_inode->blocks_in_file++;
+			cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_dir_block->block_num;
+			cur_inode->direct_blocks_in_file++;
 
 			new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
 			new_dir_block->num_entries++;
@@ -524,7 +534,7 @@ int read_partial_block(int bytes_left, void* buf_offset, struct file_descriptor*
 		|~~~~~~~~~|			|
 		--------------------- */
 		// Actually move the data to the user's specified buffer...must first cast void pointers to uint32_t* pointers:
-		// source is transferSpace
+		// source is transfer_space
 		// dest is users buffer
 
 		 os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	// note, this updates the buf_offset pointer as it transfer the data
@@ -573,14 +583,14 @@ int read_partial_block(int bytes_left, void* buf_offset, struct file_descriptor*
 
 
 // Helper function for kread():
-int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd, void* transferSpace) {
+int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd, void* transfer_space) {
 	// read BLOCKSIZE
-	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
-	int blockNum = fd->offset / BLOCKSIZE;
-	int success = sd_receive(transferSpace, blockNum);
+	// Actually get the data for 1 block (the SD Driver will put it in transfer_space for us)
+	int block_num = fd->offset / BLOCKSIZE;
+	int success = sd_receive(transfer_space, block_num);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
-	 	os_printf("failed to receive block number %d\n", blockNum);
+	 	os_printf("failed to receive block number %d\n", block_num);
 	 	return -1;
 	}//end if
 	/*	______________________
@@ -589,11 +599,11 @@ int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd,
 	// Actually move the data to the user's specified buffer...must first cast void pointers to uint32_t* pointers:
 	// source is transferSpace
 	// dest is users buffer
-	 os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 	// note, this updates the buf_offset pointer as it transfer the data
+	 os_memcpy(transfer_space, buf_offset, (os_size_t) BLOCKSIZE); 	// note, this updates the buf_offset pointer as it transfer the data
 	 																// os_memcpy takes uint32_t* as arguments
 	 fd->offset += BLOCKSIZE; // update the file descriptors file offset
 	 // reset transferSpace pointer
-	 transferSpace -= BLOCKSIZE;
+	 transfer_space -= BLOCKSIZE;
 	 return BLOCKSIZE; // note, we are returning the number of bytes that were successfully transferred
 }//end read_full_block() helper function
 
@@ -611,20 +621,20 @@ int kread(int fd_int, void* buf, int numBytes) {
 	}
 
 	// Allocate space for and create a bitvector to be used repeatedly to transfer the data:
-	uint32_t* transferSpace = kmalloc(BLOCKSIZE);
+	uint32_t* transfer_space = kmalloc(BLOCKSIZE);
 
 	// start of higher-level algo:
 	if(numBytes < BLOCKSIZE) {
 		while(bytes_read < numBytes) {
-			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transferSpace);
+			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
 		}
 	} else if(numBytes >= BLOCKSIZE) {
-		bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transferSpace);
+		bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
 		while((numBytes - bytes_read) > BLOCKSIZE) {
-			bytes_read += read_full_block((numBytes-bytes_read), buf_offset, fd, transferSpace);
+			bytes_read += read_full_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
 		}
 		if(bytes_read < numBytes) {
-			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transferSpace);
+			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
 		}
 	}//end else if
 	if(bytes_read != numBytes){
@@ -638,27 +648,27 @@ int kread(int fd_int, void* buf, int numBytes) {
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
 int kwrite(int fd_int, void* buf, int num_bytes) {
-        struct file_descriptor* fd = get_descriptor(fd_int);
+    struct file_descriptor* fd = get_descriptor(fd_int);
 
-        if ((fd->permission != 'w' || fd->permission != 'b')) {
-            os_printf("no permission\n");
-            return -1;
-        }
+    if ((fd->permission != 'w' || fd->permission != 'b')){
+        os_printf("no permission\n");
+        return -1;
+    }
 
     int total_bytes_left = num_bytes;
     int bytes_written = 0;
 
     uint32_t* buf_offset = buf;
-    uint32_t* transferSpace = kmalloc(BLOCKSIZE);
+    uint32_t* transfer_space = kmalloc(BLOCKSIZE);
     // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
 
     // have offset in the file already, just need to move it and copy.
     // fd->offset is the offset in the file. 
-    int blockNum;
+    int block_num;
     int bytes_left_in_block;
     while(bytes_written < total_bytes_left) {
-		blockNum = fd->offset / BLOCKSIZE;
-		// need to put things in transferSpace, move pointer back when done
+		block_num = fd->offset / BLOCKSIZE;
+		// need to put things in transfer_space, move pointer back when done
 		bytes_left_in_block = BLOCKSIZE - (fd->offset % BLOCKSIZE);
 		if(total_bytes_left <= bytes_left_in_block){
 			/*	--------------- 			-----------------				
@@ -666,10 +676,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				----------------			-----------------
 			*/ 
 			// write total_bytes_left
-			os_memcpy(buf_offset, transferSpace, (os_size_t) total_bytes_left);
-			transferSpace -= total_bytes_left;
+			os_memcpy(buf_offset, transfer_space, (os_size_t) total_bytes_left);
+			transfer_space -= total_bytes_left;
 			// pointer to start, blockNum, where we are in file, length of write
-			sd_transmit(transferSpace, blockNum);
+			sd_transmit(transfer_space, blockNum);
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
@@ -682,19 +692,19 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				------------
 				read to the end of the block
 			*/
-			os_memcpy(buf_offset, transferSpace, (os_size_t) bytes_left_in_block);
-			transferSpace -= bytes_left_in_block;
+			os_memcpy(buf_offset, transfer_space, (os_size_t) bytes_left_in_block);
+			transfer_space -= bytes_left_in_block;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transferSpace, blockNum);
+			sd_transmit(transfer_space, blockNum);
 
 			bytes_written += bytes_left_in_block;
 			total_bytes_left -= bytes_left_in_block;
 			fd->offset += bytes_left_in_block;
 		} else {
-			os_memcpy(buf_offset, transferSpace, (os_size_t) BLOCKSIZE);
-			transferSpace -= BLOCKSIZE;
+			os_memcpy(buf_offset, transfer_space, (os_size_t) BLOCKSIZE);
+			transfer_space -= BLOCKSIZE;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transferSpace, blockNum);
+			sd_transmit(transfer_space, blockNum);
 
 			bytes_written += BLOCKSIZE;
 			total_bytes_left -= BLOCKSIZE;
@@ -762,7 +772,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	new_inode->size = 0; 
 	new_inode->is_dir = is_this_a_dir; 
 	new_inode->usr_id = 0; //or something
-	new_inode->blocks_in_file = 0; 
+	new_inode->direct_blocks_in_file = 0; 
 	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = NULL; 
 	new_inode->indirect_blocks_in_file = 0; 
 	new_inode->indirect_blocks[MAX_NUM_INDIRECT_BLOCKS] = NULL; 
@@ -840,16 +850,17 @@ int kcopy(char* source, char* dest, char mode) {
 	int inum = 0; //start from root
 
 	//1. find source
-	struct dir_helper* source_dir_helper = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
+	struct dir_helper *source_dir_helper = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(source, source_dir_helper); 
 	struct inode *source_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	//find the source inode
 	error = kfind_inode(source, inum, (source_dir_helper->dir_levels + 1), source_inode);
 	if (error == -1) {  //kfind_inode unsuccessful 
 		os_printf("kfind_inode unsuccessful \n");
 		kfree(source_inode);
-		kfree(source_result->truncated_path);
-		kfree(source_result->last);
-		kfree(source_result);
+		kfree(source_dir_helper->truncated_path);
+		kfree(source_dir_helper->last);
+		kfree(source_dir_helper);
 		return -1;
 	}
 	//at this point source_inode is the inode of the source
@@ -868,7 +879,7 @@ int kcopy(char* source, char* dest, char mode) {
 	}
 
 	//3. find destination
-	struct file_descriptor*  dest_fd_struct = get_descriptor(dest_fd);
+	struct file_descriptor *dest_fd_struct = get_descriptor(dest_fd);
 	if (dest_fd_struct == 0x0) {  //get_descriptor had problems
 		os_printf("get_descriptor unsuccessful \n");
 		kfree(source_inode);
@@ -877,7 +888,7 @@ int kcopy(char* source, char* dest, char mode) {
 		kfree(source_result);
 		return -1;
 	}
-	struct inode * dest_inode = dest_fd_struct->linked_file;
+	struct inode *dest_inode = dest_fd_struct->linked_file;
 	//at this point dest_inode is the inode of the created destination
 
 	//4. copy contents from source_inode to dest_inode (all contents)
@@ -885,6 +896,11 @@ int kcopy(char* source, char* dest, char mode) {
 	// NEED HELPER FUNCTIONS (THAT WILL BE USED ALSO IN READ AND WRITE) THAT READ/WRITE ME STUFF FROM A GIVEN INODE
 	// so the whole copying can actually happen!
 	//-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+	void* buffer = (void*) kmalloc(source_inode->size);
+
+
+
 
 	kfree(source_inode);
 	kfree(source_result->truncated_path);
@@ -920,7 +936,7 @@ int kls(char* filepath) {
 	//1. print from direct blocks
 	int i;
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
-	for(i = 0; i < cur_inode->blocks_in_file; i++){
+	for(i = 0; i < cur_inode->direct_blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 		struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 		int j;
@@ -938,7 +954,7 @@ int kls(char* filepath) {
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
 		get_indirect_block(cur_indirect_block_num, cur_indirect_block);
 		int j;
-		for(j = 0; j < cur_indirect_block.blocks_in_file; j++){
+		for(j = 0; j < cur_indirect_block.direct_blocks_in_file; j++){
 			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
