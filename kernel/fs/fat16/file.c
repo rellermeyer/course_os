@@ -478,7 +478,6 @@ int get_block_address(struct inode *file_inode, int block_num){
 	if(indirect_block_num < file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
 		os_printf("block_num out of range");
 		return -1;
-
 	}
 
 	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]));
@@ -681,28 +680,30 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
     int total_bytes_left = num_bytes;
     int bytes_written = 0;
 
-    uint32_t* buf_offset = buf;
-    uint32_t* transfer_space = kmalloc(BLOCKSIZE);
+    uint32_t *buf_offset = buf;
+    uint32_t *transfer_space = kmalloc(BLOCKSIZE);
     // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
 
     // have offset in the file already, just need to move it and copy.
     // fd->offset is the offset in the file. 
-    int block_num;
-    int bytes_left_in_block;
     while(bytes_written < total_bytes_left) {
-		block_num = fd->offset / BLOCKSIZE;
+		int block_num = fd->offset / BLOCKSIZE;
 		// need to put things in transfer_space, move pointer back when done
-		bytes_left_in_block = BLOCKSIZE - (fd->offset % BLOCKSIZE);
+		int offset_into_current_block = fd->offset % BLOCKSIZE;
+		int bytes_left_in_block = BLOCKSIZE - offset_into_current_block;
+		int block_address = get_block_address(fd->linked_file, block_num);
+
 		if(total_bytes_left <= bytes_left_in_block){
 			/*	--------------- 			-----------------				
 				|~~~~~~~|      |	 OR		|     |~~~~~|   |
 				----------------			-----------------
 			*/ 
+			//Remaining bytes to write will fit in the current block
 			// write total_bytes_left
 			os_memcpy(buf_offset, transfer_space, (os_size_t) total_bytes_left);
-			transfer_space -= total_bytes_left;
+			//transfer_space -= total_bytes_left; //Purpose of this?
 			// pointer to start, block_num, where we are in file, length of write
-			sd_transmit(transfer_space, block_num);
+			sd_transmit(transfer_space, block_address + offset_into_current_block;
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
@@ -713,12 +714,13 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				------------
 				|	    |~~~|
 				------------
-				read to the end of the block
+				write to the end of the block
 			*/
+			//Remaining bytes will not fit in current block, fill up remainder of block
 			os_memcpy(buf_offset, transfer_space, (os_size_t) bytes_left_in_block);
-			transfer_space -= bytes_left_in_block;
+			//transfer_space -= bytes_left_in_block; //Purpose of this?
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transfer_space, block_num);
+			sd_transmit(transfer_space, block_address + offset_into_current_block);
 
 			bytes_written += bytes_left_in_block;
 			total_bytes_left -= bytes_left_in_block;
