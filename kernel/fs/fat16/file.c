@@ -469,7 +469,7 @@ int get_block_address(struct inode *file_inode, int block_num){
 		return -1;
 	}
 	if(block_num < MAX_DATABLOCKS_PER_INODE){
-		return file_inode->data_block[block_num];
+		return file_inode->data_blocks[block_num];
 	}
 	//Block must be stored in an indirect block of file_inode
 
@@ -480,7 +480,7 @@ int get_block_address(struct inode *file_inode, int block_num){
 		return -1;
 	}
 
-	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]));
+	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]);
 	int indirect_block_direct_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	return current_indirect_block->data_blocks[indirect_block_direct_block_num];
 }
