@@ -6,10 +6,11 @@ AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
+GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o
 
-all: kernel.img
+all: flash.bin card.sd
 
 CFLAGS += -pipe
 CFLAGS += -std=gnu99 
@@ -17,9 +18,16 @@ CFLAGS += -ffreestanding
 CFLAGS += -nostdinc
 CFLAGS += -Wall
 #CFLAGS += -Werror
+CFLAGS += -g
 
 run: flash.bin card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+
+run-debug: flash.bin card.sd
+	${QEMU} -S -s -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+
+gdb:
+	${GDB} -ex "target remote :1234" kernel.elf
 
 #boots the kernel at 0x210000
 flash.bin: kernel.img script.img
