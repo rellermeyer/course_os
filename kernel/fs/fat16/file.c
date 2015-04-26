@@ -629,9 +629,12 @@ int read_full_block(int bytesLeft, void* buf_offset, struct file_descriptor* fd,
 	 return BLOCKSIZE; // note, we are returning the number of bytes that were successfully transferred
 }//end read_full_block() helper function
 
+int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
+	//TODO: ya know, do this
+}
 
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
-int kread(int fd_int, void* buf, int numBytes) {
+int kread(int fd_int, void* buf, int num_bytes) {
 	int bytes_read = 0;
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
@@ -646,20 +649,20 @@ int kread(int fd_int, void* buf, int numBytes) {
 	uint32_t* transfer_space = kmalloc(BLOCKSIZE);
 
 	// start of higher-level algo:
-	if(numBytes < BLOCKSIZE) {
+	if(num_bytes < BLOCKSIZE) {
 		while(bytes_read < numBytes) {
-			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
+			bytes_read += read_partial_block((num_bytes-bytes_read), buf_offset, fd, transfer_space);
 		}
-	} else if(numBytes >= BLOCKSIZE) {
-		bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
-		while((numBytes - bytes_read) > BLOCKSIZE) {
-			bytes_read += read_full_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
+	} else if(num_bytes >= BLOCKSIZE) {
+		bytes_read += read_partial_block((num_bytes-bytes_read), buf_offset, fd, transfer_space);
+		while((num_bytes - bytes_read) > BLOCKSIZE) {
+			bytes_read += read_full_block((num_bytes-bytes_read), buf_offset, fd, transfer_space);
 		}
-		if(bytes_read < numBytes) {
-			bytes_read += read_partial_block((numBytes-bytes_read), buf_offset, fd, transfer_space);
+		if(bytes_read < num_bytes) {
+			bytes_read += read_partial_block((num_bytes-bytes_read), buf_offset, fd, transfer_space);
 		}
 	}//end else if
-	if(bytes_read != numBytes){
+	if(bytes_read != num_bytes){
 		return bytes_read;
 	}else{
 		return -1;
