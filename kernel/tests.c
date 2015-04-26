@@ -1,5 +1,3 @@
-//#include <stdio.h>
-//#include <stdlib.h>
 #include "global_defs.h"
 #include "tests.h"
 #include "klibc.h"

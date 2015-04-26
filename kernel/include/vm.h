@@ -4,7 +4,8 @@
 #include "memory.h"
 #include<stdint.h>
 
-#define BLOCK_SIZE (1<<20)
+//#define BLOCK_SIZE (1<<20)
+#define BLOCK_SIZE (1<<12)
 
 #define PAGE_TABLE_SIZE (1<<14)
 #define L2_PAGE_TABLE_SIZE (1<<12)
