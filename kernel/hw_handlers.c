@@ -193,9 +193,9 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		char* source;
 		char* dest;
 		// retrieve the args that seek() put in r1, r2 and pass to kseek():
-		asm volatile("mov r0, %[source1]":[source]"=r" (source)::);
-		asm volatile("mov r1, %[dest1]":[dest]"=r" (dest)::);
-		asm volatile("mov r1, %[mode1]":[mode]"=r" (mode)::);
+		asm volatile("mov r0, %[source1]":[source1]"=r" (source)::);
+		asm volatile("mov r1, %[dest1]":[dest1]"=r" (dest)::);
+		asm volatile("mov r2, %[mode1]":[mode1]"=r" (mode)::);
 		// call kcopy(), passing appropriate args:
 		error = kcopy(source, dest, mode);
 		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:

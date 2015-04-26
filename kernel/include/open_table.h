@@ -21,7 +21,7 @@ struct file_descriptor {
 };
 
 // Array of open files 
-struct file_descriptor* table[SYSTEM_SIZE]; 
+struct file_descriptor** table; 
 
 //list of free indexes
 bit_vector * open_table_free_list; 
