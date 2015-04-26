@@ -36,8 +36,8 @@ int start_indirect_blocks_table_loc = 25000;
 int start_data_blocks_loc = 50000;
 
 struct superblock* FS;
-bitVector* inode_bitmap;
-bitVector* data_block_bitmap;
+bit_vector* inode_bitmap;
+bit_vector* data_block_bitmap;
 /* Need to as Luke about this */
 struct inode** inode_table_cache; //is this right? we want an array of inode pointers...
 struct indirect_block** indirect_block_table_cache; // an array of pointers to indirect_blocks
@@ -63,11 +63,11 @@ int kfs_init(int inode_table_cache_size, int indirect_block_table_cache_size){
 	INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
-	inode_bitmap = (bitVector*) kmalloc(BLOCKSIZE); 
+	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
 	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
 	// inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
 
-	data_block_bitmap = (bitVector*) kmalloc(BLOCKSIZE);
+	data_block_bitmap = (bit_vector*) kmalloc(BLOCKSIZE);
 	sd_receive((void*) data_block_bitmap, (FS->data_bitmap_loc) * BLOCKSIZE);
 	// data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
 
@@ -507,7 +507,7 @@ int kopen(char* filepath, char mode){
 		return -1;
 	}
 
-	bitVector *p = cur_inode->perms;
+	bit_vector *p = cur_inode->perms;
 	switch (mode){
 		case 'r':
 			if(bv_get(0, p) == 0){

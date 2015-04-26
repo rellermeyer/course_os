@@ -47,7 +47,7 @@ struct inode {
 	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // array of data (now long 68)
 	int indirect_blocks_in_file; // how many indirect block are being used  (4 bytes)
 	int indirect_blocks[MAX_NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now
-	bitVector* perms; // permissions of the file (12 bytes)
+	bit_vector* perms; // permissions of the file (12 bytes)
 };
 
 struct indirect_block // total size is 1 block
