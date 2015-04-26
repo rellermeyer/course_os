@@ -23,5 +23,9 @@
 #define PMAPBASE 		0xf0200000
 #define PMAPTOP			0xf7f00000
 
+// Region where we use 4K pages.
+#define P_4K_BASE (P_L1PTBASE+0x200000)
+#define P_4K_TOP (PMAPTOP - 0xf0000000)
+
 //High vectors are enabled by setting V bit in the control register
 #define HIVECTABLE		0xffff0000

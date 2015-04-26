@@ -1,3 +1,8 @@
+#ifndef _TESTS_H_
+#define _TESTS_H_
+
+#include <global_defs.h>
+
 // Each test consists of a descriptor and function pointer to the test function.
 typedef struct Test {
   char *test_name;
@@ -11,3 +16,5 @@ int test1();
 int test2();
 
 Test* create_test(char *name, int (*test_function)());
+
+#endif

@@ -30,7 +30,7 @@ struct node
 };
 
 tree* init_tree();
-void insert(tree* t, void *d);
+void llist_insert(tree* t, void *d);
 void delete(tree *t, node *n);
 
 #endif

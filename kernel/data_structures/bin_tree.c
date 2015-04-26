@@ -28,7 +28,7 @@ int comparison(void *a, void *b)
     return 0;
 }
 
-void insert(tree* t, void *d)
+void llist_insert(tree* t, void *d)
 {
     node *next = t->root;
     while(next) {
