@@ -463,6 +463,29 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	return 0;
 }//end add_dir_entry() helper function
 
+int get_block_address(struct inode *file_inode, int block_num){
+	if(block_num < 0){
+		os_printf("Invalid block number");
+		return -1;
+	}
+	if(block_num < MAX_DATABLOCKS_PER_INODE){
+		return file_inode->data_block[block_num];
+	}
+	//Block must be stored in an indirect block of file_inode
+
+	//Get the indirect block num that contain the target block
+	int indirect_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
+	if(indirect_block_num < file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
+		os_printf("block_num out of range");
+		return -1;
+
+	}
+
+	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]));
+	int indirect_block_direct_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
+	return current_indirect_block->data_blocks[indirect_block_direct_block_num];
+}
+
 
 //end of helper functions
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -678,8 +701,8 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			// write total_bytes_left
 			os_memcpy(buf_offset, transfer_space, (os_size_t) total_bytes_left);
 			transfer_space -= total_bytes_left;
-			// pointer to start, blockNum, where we are in file, length of write
-			sd_transmit(transfer_space, blockNum);
+			// pointer to start, block_num, where we are in file, length of write
+			sd_transmit(transfer_space, block_num);
 
 			bytes_written += total_bytes_left;
 			total_bytes_left -= total_bytes_left;
@@ -695,7 +718,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transfer_space, (os_size_t) bytes_left_in_block);
 			transfer_space -= bytes_left_in_block;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transfer_space, blockNum);
+			sd_transmit(transfer_space, block_num);
 
 			bytes_written += bytes_left_in_block;
 			total_bytes_left -= bytes_left_in_block;
@@ -704,7 +727,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transfer_space, (os_size_t) BLOCKSIZE);
 			transfer_space -= BLOCKSIZE;
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transfer_space, blockNum);
+			sd_transmit(transfer_space, block_num);
 
 			bytes_written += BLOCKSIZE;
 			total_bytes_left -= BLOCKSIZE;
@@ -773,9 +796,9 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	new_inode->is_dir = is_this_a_dir; 
 	new_inode->usr_id = 0; //or something
 	new_inode->direct_blocks_in_file = 0; 
-	new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = NULL; 
+	//new_inode->data_blocks[MAX_DATABLOCKS_PER_INODE] = {0}; 
 	new_inode->indirect_blocks_in_file = 0; 
-	new_inode->indirect_blocks[MAX_NUM_INDIRECT_BLOCKS] = NULL; 
+	//new_inode->indirect_blocks[MAX_NUM_INDIRECT_BLOCKS] = {0}; 
 	switch (mode){
 		case 'r':
 			bv_set(0, new_inode->perms);
@@ -872,9 +895,9 @@ int kcopy(char* source, char* dest, char mode) {
 	if (dest_fd == -1) { //some problem occurred in kcreate
 		os_printf("kcreate unsuccessful \n");
 		kfree(source_inode);
-		kfree(source_result->truncated_path);
-		kfree(source_result->last);
-		kfree(source_result);
+		kfree(source_dir_helper->truncated_path);
+		kfree(source_dir_helper->last);
+		kfree(source_dir_helper);
 		return -1;
 	}
 
@@ -883,9 +906,9 @@ int kcopy(char* source, char* dest, char mode) {
 	if (dest_fd_struct == 0x0) {  //get_descriptor had problems
 		os_printf("get_descriptor unsuccessful \n");
 		kfree(source_inode);
-		kfree(source_result->truncated_path);
-		kfree(source_result->last);
-		kfree(source_result);
+		kfree(source_dir_helper->truncated_path);
+		kfree(source_dir_helper->last);
+		kfree(source_dir_helper);
 		return -1;
 	}
 	struct inode *dest_inode = dest_fd_struct->linked_file;
@@ -903,9 +926,9 @@ int kcopy(char* source, char* dest, char mode) {
 
 
 	kfree(source_inode);
-	kfree(source_result->truncated_path);
-	kfree(source_result->last);
-	kfree(source_result);
+	kfree(source_dir_helper->truncated_path);
+	kfree(source_dir_helper->last);
+	kfree(source_dir_helper);
 	return -1;
 }
 
@@ -943,7 +966,6 @@ int kls(char* filepath) {
 		for(j = 0; j < (cur_data_block.num_entries); j++){
 			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
 			os_printf("entry: %s \n", file_dir.name);
-			}
 		}//inner for
 	}//outer for
 
@@ -954,8 +976,8 @@ int kls(char* filepath) {
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
 		get_indirect_block(cur_indirect_block_num, cur_indirect_block);
 		int j;
-		for(j = 0; j < cur_indirect_block.direct_blocks_in_file; j++){
-			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
+		for(j = 0; j < cur_indirect_block->blocks_in_file; j++){
+			sd_receive(dir_spaceholder, (cur_indirect_block->data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
 			for(k = 0; k < (cur_data_block.num_entries); k++){
