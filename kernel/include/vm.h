@@ -52,10 +52,10 @@ struct vas {
  *
  * (RO stands for Read-Only, RW for Read-Write)
  */
-#define VM_PERM_PRIVILEGED_RO 5
-#define VM_PERM_USER_RO 6
-#define VM_PERM_PRIVILEGED_RW 1
-#define VM_PERM_USER_RW 3
+#define VM_PERM_PRIVILEGED_RO 1
+#define VM_PERM_USER_RO 2
+#define VM_PERM_PRIVILEGED_RW 4
+#define VM_PERM_USER_RW 8
 
 void vm_init();
 
