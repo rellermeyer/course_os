@@ -29,7 +29,7 @@ struct subscriber
 //    int_least32_t *next;//implement later if add multi- subscribers
 };
 
-void q_create(char q_name[], char options[]);
+void q_create(char q_name[]/*, char options[]*/);
 int_least32_t q_open(char q_name[]);
 int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t datalen);
 int_least32_t receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalen);
@@ -38,6 +38,7 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength);
 void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength));
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength);
+void q_call(char q_name[], int_least32_t *data, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata);
 void q_test();
 /*to add other functions below*/
 

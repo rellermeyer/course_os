@@ -5,33 +5,26 @@
 #include <stdint.h>
 #include "klibc.h"
 #include "hashtable.h"
+#include "drivers/uart.h"
 
 static int initialized;
 struct ht *q_table;
 struct queue *q_map[100];
 int_least32_t next;
 
-void q_create(char q_name[], char options[])
+void q_create(char q_name[]/*, char options[]*/)
 {
-    if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
-        initialized = 0;
-    }
-    os_printf("init is %d \n", initialized);
-    os_printf("in q_create\n");
-    os_printf(q_name);
-    os_printf("\n");
-	struct queue *q;
-	os_memset(&q, 0, sizeof(q));
-    if (initialized == 0) {
-        os_printf("not initialized\n");
+	if (initialized < 0) {  // ask why it's not getting inialized to zero. Change this hack...
+		initialized = 0;
+	}
+	struct queue *q = 0x0;
+	if (initialized == 0) {
 		initialized = 1;
         q_table = ht_alloc(100);
         ht_add(q_table, q_name, (void*)q);
 	}else{
-        os_printf("%d\n", initialized);
-        os_printf("initialized");
-        ht_add(q_table, q_name, (void*)q);
-    }
+		ht_add(q_table, q_name, (void*)q);
+	}
 
 
 
@@ -71,27 +64,20 @@ int_least32_t q_publish(int_least32_t qd, int_least32_t *data, int_least32_t dat
 	int kilo = 1024;
 	if (datalen > 128 * kilo) {
 		//TODO: throw an error
-        os_printf("datalen too large\n");
         return 0x0;
-	} else {
-        os_printf("datalen okay. data is \"%s\"\n", data);
-    }
+	} 
 
 	// TODO: Copy the data? Don't copy the data? Copy-on-write the data?
 	struct queue *q = q_map[qd];
     q->data = data;
 	q->datalen = datalen;
     //Accessing elements of q throws an error
-    os_printf("q is %d\n", q);
-    //os_printf("data from q is \"%s\"\n", q->data);
 	return 0;
 }
 
 int_least32_t q_subscribe(int_least32_t qd, void (*receiver)(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength), int_least32_t *userdata)
 {
-    os_printf("Currently in q_subscribe\n");
-    struct subscriber *user;
-    os_memset(&user, 0, sizeof(user));
+    struct subscriber *user = 0x0;
     user->userdata = userdata;
 	struct queue *q = q_map[qd];
     q->subscriber = user;
@@ -130,6 +116,7 @@ int_least32_t q_block_read(int_least32_t qd, int_least32_t *buf, int_least32_t b
 // or fails. If buffer is too small, fail
 void q_wait_for_reply(char msg[], int_least32_t *buf, int_least32_t buflength)
 {
+
 }
 
 
@@ -138,28 +125,41 @@ void q_subscribe_to_reply(char msg[], void (*receiver)(int_least32_t *userdata, 
 
 }
 
+/*q_call seems to fail on q_send*/
+//void q_call(char q_name[], int_least32_t* data, void(*receiver)(int_least32_t * userdata, int_least32_t * data, int_least32_t datalength), int_least32_t* userdata)
+//{
+//    q_create(q_name);
+//    int_least32_t qd = q_open(q_name);
+//    q_publish(qd, (int_least32_t*) data, sizeof(data));
+//    q_subscribe(qd, &receiver, (int_least32_t*) userdata);
+//    q_send(qd, (int_least32_t*) data, sizeof(data));
+//}
+
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)
 {
-    os_printf("data: %s\n", data);
+	print_uart0("foobar.\n");
+	//print_uart0("data: %s\n", data);
 }
 
 void q_test()
 {
-    os_printf("about to call q_create\n");
-    q_create("my_q", "rr");
+    os_printf_v2("this is a test\n");
+    q_create("my_q");
+    os_printf_v2("Calling q_open...\n");
     int_least32_t qd = q_open("my_q");
-    os_printf("qd is %d\n", qd);
+    os_printf_v2("qd is %d\n", qd);
     char* data = "This is a message";
     int_least32_t *castData = (int_least32_t*) data;
     q_publish(qd, castData, sizeof(data));
     char* userdata = "Some userdata";
     int_least32_t *castUserdata = (int_least32_t*) userdata;// what should this really be?
-    q_subscribe(qd, &sample_receiver, castUserdata);
+    void *fp = &sample_receiver;
+    //fp += 0x10000;
+    //os_printf("Function pointer is: %X\n", fp);
+    os_printf_v2("First 4 bytes at %X are: %X\n", fp, *(uint32_t*)fp);
+    q_subscribe(qd, (void (*)(int_least32_t*, int_least32_t*, int_least32_t))fp, castUserdata);
+    os_printf_v2("asdf\n");
     q_send(qd, castData, sizeof(data));
-
-	os_printf("***** Test code for message queue (q_test()): *****\n");
-	os_printf("haha, as if we had tests. ;)\n");
-    os_printf("This is the end of streams.\n");
 }
 
 
