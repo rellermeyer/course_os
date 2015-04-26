@@ -32,6 +32,11 @@
 #define DISABLE 0x0 | (9 << 4)
 #define READ_CNT (read_mmci(STATUS) & (1 << 21))
 #define WRITE_CNT (read_mmci(FIFO_CNT) > 0)
+#define STATUS_ERR 0x3F
+
+
+
+
 
 
 // Initializes SD card putting it in the transfer state; this should
@@ -192,3 +197,14 @@ uint32_t read_mmci(uint32_t target)
 	return response;
 }
 
+
+uint32_t status(){
+
+uint32_t status = read_mmci(STATUS);
+
+if ((status && STATUS_ERR)!=0){
+return 1;
+}
+//no error
+else return 0;
+}

@@ -35,6 +35,7 @@ void vm_release_frame(void *p) {
 	p += 0xf0000000; // Convert from PPTR to VPTR
 	struct vm_free_frame *flist = p;
 	flist->next = vm_free_list;
+	os_printf("%X %X\n", flist, vm_free_list);
 	vm_free_list = p;
 }
 
@@ -42,6 +43,10 @@ int vm_count_free_frames() {
 	int cnt = 0;
 	struct vm_free_frame *p = vm_free_list;
 	while ((p = p->next)) {
+		if (p == p->next) {
+			ERROR("Fatal problem: The free frame list has a cycle.\n");
+			return -1;
+		}
 		cnt++;
 	}
 	return cnt;
