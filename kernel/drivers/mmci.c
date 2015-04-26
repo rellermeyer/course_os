@@ -42,7 +42,7 @@
 // Initializes SD card putting it in the transfer state; this should
 // be called when the kernel boots up; readies the SD card for 
 // data transfer
-void init_sd()
+int init_sd()
 {
 	asm volatile("cpsie if");
 	int rca = 0;
@@ -83,6 +83,9 @@ void init_sd()
 	// failed to initialize properly but for now just print 
 	// that it was loaded OK
 	os_printf("\nSD card ready for transfer\n");
+
+	/* Hey Matt here is where I added a fake return */
+	return 0;
 }
 
 // Returns the maximum capacity of the SD card; Since our SD card is
