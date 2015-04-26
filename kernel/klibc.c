@@ -286,8 +286,12 @@ int os_printf_v2(const char *str_buf, ...)
 	char buf[256];
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
-    q_call("printf", buf, &printf_receiver, "printf_flag");
-    //	print_uart0(buf);
+    q_create("printf");
+    int_least32_t qd = q_open("printf");
+    q_publish(qd, (int_least32_t*) buf, sizeof(buf));
+    q_subscribe(qd, &printf_receiver, (int_least32_t*) "userdata");
+    q_send(qd, (int_least32_t*) buf, sizeof(buf));
+
 	return n;
 }
 

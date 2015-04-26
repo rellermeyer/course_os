@@ -29,7 +29,6 @@ struct ht_entry *ht_get_entry(struct ht *table, const char *key)
 }
 
 int ht_add(struct ht *table, const char *key, void *value) {
-	os_printf("Adding %s...\n", key);
 	uint32_t hash = hash_string(key);
 	struct ht_entry *entry = &table->entries[hash%table->size];
 	while (1) {
@@ -90,11 +89,11 @@ void *ht_get(struct ht *table, const char *key) {
 }
 
 void ht_test_hasher(const char *key) {
-	os_printf("'%s' hashes to %u\n", key, hash_string(key));
+//	os_printf("'%s' hashes to %u\n", key, hash_string(key));
 }
 
 void ht_test() {
-	os_printf("***** Test code for hash table (ht_test()): *****\n");
+//	os_printf("***** Test code for hash table (ht_test()): *****\n");
 
 	// Let's test the string hashing function for a few strings
 	ht_test_hasher("");
@@ -118,9 +117,9 @@ void ht_test() {
 
 	// Retrieve some stuff...
 	if ((int)ht_get(table, "abcdeh") == 7) {
-		os_printf("1 :)\n");
+		//os_printf("1 :)\n");
 	} else {
-		os_printf("1 :(\n");
+		//os_printf("1 :(\n");
 	}
 
 	// Remove some stuff...
@@ -128,10 +127,10 @@ void ht_test() {
 
 	// Make sure it's gone...
 	if ((int)ht_get(table, "abcdeg") == 0) {
-		os_printf("2 :)\n");
+	//	os_printf("2 :)\n");
 	} else {
-		os_printf("2 :(\n");
+	//	os_printf("2 :(\n");
 	}
 
-	os_printf("*************************************************\n");
+	//os_printf("*************************************************\n");
 }
