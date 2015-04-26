@@ -222,7 +222,8 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		int j;
-		for(j = 0; j < cur_indirect_blockss_in_file; j++){
+		int num_indirect_blocks = cur_inode->indirect_blocks_in_file;
+		for(j = 0; j < num_indirect_blocks; j++){
 			sd_receive(dir_spaceholder, (cur_indirect_block.data_blocks[j])*BLOCKSIZE);
 			struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 			int k;
@@ -262,26 +263,26 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 
 		filepath += k;
 
-		// Store inode with inum current_inum in result_inode 
+		// Store inode with current_inum current_inum in result_inode 
 		get_inode(current_inum, result_inode);
 
-		//Set new inum to the next_path's inum
-		inum = get_inum_from_direct_data_block(result_inode, next_path);
+		//Set new current_inum to the next_path's current_inum
+		current_inum = get_inum_from_direct_data_block(result_inode, next_path);
 
-		if(inum == -1){
-			//inum not found in any direct blocks of result_inode
+		if(current_inum == -1){
+			//current_inum not found in any direct blocks of result_inode
 			//look for it in the indirect blocks now
-			inum = get_inum_from_indirect_data_block(cur_inode, next_path);
+			current_inum = get_inum_from_indirect_data_block(result_inode, next_path);
 		}
 
-		if(inum == -1){
+		if(current_inum == -1){
 			//next_path not found in current_inode
 			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
 			return -1;
 		}
 	}//outer most for loop
-	//inum of target inode found, store that inode in result_inode
-	get_inode(inum, result_inode);
+	//current_inum of target inode found, store that inode in result_inode
+	get_inode(current_inum, result_inode);
 	return 0;
 }//end kfind_inode() helper function
 
@@ -332,15 +333,15 @@ int transmit_data_block_bitmap(){
 /* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
 	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
 int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result){
-	int flag_free_new_dir_block = 0;
+
 	int flag_free_cur_indirect_block = 0;
-	int flag_free_new_indirect_block = 0;
+
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 	struct indirect_block* cur_indirect_block;
 	//if the cur_inode's array of direct data blocks has not reached max capacity, grab the last data block in the array to update:
-	if((cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE) || ((cur_inode->direct_blocks_in_file == MAX_DATABLOCKS_PER_INODE) && (cur_inode->indirect_blocks_in_file == 0))) {
-		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->blocks_in_file)-1])*BLOCKSIZE);
+	if((cur_inode->direct_blocks_in_file <= MAX_DATABLOCKS_PER_INODE)  && (cur_inode->indirect_blocks_in_file == 0)) {
+		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->direct_blocks_in_file)-1])*BLOCKSIZE);
 	}else{
 		//all the direct data blocks are full, so grab the last indirect block in the array of indirect blocks:
 		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
@@ -373,10 +374,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		//first kmalloc space for a new_dir_block:
 		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
 		struct dir_data_block* new_dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
-		flag_free_new_dir_block = 1;
+
 		new_dir_block->num_entries = 0;
 		new_dir_block->block_num = new_data_block_loc;
-		new_dir_block->dir_entries = NULL;
 
 		if(cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE){
 			//Case (1): add a direct data block to cur_inode:
@@ -421,13 +421,11 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
 						then add the new dir_entry to the new data block: */
-					int new_indirect_block_loc = bv_firstFree(indirect_blocks_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+					int new_indirect_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
 					struct indirect_block* new_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-					flag_free_new_indirect_block = 1;
 
 					new_indirect_block->blocks_in_file = 0;
 					new_indirect_block->block_num = new_indirect_block_loc;
-					new_indirect_block->data_blocks = NULL;
 
 					new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_dir_block->block_num;
 					new_indirect_block->blocks_in_file++;
@@ -924,7 +922,8 @@ int kcopy(char* source, char* dest, char mode) {
 		kfree(source_dir_helper);
 		return -1;
 	}
-	struct inode *dest_inode = dest_fd_struct->linked_file;
+	/* commenting line 925 but will be needed, just want to compile rn */
+	//struct inode *dest_inode = dest_fd_struct->linked_file;
 	//at this point dest_inode is the inode of the created destination
 
 	//4. copy contents from source_inode to dest_inode (all contents)
