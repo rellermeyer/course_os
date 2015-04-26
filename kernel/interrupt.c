@@ -69,7 +69,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 void handle_irq_interrupt(int interrupt_vector){
 	os_printf("handling interrupt %d\n", interrupt_vector);
 	// go to handler routine
-	handlers[interrupt_vector]->handler((void*) interrupt_vector);
+	handlers[interrupt_vector]->handler((void *) interrupt_vector);
 	// ok interrupt handled, clear it
 	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
 	// yea this needs to be changed
