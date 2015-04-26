@@ -14,32 +14,31 @@
 #ifndef __llist_h
 #define __llist_h
 
-typedef struct ll_node ll_node;
-typedef struct list list;
+typedef struct llist_node llist_node;
 
-
-struct ll_node
-{
-    ll_node *next;
+struct llist_node {
+    llist_node *next;
     void *data;
-}; 
-struct list
-{
-    ll_node *head;
-    ll_node *tail;
-    int size;
 };
 
+typedef struct {
+    llist_node *head;
+    llist_node *tail;
+    int count;
+} llist_handle;
+
 /* prepend (because of speed) to the list. */
-list* create_list(void *data);
-ll_node* create_node(void *data);
-void free_list(list *l);
-void free_node(ll_node *node);
-void insert(list *l, void *data, int index);
-void append(list *l, void *data);
-void delete_at(list *l, int index);
-void* get_data(list *l, int index);
-ll_node* get_node(list *l, int index);
-void set_data(ll_node *l, void *data);
+llist_handle* llist_create(void *data);
+llist_node* create_node(void *data);
+void llist_free(llist_handle *l);
+void llist_free_node(llist_node *node);
+void llist_insert(llist_handle *l, void *data, int index);
+void llist_enqueue(llist_handle *l, void *data);
+void* llist_dequeue(llist_handle *l);
+void llist_remove_at(llist_handle *l, int index);
+void* llist_get_by_index(llist_handle *l, int index);
+llist_node* llist_get_node(llist_handle *l, int index);
+void llist_set_data(llist_node *l, void *data);
+void llist_count(llist_node *l);
 
 #endif

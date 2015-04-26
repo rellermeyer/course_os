@@ -13,7 +13,7 @@ GDB_VERSION=7.7
 GDB_EXT_VERSION=${GDB_VERSION}
 
 
-rm -rf ${TARGET}/build
+rm -rf ${TARGET}
 
 mkdir -p ${TARGET}/orig
 mkdir -p ${TARGET}/src

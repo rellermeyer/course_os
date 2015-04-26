@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "../include/klibc.h"
-#include "../include/bit_vector.h"
+#include "../include/bitvector.h"
 
 uint32_t const WORD_SIZE = 32;
 
@@ -8,7 +8,6 @@ uint32_t const WORD_SIZE = 32;
 bit_vector *make_vector(uint32_t size) {
 	// make the array 
 	bit_vector *BV = (bit_vector*) kmalloc(sizeof(bit_vector));
-	uint32_t val = size % 32;
 	if((size % 32) == 0) {
 		uint32_t array[size >> 5];
 		uint32_t x;

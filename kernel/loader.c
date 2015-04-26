@@ -38,7 +38,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
 	os_size_t process_size = det_proc_size(h, ph);
-	void * process_mem = aligned_mem_alloc(process_size, 4096);
+	void * process_mem = kmalloc_aligned(process_size, 4096);
 	void * current_pointer = process_mem;
 
 	os_printf("process size= %x\n", process_size);
@@ -118,12 +118,12 @@ uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 
 	if(i == -1) {
-		os_printf("File is Not an ELF File. Exiting");
+		os_printf("File is Not an ELF File. Exiting\n");
 		return -1;
 	}
 
 	if(h->e_phnum == 0) {
-		os_printf("No Program headers in ELF file. Exiting");
+		os_printf("No Program headers in ELF file. Exiting\n");
 		return -1;
 	}
 	
