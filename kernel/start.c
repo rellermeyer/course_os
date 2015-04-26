@@ -80,7 +80,8 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup kmalloc...
 	init_heap();
-
+	_schedule_register_timer_irq();
+        timer_test();
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 	//asm volatile("swi 1");
@@ -96,16 +97,15 @@ void start2(uint32_t *p_bootargs)
 	/*int *p = (int*)0xFFFFFFF0;
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
-	_schedule_register_timer_irq();
-	timer_test();
-
-	run_vm_tests();
+	//_schedule_register_timer_irq();
+	///timer_test();
+/*	run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_mem_alloc_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
-
+*/
 	//asm volatile("swi 1");
 
 	/*
