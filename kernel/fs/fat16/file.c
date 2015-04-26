@@ -18,6 +18,8 @@ int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
 int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
 int INODES_PER_BLOCK;
 int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
+int DATA_BLOCK_TABLE_CACHE_SIZE;
+int NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE;
 
 // FAKE CONSTANTS:
 /* These should be read in the first time the FS is loaded */
@@ -41,6 +43,7 @@ bit_vector* data_block_bitmap;
 struct inode** inode_table_cache; //is this right? we want an array of inode pointers...
 struct indirect_block** indirect_block_table_cache; // an array of pointers to indirect_blocks
 struct inode** inode_table_temp;
+struct data_block** data_block_table_cache;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
 
@@ -101,7 +104,7 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 	data_block_table_cache = (struct data_block**) kmalloc((sizeof(struct data_block*))* FS->max_data_blocks);
 	for(i = 0; i < FS->max_data_blocks; i++){
 		if(i < NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE){
-			sd_receive(data_block_table_temp + (i*BLOCKSIZE), (FS->start_data_block_table_loc) + (i*BLOCKSIZE));
+			sd_receive(data_block_table_temp + (i*BLOCKSIZE), (FS->start_data_blocks_loc) + (i*BLOCKSIZE));
 			data_block_table_cache[i] = (struct data_block*)(data_block_table_temp + (i*BLOCKSIZE));
 		} else{
 			data_block_table_cache[i] = NULL;
@@ -160,7 +163,7 @@ void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
 	}else{ //RIGHT HERE
 		// indirect_block is not in the cache table, so get it from disk:
 		struct indirect_block* indirect_block_spaceholder = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		sd_receive((void*) indirect_block_spaceholder, (index + FS->start_indirect_block_table_loc)*BLOCKSIZE); // the firs
+		sd_receive((void*) indirect_block_spaceholder, (index + FS->start_data_blocks_loc)*BLOCKSIZE); // the firs
 		*cur_indirect_block = *(indirect_block_spaceholder);
 		kfree(indirect_block_spaceholder);
 		// need to implement an eviction policy/function to update the data_block_table_cache...
@@ -175,7 +178,7 @@ void get_inode(int inum, struct inode* result_inode){
 	}else{ 
 		// inode is not in the cache table, so get it from disk:
 		struct inode* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		sd_receive((void*)(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
+		sd_receive((void*)inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
 		struct inode *block_of_inodes = inode_spaceholder;
 		*result_inode = block_of_inodes[inum % INODES_PER_BLOCK];
 		kfree(inode_spaceholder);
