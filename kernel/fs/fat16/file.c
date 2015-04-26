@@ -163,23 +163,23 @@ void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
 }//end get_indirect_block helper
 
 //from the inum, gets corresponding inode, either from cache or disk
-void get_inode(int inum, struct inode* cur_inode){
+void get_inode(int inum, struct inode* result_inode){
 	if(inode_table_cache[inum] != NULL){
 		// the inode is in the inode_cache_table, so get it:
-		cur_inode = (inode_table_cache[inum]);	
+		result_inode = (inode_table_cache[inum]);	
 	}else{ 
 		// inode is not in the cache table, so get it from disk:
 		void* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		sd_receive(inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
-		struct inode* block_of_inodes = (struct inode*) inode_spaceholder;
-		*cur_inode = block_of_inodes[inum % INODES_PER_BLOCK];
+		struct inode *block_of_inodes = (struct inode*) inode_spaceholder;
+		result_inode = block_of_inodes[inum % INODES_PER_BLOCK];
 		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
 	}//end if else
 }//end get_inode() helper function
 
-//gets the inum of netxpath (file or dir) looking at the direct data blocks of cur_inode
+//gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
 int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int inum = -1;
 	int i;
@@ -187,10 +187,10 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		struct dir_data_block *cur_data_block = (struct dir_data_block*) dir_spaceholder;
+		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
 		int j;
-		for(j = 0; j < (cur_data_block->num_entries); j++){
-			struct dir_entry file_dir = cur_data_block->dir_entries[j];  
+		for(j = 0; j < (cur_data_block.num_entries); j++){
+			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
 			if(!os_strcmp(file_dir.name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
 				inum = file_dir.inum;
@@ -840,10 +840,10 @@ int kcopy(char* source, char* dest, char mode) {
 	int inum = 0; //start from root
 
 	//1. find source
-	struct dir_helper* source_result = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
-	kfind_dir(source, source_result); 
-	struct inode* source_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	error = kfind_inode(source, inum, (source_result->dir_levels + 1), source_inode);
+	struct dir_helper* source_dir_helper = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(source, source_dir_helper); 
+	struct inode *source_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	error = kfind_inode(source, inum, (source_dir_helper->dir_levels + 1), source_inode);
 	if (error == -1) {  //kfind_inode unsuccessful 
 		os_printf("kfind_inode unsuccessful \n");
 		kfree(source_inode);
@@ -922,7 +922,7 @@ int kls(char* filepath) {
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	for(i = 0; i < cur_inode->blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
-		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
+		struct dir_data_block cur_data_block = *((struct dir_data_block*) dir_spaceholder);
 		int j;
 		for(j = 0; j < (cur_data_block.num_entries); j++){
 			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
@@ -932,7 +932,7 @@ int kls(char* filepath) {
 	}//outer for
 
 	//2. print from indirect blocks
-	struct indirect_block * cur_indirect_block = (struct indirect_block *) kmalloc(sizeof(struct indirect_block));
+	struct indirect_block *cur_indirect_block = (struct indirect_block *) kmalloc(sizeof(struct indirect_block));
 	int cur_indirect_block_num;
 	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
