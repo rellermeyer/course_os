@@ -22,6 +22,8 @@ void _schedule_register_timer_irq(){
 void main(){
 	int x;
 	x=5;
+	printf("s_r_t called\n");
 	_schedule_register_timer_irq();
+	printf("setting handler in array\n");
 	handlers[4]->handler((void *)&x);
 }
