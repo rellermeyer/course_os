@@ -25,7 +25,7 @@ alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
         return 0;
     }
 
-    alloc_handle* alloc_handle_ptr = (alloc_handle*) &buffer[0];
+    alloc_handle* alloc_handle_ptr = (alloc_handle*) buffer;
 
     // storing the alloc_handle struct
     // inside the heading of the buffer
@@ -62,7 +62,7 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
     }
 
     // Now extend the footer block
-    uint32_t *orig_footer = (uint32_t*) ((void*) allocator->heap + start_size
+    int32_t *orig_footer = (int32_t*) ((void*) allocator->heap + start_size
             - sizeof(uint32_t));
 
     allocator->heap_size += amount_added;
@@ -92,10 +92,6 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
 }
 
 void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
-    if (size > (allocator->heap_size + 2 * sizeof(int32_t))) {
-        return 0;
-    }
-
     int32_t i, ret_ptr;
 
     for (i = 0; i < allocator->heap_size;) {
@@ -159,19 +155,6 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
 
     // Recursive call. TODO: (relatively) Inefficient
     return alloc_allocate(allocator, size);
-
-    uint32_t *new_footer =
-            (uint32_t*) ((void*) header + size + sizeof(uint32_t));
-    uint32_t *new_header = new_footer + 1;
-    uint32_t *old_footer = (void*) header + sizeof(uint32_t) + *header;
-
-    *new_header = *header - size - 2 * sizeof(uint32_t);
-    *new_footer = *new_header;
-    *header = -size;
-    *old_footer = -size;
-
-    // The memory immediately after new_header
-    return (void*) (new_header + 1);
 }
 
 void alloc_deallocate(alloc_handle* allocator, void* ptr) {
@@ -289,6 +272,7 @@ uint32_t alloc_check(alloc_handle* allocator) {
             + allocator->heap_size);
     int i, block = 0;
 
+    LOG("Checking memory...\n");
     for (i = 0; i < allocator->heap_size; i += 0) {
         uint32_t* block_addr = (uint32_t*) (ptr + sizeof(int32_t));
 
