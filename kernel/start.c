@@ -99,18 +99,18 @@ void start2(uint32_t *p_bootargs)
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
 
-	run_vm_tests();
+	//run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
-	run_mem_alloc_tests();
+	//run_mem_alloc_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
-	run_prq_tests();
-	run_hmap_tests();
+	//run_prq_tests();
+	//run_hmap_tests();
 
 	ht_test();
 	q_test();
 
 	os_printf("There are %d free frames.\n", vm_count_free_frames());
-	asm volatile("swi 1");
+	//asm volatile("swi 1");
 
 	/*
 	4-15-15: 	#Prakash: 	What happens if we let the program load here?

@@ -21,13 +21,8 @@ void q_create(char q_name[]/*, char options[]*/)
 
 	if (initialized == 0) {
 		initialized = 1;
-<<<<<<< HEAD
 		q_table = ht_alloc(5000);
 		ht_add(q_table, q_name, (void*)q);
-=======
-        q_table = ht_alloc(100);
-        ht_add(q_table, q_name, (void*)q);
->>>>>>> debdaeb28670d3bf85f09f666489cf4949140044
 	}else{
 		ht_add(q_table, q_name, (void*)q);
 	}
