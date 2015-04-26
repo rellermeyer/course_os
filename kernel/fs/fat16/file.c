@@ -8,6 +8,7 @@
 #define NULL 0x0
 
 //CONSTANTS:
+<<<<<<< HEAD
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
 int MAX_BLOCKS;
@@ -1008,4 +1009,3 @@ int kls(char* filepath) {
 	kfree(result);
 	return 0;
 }
-
