@@ -80,16 +80,36 @@ static void argparse_parse(char *cmdline)
 			//os_printf("%X HIYA \n", start);
 			//assert(1==15);
 
-			for(int i = 0; i < 30; i++){
+			for(int i = 0; i < 20; i++){
 				uint32_t *v = start + (i* BLOCK_SIZE);
 				int x = vm_allocate_page(test->stored_vas, (void*)v, VM_PERM_USER_RW );		
-				os_printf("%X \n", x);
-	
+				vm_map_shared_memory(KERNEL_VAS, (void*)v, test->stored_vas, (void*)v, VM_PERM_USER_RW);
+				
+
+
+			
 			}
-		
+
+			int *copyIn = start-PROC_LOCATION;
+			int counter = 0;
+			uint32_t * v = start;
+			//*v = *copyIn;
+			while(counter < len){
+				*v = *copyIn;
+				copyIn+=1;
+				v+=1;
+				counter +=4;
+			}
+
+
+			for(int i = 0; i < 20; i++){
+				uint32_t *v = start + (i* BLOCK_SIZE);
+				vm_free_mapping(KERNEL_VAS, (void*)v);
+			
+			}
+
 			test->name = name;
 
-			//os_memcpy((uint32_t *)start-PROC_LOCATION, (uint32_t *)start, (os_size_t)len);
 
 			//assert(1==15);		
 			execute_process(test);
