@@ -51,6 +51,7 @@ void atag_print(struct atag *t)
 
 static void argparse_parse(char *cmdline)
 {
+
 	char* token = os_strtok(cmdline, " ");
 
 	while (token != NULL)
@@ -63,13 +64,34 @@ static void argparse_parse(char *cmdline)
 			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
+
+
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
+
+			os_printf("START: %X \n", start+PROC_LOCATION);
+
+			 
+
 			pcb *test= process_create((uint32_t*) start);
+			start += PROC_LOCATION;
+			//start = round_up(start);
+			//os_printf("%X HIYA \n", start);
+			//assert(1==15);
 
+			for(int i = 0; i < 30; i++){
+				uint32_t *v = start + (i* BLOCK_SIZE);
+				int x = vm_allocate_page(test->stored_vas, (void*)v, VM_PERM_USER_RW );		
+				os_printf("%X \n", x);
 	
+			}
+		
+			test->name = name;
 
+			//os_memcpy((uint32_t *)start-PROC_LOCATION, (uint32_t *)start, (os_size_t)len);
+
+			//assert(1==15);		
 			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
@@ -145,4 +167,21 @@ int hex_value_of_character(char c)
 
 	// Return -1 if c was not a hex digit
 	return -1;
+}
+
+
+uint32_t round_up(uint32_t c){
+
+
+	c--;
+	c |= c >> 1;
+
+    c |= c >> 2;
+    c |= c >> 4;
+    c |= c >> 8;
+
+    c |= c >> 16;
+    c++;
+    return c;
+
 }
