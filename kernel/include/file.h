@@ -111,10 +111,46 @@ int kdelete(char* filepath); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
 int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
 int kls(char* filepath); //shows contents of one directory
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size);
+int kfs_shutdown();
 
+// // -------------------------------------------------------------------------------------------------------------------------------------------------------
+// /* HELPER FUNCTIONS */
 
-// in the header file write it with extern. And in one of the c files declare it without extern.
+//from the index, gets the corresponding indirect block, either from cache or from disk
+void get_indirect_block(int index, struct indirect_block* cur_indirect_block);
 
+//from the inum, gets corresponding inode, either from cache or disk
+void get_inode(int inum, struct inode* result_inode);
+
+//gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
+int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path);
+
+//gets the inum of netxpath (file or dir) looking at the indirect data blocks of cur_inode
+int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path);
+
+//finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
+int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode);
+
+//finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
+//result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
+void kfind_dir(char* filepath, struct dir_helper* result);
+
+int transmit_data_block_bitmap(int bit_index, int all);
+
+/* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
+	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
+int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result);
+
+int get_block_address(struct inode *file_inode, int block_num);
+
+// Helper function for kread():
+int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytes_left, void* transfer_space);
+
+// Helper function for kread():
+int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space);;
+
+int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
 
 
 #endif 
