@@ -22,31 +22,45 @@
 #define SWAP_SPACES (1<<8)
 #define PAGE_ENTRIES (1<<12) //Assuming 4kB Pages right now
 
-struct swap_info {
-	struct swap_info* next;
-	uint32_t higher_bits;
-	uint8_t lower_bits;
-	uint32_t swap_map[PAGE_ENTRIES]; 
-	uint32_t memory_count;
-};
+//arrays better here? more cache friendly...
+struct swap_space_list {
+	struct swap_space_list *next;
+	struct swap_entry *head;
+	uint8_t lower_bits; //swap space ID [8-bits]
+	short int flags; //SWP_USED (1000 or 1), SWP_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
+	short int priority; //lower is better 
+}; // 13 bytes
+
+struct swap_entry {
+	struct swap_entry *next;
+	uint32_t higher_bits; //swap entry ID [24-bit assuming 4kB pages]
+	short int e_flags; //ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
+	void *data;
+}; // 14 bytes
 
 
-// swap_init initializes all necessary values, linkedlists and 
+struct swap_space_list *head;
+os_size_t memory_count;
+
+
+// swap_init initializes all necessary values, lists, etc...
 void swap_init(os_size_t);
 
 
 /* store_page will store a page to media - not main memory - storage, e.g. HDD
+ * from the page* and will change uint32_t *ID -> value to the swap space address
  *	VARIABLES
  * void* page -> data to be paged
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
- * uint32_t* ID -> The page ID or address
+ * uint32_t* ID -> The page ID or address [not yet implemented]
  * Returns: The stored page's (24-bit) swap space ID/Address 
  */
-int store_page(void*, os_size_t, uint32_t*);
+int store_page(void*, uint32_t*);
+//int store_page(void*, os_size_t, uint32_t*); 
 
 
 /* retrieve_page will retrieve the page identified the ID pointer and
- * will store it back into main memory
+ * will store it back into main memory (specified by the void *page pointer)
  * Returns: The retrieved page's (32-bit) new main memory ID/Address (like example)
  *
  * Note: Page size was set by store_page 
@@ -57,22 +71,25 @@ int retrieve_page(void*, uint32_t*);
 // Returns: The total stored memory in bytes by function store_page(void*, uint32_t*)
 os_size_t sum_stored();
 
-/*
- *
+/* vm_swap_page will swap pages between main memory (specified by void *page) 
+ * and the auxillary swap spaces (specified by uint32_t *ID)
+ * Returns: 0 or 1 if the page swap was a failure or success, respectively 
  */
 int vm_swap_page(void*, uint32_t*);
 
-
 /*
  *
  */
-int vm_unswap_page(void*, uint32_t);
+//int vm_unswap_page(void*, uint32_t);
 
 
-/*
- *
+/* vm_register swapper will activate a swap space and set a priority (loewr is better)
+ * accordingly to it. This  allows the swap spaces use as well as increasing it's efficiency 
+ * Returns: 0 or 1 whether the swap space registeration was a failure or success, respectively
  */
-int vm_register_swapper(int (*)(void*, uint32_t*), int (*)(void*, uint32_t*), int);
+int vm_register_swap_space(int (*store_page(void*, uint32_t*)), int (*)(void*, uint32_t*), int);
 
+// As implied
+int vm_deregister_swap_space(int (*store_page(void*, uint32_t*)), int (*)(void*, uint32_t*), int);
 
 #endif
