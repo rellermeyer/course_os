@@ -284,10 +284,13 @@ int os_printf_v2(const char *str_buf, ...)
 	va_list args;
 	va_start(args, str_buf);
 	char buf[256];
+	//print_uart0("printf_v2 called.\n");
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
-    q_init("printf", buf, &printf_receiver, "printf_user");
-    //q_send("printf", (int_least32_t*) buf, sizeof(buf));
+	//q_init("printf", buf, &printf_receiver, "printf_user");
+	//print_uart0(buf);
+	//print_uart0("printf_v2 un-called.\n");
+	q_send("printf", (int_least32_t*) buf, n);
 
 	return n;
 }
