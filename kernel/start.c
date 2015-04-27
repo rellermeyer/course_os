@@ -52,12 +52,32 @@ void uart_handler(void *null)
 	print_uart0("uart0!\n");
 }
 
+void init_receiver(void *userdata, void *data, uint32_t datalength)
+{
+	//print_uart0("foobar.\n");
+	int i;
+	char *s = (char*)data;
+	//print_uart0(data);
+	for (i=0; i<datalength; i++) {
+		print_char_uart0(s[i]);
+	}
+	//print_uart0();
+	//print_uart0("data: %s\n", data);
+}
+
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs)
 {
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, init_receiver, 0x0);
+
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
+	
+
+
 	/*print_uart0("p_bootargs: ");
 	print_uart0((char*)p_bootargs);
 	print_uart0("\n");*/
@@ -73,7 +93,6 @@ void vm_test_early();
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs)
 {
-
 
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
