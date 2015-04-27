@@ -166,16 +166,31 @@ void q_init(char q_name[], int_least32_t* data, void(*receiver)(int_least32_t * 
 
 void sample_receiver(int_least32_t *userdata, int_least32_t *data, int_least32_t datalength)
 {
-	print_uart0("foobar.\n");
+	//print_uart0("foobar.\n");
+	int i;
+	char *s = (char*)data;
+	//print_uart0(data);
+	for (i=0; i<datalength; i++) {
+		print_char_uart0(s[i]);
+	}
+	//print_uart0();
 	//print_uart0("data: %s\n", data);
 }
 
 void q_test()
 {
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, sample_receiver, 0x0);
+
+	print_uart0("This is a test.\n");
+	os_printf_v2("This is a 2nd test.\n");
+	return;
+
     os_printf_v2("this is a test\n");
     q_create("my_q");
     os_printf_v2("Calling q_open...\n");
-    int_least32_t qd = q_open("my_q");
+    qd = q_open("my_q");
     os_printf_v2("qd is %d\n", qd);
     char* data = "This is a message";
     int_least32_t *castData = (int_least32_t*) data;
