@@ -33,6 +33,7 @@ pcb* process_create(uint32_t* file_p) {
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		pcb_pointer->stored_vas = vm_new_vas();
+		setup_process_vas(pcb_pointer);
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
 		if(!success) {
@@ -365,34 +366,37 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
-void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr, uint32_t* block_addr){
-	/*
-	pcb* p = get_PCB(PID);
+void setup_process_vas(pcb * pcb_p)
+{
+	/*	
+	4GB for virutal memory, 1GB for Kernel and 3 GB for the process
+	Ideally the offset between segments in memory are random for
+	security purposes, but for now they are constant
+	
+		-------------------------	
+		| Virtual Address Space |
+		-------------------------
+		|	0xffffffff  | ***** | 
+		|	            | Kernal|
+		|	0xc0000000	| ***** |
+		|	            | *Pad* | 
+		|	0xbfc00000	| ***** |
+		|	        	| Stack |
+		|	0x80400000 	| ***** |
+		|				| *Pad* | 
+		|	0x80000000  | ***** |
+		|			    | Heap  |
+		|	0x40400000	| ***** |
+		|			    | *Pad* |
+		|	0x40000000	| ***** |	
+		|				|  RW   |
+		|				|  RO   |
+		|	0x00000000	| ***** | 	
+		-------------------------
+*/
+	os_printf("Process VAS: 0x%x\n", pcb_p->stored_vas);
+	unsigned int pstack = (unsigned int) pcb_p->stored_vas;
 
-	os_printf("setting up process vas at %x\n", p->process_l1pt);
-
-	os_memcpy(first_level_pt, p->process_l1pt, 16*1024);
-
-	uint32_t entry_section = (uint32_t)entry_addr>>20;
-	uint32_t entry_page = (uint32_t)entry_addr>>12;
-	uint32_t num_proc_pages = proc_size>>12;
-	if(proc_size%4096 > 0)
-		num_proc_pages++;
-
-	uint32_t target_addr = (uint32_t)block_addr;
-
-	//aborts if I try to allocate l2pt in here
-	//allocating in process_create for brute force testing
-	int i;
-	for(i = 0; i < 256; i++){
-		if(i>=entry_page && i<= entry_page+num_proc_pages){
-			p->l2pt[i] = target_addr | 0x0010 | 2;
-			target_addr += 4096;
-		}
-	}
-
-	p->process_l1pt[entry_section] = (uint32_t)p->l2pt | 1;
-	*/
 }
 
 
