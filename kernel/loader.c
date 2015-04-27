@@ -102,8 +102,6 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	pcb_p->heap_p = current_pointer;
 
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
-	
-	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
 	//entry_point_offset = entry_point_elf - addr_first;			
 	//entry_point = process_mem + entry_point_offset	
