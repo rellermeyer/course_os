@@ -395,6 +395,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 									(3) add a new indirect block then add a new data block to that */
 		//first kmalloc space for a new_dir_block:
 		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+		if(new_data_block_loc == -1){//disk is full
+			os_printf("ERROR! Disk full\n");
+			return -1;
+		}
 		bv_set(new_data_block_loc, data_block_bitmap);
 		struct dir_data_block* new_dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 
@@ -420,7 +424,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 				sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1])*BLOCKSIZE);
 				// kfree(cur_indirect_block);
-			}
+			}	
 			if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
 				//Case (2): add a new data block to to the current indirect block, then add the new_dir entry to the new data block:
 				cur_indirect_block->data_blocks[cur_indirect_block->blocks_in_file] = new_dir_block->block_num;
@@ -450,6 +454,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 					new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_dir_block->block_num;
 					new_indirect_block->blocks_in_file++;
+					cur_inode->indirect_blocks_in_file++;
 
 					new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
 					new_dir_block->num_entries++;
@@ -482,26 +487,30 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	return 0;
 }//end add_dir_entry() helper function
 
-int get_block_address(struct inode *file_inode, int block_num){
-	if(block_num < 0){
+int get_block_address(struct inode *file_inode, int file_block_num){
+	if(file_block_num < 0){
 		os_printf("Invalid block number");
 		return -1;
 	}
-	if(block_num < MAX_DATABLOCKS_PER_INODE){
-		return file_inode->data_blocks[block_num];
+	if(file_block_num < MAX_DATABLOCKS_PER_INODE){
+		return file_inode->data_blocks[file_block_num];
 	}
 	//Block must be stored in an indirect block of file_inode
 
 	//Get the indirect block num that contain the target block
-	int indirect_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
+	int indirect_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	if(indirect_block_num < file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
-		os_printf("block_num out of range");
+		os_printf("file_block_num out of range");
 		return -1;
 	}
 
-	struct indirect_block *current_indirect_block = (struct indirect_block *) &(file_inode->indirect_blocks[indirect_block_num]);
-	int indirect_block_direct_block_num = (block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
-	return current_indirect_block->data_blocks[indirect_block_direct_block_num];
+	struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(indirect_block));
+	get_indirect_block(indirect_block_num, struct indirect_block* cur_indirect_block);
+
+	int indirect_block_direct_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
+	int block_address = cur_indirect_block->data_blocks[indirect_block_direct_block_num];
+	block_address = (block_address + FS->start_data_blocks_loc) * BLOCKSIZE;
+	return block_address;
 }
 
 
@@ -562,14 +571,14 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 	int local_offset = offset % BLOCKSIZE; // local_offset is the leftmost point in the block
 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
-	int block_num = offset / BLOCKSIZE;
-	int block_address = get_block_address(c_inode, block_num);
+	int file_block_num = offset / BLOCKSIZE;
+	int block_address = get_block_address(c_inode, file_block_num);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	// os_printf("failed to receive block number %d\n", numBytes);
 	 	return -1;
-	}//end if
+	}//end if block_num
 
 	if((local_offset == 0) && (bytes_left < BLOCKSIZE)) { 
 	/*	 ___________________
@@ -626,12 +635,12 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space) {
 	// read BLOCKSIZE
 	// Actually get the data for 1 block (the SD Driver will put it in transfer_space for us)
-	int block_num = offset / BLOCKSIZE;
-	int block_address = get_block_address(c_inode, block_num);
+	int file_block_num = offset / BLOCKSIZE;
+	int block_address = get_block_address(c_inode, file_block_num);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
-	 	os_printf("failed to receive block number %d\n", block_num);
+	 	os_printf("failed to receive block number %d\n", file_block_num);
 	 	return -1;
 	}//end if
 	/*	______________________
@@ -691,8 +700,6 @@ int kread(int fd_int, void* buf, int num_bytes) {
 	}else{
 		return -1;
 	}
-
-
 } // end kread();
 
 
@@ -701,44 +708,144 @@ int kread(int fd_int, void* buf, int num_bytes) {
 int kwrite(int fd_int, void* buf, int num_bytes) {
     struct file_descriptor* fd = get_descriptor(fd_int);
 
-    if ((fd->permission != 'w' || fd->permission != 'b')){
-        os_printf("no permission\n");
+    if ((fd->permission != 'w' && fd->permission != 'a')){
+        os_printf("ERROR! File was opened without write permissions.\nYou may or may not have permission to write to this file.\nTry opneing with 'w' permission\n");
         return -1;
     }
 
     int total_bytes_left = num_bytes;
     int bytes_written = 0;
 
-    uint32_t *buf_offset = buf;
-    uint32_t *transfer_space = kmalloc(BLOCKSIZE);
+    void* buf_offset = buf;
+    void* transfer_space = kmalloc(BLOCKSIZE);
     // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
-
+    struct inode* cur_inode = fd->linked_file;
     // have offset in the file already, just need to move it and copy.
     // fd->offset is the offset in the file. 
-    while(bytes_written < total_bytes_left) {
-		int block_num = fd->offset / BLOCKSIZE;
+    while(bytes_written < total_bytes_left){
+		int file_block_num = fd->offset / BLOCKSIZE;
 		// need to put things in transfer_space, move pointer back when done
 		int offset_into_current_block = fd->offset % BLOCKSIZE;
 		int bytes_left_in_block = BLOCKSIZE - offset_into_current_block;
-		int block_address = get_block_address(fd->linked_file, block_num);
+		int block_address = get_block_address(cur_inode, file_block_num);
 
+		//if get_block_address == -1, we know we need to allocate more space for the file
+		if(block_address == -1){
+			int new_data_block_loc = bv_firstFree(data_block_bitmap);
+			if(new_data_block_loc == -1){//disk is completley full
+				os_printf("ERROR! disk full\n");
+				return -1;
+			}
+
+			int flag_free_cur_indirect_block = 0;
+			if(cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+				//Case (1): add a direct data block to cur_inode:
+				cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_data_block_loc;
+				cur_inode->direct_blocks_in_file++;
+				if(bytes_left >= BLOCKSIZE){
+					cur_inode->size += BLOCKSIZE;
+				}else{
+					cur_inode->size += bytes_left;
+				}
+				block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
+				bv_set(new_data_block_loc, data_block_bitmap);
+				transmit_data_block_bitmap(new_data_block_loc, 0);
+			}else{//(cur_inode->direct_blocks_in_file >= MAX_DATABLOCKS_PER_INODE
+				//get the current indirect block and check to see if it has room to add another data block:
+				struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+				flag_free_cur_indirect_block = 1;
+				get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
+				// kfree(cur_indirect_block);
+
+				if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
+					//Case (2): add a new data block to to the current indirect block:
+					cur_indirect_block->data_blocks[cur_indirect_block->blocks_in_file] = new_data_block_loc;
+					cur_indirect_block->blocks_in_file++;
+
+					if(bytes_left >= BLOCKSIZE){
+						cur_inode->size += BLOCKSIZE;
+					}else{
+						cur_inode->size += bytes_left;
+					}				
+
+					if(data_block_table_cache[cur_indirect_block->block_num] == NULL){
+						//TODO: implement eviction policy...add the cur_inode to the cache:
+					}else{
+						*(data_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
+					}
+
+					block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
+					bv_set(new_data_block_loc, data_block_bitmap);
+					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_block_table_loc) * BLOCKSIZE);
+					transmit_data_block_bitmap(new_data_block_loc, 0);
+				}else{ //last indirect block full
+					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
+						/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block */
+						int new_indirect_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+						if(new_indirect_block_loc == -1){
+							os_printf("ERROR! Disk full\n");
+							return -1;
+						}
+						bv_set(new_indirect_block_loc, data_block_bitmap);
+
+						struct indirect_block* new_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+						new_indirect_block->blocks_in_file = 0;
+						new_indirect_block->block_num = new_indirect_block_loc;
+
+						new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_data_block_loc;
+						new_indirect_block->blocks_in_file++;
+						cur_inode->indirect_blocks_in_file++;
+
+						if(bytes_left >= BLOCKSIZE){
+							cur_inode->size += BLOCKSIZE;
+						}else{
+							cur_inode->size += bytes_left;
+						}
+						if(data_block_table_cache[new_indirect_block->block_num] == NULL){
+							//TODO: implement eviction policy...add the cur_inode to the cache:
+						}else{
+							*(data_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
+						}
+
+						block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
+						bv_set(new_data_block_loc, data_block_bitmap);
+						sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
+						transmit_data_block_bitmap(new_indirect_block_loc, 0);
+						kfree(new_indirect_block);
+
+					}else{
+						//file has reached max allowable size:
+						os_printf("ERROR! Operation failed because file has reached max allowable size\n");
+						return -1;
+					}
+				}
+			}
+			if(flag_free_cur_indirect_block){
+				kfree(cur_indirect_block);
+			}
+		}//end if(block_address == -1)
+
+		//now we have added new blocks to the file if necessary (and possible), so actually execute the write:	
 		if(total_bytes_left <= bytes_left_in_block){
+			//note, that here we are overwriting, but will never have to allocate new data blocks for the file
 			/*	--------------- 			-----------------				
-				|~~~~~~~|      |	 OR		|     |~~~~~|   |
+				|~~~~~~~|      |	 OR		|     |~~~~~|   |                           
 				----------------			-----------------
 			*/ 
 			//Remaining bytes to write will fit in the current block
+			//first read the block in, so that the first part of it doesn't get ovewritten:
+			sd_receive(transfer_space, block_address);
 			// write total_bytes_left
-			os_memcpy(buf_offset, transfer_space, (os_size_t) total_bytes_left);
+			os_memcpy(buf_offset, transfer_space + offset_into_current_block, (os_size_t) total_bytes_left);
 			//transfer_space -= total_bytes_left; //Purpose of this?
 			// pointer to start, block_num, where we are in file, length of write
-			sd_transmit(transfer_space, block_address + offset_into_current_block);
+			sd_transmit(transfer_space, block_address);
 
 			bytes_written += total_bytes_left;
-			total_bytes_left -= total_bytes_left;
 			fd->offset += total_bytes_left;
+			total_bytes_left = 0; //at this point there is nothing left to write, so we're done
 		}
-		else if(total_bytes_left > bytes_left_in_block) {
+		else{//(total_bytes_left > bytes_left_in_block) so...we might need to allocate new data blocks for the file...
 			/* 
 				------------
 				|	    |~~~|
@@ -746,26 +853,23 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				write to the end of the block
 			*/
 			//Remaining bytes will not fit in current block, fill up remainder of block
-			os_memcpy(buf_offset, transfer_space, (os_size_t) bytes_left_in_block);
+			//first read the block in, so that the first part of it doesn't get ovewritten:
+			sd_receive(transfer_space, block_address);
+			// write total_bytes_left
+			os_memcpy(buf_offset, transfer_space + offset_into_current_block, (os_size_t) bytes_left_in_block);
+
 			//transfer_space -= bytes_left_in_block; //Purpose of this?
 			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transfer_space, block_address + offset_into_current_block);
+			sd_transmit(transfer_space, block_address);
 
 			bytes_written += bytes_left_in_block;
 			total_bytes_left -= bytes_left_in_block;
 			fd->offset += bytes_left_in_block;
-		} else {
-			// Is it possible to even reach here?
-			os_memcpy(buf_offset, transfer_space, (os_size_t) BLOCKSIZE);
-			transfer_space -= BLOCKSIZE;
-			// pointer to start, blockNum, where we are in file, lengh of write
-			sd_transmit(transfer_space, block_num);
-
-			bytes_written += BLOCKSIZE;
-			total_bytes_left -= BLOCKSIZE;
-			fd->offset += BLOCKSIZE;
 		}
-	}
+
+	}//end while
+	//update the the cur_inode on disk:
+	sd_transmit(cur_inode, (cur_inode->inum + FS->start_inode_table_loc) + BLOCKSIZE);
 	return bytes_written;
 } // end kwrite();
 
