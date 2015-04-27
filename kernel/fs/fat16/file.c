@@ -46,6 +46,56 @@ struct inode** inode_table_temp;
 struct data_block** data_block_table_cache;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
+int kfs_format()
+{
+	// Lay down the superblock to block 1
+	struct superblock sblock;
+	sblock.fs_version = 1;
+	sblock.magic_num = 0xDEADBEAF;
+	sblock.sd_card_capacity = 128000000;
+	sblock.block_size = 512;
+	sblock.root_inum = 1;
+	sblock.max_inodes = 4000;
+	sblock.inode_size = 512;
+	sblock.max_data_blocks = 200000;
+	sblock.inode_bitmap_loc = 10;
+	sblock.data_bitmap_loc = 50;
+	sblock.start_inode_table_loc = 1000;
+	sblock.start_data_blocks_loc = 50000;
+
+	void *block = kmalloc(512);
+	os_printf("%X %X %X\n", sblock.fs_version, block, &sblock);
+	os_memcpy(&sblock, block, sizeof(struct superblock));
+	os_printf("Writing first 4 bytes: %X (should be %X)\n", *(unsigned int*)block, sblock.fs_version);
+	sd_transmit(block, 1*BLOCKSIZE);
+
+	// Lay down the root inode
+	struct inode root_inode;
+	root_inode.inum = 1; // Isn't this redundant?
+	root_inode.fd_refs = 0;
+	root_inode.size = 0;
+	root_inode.is_dir = 1;
+	root_inode.direct_blocks_in_file = 1;
+	root_inode.data_blocks[0] = sblock.start_data_blocks_loc;
+	root_inode.indirect_blocks_in_file = 0;
+	os_memcpy(&root_inode, block, sizeof(struct inode));
+	sd_transmit(block, sblock.start_inode_table_loc*BLOCKSIZE);
+
+	// Lay down the first (empty...) data block for the directory.
+	struct dir_data_block ddb;
+	ddb.block_num = 0;
+	ddb.num_entries = 0;
+	os_memcpy(&ddb, block, sizeof(struct dir_data_block));
+	sd_transmit(block, sblock.start_data_blocks_loc*BLOCKSIZE);
+
+	// Update the inode bitmap
+	unsigned char i = 0x80;
+	os_memset(block, 0, BLOCKSIZE);
+	os_memcpy(&i, block, 1);
+	sd_transmit(block, sblock.inode_bitmap_loc*BLOCKSIZE);
+
+	return 0;
+}
 
 /* make the global varrible */
 // initialize the filesystem:
@@ -53,8 +103,9 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
 	DATA_BLOCK_TABLE_CACHE_SIZE = data_block_table_cache_size;
-	NUM_INODE_TABLE_BLOCKS_TO_CACHE = ((int) INODE_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
-	NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE = ((int) DATA_BLOCK_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
+	// TODO: Reading the root inode has weird issues (getting is_dir==0) with inode table block cache.
+	NUM_INODE_TABLE_BLOCKS_TO_CACHE = 0;//((int) INODE_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
+	NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE = 0;//((int) DATA_BLOCK_TABLE_CACHE_SIZE/BLOCKSIZE) + 1;
 
 	//initialize the SD Card driver:
 	if(!init_sd()){
@@ -64,26 +115,39 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 		os_printf("FATAL ERROR!!!!! SD Card NOT initiallized successfully!\n");
 		//handle errors returned by SD Card...will implement this later...
 	}//end else
+
+	// Bootstrap the FS...
+	kfs_format();
+
 	//read in the super block from disk and store in memory:
 	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
 	sd_receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
+	os_printf("Read in superblock... First 4 bytes: %X\n", *(unsigned int*)FS);
 
 	INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
+	inode_bitmap = make_vector(FS->max_inodes);
+	data_block_bitmap = make_vector(FS->max_data_blocks);
+	bv_set(0, inode_bitmap);
+#if 0 // This will never work because of the nature of the bitmap structure, wherein we don't know inode_bitmap->vector :(
 	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
 	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
 	// inode_bitmap = inode_bitmap_temp; // pointer to a bitvector representing iNodes
+	os_printf("Read inode bitmap from block %d...\n", FS->inode_bitmap_loc);
 
 	data_block_bitmap = (bit_vector*) kmalloc(BLOCKSIZE);
 	sd_receive((void*) data_block_bitmap, (FS->data_bitmap_loc) * BLOCKSIZE);
 	// data_block_bitmap = data_block_bitmap_temp; // pointer to bitvector representing free data blocks
+	os_printf("Read data block bitmap...\n");
+#endif
 
-	
 	// initilize the inode_table_cache in memory:
 	inode_table_temp = (struct inode**)kmalloc(NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
+	os_printf("Allocated %d bytes.\n", NUM_INODE_TABLE_BLOCKS_TO_CACHE * BLOCKSIZE);
 	inode_table_cache = (struct inode**) kmalloc((sizeof(struct inode*))* FS->max_inodes);
 	int i;
+	os_printf("%d\n", NUM_INODE_TABLE_BLOCKS_TO_CACHE * INODES_PER_BLOCK);
 	for(i = 0; i < FS->max_inodes; i++){
 		if(i < NUM_INODE_TABLE_BLOCKS_TO_CACHE * INODES_PER_BLOCK){
 			if(i % INODES_PER_BLOCK == 0){
@@ -97,6 +161,7 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 		}
 	}//end for
 	// inode_table_cache = (inode*) inode_table_temp;  // cast the void pointer to an Inode pointer
+	os_printf("Loaded inode table cache into memory...\n");
 
 
 	// initilize the data_block_table_cache in memory:
@@ -112,6 +177,8 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 	}//end for
 
 	fs_table_init(); //initializes open_table stuff
+
+	os_printf("Finished initializing table...\n");
 	return 0;
 	//what was this for? don't think we need it...
 	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
@@ -174,8 +241,10 @@ void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
 void get_inode(int inum, struct inode* result_inode){
 	if(inode_table_cache[inum] != NULL){
 		// the inode is in the inode_cache_table, so get it:
+		os_printf("inode %d was in the cache. Returning it.\n", inum);
 		result_inode = (inode_table_cache[inum]);	
 	}else{ 
+		os_printf("inode %d was not in the cache. Reading from SD card.\n", inum);
 		// inode is not in the cache table, so get it from disk:
 		struct inode* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		sd_receive((void*)inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs
@@ -193,6 +262,13 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int i;
 	int file_found = 0; // initialize to false (i.e. file not found)
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
+
+	os_printf("Next path is: '%s'\n", next_path);
+	/*if (os_strlen(next_path) == 0) {
+		// I guess we're currently in the right place?
+		return cur_inode->inum;
+		}*/
+
 	for(i = 0; i < cur_inode->direct_blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
 		struct dir_data_block cur_data_block = *(struct dir_data_block*) dir_spaceholder;
@@ -257,6 +333,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 
 //finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
+	os_printf("dir_levels = %d\n", dir_levels);
 	int current_inum = starting_inum;
 	int a;
 	for(a = 0; a < dir_levels; a++) {
@@ -272,7 +349,9 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 		filepath += k;
 
 		// Store inode with current_inum current_inum in result_inode 
+		os_printf("Getting inode %d...\n", current_inum);
 		get_inode(current_inum, result_inode);
+		os_printf("Got is_dir=%d\n", result_inode->is_dir);
 
 		//Set new current_inum to the next_path's current_inum
 		current_inum = get_inum_from_direct_data_block(result_inode, next_path);
@@ -328,6 +407,7 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	result->dir_levels = dir_levels;
 	result->truncated_path = truncated_path;
 	result->last = last;
+	os_printf("kfind_dir found: '%s', %d levels\n", result->truncated_path, result->dir_levels);
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
@@ -359,6 +439,7 @@ int transmit_data_block_bitmap(int bit_index, int all){
 	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
 int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result){
 
+	os_printf("Adding dir entry.\n");
 	int flag_free_cur_indirect_block = 0;
 
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
@@ -385,12 +466,15 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	new_dir_entry.name_length = os_strlen(result->last);
 
 	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
+	os_printf("Adding entry to data blocks.\n");
 	if(dir_block->num_entries < MAX_DIR_ENTRIES_PER_DATA_BLOCK){
+		os_printf("Adding to the main data block...\n");
 		//the data block has room to add the new dir_entry, so we add it:
 		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
 		dir_block->num_entries++;
 		cur_inode->size += sizeof(struct dir_entry);
 		sd_transmit((void*) dir_block, (dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
+		os_printf("Sent main data block.\n");
 	}else{
 		/* 	the data block doesn't have room to add the new dir_entry, so we need to add a new data block....
 			either by adding:		(1) as a direct data block, 
@@ -437,11 +521,11 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				new_dir_block->num_entries++;
 				cur_inode->size += sizeof(struct dir_entry);
 
-				if(data_block_table_cache[cur_indirect_block->block_num] == NULL){
+				if(indirect_block_table_cache[cur_indirect_block->block_num] == NULL){
 					//TODO: implement eviction policy...add the cur_inode to the cache:
 				}else{
 					// data block
-					*(data_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
+					*(indirect_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
 				}
 				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
@@ -464,10 +548,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 					new_dir_block->num_entries++;
 					cur_inode->size += sizeof(struct dir_entry);
 
-					if(data_block_table_cache[new_indirect_block->block_num] == NULL){
+					if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
 						//TODO: implement eviction policy...add the cur_inode to the cache:
 					}else{
-						*(data_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
+						*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
 					}
 
 					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
@@ -773,10 +857,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						cur_inode->size += total_bytes_left;
 					}				
 
-					if(data_block_table_cache[cur_indirect_block->block_num] == NULL){
+					if(indirect_block_table_cache[cur_indirect_block->block_num] == NULL){
 						//TODO: implement eviction policy...add the cur_inode to the cache:
 					}else{
-						*(data_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
+						*(indirect_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
 					}
 
 					block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
@@ -806,10 +890,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						}else{
 							cur_inode->size += total_bytes_left;
 						}
-						if(data_block_table_cache[new_indirect_block->block_num] == NULL){
+						if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
 							//TODO: implement eviction policy...add the cur_inode to the cache:
 						}else{
-							*(data_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
+							*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
 						}
 
 						block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
@@ -960,9 +1044,16 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		}else{
 			*(inode_table_cache[cur_inode->inum]) = *(cur_inode);
 	}
-	sd_transmit((void*) cur_inode, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
-	sd_transmit((void*)new_inode, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
-	sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
+	os_printf("Writing inode data to SD card...\n");
+	void *block = kmalloc(BLOCKSIZE);
+	os_memcpy(&cur_inode, block, sizeof(struct inode));
+	sd_transmit(block, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
+	os_memcpy(&new_inode, block, sizeof(struct inode));
+	sd_transmit(block, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
+	os_printf("Finished writing to SD card...\n");
+	kfree(block);
+	// See above... We can't just do this.
+	//sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
 
 	kfree(cur_inode);
 	if (!is_this_a_dir) {
