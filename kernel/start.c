@@ -104,6 +104,25 @@ void start2(uint32_t *p_bootargs)
 	run_prq_tests();
 	run_hmap_tests();
 
+	int retval;
+	kfs_init(0,0);
+
+	// Test kfind_dir real quick...
+	struct dir_helper dh;
+	kfind_dir("/", &dh);
+	kfind_dir("/etc", &dh);
+	kfind_dir("/etc/", &dh);
+	kfind_dir("/etc/fstab", &dh);
+
+	//retval = kcreate("/", 0xFF, 1);
+	//os_printf("%d\n", retval);
+	int fd = kcreate("/foobar", 'w', 0);
+	os_printf("%d\n", fd);
+
+	char *s = "Hello, world!\n";
+	kwrite(fd, s, os_strlen(s));
+	while(1);
+
 	//asm volatile("swi 1");
 
 	/*
