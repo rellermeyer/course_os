@@ -142,9 +142,10 @@ void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength)
 }
 
 // attaches an asynchronous receiver to the reply
-void q_subscribe_to_reply(char msg[], void (*receiver)(void *userdata, void *data, uint32_t datalength))
+void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, void *data, uint32_t datalength))
 {
-
+    struct queue *reply_q = q_map[reply_qd];
+    reply_q->receiver = receiver;
 }
 
 /*q_call seems to fail on q_send*/
