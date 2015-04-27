@@ -205,7 +205,7 @@ uint32_t read_mmci(uint32_t target)
 //if -1 , error code 0
 // if -2 , error code 1
 //if -3 , error cod 0 and 1 */
-uint32_t status(){
+int status(){
 uint32_t stat = read_mmci(STATUS);
 int error= stat & STATUS_ERR;
 return (~error+1);
