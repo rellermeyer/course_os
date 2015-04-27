@@ -23,6 +23,7 @@ int vm_build_free_frame_list(void *start, void *end);
 unsigned int * first_level_pt = (unsigned int*) P_L1PTBASE;
 extern struct vm_free_list *vm_vas_free_list;
 extern struct vm_free_list *vm_l1pt_free_list;
+extern struct vm_free_list *vm_l2pt_free_list;
 
 void mmap(void *p_bootargs) {
 	//char *cmdline_args = read_cmdline_tag(p_bootargs);
@@ -86,8 +87,8 @@ void mmap(void *p_bootargs) {
 	}
 
 	// Quick coarse page table address
-	unsigned int coarse_page_table_address = P_L1PTBASE + 2*PAGE_TABLE_SIZE;
-	os_printf("coarse pt: 0x%X\n", coarse_page_table_address);
+	//unsigned int coarse_page_table_address = P_L1PTBASE + 2*PAGE_TABLE_SIZE;
+	//os_printf("coarse pt: 0x%X\n", coarse_page_table_address);
 
 	//remap 62MB of physical memory after the kernel 
 	// (KERNTOP to end of physical RAM (PMAPTOP))
@@ -97,8 +98,6 @@ void mmap(void *p_bootargs) {
 	for(i = (PMAPBASE>>20); i < (PMAPTOP>>20); i++){
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
-		//break;
-		//phys_addr += 0x100000;
 	}
 
 	// Fill in the coarse page table
@@ -106,7 +105,7 @@ void mmap(void *p_bootargs) {
 	//os_memset((void*)coarse_page_table_address, 0, L2_PAGE_TABLE_SIZE);
 	// Set the first page to phys_addr
 	//*(unsigned int*)coarse_page_table_address = phys_addr | 0x20 | 2;
-	os_printf("0x%X\n", *(unsigned int*)coarse_page_table_address);
+	//os_printf("0x%X\n", *(unsigned int*)coarse_page_table_address);
 
 	first_level_pt[V_L1PTBASE>>20] = P_L1PTBASE | 0x0400 | 2;
 
@@ -156,7 +155,7 @@ void mmap(void *p_bootargs) {
 	os_printf("Got here\n");
 
 	// Build the free frame list
-	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
+	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPTOP);//(void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
 
 	//restore register state
 	asm volatile("pop {r0-r11}");
