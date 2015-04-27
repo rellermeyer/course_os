@@ -440,9 +440,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				if(data_block_table_cache[cur_indirect_block->block_num] == NULL){
 					//TODO: implement eviction policy...add the cur_inode to the cache:
 				}else{
+					// data block
 					*(data_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
 				}
-				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_block_table_loc) * BLOCKSIZE);
+				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				transmit_data_block_bitmap(new_dir_block->block_num, 0);
 			}else{
@@ -469,7 +470,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 						*(data_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
 					}
 
-					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
+					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					transmit_data_block_bitmap(new_dir_block->block_num, 0);
 					kfree(new_indirect_block);
@@ -507,8 +508,8 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 		return -1;
 	}
 
-	struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(indirect_block));
-	get_indirect_block(indirect_block_num, struct indirect_block* cur_indirect_block);
+	struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
+	get_indirect_block(indirect_block_num, (struct indirect_block*) cur_indirect_block);
 
 	int indirect_block_direct_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	int block_address = cur_indirect_block->data_blocks[indirect_block_direct_block_num];
@@ -719,6 +720,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
     int total_bytes_left = num_bytes;
     int bytes_written = 0;
 
+    struct indirect_block* cur_indirect_block; 
     void* buf_offset = buf;
     void* transfer_space = kmalloc(BLOCKSIZE);
     // os_memcpy(transferSpace, buf_offset, (os_size_t) BLOCKSIZE); 
@@ -745,17 +747,17 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				//Case (1): add a direct data block to cur_inode:
 				cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_data_block_loc;
 				cur_inode->direct_blocks_in_file++;
-				if(bytes_left >= BLOCKSIZE){
+				if(total_bytes_left >= BLOCKSIZE){
 					cur_inode->size += BLOCKSIZE;
 				}else{
-					cur_inode->size += bytes_left;
+					cur_inode->size += total_bytes_left; // changing all these to total_bytes_left, pretty sure this is correct
 				}
 				block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 				bv_set(new_data_block_loc, data_block_bitmap);
 				transmit_data_block_bitmap(new_data_block_loc, 0);
 			}else{//(cur_inode->direct_blocks_in_file >= MAX_DATABLOCKS_PER_INODE
 				//get the current indirect block and check to see if it has room to add another data block:
-				struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
+				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 				flag_free_cur_indirect_block = 1;
 				get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 				// kfree(cur_indirect_block);
@@ -765,10 +767,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 					cur_indirect_block->data_blocks[cur_indirect_block->blocks_in_file] = new_data_block_loc;
 					cur_indirect_block->blocks_in_file++;
 
-					if(bytes_left >= BLOCKSIZE){
+					if(total_bytes_left >= BLOCKSIZE){
 						cur_inode->size += BLOCKSIZE;
 					}else{
-						cur_inode->size += bytes_left;
+						cur_inode->size += total_bytes_left;
 					}				
 
 					if(data_block_table_cache[cur_indirect_block->block_num] == NULL){
@@ -779,7 +781,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 					block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 					bv_set(new_data_block_loc, data_block_bitmap);
-					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_block_table_loc) * BLOCKSIZE);
+					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					transmit_data_block_bitmap(new_data_block_loc, 0);
 				}else{ //last indirect block full
 					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
@@ -799,10 +801,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						new_indirect_block->blocks_in_file++;
 						cur_inode->indirect_blocks_in_file++;
 
-						if(bytes_left >= BLOCKSIZE){
+						if(total_bytes_left >= BLOCKSIZE){
 							cur_inode->size += BLOCKSIZE;
 						}else{
-							cur_inode->size += bytes_left;
+							cur_inode->size += total_bytes_left;
 						}
 						if(data_block_table_cache[new_indirect_block->block_num] == NULL){
 							//TODO: implement eviction policy...add the cur_inode to the cache:
@@ -812,7 +814,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 						block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 						bv_set(new_data_block_loc, data_block_bitmap);
-						sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_indirect_block_table_loc) * BLOCKSIZE);
+						sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 						transmit_data_block_bitmap(new_indirect_block_loc, 0);
 						kfree(new_indirect_block);
 
