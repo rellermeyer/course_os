@@ -33,7 +33,6 @@ pcb* process_create(uint32_t* file_p) {
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		pcb_pointer->stored_vas = vm_new_vas();
-
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
 		if(!success) {
@@ -332,7 +331,7 @@ uint32_t execute_process(pcb* pcb_p) {
 	stack_top[-4] = 0;
 	stack_top[-5] = STACK_BASE;
 	stack_top[-6] = 1;
-	os_strcpy(STACK_BASE, "name");
+	os_strcpy(STACK_BASE, pcb_p->name);
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4*6;
 	print_process_state(pcb_p->PID);
