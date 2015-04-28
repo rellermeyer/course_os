@@ -33,7 +33,6 @@ pcb* process_create(uint32_t* file_p) {
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		pcb_pointer->stored_vas = vm_new_vas();
-		setup_process_vas(pcb_pointer);
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
 		if(!success) {
@@ -318,23 +317,10 @@ uint32_t execute_process(pcb* pcb_p) {
 	
 
 	// Let's get a simple argc/argv layout going at 0x9f000000
-
-	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)STACK_BASE, VM_PERM_USER_RW);
-	os_printf("%d\n", retval);
-
 	// Stick the program name at stack_base
+	setup_process_vas(pcb_p);
+	//assert(1==2);
 
-	// Stick a NULL at STACK_TOP-sizeof(int*)
-	uint32_t *stack_top = (uint32_t*)STACK_TOP;
-	stack_top[-1] = 0;
-	stack_top[-2] = 0;
-	stack_top[-3] = 0;
-	stack_top[-4] = 0;
-	stack_top[-5] = STACK_BASE;
-	stack_top[-6] = 1;
-	os_strcpy(STACK_BASE, pcb_p->name);
-	// We need to set sp (r13) to stack_top - 12
-	pcb_p->R13 = STACK_TOP - 4*6;
 	print_process_state(pcb_p->PID);
 	load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
@@ -366,38 +352,57 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
-void setup_process_vas(pcb * pcb_p)
-{
-	/*	
-	4GB for virutal memory, 1GB for Kernel and 3 GB for the process
-	Ideally the offset between segments in memory are random for
-	security purposes, but for now they are constant
-	
-		-------------------------	
-		| Virtual Address Space |
-		-------------------------
-		|	0xffffffff  | ***** | 
-		|	            | Kernal|
-		|	0xc0000000	| ***** |
-		|	            | *Pad* | 
-		|	0xbfc00000	| ***** |
-		|	        	| Stack |
-		|	0x80400000 	| ***** |
-		|				| *Pad* | 
-		|	0x80000000  | ***** |
-		|			    | Heap  |
-		|	0x40400000	| ***** |
-		|			    | *Pad* |
-		|	0x40000000	| ***** |	
-		|				|  RW   |
-		|				|  RO   |
-		|	0x00000000	| ***** | 	
-		-------------------------
-*/
-	os_printf("Process VAS: 0x%x\n", pcb_p->stored_vas);
-	unsigned int pstack = (unsigned int) pcb_p->stored_vas;
+
+void setup_process_vas(pcb* pcb_p){
+init_proc_stack(pcb_p);
+//init_proc_heap(pcb_p);
 
 }
 
+//Initial page allocation for process stack in VAS
+//Allows for a variety of stack limits
+void init_proc_stack(pcb * pcb_p)
+{
+	int retval = 0;
+	for (int i = 0; i < (STACK_SIZE/BLOCK_SIZE); i ++)
+	{
+		retval = vm_allocate_page(pcb_p->stored_vas, (void*)(STACK_BASE+ (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+		if(retval){
+			os_printf("vm_allocate_page error code: %d\n", retval);
+			break;
+		}
+		else{
+		os_printf("A page have been allocated for process stack at vptr: 0x%x\n",(STACK_BASE+ (i * BLOCK_SIZE)));
+		}
+	}
+	// Stick a NULL at STACK_TOP-sizeof(int*)
+	uint32_t *stack_top = (uint32_t*)STACK_TOP;
+	stack_top[-1] = 0;
+	stack_top[-2] = 0;
+	stack_top[-3] = 0;
+	stack_top[-4] = 0;
+	stack_top[-5] = STACK_BASE;
+	stack_top[-6] = 1;
+	os_strcpy(STACK_BASE, pcb_p->name);
+	// We need to set sp (r13) to stack_top - 12
+	pcb_p->R13 = STACK_TOP - 4*6;	
+	print_process_state(pcb_p->PID);
+}
 
+void init_proc_heap(pcb* pcb_p){
 
+	int retval = 0;
+	//Initial page allocation for a process heap in VAS
+	
+	print_process_state(pcb_p->PID);
+	retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
+    if (retval) {
+        os_printf("vm_allocate_page error code: %d\n", retval);
+    }
+    else{
+    	os_printf("A page have been allocated for process heap at vptr: 0x%x\n",(void*) HEAP_BASE);
+    }
+    os_printf("PID: %d\n",pcb_p->PID);
+    assert(0 ==1 && "FUCK");
+    print_process_state(pcb_p->PID);
+}
