@@ -148,6 +148,11 @@ void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, vo
     reply_q->receiver = receiver;
 }
 
+void q_reply_send(uint32_t reply_qd, void* data, uint32_t data_length) {
+    struct queue *reply_qd = q_map[reply_qd];
+    reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
+}
+
 /*q_call seems to fail on q_send*/
 //void q_call(char q_name[], void * data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata)
 //{
