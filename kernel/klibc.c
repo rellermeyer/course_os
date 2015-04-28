@@ -81,11 +81,21 @@ int os_strcmp(const char *left, const char *right)
 //Responsibility is on the programmer to copy safely
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
-	int i = 0;
-	for (; i < size; i++)
-	{
-		*(dest + i) = *(source + i);
-	}
+    int limit = size / sizeof(uint32_t);
+
+    int i = 0;
+    for (; i < limit; i += 1) {
+        *(dest + i) = *(source + i);
+    }
+
+    char * d = (char*) (dest + i);
+    char * s = (char*) (source + i);
+
+    i *= sizeof(uint32_t);
+
+    for (; i < size; i++) {
+        *(d++) = *(s++);
+    }
 }
 
 // base is between 2 and 16, inclusive
@@ -508,11 +518,63 @@ int32_t abs(int32_t val)
 
 void* kmalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, heap, heap_size);
+	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
 	return block;
+}
+
+uint32_t kmcheck(){
+    return mem_check();
+}
+
+// NOTE potentially expand these features. offer more
+// memory stats
+uint32_t km_size(){
+    return mem_get_heap_size();
+}
+
+void* kmalloc_aligned(uint32_t size, uint32_t alignment)
+{
+    void* block;
+    void* ptr;
+
+    switch (alignment) {
+        case 4:
+            block = kmalloc(size + 4);
+            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+            return ptr;
+        case 1024:
+            block = kmalloc(size + 1024);
+            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+            return ptr;
+        case 4096:
+            block = kmalloc(size + 4096);
+            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+            return ptr;
+        case 16 * 1024:
+            block = kmalloc(size + 16 * 1024);
+            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+            return ptr;
+        default:
+            return kmalloc(size);
+    }
 }
 
 void kfree(void* ptr)
 {
-	deallocate((uint32_t*) ptr, heap, heap_size);
+	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
+}
+
+unsigned int rand()
+{
+    static unsigned int z1 = 12345, z2 = 67891, z3 = 11121, z4 = 31415;
+    unsigned int b;
+    b = ((z1 << 6) ^ z1) >> 13;
+    z1 = ((z1 & 4294967294U) << 18) ^ b;
+    b = ((z2 << 2) ^ z2) >> 27;
+    z2 = ((z2 & 4294967288U) << 2) ^ b;
+    b = ((z3 << 13) ^ z3) >> 21;
+    z3 = ((z3 & 4294967280U) << 7) ^ b;
+    b = ((z4 << 3) ^ z4) >> 12;
+    z4 = ((z4 & 4294967168U) << 13) ^ b;
+    return (z1 ^ z2 ^ z3 ^ z4);
 }
