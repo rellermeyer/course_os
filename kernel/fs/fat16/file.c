@@ -1,9 +1,10 @@
-
 #include <stdint.h>
-#include "../../include/linked_list.h"
-#include "../../include/bitvector.h"
-#include "../../include/open_table.h"
-#include "../../include/mmci.h" 
+#include "klibc.h"
+//#include "linked_list.h"
+#include "bitvector.h"
+#include "open_table.h"
+#include "mmci.h"
+#include "file.h"
 
 //CONSTANTS:
 const int SUPERBLOCK = 1;
@@ -66,7 +67,7 @@ int kfs_format()
 	void *block = kmalloc(512);
 	//os_printf("%X %X %X\n", sblock.fs_version, block, &sblock);
 	os_memset(block, 0, 512);
-	os_memcpy(&sblock, block, sizeof(struct superblock));
+	os_memcpy((uint32_t*)&sblock, block, sizeof(struct superblock));
 	//os_printf("Writing first 4 bytes: %X (should be %X)\n", *(unsigned int*)block, sblock.fs_version);
 	sd_transmit(block, 1*BLOCKSIZE);
 
@@ -80,7 +81,7 @@ int kfs_format()
 	root_inode.data_blocks[0] = sblock.start_data_blocks_loc;
 	root_inode.indirect_blocks_in_file = 0;
 	os_memset(block, 0, 512);
-	os_memcpy(&root_inode, block, sizeof(struct inode));
+	os_memcpy((uint32_t*)&root_inode, block, sizeof(struct inode));
 	sd_transmit(block, sblock.start_inode_table_loc*BLOCKSIZE);
 
 	// Lay down the first (empty...) data block for the directory.
@@ -88,7 +89,7 @@ int kfs_format()
 	ddb.block_num = 0;
 	ddb.num_entries = 0;
 	os_memset(block, 0, 512);
-	os_memcpy(&ddb, block, sizeof(struct dir_data_block));
+	os_memcpy((uint32_t*)&ddb, block, sizeof(struct dir_data_block));
 	sd_transmit(block, sblock.start_data_blocks_loc*BLOCKSIZE);
 
 	// Update the inode bitmap
@@ -1071,11 +1072,11 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	//os_printf("Writing inode data to SD card...\n");
 	void *block = kmalloc(BLOCKSIZE);
 	os_memset(block, 0, BLOCKSIZE);
-	os_memcpy(cur_inode, block, sizeof(struct inode));
+	os_memcpy((uint32_t*)cur_inode, block, sizeof(struct inode));
 	sd_transmit(block, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
 
 	os_memset(block, 0, BLOCKSIZE);
-	os_memcpy(new_inode, block, sizeof(struct inode));
+	os_memcpy((uint32_t*)new_inode, block, sizeof(struct inode));
 	//os_printf("New inode has %d data blocks.\n", new_inode->direct_blocks_in_file);
 	sd_transmit(block, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	//os_printf("Finished writing to SD card...\n");
