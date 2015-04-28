@@ -107,43 +107,7 @@ void start2(uint32_t *p_bootargs)
 	int retval;
 	kfs_init(0,0);
 
-	// Test kfind_dir real quick...
-	struct dir_helper dh;
-	kfind_dir("/", &dh);
-	kfind_dir("/etc", &dh);
-	kfind_dir("/etc/", &dh);
-	kfind_dir("/etc/fstab", &dh);
-
-	//retval = kcreate("/", 0xFF, 1);
-	//os_printf("%d\n", retval);
-	int fd = kcreate("/foobar", 'w', 0);
-	os_printf("%d\n", fd);
-	kclose(fd);
-
-	os_printf("\nOpening file...\n");
-	fd = kopen("/foobar", 'w');
-	os_printf("\nWriting string to file...\n");
-	char *s = "Hello, world!\n";
-	kwrite(fd, s, os_strlen(s));
-	kclose(fd);
-	//while(1);
-
-	// Okay, now we should be able to open it.
-	os_printf("\nOpening previous file...\n");
-	fd = kopen("/foobar", 'r');
-
-	// And read from it
-	os_printf("\nReading from file...\n");
-	char buf[256];
-	int nbytes = kread(fd, buf, 256);
-	os_printf("Read %d bytes from file.\n", nbytes);
-	os_printf("'%s'\n", buf);
-
-	kclose(fd);
-
-	// Test kls, just for grins. :)
-	os_printf("\nRunning kls...\n");
-	kls("/");
+	run_fs_tests();
 	while(1);
 
 	//asm volatile("swi 1");
