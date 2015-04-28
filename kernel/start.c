@@ -118,9 +118,28 @@ void start2(uint32_t *p_bootargs)
 	//os_printf("%d\n", retval);
 	int fd = kcreate("/foobar", 'w', 0);
 	os_printf("%d\n", fd);
+	kclose(fd);
 
+	os_printf("\nOpening file...\n");
+	fd = kopen("/foobar", 'w');
+	os_printf("\nWriting string to file...\n");
 	char *s = "Hello, world!\n";
 	kwrite(fd, s, os_strlen(s));
+	kclose(fd);
+	//while(1);
+
+	// Okay, now we should be able to open it.
+	os_printf("Opening previous file...\n");
+	fd = kopen("/foobar", 'r');
+
+	// And read from it
+	os_printf("Reading from file...\n");
+	char buf[256];
+	int nbytes = kread(fd, buf, 256);
+	os_printf("Read %d bytes from file.\n", nbytes);
+	os_printf("'%s'\n", buf);
+
+	kclose(fd);
 	while(1);
 
 	//asm volatile("swi 1");

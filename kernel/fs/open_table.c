@@ -36,8 +36,9 @@ void fs_table_shutdown() {
 //returns struct of descriptor at index fd
 //if invalid, returns NULL.
 struct file_descriptor* get_descriptor(int fd){
-	if (file_is_open(fd))
+	if (file_is_open(fd)) {
 		return table[fd];
+	}
 	return 0x0;
 }
 
@@ -96,6 +97,11 @@ int file_is_open(int fd) {
 	if (fd<0 || fd>=SYSTEM_SIZE) { 
                 return 0; 
         }
-        return (table[fd] != 0x0);
+	// Doing it this way to avoid uxtb instruction from compiler.
+	if (table[fd] == 0x0) {
+		return 0;
+	}
+	return 1;
+        //return (table[fd] != 0x0);
 }
 
