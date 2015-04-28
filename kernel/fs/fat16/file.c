@@ -599,7 +599,7 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	//Get the indirect block num that contain the target block
 	int indirect_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	if(indirect_block_num < file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
-		os_printf("file_block_num out of range");
+		os_printf("file_block_num %d out of range (from %d, within %d and %d) (%d)\n", indirect_block_num, file_block_num, file_inode->indirect_blocks_in_file, MAX_NUM_INDIRECT_BLOCKS, file_block_num, MAX_DATABLOCKS_PER_INODE);
 		return -1;
 	}
 
@@ -1135,7 +1135,7 @@ int kdelete(char* filepath) {
 int krec_delete(struct inode * cur_inode){
 	//base case
 	if (!cur_inode->is_dir){
-	kdelte_single(cur_inode);
+		//kdelete_single(cur_inode);
 	}
 	//recursive step
 	else{
@@ -1150,8 +1150,8 @@ int krec_delete(struct inode * cur_inode){
 			struct dir_entry cur_dir_entry;
 			for(j = 0; j < dir_block->num_entries; j++){
 				cur_dir_entry = dir_block->dir_entries[j];
-				inum = cur_dir_entry->inum;
-				struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+				inum = cur_dir_entry.inum;
+				struct inode* next_inode = (struct inode*) kmalloc(sizeof(struct inode));
 				// struct inode* next_inode;
 				get_inode(inum, next_inode);
 				krec_delete(next_inode);
@@ -1163,7 +1163,7 @@ int krec_delete(struct inode * cur_inode){
 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
 		for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
 			indirect_data_block_address = (cur_inode->indirect_blocks[k]+FS->start_data_blocks_loc) * BLOCKSIZE;
-			sd_receive(indirect_block, indirect_data_block_address);
+			sd_receive(cur_indirect_block, indirect_data_block_address);
 			for(i=0; i < cur_indirect_block->blocks_in_file; i++){
 				direct_data_block_address = (cur_indirect_block->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
 				sd_receive(dir_block, direct_data_block_address);
@@ -1172,8 +1172,8 @@ int krec_delete(struct inode * cur_inode){
 				struct dir_entry cur_dir_entry;
 				for(j = 0; j < dir_block->num_entries; j++){
 					cur_dir_entry = dir_block->dir_entries[j];
-					inum = cur_dir_entry->inum;
-					struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+					inum = cur_dir_entry.inum;
+					struct inode* next_inode = (struct inode*) kmalloc(sizeof(struct inode));
 					// struct inode* next_inode;
 					get_inode(inum, next_inode);
 					krec_delete(next_inode);
@@ -1182,7 +1182,7 @@ int krec_delete(struct inode * cur_inode){
 			}//end
 		}//end outer for
 		kfree(cur_indirect_block);
-		kfree(dir_data_block);
+		//kfree(dir_data_block);
 	}//end if else	
 }//end krec_delete()
 

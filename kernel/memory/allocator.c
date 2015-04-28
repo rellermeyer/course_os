@@ -102,10 +102,11 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
                 + sizeof(int32_t) + size);
 
         //free and >= request
-        if (header > 0 && header >= size) {
-
+	if (header > 0 && header >= size) {
             //cannot split this block
-            if ((header - size) < (2 * sizeof(int32_t) + sizeof(char))) {
+		if (header < (size + 2 * sizeof(int32_t) + sizeof(char))) {
+		    footer_addr = (uint32_t*) ((void*) allocator->heap + i
+					       + sizeof(int32_t) + abs(header));
 
                 ret_ptr = i + sizeof(int32_t);
                 //mark header as used
@@ -171,9 +172,11 @@ void alloc_deallocate(alloc_handle* allocator, void* ptr) {
     }
 
     if (footer_addr + sizeof(int32_t)
-            == (uint32_t*) allocator->heap + allocator->heap_size) {
+            == (void*) allocator->heap + allocator->heap_size) {
         last_block = 1;
     }
+
+    //os_printf("Freeing %d-sized block at %X. first/last=%d/%d\n", size, header_addr, first_block,last_block);
 
     //only check and coalesce right block
     if (first_block) {
@@ -225,6 +228,7 @@ void alloc_deallocate(alloc_handle* allocator, void* ptr) {
         uint32_t* left_block_header = (uint32_t*) ((void*) header_addr
                 - sizeof(int32_t));
         int32_t left_block_size = *left_block_header;
+	//os_printf("left/right sizes are %d/%d, size=%d\n", left_block_size, right_block_size, size);
 
         //both adjacent blocks are free
         if (right_block_size > 0 && left_block_size > 0) {
@@ -286,7 +290,7 @@ int alloc_check(alloc_handle* allocator) {
         uint32_t* footer_addr = (uint32_t*) (ptr + sizeof(int32_t) + block_size);
         int32_t block_footer = *footer_addr;
 
-        if (block_header == block_footer && block_header < 0) {
+        if (block_header == block_footer && block_header <= 0) {
             LOG("Block %d Allocated:", block);
             LOG("\tsize = %d, address = %x\n", block_size, block_addr);
         } else if (block_header == block_footer && block_header > 0) {
