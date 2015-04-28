@@ -83,9 +83,8 @@ int init_sd()
 	// failed to initialize properly but for now just print 
 	// that it was loaded OK
 	os_printf("\nSD card ready for transfer\n");
-
-	/* Hey Matt here is where I added a fake return */
-	return 0;
+	
+	return status();
 }
 
 // Returns the maximum capacity of the SD card; Since our SD card is
@@ -100,7 +99,7 @@ uint32_t sd_capacity()
 
 // Writes the contents of the FIFO buffer to the SD
 // card; writes a single block; returns 0 if the
-// transmission was successful and 1 if there was 
+// transmission was successful and error code if there was 
 // an error
 int sd_transmit(void* buffer, uint32_t address)
 {
@@ -114,12 +113,12 @@ int sd_transmit(void* buffer, uint32_t address)
 	push_bytes(buffer);
 
 	// Return that write succeeded for now
-	return 0;
+	return status();
 }
 
 // Reads the contents of the FIFO buffer to the SD
 // card; reads a single block and returns 0 if the
-// transmission succeeded and 1 if there was an error
+// transmission succeeded and error code if there was an error
 int sd_receive(void* buffer, uint32_t address)
 {
 	//Clear out FIFO and set to read
@@ -132,18 +131,18 @@ int sd_receive(void* buffer, uint32_t address)
 	pull_bytes(buffer);
 
 	// Return that read succeeded for now
-	return 0;
+	return status();
 }
 
 // Resets all non-dynamic status flags; returns 0
-// if the clear was successful and 1 if there was
+// if the clear was successful and error code if there was an error
 // an error
 int clear()
 {
 	// Return that the clear succeeded for now
 	// Clear all status flags
 	run_mmci(CLR, 0x2FF);
-	return 0; 
+	return status() ; 
 }
 
 
@@ -154,7 +153,7 @@ int clear()
 
 // Push bits into FIFO buffer from the address passed 
 // into the push bits function; Returns 0 if successful 
-// and 1 if an error occurred
+//  and error code if there was an error
 int push_bytes(void* buffer)
 {
 	//Clear out FIFO and set to write
@@ -167,12 +166,12 @@ int push_bytes(void* buffer)
 	}
 	
 	// Return that the push succeeded for now
-	return 0;
+	return status();
 }
 
 // Pull bits out of the FIFO buffer and store them at the 
 // address passed into the pull bits function; returns 0 
-// if successful and 1 if an error occurred
+// if successful and  and error code if there was an error
 int pull_bytes(void* buffer)
 {
 	int i = 0;
@@ -182,7 +181,7 @@ int pull_bytes(void* buffer)
 	}
 	
 	// Return that the pull succeeded for now
-	return 0;
+	return status();
 }
 
 // Stub function used to run MMCI commands
@@ -200,13 +199,14 @@ uint32_t read_mmci(uint32_t target)
 	return response;
 }
 
-uint32_t status(){
-
-uint32_t status = read_mmci(STATUS);
-
-if ((status && STATUS_ERR)!=0){
-	return 1;
-}
-//no error
-else return 0;
+//Because multiple bits could be set, thus giving multiple errors:
+//1. convert abs|number| to binary example: -3 would be 011
+//if no error - will return 0
+//if -1 , error code 0
+// if -2 , error code 1
+//if -3 , error cod 0 and 1 */
+int status(){
+uint32_t stat = read_mmci(STATUS);
+int error= stat & STATUS_ERR;
+return (~error+1);
 }
