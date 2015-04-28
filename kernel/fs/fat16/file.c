@@ -590,11 +590,11 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 		return -1;
 	}
 	if(file_block_num < MAX_DATABLOCKS_PER_INODE){
-		os_printf("Writing out file block num for block %d from direct data blocks.\n", file_block_num);
+		os_printf("Writing out file block num for block %d from direct data blocks (%d direct blocks).\n", file_block_num, file_inode->direct_blocks_in_file);
 		if (file_block_num >= file_inode->direct_blocks_in_file) {
 			return -1;
 		}
-		return file_inode->data_blocks[file_block_num];
+		return (file_inode->data_blocks[file_block_num] + FS->start_data_blocks_loc) * BLOCKSIZE;
 	}
 	//Block must be stored in an indirect block of file_inode
 
@@ -674,10 +674,11 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int file_block_num = offset / BLOCKSIZE;
 	int block_address = get_block_address(c_inode, file_block_num);
+	os_printf("Reading from block address %d...\n", block_address);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
-	 	// os_printf("failed to receive block number %d\n", numBytes);
+	 	os_printf("failed to receive block number %d\n", block_address);
 	 	return -1;
 	}//end if block_num
 
@@ -691,10 +692,11 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 
 		// note, this updates the buf_offset pointer as it transfer the data
 		// os_memcpy takes uint32_t* as arguments
-		 os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	
-		 // reset transferSpace pointer
-		 //transfer_space -= bytes_left; //Purpose of this?
-		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
+		os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	
+		os_printf("memcpy(%X,%X,%d)\n", *(uint32_t*)transfer_space,*(uint32_t*)buf_offset,bytes_left);
+		// reset transferSpace pointer
+		//transfer_space -= bytes_left; //Purpose of this?
+		return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left >= (BLOCKSIZE - local_offset))) {
 	/*	_____________________
@@ -751,7 +753,7 @@ int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int byt
 	// source is transferSpace
 	// dest is users buffer
 	 os_memcpy(transfer_space, buf_offset, (os_size_t) BLOCKSIZE); 	// note, this updates the buf_offset pointer as it transfer the data
-	 																// os_memcpy takes uint32_t* as arguments
+	 // os_memcpy takes uint32_t* as arguments
 	 // reset transferSpace pointer
 	 //transfer_space -= BLOCKSIZE; //Purpose of this?
 	 return BLOCKSIZE; // note, we are returning the number of bytes that were successfully transferred
@@ -762,10 +764,16 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 	uint32_t *transfer_space = kmalloc(BLOCKSIZE);
 	int bytes_read = 0;
 
+	if (num_bytes+offset > c_inode->size) {
+		os_printf("Going beyond size of file!\n");
+		num_bytes = c_inode->size - offset;
+	}
+
 	// start of higher-level algo:
 	if(num_bytes < BLOCKSIZE) {
 		while(bytes_read < num_bytes) {
 			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
+			os_printf("Read bytes, bytes_read=%d\n", bytes_read);
 		}
 	} else if(num_bytes >= BLOCKSIZE) {
 		//Read in remainder of current block
@@ -779,6 +787,7 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		}
 	}//end else if
+	kfree(transfer_space);
 	return bytes_read;
 }
 
@@ -789,18 +798,15 @@ int kread(int fd_int, void* buf, int num_bytes) {
 	//while retaining the original pointer to return back to the user
 	struct file_descriptor* fd = get_descriptor(fd_int); // note, get_file_descriptor() function has not yet been implemented...will be in open_table.c
 
-	if ((fd->permission != 'r' || fd->permission != 'b')) {
+	os_printf("%d\n", fd->permission);
+	if ((fd->permission != 'r') && (fd->permission != 'b')) {
 		os_printf("no permission\n");
 		return -1;
 	}
 
 	bytes_read = read_inode(fd->linked_file, fd->offset, buf_offset, num_bytes);
 	fd->offset += bytes_read;
-	if(bytes_read != num_bytes){
-		return bytes_read;
-	}else{
-		return -1;
-	}
+	return bytes_read;
 } // end kread();
 
 
@@ -977,7 +983,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 	}//end while
 	//update the the cur_inode on disk:
-	sd_transmit(cur_inode, (cur_inode->inum + FS->start_inode_table_loc) + BLOCKSIZE);
+	sd_transmit(cur_inode, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
 	return bytes_written;
 } // end kwrite();
 
