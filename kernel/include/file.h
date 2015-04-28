@@ -11,8 +11,8 @@
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define MAX_NUM_INDIRECT_BLOCKS 50
-#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-2
-#define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2
+#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK ((BLOCKSIZE/4)-2)
+#define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
 
 //IMPORTANT!! ---------------------------------------------------------------------------------------------------
 //all constants are in units of block NUMBER																	|
