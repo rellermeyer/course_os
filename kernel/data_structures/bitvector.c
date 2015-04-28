@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "../include/klibc.h"
-#include "../include/bitvector.h"
+#include "klibc.h"
+#include "bitvector.h"
 
 uint32_t const WORD_SIZE = 32;
 
