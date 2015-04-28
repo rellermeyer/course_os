@@ -266,7 +266,10 @@ void alloc_deallocate(alloc_handle* allocator, void* ptr) {
     }
 }
 
-uint32_t alloc_check(alloc_handle* allocator) {
+/**
+ * Returns 0 on success. -1 on error.
+ */
+int alloc_check(alloc_handle* allocator) {
     char* ptr = (char*) allocator->heap;
     uint32_t* end_ptr = (uint32_t*) ((void*) allocator->heap
             + allocator->heap_size);
@@ -295,17 +298,17 @@ uint32_t alloc_check(alloc_handle* allocator) {
             ERROR("block_footer = %d\n", block_footer);
             ERROR("header addr = %x\n", header_addr);
             ERROR("footer addr = %x\n", footer_addr);
-            return STATUS_FAIL;
+            return -1;
         }
 
         ptr = ptr + block_size + 2 * sizeof(int32_t);
         block++;
         if ((uint32_t*) ptr == end_ptr) {
-            return STATUS_OK;
+            return 0;
         }
     }
 
-    return STATUS_OK;
+    return 0;
 }
 
 uint32_t* alloc_get_heap(alloc_handle* allocator) {
