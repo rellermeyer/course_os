@@ -10,10 +10,10 @@ CFLAGS += -std=c99 -ffreestanding -nostdinc
 SPECS = -specs "../gcc.specs"
 
 hello: hello.o
-	$(CC) $(SPECS) -L../libc -static -lc -o hello hello.o
-	
+	$(CC) $(SPECS) -Wl,-Ttext-segment=0x28000 -L../libc -static -lc -o hello hello.o
+
 %.o: %.c
-	$(CC) $(SPECS) $(CFLAGS) -I../include -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(SPECS) $(CFLAGS) -Wl,-Ttext-segment=0x28000 -I../include -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
 	rm -f hello.o
