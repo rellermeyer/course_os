@@ -129,17 +129,21 @@ void start2(uint32_t *p_bootargs)
 	//while(1);
 
 	// Okay, now we should be able to open it.
-	os_printf("Opening previous file...\n");
+	os_printf("\nOpening previous file...\n");
 	fd = kopen("/foobar", 'r');
 
 	// And read from it
-	os_printf("Reading from file...\n");
+	os_printf("\nReading from file...\n");
 	char buf[256];
 	int nbytes = kread(fd, buf, 256);
 	os_printf("Read %d bytes from file.\n", nbytes);
 	os_printf("'%s'\n", buf);
 
 	kclose(fd);
+
+	// Test kls, just for grins. :)
+	os_printf("\nRunning kls...\n");
+	kls("/");
 	while(1);
 
 	//asm volatile("swi 1");
