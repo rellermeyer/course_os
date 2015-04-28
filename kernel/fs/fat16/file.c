@@ -16,7 +16,7 @@ int INODE_TABLE_CACHE_SIZE;
 int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
 int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
 int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
-int INODES_PER_BLOCK;
+int INODES_PER_BLOCK = 1;
 int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
 int DATA_BLOCK_TABLE_CACHE_SIZE;
 int NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE;
@@ -65,6 +65,7 @@ int kfs_format()
 
 	void *block = kmalloc(512);
 	os_printf("%X %X %X\n", sblock.fs_version, block, &sblock);
+	os_memset(block, 0, 512);
 	os_memcpy(&sblock, block, sizeof(struct superblock));
 	os_printf("Writing first 4 bytes: %X (should be %X)\n", *(unsigned int*)block, sblock.fs_version);
 	sd_transmit(block, 1*BLOCKSIZE);
@@ -78,6 +79,7 @@ int kfs_format()
 	root_inode.direct_blocks_in_file = 1;
 	root_inode.data_blocks[0] = sblock.start_data_blocks_loc;
 	root_inode.indirect_blocks_in_file = 0;
+	os_memset(block, 0, 512);
 	os_memcpy(&root_inode, block, sizeof(struct inode));
 	sd_transmit(block, sblock.start_inode_table_loc*BLOCKSIZE);
 
@@ -85,14 +87,15 @@ int kfs_format()
 	struct dir_data_block ddb;
 	ddb.block_num = 0;
 	ddb.num_entries = 0;
+	os_memset(block, 0, 512);
 	os_memcpy(&ddb, block, sizeof(struct dir_data_block));
 	sd_transmit(block, sblock.start_data_blocks_loc*BLOCKSIZE);
 
 	// Update the inode bitmap
-	unsigned char i = 0x80;
+	/*unsigned char i = 0x80;
 	os_memset(block, 0, BLOCKSIZE);
 	os_memcpy(&i, block, 1);
-	sd_transmit(block, sblock.inode_bitmap_loc*BLOCKSIZE);
+	sd_transmit(block, sblock.inode_bitmap_loc*BLOCKSIZE);*/
 
 	return 0;
 }
@@ -130,6 +133,7 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 	inode_bitmap = make_vector(FS->max_inodes);
 	data_block_bitmap = make_vector(FS->max_data_blocks);
 	bv_set(0, inode_bitmap);
+	bv_set(0, data_block_bitmap);
 #if 0 // This will never work because of the nature of the bitmap structure, wherein we don't know inode_bitmap->vector :(
 	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
 	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
@@ -264,10 +268,6 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 
 	os_printf("Next path is: '%s'\n", next_path);
-	/*if (os_strlen(next_path) == 0) {
-		// I guess we're currently in the right place?
-		return cur_inode->inum;
-		}*/
 
 	for(i = 0; i < cur_inode->direct_blocks_in_file; i++){
 		sd_receive(dir_spaceholder, (cur_inode->data_blocks[i])*BLOCKSIZE);
@@ -275,9 +275,11 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 		int j;
 		for(j = 0; j < (cur_data_block.num_entries); j++){
 			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
+			os_printf("'%s' vs. '%s'\n", file_dir.name, next_path);
 			if(!os_strcmp(file_dir.name, next_path)){
 				file_found = 1; //we found the file, so break out of loop
 				inum = file_dir.inum;
+				os_printf("File was found at inode %d!\n", inum);
 				break;
 			}
 			if(file_found){
@@ -342,9 +344,10 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 
 		//get path of next inode
 		while ((filepath[k] != '/') && (k <= MAX_NAME_LENGTH) && (filepath[k] != '\0')) {
-			next_path[k] = filepath[k];
+			next_path[k-1] = filepath[k];
 			k++;
 		}//end of litte while to find next_path
+		os_printf("filepath='%s' next_path='%s' k=%d\n", filepath, next_path, k);
 
 		filepath += k;
 
@@ -382,6 +385,7 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
+			//index++;
 			break;
 		}
 		else if(iterator[0] == '/'){
@@ -395,19 +399,24 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	}//end while
 	total_chars -= index;
 
-	char* truncated_path = (char*)kmalloc(total_chars); // do we need to kmalloc this?
-	char* last = (char*)kmalloc(index);
+	char* truncated_path = (char*)kmalloc(total_chars+1); // do we need to kmalloc this?
+	char* last = (char*)kmalloc(index+1);
 	int i;
 	for(i = 0; i < total_chars; i++){
 		truncated_path[i] = filepath[i];
 	}
-	for(; i < index; i++){
+	truncated_path[i] = 0;
+	/*for(; i < index; i++){
 		last[i-total_chars] = filepath[i];
+	}*/
+	for (i=0; i<index; i++) {
+		last[i] = filepath[i+total_chars];
 	}
+	last[i] = 0;
 	result->dir_levels = dir_levels;
 	result->truncated_path = truncated_path;
 	result->last = last;
-	os_printf("kfind_dir found: '%s', %d levels\n", result->truncated_path, result->dir_levels);
+	os_printf("kfind_dir found: '%s', last='%s', %d levels, given '%s'\n", result->truncated_path, result->last, result->dir_levels, filepath);
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
@@ -462,7 +471,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	//create the new dir_entry and populate it's fields:
 	struct dir_entry new_dir_entry;
 	new_dir_entry.inum = free_inode_loc;
-	new_dir_entry.name = result->last;
+	os_strcpy(new_dir_entry.name, result->last);
 	new_dir_entry.name_length = os_strlen(result->last);
 
 	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
@@ -581,6 +590,10 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 		return -1;
 	}
 	if(file_block_num < MAX_DATABLOCKS_PER_INODE){
+		os_printf("Writing out file block num for block %d from direct data blocks.\n", file_block_num);
+		if (file_block_num >= file_inode->direct_blocks_in_file) {
+			return -1;
+		}
 		return file_inode->data_blocks[file_block_num];
 	}
 	//Block must be stored in an indirect block of file_inode
@@ -812,11 +825,14 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
     // have offset in the file already, just need to move it and copy.
     // fd->offset is the offset in the file. 
     while(bytes_written < total_bytes_left){
+	    os_printf("bytes_written=%d, total_bytes_left=%d\n", bytes_written, total_bytes_left);
 		int file_block_num = fd->offset / BLOCKSIZE;
 		// need to put things in transfer_space, move pointer back when done
 		int offset_into_current_block = fd->offset % BLOCKSIZE;
 		int bytes_left_in_block = BLOCKSIZE - offset_into_current_block;
 		int block_address = get_block_address(cur_inode, file_block_num);
+		os_printf("cur_inode has %d direct data blocks.\n", cur_inode->direct_blocks_in_file);
+		os_printf("Writing data to block address %d\n", block_address);
 
 		//if get_block_address == -1, we know we need to allocate more space for the file
 		if(block_address == -1){
@@ -828,6 +844,8 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 			int flag_free_cur_indirect_block = 0;
 			if(cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE){
+				os_printf("Allocating a new direct block for the file.\n");
+
 				//Case (1): add a direct data block to cur_inode:
 				cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_data_block_loc;
 				cur_inode->direct_blocks_in_file++;
@@ -928,6 +946,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 			os_memcpy(buf_offset, transfer_space + offset_into_current_block, (os_size_t) total_bytes_left);
 			//transfer_space -= total_bytes_left; //Purpose of this?
 			// pointer to start, block_num, where we are in file, length of write
+			os_printf("Block address is: %d\n", block_address);
 			sd_transmit(transfer_space, block_address);
 
 			bytes_written += total_bytes_left;
@@ -1046,9 +1065,13 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	}
 	os_printf("Writing inode data to SD card...\n");
 	void *block = kmalloc(BLOCKSIZE);
-	os_memcpy(&cur_inode, block, sizeof(struct inode));
+	os_memset(block, 0, BLOCKSIZE);
+	os_memcpy(cur_inode, block, sizeof(struct inode));
 	sd_transmit(block, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
-	os_memcpy(&new_inode, block, sizeof(struct inode));
+
+	os_memset(block, 0, BLOCKSIZE);
+	os_memcpy(new_inode, block, sizeof(struct inode));
+	os_printf("New inode has %d data blocks.\n", new_inode->direct_blocks_in_file);
 	sd_transmit(block, (FS->start_inode_table_loc + new_inode->inum * INODES_PER_BLOCK)*BLOCKSIZE); //if there are more than 1 inodeperblock need to change
 	os_printf("Finished writing to SD card...\n");
 	kfree(block);
