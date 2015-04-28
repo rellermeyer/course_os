@@ -35,9 +35,7 @@ bit_vector *make_vector(uint32_t size) {
 
 /* return a whatever number, 1 or 0 is at position index */
 int32_t bv_get (uint32_t index, bit_vector* bit_vec) {
-	os_printf("index is: %u\n", index);
 	if(index < bit_vec->length && index >= 0) {
-		os_printf("We are in the wrong place...\n");
 		uint32_t val = (index >> 5);
 		uint32_t oneWord = bit_vec->vector[val];
 		oneWord = oneWord >> (31 - (index % WORD_SIZE));
@@ -73,7 +71,7 @@ int32_t bv_lower (uint32_t index, bit_vector* bit_vec) {
 	if(index < bit_vec->length && index >= 0) {
 		uint32_t val = (index >> 5);
 		uint32_t oneWord = bit_vec->vector[val];
-		uint32_t mask = !(0x1 << (31 - (index % WORD_SIZE)));
+		uint32_t mask = ~(0x1 << (31 - (index % WORD_SIZE)));
 		bit_vec->vector[val] = oneWord & mask;
 		return 1; 
 	} else {return -1;} // invalid index
