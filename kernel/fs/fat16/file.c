@@ -612,60 +612,6 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	return block_address;
 }
 
-
-//end of helper functions
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-int kopen(char* filepath, char mode){
-	int fd;
-	int inum = 0;
-	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
-	kfind_dir(filepath, result);
-	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	//here we have the file we were looking for! it is cur_inode.
-	if (cur_inode->is_dir) {
-		os_printf("cannot open a directory, make the path end to a file");
-		kfree(cur_inode);
-		kfree(result->truncated_path);
-		kfree(result->last);
-		kfree(result);
-		return -1;
-	}
-
-	// TODO: Permissions need some work, because the bitvector cannot be pulled out like this. :(
-	/*bit_vector *p = cur_inode->perms;
-	switch (mode){
-		case 'r':
-			if(bv_get(0, p) == 0){
-				os_printf("File Cannot Be Read\n");
-				return -1;
-			}
-			break;
-		case 'w':
-			if(bv_get(1, p) == 0){
-				os_printf("File Cannot Be Written\n");
-				return -1;
-			}
-			break;
-		case 'a':
-			if(bv_get(1, p) == 0){
-				os_printf("File Cannot Be Appeneded To\n");
-				return -1;
-			}	
-			break;
-		default:
-			os_printf("Please specify permission as r to read, w to write and a to append\n");
-			}*/
-	fd = add_to_opentable(cur_inode, mode);
-	kfree(result->truncated_path);
-	kfree(result->last);
-	kfree(result);
-	return fd;
-}//end kopen()
-
-
 // Helper function for kread():
 int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytes_left, void* transfer_space) {
 	int local_offset = offset % BLOCKSIZE; // local_offset is the leftmost point in the block
@@ -790,8 +736,82 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 	return bytes_read;
 }
 
+
+//end of helper functions
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+int kopen(char* filepath, char mode){
+	if (filepath == 0x0) {
+		os_printf("no directory specified \n");
+		return -1;
+	}
+	if (mode == 0x0) {
+		os_printf("no mode specified \n");
+		retunr -1;
+	}
+	int fd;
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	//here we have the file we were looking for! it is cur_inode.
+	if (cur_inode->is_dir) {
+		os_printf("cannot open a directory, make the path end to a file\n");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
+		return -1;
+	}
+
+	// TODO: Permissions need some work, because the bitvector cannot be pulled out like this. :(
+	/*bit_vector *p = cur_inode->perms;
+	switch (mode){
+		case 'r':
+			if(bv_get(0, p) == 0){
+				os_printf("File Cannot Be Read\n");
+				return -1;
+			}
+			break;
+		case 'w':
+			if(bv_get(1, p) == 0){
+				os_printf("File Cannot Be Written\n");
+				return -1;
+			}
+			break;
+		case 'a':
+			if(bv_get(1, p) == 0){
+				os_printf("File Cannot Be Appeneded To\n");
+				return -1;
+			}	
+			break;
+		default:
+			os_printf("Please specify permission as r to read, w to write and a to append\n");
+			}*/
+	fd = add_to_opentable(cur_inode, mode);
+	kfree(result->truncated_path);
+	kfree(result->last);
+	kfree(result);
+	return fd;
+}//end kopen()
+
+
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd_int, void* buf, int num_bytes) {
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (buf == 0x0) {
+		os_printf("no buffer \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("invalid number of bytes \n");
+		return -1;
+	}
 	int bytes_read = 0;
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
@@ -812,6 +832,18 @@ int kread(int fd_int, void* buf, int num_bytes) {
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
 int kwrite(int fd_int, void* buf, int num_bytes) {
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (buf == 0x0) {
+		os_printf("no buffer \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("invalid number of bytes \n");
+		return -1;
+	}
     struct file_descriptor* fd = get_descriptor(fd_int);
 
     if ((fd->permission != 'w' && fd->permission != 'a')){
@@ -989,6 +1021,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 // close the file fd, return 1 if the close was successful 
 int kclose(int fd) {
+	if (fd < 0 || fd >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
 	int error;
 	if(!file_is_open(fd)) { 
 		os_printf("file not open"); return -1; 
@@ -1000,25 +1036,41 @@ int kclose(int fd) {
 
 // seek within the file, return an error if you are outside the boundaries 
 int kseek(int fd_int, int num_bytes) {
-        struct file_descriptor* fd = get_descriptor(fd_int);
-        if (fd->permission != 'r' || fd->permission != 'w') {
-            os_printf("no permission \n");
-            return -1;
-        } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
-        	os_printf("Error! file offset exceeds file size \n");
-			return -1;
-        } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
-			os_printf("Error! file offset exceeds beginning of file \n");
-			return -1;
-		}//end if else  */
-	fd->offset += num_bytes;	
-	return 0;
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("num of bytes not valid \n");
+		return -1;
+	}
+    struct file_descriptor* fd = get_descriptor(fd_int);
+    if (fd->permission != 'r' || fd->permission != 'w') {
+        os_printf("no permission \n");
+        return -1;
+    } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
+    	os_printf("Error! file offset exceeds file size \n");
+		return -1;
+    } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
+		os_printf("Error! file offset exceeds beginning of file \n");
+		return -1;
+	}//end if else  */
+fd->offset += num_bytes;	
+return 0;
 } // end kseek();
 
 
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, char mode, int is_this_a_dir) {
+	if (filepath == 0x0) {
+		os_printf("filepath not valid \n");
+		return -1;	
+	}
+	if (mode == 0x0) {
+		os_printf("filepath not valid \n");
+		return -1;	
+	}t
 	int fd;
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
@@ -1135,7 +1187,7 @@ int kdelete(char* filepath) {
 int krec_delete(struct inode * cur_inode){
 	//base case
 	if (!cur_inode->is_dir){
-	kdelte_single(cur_inode);
+		kdelte_single(cur_inode);
 	}
 	//recursive step
 	else{
@@ -1185,10 +1237,6 @@ int krec_delete(struct inode * cur_inode){
 		kfree(dir_data_block);
 	}//end if else	
 }//end krec_delete()
-
-
-
-
 
 
 
