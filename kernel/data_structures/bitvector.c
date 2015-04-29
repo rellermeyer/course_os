@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "klibc.h"
 #include "bitvector.h"
+#include "mmci.h"
 
 uint32_t const WORD_SIZE = 32;
 
@@ -103,3 +104,43 @@ int32_t bv_free (bit_vector* bit_vec) {
 	kfree(bit_vec);
 	return 1;
 }
+
+// os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
+
+int32_t bv_serialize(bit_vector* bit_vec, uint32_t start_block, uint32_t end_block){
+    
+    int i = 0;
+    void* buf;
+    while((start_block < end_block) && i < bit_vec->actualLength){
+        
+        int block_num = i / 128; // use this to get the block number
+        /* transfer over */
+        sd_transmit((void*)bit_vec->vector,start_block); // how do I get the address?
+        start_block++;
+        i+= 128;
+    }
+}
+
+int32_t bv_unserialize(bit_vector* bit_vec, uint32_t start_block, uint32_t end_block){
+    
+    int i = 0;
+    void* buf;
+    while((start_block < end_block) && i < bit_vec->actualLength){
+        
+        int block_num = i / 128; // use this to get the block number
+        sd_receive((void*)bit_vec->vector,); // how does one get the value?
+        start_block++;
+        i+= 128;
+    }
+}
+
+
+/*
+ int sd_transmit(void* buffer, uint32_t address);
+ int sd_receive(void* buffer, uint32_t address);
+ */
+
+
+
+
+
