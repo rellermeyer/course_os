@@ -1,0 +1,44 @@
+process.c: In function 'execute_process':
+process.c:335:2: warning: passing argument 1 of 'os_strcpy' makes pointer from integer without a cast [enabled by default]
+  os_strcpy(STACK_BASE, "name");
+  ^
+In file included from process.c:2:0:
+include/klibc.h:85:7: note: expected 'char *' but argument is of type 'unsigned int'
+ char *os_strcpy(char *dest, const char *src);
+       ^
+loader.c: In function 'allocate_process_memory':
+loader.c:77:11: warning: variable 'entry_point_offset' set but not used [-Wunused-but-set-variable]
+  uint32_t entry_point_offset = 0;
+           ^
+loader.c: In function 'load_file':
+loader.c:131:13: warning: unused variable 'sh' [-Wunused-variable]
+  Elf_Shdr * sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
+             ^
+64+0 records in
+64+0 records out
+262144 bytes (262 kB) copied, 0.000604135 s, 434 MB/s
+10+1 records in
+10+1 records out
+44384 bytes (44 kB) copied, 0.000171269 s, 259 MB/s
+18+1 records in
+18+1 records out
+76914 bytes (77 kB) copied, 0.000815756 s, 94.3 MB/s
+1536+0 records in
+1536+0 records out
+6291456 bytes (6.3 MB) copied, 0.0101995 s, 617 MB/s
+24+1 records in
+24+1 records out
+101176 bytes (101 kB) copied, 0.00119132 s, 84.9 MB/s
+64+1 records in
+64+1 records out
+262208 bytes (262 kB) copied, 0.000265242 s, 989 MB/s
+0+1 records in
+0+1 records out
+154 bytes (154 B) copied, 0.000353152 s, 436 kB/s
+1+0 records in
+1+0 records out
+134217728 bytes (134 MB) copied, 0.905783 s, 148 MB/s
+pulseaudio: pa_context_connect() failed
+pulseaudio: Reason: Connection refused
+pulseaudio: Failed to initialize PA contextaudio: Could not init `pa' audio driver
+qemu: terminating on signal 1 from pid 18085
