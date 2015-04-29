@@ -6,6 +6,9 @@
 #include "mmci.h"
 #include "file.h"
 
+#define TRANSMIT 0
+#define RECEIVE 1
+
 //CONSTANTS:
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
@@ -195,9 +198,8 @@ int kfs_shutdown(){
 	//TODO: write inodes pointed to by inode_table_cache back to disk to ensure it's up to date:
 
 	//TODO: write indirect_blocks pointed to by data_block_table_cache back to disk to ensure it's up to date:
-
-	transmit_receive_bitmap('t', 'i', 0, 1); //transmit inode cache
-	transmit_receive_bitmap('t', 'd', 0, 1); //transmit data blocks cache
+	transmit_receive_bitmap(TRANSMIT, inode_bitmap, FS->inode_bitmap_loc, FS->max_inodes, 0, 1); //transmit inode bitmap
+	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1); //transmit block bitmap
 
 	//free inodes stored in inode_table_cache:
 	for(i = 0; i < NUM_INODE_TABLE_BLOCKS_TO_CACHE; i++){
@@ -422,57 +424,46 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 
 
 //transmits or receives the data block bitvector or the inode bitvecotr to and from disk
-// First parameter: t=transmit, r=receive
-// Second paramter: i=inode bitvector, d=datablock bitvector
+// First parameter: TRANSMIT or RECEIVE (defined)
+// Second paramter: put pointer to bitvector (example: data_block_bitmap for data, inode_bitmap for inodes)
+// Third parameter: put where that bitvecotr starts in memory (example: FS->data_bitmap_loc for data, FS->inode_bitmap_loc for inode)
+// Fourth parameter: how many there are (example: FS->max_data_blocks for data, FS->max_inodes for inodes)
 // index = index you would put in the bitvector
-// all = 0 for index, 1 for all of it 
-int transmit_receive_bitmap(char t_or_r, char i_or_d, int bit_index, int all){
+// all = 0 for only one index, 1 for all the bitvector
+int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all){
 	int error = 0;
-	int num_blocks;
-	int loc;
-	bit_vector * vec;
-	if (t_or_r != 't' || t_or_r != 'r' || i_or_d != 'i' || i_or_d != 'd') {
+	int num_blocks = (max/(8 * BLOCKSIZE)) + 1;
+	if (t_or_r != TRANSMIT || t_or_r != RECEIVE) {
 		return -1;
-	}
-	if (i_or_d == 'i') {
-		num_blocks = ((FS->max_inodes)/(8 * BLOCKSIZE)) + 1; //because of integer division
-		vec = inode_bitmap;
-		loc = FS->inode_bitmap_loc;
-	}
-	else { // (i_or_d == 'd') 
-		num_blocks = ((FS->max_data_blocks)/(8 * BLOCKSIZE)) + 1; //because of integer division
-		vec = data_block_bitmap;
-		loc = FS->data_bitmap_loc
-	}
-	if(all){
+	if(all){  //transmit or receive all the bitvector
 		int i;
 		for(i = 0; i < num_blocks; i++){
-			if (t_or_r == 't') {
-				error = sd_transmit((void*) (vec->vector + (i*BLOCKSIZE)), (loc + i)*BLOCKSIZE);
+			if (t_or_r == TRANSMIT) {
+				error = sd_transmit((void*) (vec->vector + (i*BLOCKSIZE)), (starting_loc + i)*BLOCKSIZE);
 			}
 			else {  //receive
-				error = sd_receive((void*) (vec->vector + (i*BLOCKSIZE)), (loc + i)*BLOCKSIZE);
+				error = sd_receive((void*) (vec->vector + (i*BLOCKSIZE)), (starting_loc + i)*BLOCKSIZE);
 			}
 			if(error < 0){
-				os_printf("ERROR! Failed to transmit\n");
+				os_printf("ERROR! Failed to transmit or receive\n");
 				return error;
-			}//end error checking
-		}//end for		
-	}else{
+			}
+		}	
+	}else{  //transmit or reveive only the block corresponding to the index
 		int block_to_change = (bit_index/8)/BLOCKSIZE;
-		if (t_or_r == 't') {
-			error = sd_transmit((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (loc + block_to_change)*BLOCKSIZE);
+		if (t_or_r == TRANSMIT) {
+			error = sd_transmit((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (starting_loc + block_to_change)*BLOCKSIZE);
 		}
 		else { //receive
-			error = sd_receive((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (loc + block_to_change)*BLOCKSIZE);
+			error = sd_receive((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (starting_loc + block_to_change)*BLOCKSIZE);
 		}
 		if(error < 0){
-			os_printf("ERROR! Failed to transmit\n");
+			os_printf("ERROR! Failed to transmit or receive\n");
 			return error;
-		}//end error checking
-	}//end else
+		}
+	}
 	return error;
-}//end transmit_data_block_bitmap() helper function
+}//end transmit_receive_bitmap helper function
 
 
 /* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
@@ -543,7 +534,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 			new_dir_block->num_entries++;
 			cur_inode->size += sizeof(struct dir_entry);
 			sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-			transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
+			transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 		}else{
 			//get the current indirect block and check to see if it has room to add another data block:
 			if(!flag_free_cur_indirect_block){
@@ -571,7 +562,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				}
 				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-				transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
+				transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 			}else{
 				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
@@ -604,7 +595,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 					bv_set(new_indirect_block_loc, data_block_bitmap); //taken
 					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
+					transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 					kfree(new_indirect_block);
 
 				}else{
@@ -942,7 +933,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				}
 				block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 				bv_set(new_data_block_loc, data_block_bitmap);
-				transmit_receive_bitmap('t', 'd', new_data_block_loc, 0);
+				transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_data_block_loc, 0);
 			}else{//(cur_inode->direct_blocks_in_file >= MAX_DATABLOCKS_PER_INODE
 				//get the current indirect block and check to see if it has room to add another data block:
 				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
@@ -970,7 +961,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 					block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 					bv_set(new_data_block_loc, data_block_bitmap);
 					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_receive_bitmap('t', 'd', new_data_block_loc, 0);
+					transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_data_block_loc, 0);
 				}else{ //last indirect block full
 					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 						/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block */
@@ -1003,7 +994,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 						bv_set(new_data_block_loc, data_block_bitmap);
 						sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-						transmit_receive_bitmap('t', 'd', new_indirect_block_loc, 0);
+						transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_indirect_block_loc, 0);
 						kfree(new_indirect_block);
 
 					}else{
@@ -1254,10 +1245,8 @@ int kdelete(char* filepath) {
 	//Make sure folder is empty
 	if(cur_inode->is_dir){
 		if(dir_empty(cur_inode){
-			transmit_receive_bitmap('r', 'd', 0, 1);
-			//TODO create a recieve data block bm recieve
+			//transmit_receive_bitmap(RECEIVE, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);   I DONT THINK YOU NEED THIS
 			bv_lower(cur_inode->inum, inode_bitmap);
-			
 		}
 	}
 	//we know it is a file
@@ -1280,13 +1269,9 @@ int kdelete(char* filepath) {
 		}
 		bv_lower(cur_inode->inum, inode_bitmap);
 	}
-	transmit_receive_bitmap('t', 'd', 0, 1); // done with bitmap, so transmit to card
-	//find 
+	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
 
 	//////////////////END Delete references to file/folder direct/inder blocks//////////////////
-
-
-
 
 
 	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
