@@ -1146,6 +1146,18 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	}
 }//end of kcreate() function
 
+//returns 1 if empty 0 if not empty
+int dir_empty(struct inode* cur_inode){
+	if((cur_inode->direct_blocks_in_file == 0) && (cur_inode->indirect_blocks_in_file ==0)){
+		return 1;
+	}
+	else {
+		os_printf("Your current directory still has files in it\n");
+		return 0;
+	}
+}
+
+
 
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath) {
@@ -1153,15 +1165,8 @@ int kdelete(char* filepath) {
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	if (error == -1) {
-		os_printf("something wrong in kfind_inode \n");
-		kfree(cur_inode);
-		kfree(result->truncated_path);
-		kfree(result->last);
-		kfree(result);
-		return -1;
-	}
+	int error1 = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	
 	//here we have the file we were looking for! it is cur_inode.
 
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1169,6 +1174,69 @@ int kdelete(char* filepath) {
     // the inode has to be deleted from its directory.                                                                         
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 	
+	struct inode* level_up_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* level_up_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, level_up_result);
+	int error2 = kfind_inode(level_up_result->truncated_path, inum, level_up_result->dir_levels, level_up_inode);
+
+	if (error == -1 || error2 == -1) {
+		os_printf("something wrong in kfind_inode \n");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
+
+		kfree(level_up_inode);
+		kfree(level_up_result->truncated_path);
+		kfree(level_up_result->last);
+		kfree(level_up_result);
+		return -1;
+	}
+		//WORK ON LOGIC
+		int d;
+		int find = (cur_inode->inum)+start_data_blocks_loc; //
+	for(d=0; d<level_up_inode->direct_blocks_in_file; d++){
+		if(find==level_up_inode->direct_blocks_in_file[d]){
+		sd_receive(
+		}
+	}
+//Make sure folder is empty
+	if(cur_inode->is_dir){
+		if(dir_empty(cur_inode){
+			//TODO create a recieve data block bm recieve
+			bv_lower(cur_inode->inum, inode_bitmap);
+			
+			
+		}
+	}
+	//we know it is a file
+	//TODO  work on recieving blocks from sd card
+	else{
+		int d; 
+		for(d=0; d<cur_inode->direct_blocks_in_file; d++){
+			int index = direct_blocks_in_file[d];
+			bv_lower(index, data_block_bitmap);
+		}
+		int i;
+		for(i=0; i<cur_inode->indirect_blocks_in_file; i++){
+			int z;
+			struct indirect_block one_block = cur_inode->indirect_blocks[i];
+			for(z=0; z<one_block.blocks_in_file; z++){
+				int index = one_block.data_blocks[z];
+				bv_lower(index, data_block_bitmap);
+			}
+			bv_lower(one_block.block_num, data_block_bitmap);
+		}
+		bv_lower(cur_inode->inum, inode_bitmap);
+	}
+	transmit_data_block_bitmap(0, 1); 
+	//find 
+
+	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
+	//Then possibly move the last dir entry in place of text.txt entry
+	//can only delete directory if directory is empty
+
+
 	kfree(cur_inode->data_blocks);
 	kfree(cur_inode->indirect_blocks);
 	bv_free(cur_inode->perms);
@@ -1181,62 +1249,75 @@ int kdelete(char* filepath) {
 
 
 
-/*	The logic on this should be good, but still need to...
-	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
-	should we limit the depth of filepaths to avoid this??? */
-int krec_delete(struct inode * cur_inode){
-	//base case
-	if (!cur_inode->is_dir){
-		kdelte_single(cur_inode);
-	}
-	//recursive step
-	else{
-		int i;
-		int direct_data_block_address;
-		struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(sizeof(struct dir_data_block));
-		for(i=0; i< cur_inode->direct_blocks_in_file; i++){
-			direct_data_block_address = (cur_inode->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
-			sd_receive(dir_block, direct_data_block_address);
-			int j;
-			int inum;
-			struct dir_entry cur_dir_entry;
-			for(j = 0; j < dir_block->num_entries; j++){
-				cur_dir_entry = dir_block->dir_entries[j];
-				inum = cur_dir_entry->inum;
-				struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
-				// struct inode* next_inode;
-				get_inode(inum, next_inode);
-				krec_delete(next_inode);
-				kfree(next_inode);
-			}//end
-		}//end for
-		int k;
-		int indirect_data_block_address;
-		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
-		for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
-			indirect_data_block_address = (cur_inode->indirect_blocks[k]+FS->start_data_blocks_loc) * BLOCKSIZE;
-			sd_receive(indirect_block, indirect_data_block_address);
-			for(i=0; i < cur_indirect_block->blocks_in_file; i++){
-				direct_data_block_address = (cur_indirect_block->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
-				sd_receive(dir_block, direct_data_block_address);
-				int j;
-				int inum;
-				struct dir_entry cur_dir_entry;
-				for(j = 0; j < dir_block->num_entries; j++){
-					cur_dir_entry = dir_block->dir_entries[j];
-					inum = cur_dir_entry->inum;
-					struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
-					// struct inode* next_inode;
-					get_inode(inum, next_inode);
-					krec_delete(next_inode);
-					kfree(next_inode);
-				}//end
-			}//end
-		}//end outer for
-		kfree(cur_indirect_block);
-		kfree(dir_data_block);
-	}//end if else	
-}//end krec_delete()
+
+// /*	The logic on this should be good, but still need to...
+// 	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
+// 	should we limit the depth of filepaths to avoid this??? */
+// int krec_delete(struct inode * cur_inode){
+// 	//base case
+// 	if (!cur_inode->is_dir){
+// 		kdelte_single(cur_inode);
+// 	}
+// 	//recursive step
+// 	else{
+// 		int i;
+// 		int direct_data_block_address;
+// 		struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(sizeof(struct dir_data_block));
+// 		for(i=0; i< cur_inode->direct_blocks_in_file; i++){
+// 			direct_data_block_address = (cur_inode->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 			sd_receive(dir_block, direct_data_block_address);
+// 			int j;
+// 			int inum;
+// 			struct dir_entry cur_dir_entry;
+// 			for(j = 0; j < dir_block->num_entries; j++){
+// 				cur_dir_entry = dir_block->dir_entries[j];
+// 				inum = cur_dir_entry->inum;
+// 				struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+// 				// struct inode* next_inode;
+// 				get_inode(inum, next_inode);
+// 				krec_delete(next_inode);
+// 				kfree(next_inode);
+// 			}//end
+// 		}//end for
+// 		int k;
+// 		int indirect_data_block_address;
+// 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
+// 		for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
+// 			indirect_data_block_address = (cur_inode->indirect_blocks[k]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 			sd_receive(indirect_block, indirect_data_block_address);
+// 			for(i=0; i < cur_indirect_block->blocks_in_file; i++){
+// 				direct_data_block_address = (cur_indirect_block->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 				sd_receive(dir_block, direct_data_block_address);
+// 				int j;
+// 				int inum;
+// 				struct dir_entry cur_dir_entry;
+// 				for(j = 0; j < dir_block->num_entries; j++){
+// 					cur_dir_entry = dir_block->dir_entries[j];
+// 					inum = cur_dir_entry->inum;
+// 					struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+// 					// struct inode* next_inode;
+// 					get_inode(inum, next_inode);
+// 					krec_delete(next_inode);
+// 					kfree(next_inode);
+// 				}//end
+// 			}//end
+// 		}//end outer for
+// 		kfree(cur_indirect_block);
+// 		kfree(dir_data_block);
+// 	}//end if else	
+// }//end krec_delete()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
