@@ -59,10 +59,9 @@ int test_fs_2() {
 		buf[i] = i*3;
 	}
 	// Write buf out 128 times
-#define CNT 40
+#define CNT 64
 	for (i=0; i<CNT; i++) {
 		kwrite(fd, buf, sizeof(int)*256);
-		os_printf("\n");
 	}
 	// 128K should be in the file
 	kclose(fd);
@@ -79,7 +78,7 @@ int test_fs_2() {
 				return -1;
 			}
 		}
-		os_printf("%d is valid.\n", i);
+		//os_printf("%d is valid.\n", i);
 	}
 	kclose(fd);
 
