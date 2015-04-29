@@ -418,13 +418,39 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
-int transmit_data_block_bitmap(int bit_index, int all){
+
+//transmits or receives the data block bitvector or the inode bitvecotr to and from disk
+// First parameter: t=transmit, r=receive
+// Second paramter: i=inode bitvector, d=datablock bitvector
+// index = index you would put in the bitvector
+// all = 0 for index, 1 for all of it 
+int transmit_receive_bitmap(char t_or_r, char i_or_d, int bit_index, int all){
 	int error = 0;
-	int num_blocks = ((FS->max_data_blocks)/(8 * BLOCKSIZE)) + 1; //because of integer division
+	int num_blocks;
+	int loc;
+	bit_vector * vec;
+	if (t_or_r != 't' || t_or_r != 'r' || i_or_d != 'i' || i_or_d != 'd') {
+		return -1;
+	}
+	if (i_or_d == 'i') {
+		num_blocks = ((FS->max_inodes)/(8 * BLOCKSIZE)) + 1; //because of integer division
+		vec = inode_bitmap;
+		loc = FS->inode_bitmap_loc;
+	}
+	else { // (i_or_d == 'd') 
+		num_blocks = ((FS->max_data_blocks)/(8 * BLOCKSIZE)) + 1; //because of integer division
+		vec = data_block_bitmap;
+		loc = FS->data_bitmap_loc
+	}
 	if(all){
 		int i;
 		for(i = 0; i < num_blocks; i++){
-			error = sd_transmit((void*) (data_block_bitmap + (i*BLOCKSIZE)), (FS->data_bitmap_loc + i)*BLOCKSIZE);
+			if (t_or_r == 't') {
+				error = sd_transmit((void*) (vec->vector + (i*BLOCKSIZE)), (loc + i)*BLOCKSIZE);
+			}
+			else {  //receive
+				error = sd_receive((void*) (vec->vector + (i*BLOCKSIZE)), (loc + i)*BLOCKSIZE);
+			}
 			if(error < 0){
 				os_printf("ERROR! Failed to transmit\n");
 				return error;
@@ -432,7 +458,12 @@ int transmit_data_block_bitmap(int bit_index, int all){
 		}//end for		
 	}else{
 		int block_to_change = (bit_index/8)/BLOCKSIZE;
-		error = sd_transmit((void*) (data_block_bitmap + (block_to_change*BLOCKSIZE)), (FS->data_bitmap_loc + block_to_change)*BLOCKSIZE);
+		if (t_or_r == 't') {
+			error = sd_transmit((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (loc + block_to_change)*BLOCKSIZE);
+		}
+		else { //receive
+			error = sd_receive((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (loc + block_to_change)*BLOCKSIZE);
+		}
 		if(error < 0){
 			os_printf("ERROR! Failed to transmit\n");
 			return error;
