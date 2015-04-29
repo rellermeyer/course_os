@@ -136,7 +136,14 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 //result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
 void kfind_dir(char* filepath, struct dir_helper* result);
 
-int transmit_data_block_bitmap(int bit_index, int all);
+//transmits or receives the data block bitvector or the inode bitvecotr to and from disk
+// First parameter: TRANSMIT or RECEIVE (defined)
+// Second paramter: put pointer to bitvector (example: data_block_bitmap for data, inode_bitmap for inodes)
+// Third parameter: put where that bitvecotr starts in memory (example: FS->data_bitmap_loc for data, FS->inode_bitmap_loc for inode)
+// Fourth parameter: how many there are (example: FS->max_data_blocks for data, FS->max_inodes for inodes)
+// index = index you would put in the bitvector
+// all = 0 for only one index, 1 for all the bitvector
+int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all);
 
 /* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
 	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */

@@ -5,10 +5,9 @@
 //that implements the open table for the file system
 //please use provided functinos to add/remove items 
 
-#include "../include/file.h"
-#include "../include/klibc.h"
-#include "../include/open_table.h"
-#include "../include/bitvector.h"
+#include "file.h"
+#include "klibc.h"
+#include "bitvector.h"
 
 #define SYSTEM_SIZE 512 //how many files can be open at the same time
 

@@ -6,6 +6,9 @@
 #include "mmci.h"
 #include "file.h"
 
+#define TRANSMIT 0
+#define RECEIVE 1
+
 //CONSTANTS:
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
@@ -18,7 +21,6 @@ int NUM_INODE_TABLE_BLOCKS_TO_CACHE;
 int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
 int NUM_INDIRECT_BLOCK_TABLE_BLOCKS_TO_CACHE;
 int INODES_PER_BLOCK = 1;
-int INDIRECT_BLOCK_TABLE_CACHE_SIZE;
 int DATA_BLOCK_TABLE_CACHE_SIZE;
 int NUM_DATA_BLOCK_TABLE_BLOCKS_TO_CACHE;
 
@@ -195,7 +197,8 @@ int kfs_shutdown(){
 	//TODO: write inodes pointed to by inode_table_cache back to disk to ensure it's up to date:
 
 	//TODO: write indirect_blocks pointed to by data_block_table_cache back to disk to ensure it's up to date:
-
+	transmit_receive_bitmap(TRANSMIT, inode_bitmap, FS->inode_bitmap_loc, FS->max_inodes, 0, 1); //transmit inode bitmap
+	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1); //transmit block bitmap
 
 	//free inodes stored in inode_table_cache:
 	for(i = 0; i < NUM_INODE_TABLE_BLOCKS_TO_CACHE; i++){
@@ -407,28 +410,49 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
-int transmit_data_block_bitmap(int bit_index, int all){
+
+//transmits or receives the data block bitvector or the inode bitvecotr to and from disk
+// First parameter: TRANSMIT or RECEIVE (defined)
+// Second paramter: put pointer to bitvector (example: data_block_bitmap for data, inode_bitmap for inodes)
+// Third parameter: put where that bitvecotr starts in memory (example: FS->data_bitmap_loc for data, FS->inode_bitmap_loc for inode)
+// Fourth parameter: how many there are (example: FS->max_data_blocks for data, FS->max_inodes for inodes)
+// index = index you would put in the bitvector
+// all = 0 for only one index, 1 for all the bitvector
+int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all){
 	int error = 0;
-	int num_blocks = ((FS->max_data_blocks)/(8 * BLOCKSIZE)) + 1; //because of integer division
-	if(all){
+	int num_blocks = (max/(8 * BLOCKSIZE)) + 1;
+	if (t_or_r != TRANSMIT || t_or_r != RECEIVE) {
+		return -1;
+	}
+	if(all){  //transmit or receive all the bitvector
 		int i;
 		for(i = 0; i < num_blocks; i++){
-			error = sd_transmit((void*) (data_block_bitmap + (i*BLOCKSIZE)), (FS->data_bitmap_loc + i)*BLOCKSIZE);
+			if (t_or_r == TRANSMIT) {
+				error = sd_transmit((void*) (vec->vector + (i*BLOCKSIZE)), (starting_loc + i)*BLOCKSIZE);
+			}
+			else {  //receive
+				error = sd_receive((void*) (vec->vector + (i*BLOCKSIZE)), (starting_loc + i)*BLOCKSIZE);
+			}
 			if(error < 0){
-				os_printf("ERROR! Failed to transmit\n");
+				os_printf("ERROR! Failed to transmit or receive\n");
 				return error;
-			}//end error checking
-		}//end for		
-	}else{
+			}
+		}	
+	}else{  //transmit or reveive only the block corresponding to the index
 		int block_to_change = (bit_index/8)/BLOCKSIZE;
-		error = sd_transmit((void*) (data_block_bitmap + (block_to_change*BLOCKSIZE)), (FS->data_bitmap_loc + block_to_change)*BLOCKSIZE);
+		if (t_or_r == TRANSMIT) {
+			error = sd_transmit((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (starting_loc + block_to_change)*BLOCKSIZE);
+		}
+		else { //receive
+			error = sd_receive((void*) (vec->vector + (block_to_change*BLOCKSIZE)), (starting_loc + block_to_change)*BLOCKSIZE);
+		}
 		if(error < 0){
-			os_printf("ERROR! Failed to transmit\n");
+			os_printf("ERROR! Failed to transmit or receive\n");
 			return error;
-		}//end error checking
-	}//end else
+		}
+	}
 	return error;
-}//end transmit_data_block_bitmap() helper function
+}//end transmit_receive_bitmap helper function
 
 
 /* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
@@ -482,6 +506,8 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
 		if(new_data_block_loc == -1){//disk is full
 			os_printf("ERROR! Disk full\n");
+			kfree(dir_block);
+			if (cur_indirect_block != 0x0) kfree(cur_indirect_block);
 			return -1;
 		}
 		bv_set(new_data_block_loc, data_block_bitmap);
@@ -499,7 +525,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 			new_dir_block->num_entries++;
 			cur_inode->size += sizeof(struct dir_entry);
 			sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-			transmit_data_block_bitmap(new_dir_block->block_num, 0);
+			transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 		}else{
 			//get the current indirect block and check to see if it has room to add another data block:
 			if(!flag_free_cur_indirect_block){
@@ -527,13 +553,18 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				}
 				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-				transmit_data_block_bitmap(new_dir_block->block_num, 0);
+				transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 			}else{
 				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
 						then add the new dir_entry to the new data block: */
 					int new_indirect_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
-					bv_set(new_indirect_block_loc, data_block_bitmap);
+					if (new_indirect_block_loc == -1) { //no free blocks
+						os_printf("disk space over \n");
+						kfree(dir_block);
+						if (cur_indirect_block != 0x0) kfree(cur_indirect_block);
+						return -1;
+					}
 					struct indirect_block* new_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 
 					new_indirect_block->blocks_in_file = 0;
@@ -552,10 +583,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 					}else{
 						*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
 					}
-
+					bv_set(new_indirect_block_loc, data_block_bitmap); //taken
 					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_data_block_bitmap(new_dir_block->block_num, 0);
+					transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 					kfree(new_indirect_block);
 
 				}else{
@@ -603,62 +634,9 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	}
 	int block_address = cur_indirect_block->data_blocks[indirect_block_direct_block_num];
 	block_address = (block_address + FS->start_data_blocks_loc) * BLOCKSIZE;
+	kfree(cur_indirect_block);
 	return block_address;
 }
-
-
-//end of helper functions
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-int kopen(char* filepath, char mode){
-	int fd;
-	int inum = 0;
-	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
-	kfind_dir(filepath, result);
-	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	//here we have the file we were looking for! it is cur_inode.
-	if (cur_inode->is_dir) {
-		os_printf("cannot open a directory, make the path end to a file");
-		kfree(cur_inode);
-		kfree(result->truncated_path);
-		kfree(result->last);
-		kfree(result);
-		return -1;
-	}
-
-	// TODO: Permissions need some work, because the bitvector cannot be pulled out like this. :(
-	/*bit_vector *p = cur_inode->perms;
-	switch (mode){
-		case 'r':
-			if(bv_get(0, p) == 0){
-				os_printf("File Cannot Be Read\n");
-				return -1;
-			}
-			break;
-		case 'w':
-			if(bv_get(1, p) == 0){
-				os_printf("File Cannot Be Written\n");
-				return -1;
-			}
-			break;
-		case 'a':
-			if(bv_get(1, p) == 0){
-				os_printf("File Cannot Be Appeneded To\n");
-				return -1;
-			}	
-			break;
-		default:
-			os_printf("Please specify permission as r to read, w to write and a to append\n");
-			}*/
-	fd = add_to_opentable(cur_inode, mode);
-	kfree(result->truncated_path);
-	kfree(result->last);
-	kfree(result);
-	return fd;
-}//end kopen()
-
 
 // Helper function for kread():
 int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytes_left, void* transfer_space) {
@@ -667,6 +645,9 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int file_block_num = offset / BLOCKSIZE;
 	int block_address = get_block_address(c_inode, file_block_num);
+	if (block_address == -1) {
+		return -1;
+	}
 	//os_printf("Reading from block address %d...\n", block_address);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
@@ -734,6 +715,9 @@ int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int byt
 	// Actually get the data for 1 block (the SD Driver will put it in transfer_space for us)
 	int file_block_num = offset / BLOCKSIZE;
 	int block_address = get_block_address(c_inode, file_block_num);
+	if (block_address == -1) {
+		return -1;
+	}
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
@@ -782,8 +766,82 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 	return bytes_read;
 }
 
+
+//end of helper functions
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+int kopen(char* filepath, char mode){
+	if (filepath == 0x0) {
+		os_printf("no directory specified \n");
+		return -1;
+	}
+	if (mode == 0x0) {
+		os_printf("no mode specified \n");
+		return -1;
+	}
+	int fd;
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	//here we have the file we were looking for! it is cur_inode.
+	if (cur_inode->is_dir) {
+		os_printf("cannot open a directory, make the path end to a file\n");
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
+		return -1;
+	}
+
+	// TODO: Permissions need some work, because the bitvector cannot be pulled out like this. :(
+	/*bit_vector *p = cur_inode->perms;
+	switch (mode){
+		case 'r':
+			if(bv_get(0, p) == 0){
+				os_printf("File Cannot Be Read\n");
+				return -1;
+			}
+			break;
+		case 'w':
+			if(bv_get(1, p) == 0){
+				os_printf("File Cannot Be Written\n");
+				return -1;
+			}
+			break;
+		case 'a':
+			if(bv_get(1, p) == 0){
+				os_printf("File Cannot Be Appeneded To\n");
+				return -1;
+			}	
+			break;
+		default:
+			os_printf("Please specify permission as r to read, w to write and a to append\n");
+			}*/
+	fd = add_to_opentable(cur_inode, mode);
+	kfree(result->truncated_path);
+	kfree(result->last);
+	kfree(result);
+	return fd;
+}//end kopen()
+
+
 /* read from fd, put it in buf, then return the number of bytes read in numBytes */
 int kread(int fd_int, void* buf, int num_bytes) {
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (buf == 0x0) {
+		os_printf("no buffer \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("invalid number of bytes \n");
+		return -1;
+	}
 	int bytes_read = 0;
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
 	//while retaining the original pointer to return back to the user
@@ -804,6 +862,18 @@ int kread(int fd_int, void* buf, int num_bytes) {
 
 /* write from fd, put it in buf, then return the number of bytes written in numBytes */
 int kwrite(int fd_int, void* buf, int num_bytes) {
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (buf == 0x0) {
+		os_printf("no buffer \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("invalid number of bytes \n");
+		return -1;
+	}
     struct file_descriptor* fd = get_descriptor(fd_int);
 
     if ((fd->permission != 'w' && fd->permission != 'a')){
@@ -844,7 +914,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				//Case (1): add a direct data block to cur_inode:
 				cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_data_block_loc;
 				cur_inode->direct_blocks_in_file++;
-				transmit_data_block_bitmap(new_data_block_loc, 0);
+				transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_data_block_loc, 0);
 			}else{//(cur_inode->direct_blocks_in_file >= MAX_DATABLOCKS_PER_INODE
 				//get the current indirect block and check to see if it has room to add another data block:
 				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
@@ -864,7 +934,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						}*/
 
 					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_data_block_bitmap(new_data_block_loc, 0);
+					transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_data_block_loc, 0);
 				}else{ //last indirect block full
 					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 						/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block */
@@ -894,7 +964,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						os_memcpy(new_indirect_block, buf, sizeof(struct indirect_block));
 						sd_transmit(buf, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 						kfree(buf);
-						transmit_data_block_bitmap(new_indirect_block_loc, 0);
+						transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_indirect_block_loc, 0);
 						kfree(new_indirect_block);
 
 					}else{
@@ -964,6 +1034,10 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 
 // close the file fd, return 1 if the close was successful 
 int kclose(int fd) {
+	if (fd < 0 || fd >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
 	int error;
 	if(!file_is_open(fd)) { 
 		os_printf("file not open"); return -1; 
@@ -975,25 +1049,41 @@ int kclose(int fd) {
 
 // seek within the file, return an error if you are outside the boundaries 
 int kseek(int fd_int, int num_bytes) {
-        struct file_descriptor* fd = get_descriptor(fd_int);
-        if (fd->permission != 'r' || fd->permission != 'w') {
-            os_printf("no permission \n");
-            return -1;
-        } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
-        	os_printf("Error! file offset exceeds file size \n");
-			return -1;
-        } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
-			os_printf("Error! file offset exceeds beginning of file \n");
-			return -1;
-		}//end if else  */
-	fd->offset += num_bytes;	
-	return 0;
+	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
+		os_printf("fd not valid \n");
+		return -1;
+	}
+	if (num_bytes <= 0) {
+		os_printf("num of bytes not valid \n");
+		return -1;
+	}
+    struct file_descriptor* fd = get_descriptor(fd_int);
+    if (fd->permission != 'r' || fd->permission != 'w') {
+        os_printf("no permission \n");
+        return -1;
+    } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
+    	os_printf("Error! file offset exceeds file size \n");
+		return -1;
+    } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
+		os_printf("Error! file offset exceeds beginning of file \n");
+		return -1;
+	}//end if else  */
+fd->offset += num_bytes;	
+return 0;
 } // end kseek();
 
 
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, char mode, int is_this_a_dir) {
+	if (filepath == 0x0) {
+		os_printf("filepath not valid \n");
+		return -1;	
+	}
+	if (mode == 0x0) {
+		os_printf("filepath not valid \n");
+		return -1;	
+	}
 	int fd;
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
@@ -1069,39 +1159,59 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	}
 }//end of kcreate() function
 
+//returns 1 if empty 0 if not empty
+int dir_empty(struct inode* cur_inode){
+	if((cur_inode->direct_blocks_in_file == 0) && (cur_inode->indirect_blocks_in_file ==0)){
+		return 1;
+	}
+	else {
+		os_printf("Your current directory still has files in it\n");
+		return 0;
+	}
+}
+
+
 
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath) {
+#if 0
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	if (error == -1) {
+	int error1 = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	
+	//here we have the file we were looking for! it is cur_inode.
+
+	struct inode* level_up_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* level_up_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, level_up_result);
+	int error2 = kfind_inode(level_up_result->truncated_path, inum, level_up_result->dir_levels, level_up_inode);
+
+	if (error == -1 || error2 == -1) {
 		os_printf("something wrong in kfind_inode \n");
 		kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
+		kfree(level_up_inode);
+		kfree(level_up_result->truncated_path);
+		kfree(level_up_result->last);
+		kfree(level_up_result);
 		return -1;
 	}
-	//here we have the file we were looking for! it is cur_inode.
-
-    // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // REAL DELETING HAS TO BE MADE                                                                                                                                    
-    // the inode has to be deleted from its directory.                                                                         
-    // ----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 	
-	kfree(cur_inode->data_blocks);
-	kfree(cur_inode->indirect_blocks);
-	bv_free(cur_inode->perms);
-	kfree(cur_inode);
-	kfree(result->truncated_path);
-	kfree(result->last);
-	kfree(result);
-	return 0;
-} // end kdelete();
 
+	///////////////////TODO Delete dir enteries in level up directory//////////////////
+		//WORK ON LOGIC
+	int d =	cur_inode->data_blocks[cur_inode->direct_blocks_in_file];
+	int find = start_data_blocks_loc + (cur_inode->inum); //datablock index
+	for(d=0; d<level_up_inode->direct_blocks_in_file; d++){
+		if(find==level_up_inode->direct_blocks_in_file[d]){
+		sd_receive(
+		}
+	}
+	///////////////////END Delete dir enteries in level up directory//////////////////
 
 
 /*	The logic on this should be good, but still need to...
@@ -1112,59 +1222,103 @@ int krec_delete(struct inode * cur_inode){
 	if (!cur_inode->is_dir){
 		//kdelete_single(cur_inode);
 	}
-	//recursive step
+	//we know it is a file
+	//TODO  work on recieving blocks from sd card
 	else{
+		int d; 
+		for(d=0; d<cur_inode->direct_blocks_in_file; d++){
+			int index = direct_blocks_in_file[d];
+			bv_lower(index, data_block_bitmap);
+		}
 		int i;
-		int direct_data_block_address;
-		struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(sizeof(struct dir_data_block));
-		for(i=0; i< cur_inode->direct_blocks_in_file; i++){
-			direct_data_block_address = (cur_inode->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
-			sd_receive(dir_block, direct_data_block_address);
-			int j;
-			int inum;
-			struct dir_entry cur_dir_entry;
-			for(j = 0; j < dir_block->num_entries; j++){
-				cur_dir_entry = dir_block->dir_entries[j];
-				inum = cur_dir_entry.inum;
-				struct inode* next_inode = (struct inode*) kmalloc(sizeof(struct inode));
-				// struct inode* next_inode;
-				get_inode(inum, next_inode);
-				krec_delete(next_inode);
-				kfree(next_inode);
-			}//end
-		}//end for
-		int k;
-		int indirect_data_block_address;
-		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
-		for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
-			indirect_data_block_address = (cur_inode->indirect_blocks[k]+FS->start_data_blocks_loc) * BLOCKSIZE;
-			sd_receive(cur_indirect_block, indirect_data_block_address);
-			for(i=0; i < cur_indirect_block->blocks_in_file; i++){
-				direct_data_block_address = (cur_indirect_block->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
-				sd_receive(dir_block, direct_data_block_address);
-				int j;
-				int inum;
-				struct dir_entry cur_dir_entry;
-				for(j = 0; j < dir_block->num_entries; j++){
-					cur_dir_entry = dir_block->dir_entries[j];
-					inum = cur_dir_entry.inum;
-					struct inode* next_inode = (struct inode*) kmalloc(sizeof(struct inode));
-					// struct inode* next_inode;
-					get_inode(inum, next_inode);
-					krec_delete(next_inode);
-					kfree(next_inode);
-				}//end
-			}//end
-		}//end outer for
-		kfree(cur_indirect_block);
-		//kfree(dir_data_block);
-	}//end if else	
-}//end krec_delete()
+		for(i=0; i<cur_inode->indirect_blocks_in_file; i++){
+			int z;
+			struct indirect_block one_block = cur_inode->indirect_blocks[i];
+			for(z=0; z<one_block.blocks_in_file; z++){
+				int index = one_block.data_blocks[z];
+				bv_lower(index, data_block_bitmap);
+			}
+			bv_lower(one_block.block_num, data_block_bitmap);
+		}
+		bv_lower(cur_inode->inum, inode_bitmap);
+	}
+	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
+
+	//////////////////END Delete references to file/folder direct/inder blocks//////////////////
 
 
+	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
+	//Then possibly move the last dir entry in place of text.txt entry
+	//can only delete directory if directory is empty
+
+	kfree(cur_inode->data_blocks);
+	kfree(cur_inode->indirect_blocks);
+	bv_free(cur_inode->perms);
+	kfree(cur_inode);
+	kfree(result->truncated_path);
+	kfree(result->last);
+	kfree(result);
+#endif
+	return 0;
+} // end kdelete();
 
 
-
+// /*	The logic on this should be good, but still need to...
+// 	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
+// 	should we limit the depth of filepaths to avoid this??? */
+// int krec_delete(struct inode * cur_inode){
+// 	//base case
+// 	if (!cur_inode->is_dir){
+// 		kdelte_single(cur_inode);
+// 	}
+// 	//recursive step
+// 	else{
+// 		int i;
+// 		int direct_data_block_address;
+// 		struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(sizeof(struct dir_data_block));
+// 		for(i=0; i< cur_inode->direct_blocks_in_file; i++){
+// 			direct_data_block_address = (cur_inode->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 			sd_receive(dir_block, direct_data_block_address);
+// 			int j;
+// 			int inum;
+// 			struct dir_entry cur_dir_entry;
+// 			for(j = 0; j < dir_block->num_entries; j++){
+// 				cur_dir_entry = dir_block->dir_entries[j];
+// 				inum = cur_dir_entry->inum;
+// 				struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+// 				// struct inode* next_inode;
+// 				get_inode(inum, next_inode);
+// 				krec_delete(next_inode);
+// 				kfree(next_inode);
+// 			}//end
+// 		}//end for
+// 		int k;
+// 		int indirect_data_block_address;
+// 		struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
+// 		for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
+// 			indirect_data_block_address = (cur_inode->indirect_blocks[k]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 			sd_receive(indirect_block, indirect_data_block_address);
+// 			for(i=0; i < cur_indirect_block->blocks_in_file; i++){
+// 				direct_data_block_address = (cur_indirect_block->data_blocks[i]+FS->start_data_blocks_loc) * BLOCKSIZE;
+// 				sd_receive(dir_block, direct_data_block_address);
+// 				int j;
+// 				int inum;
+// 				struct dir_entry cur_dir_entry;
+// 				for(j = 0; j < dir_block->num_entries; j++){
+// 					cur_dir_entry = dir_block->dir_entries[j];
+// 					inum = cur_dir_entry->inum;
+// 					struct inode* next_inode = (struct inode*) kmalloc(sizeof(inode));
+// 					// struct inode* next_inode;
+// 					get_inode(inum, next_inode);
+// 					krec_delete(next_inode);
+// 					kfree(next_inode);
+// 				}//end
+// 			}//end
+// 		}//end outer for
+// 		kfree(cur_indirect_block);
+// 		kfree(dir_data_block);
+// 	}//end if else	
+// }//end krec_delete()
 
 
 //copies contents of file
@@ -1211,26 +1365,22 @@ int kcopy(char* source, char* dest, char mode) {
 		kfree(source_dir_helper);
 		return -1;
 	}
-	/* commenting line 925 but will be needed, just want to compile rn */
-	//struct inode *dest_inode = dest_fd_struct->linked_file;
+	
+	struct inode *dest_inode = dest_fd_struct->linked_file;
 	//at this point dest_inode is the inode of the created destination
-
-	//4. copy contents from source_inode to dest_inode (all contents)
-	//-------------------------------------------------------------------------------------------------------------------------------------------------------
-	// NEED HELPER FUNCTIONS (THAT WILL BE USED ALSO IN READ AND WRITE) THAT READ/WRITE ME STUFF FROM A GIVEN INODE
-	// so the whole copying can actually happen!
-	//-------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	
 	void *buffer = (void*) kmalloc(source_inode->size);
-	read_inode(source_inode, 0, buffer, source_inode->size);
-	kwrite(dest_fd, buffer, source_inode->size);
+	error = read_inode(source_inode, 0, buffer, source_inode->size);
+	if (!error) {
+		error = kwrite(dest_fd, buffer, source_inode->size);
+	}
 
 	kfree(buffer);
 	kfree(source_inode);
 	kfree(source_dir_helper->truncated_path);
 	kfree(source_dir_helper->last);
 	kfree(source_dir_helper);
-	return -1;
+	return error;
 }
 
 
