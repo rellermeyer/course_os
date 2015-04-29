@@ -1161,8 +1161,14 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 
 //returns 1 if empty 0 if not empty
 int dir_empty(struct inode* cur_inode){
-	if((cur_inode->direct_blocks_in_file == 0) && (cur_inode->indirect_blocks_in_file ==0)){
-		return 1;
+	if((cur_inode->direct_blocks_in_file == 0) && (cur_inode->indirect_blocks_in_file == 0)){
+        if(cur_inode->size == 0){
+            return 1;
+        } else {
+            /* TODO: Remove after debugging */
+            os_printf("LOGIC ERROR: File size does not sync with file properties");
+            return -1;
+        }
 	}
 	else {
 		os_printf("Your current directory still has files in it\n");
@@ -1170,17 +1176,68 @@ int dir_empty(struct inode* cur_inode){
 	}
 }
 
-
+int kdelete_single(struct inode * cur_inode, int write_to_disk){
+    
+    if (!cur_inode->is_dir){
+        
+        if(dir_empty(cur_inode)) {
+           
+            bv_lower(cur_inode->inum, inode_bitmap);
+            return 1;
+        }
+        else {
+            
+            return 0;
+        }
+    }
+    //we know it is a file
+    else{
+        
+        int d;
+        for(d=0; d<cur_inode->direct_blocks_in_file; d++){
+            
+            int index = cur_inode->data_blocks[d];
+            bv_lower(index, data_block_bitmap);
+        }
+        
+        struct indirect_block* cur_inder_block = (struct indirect_block*)kmalloc(sizeof(struct indirect_block));
+        int i;
+        
+        for(i=0; i<cur_inode->indirect_blocks_in_file; i++){
+            
+            int z;
+            int indy_index_add = (cur_inode->indirect_blocks[i] + FS->start_data_blocks_loc) * BLOCKSIZE;
+            sd_recieve((void*)cur_inder_block, indy_index_add);
+            
+            for(z=0; z<cur_inder_block->blocks_in_file; z++){
+                
+                int index = cur_inder_block->data_blocks[z];
+                bv_lower(index, data_block_bitmap);
+            }
+            
+            bv_lower(cur_inder_block->block_num, data_block_bitmap);
+        }
+        
+        kfree(cur_inder_block);
+        bv_lower(cur_inode->inum, inode_bitmap);
+    }
+    
+    if(write_to_disk) {
+        
+        transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
+    }
+    
+    return 1;
+} // end kdelete_single();
 
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath) {
-#if 0
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
 	int error1 = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	
+	/* TODO: Need to check that the file is closed here */
 	//here we have the file we were looking for! it is cur_inode.
 
 	struct inode* level_up_inode = (struct inode*) kmalloc(sizeof(struct inode));
@@ -1190,7 +1247,12 @@ int kdelete(char* filepath) {
 
 	if (error == -1 || error2 == -1) {
 		os_printf("something wrong in kfind_inode \n");
-		kfree(cur_inode);
+		kfree(cur_inode->data_blocks);
+        kfree(cur_inode->indirect_blocks);
+        bv_free(cur_inode->perms);
+        kfree(cur_inode);
+        
+        kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
@@ -1200,68 +1262,16 @@ int kdelete(char* filepath) {
 		kfree(level_up_result);
 		return -1;
 	}
-	
-
-	///////////////////TODO Delete dir enteries in level up directory//////////////////
-		//WORK ON LOGIC
-	int d =	cur_inode->data_blocks[cur_inode->direct_blocks_in_file];
-	int find = start_data_blocks_loc + (cur_inode->inum); //datablock index
-	for(d=0; d<level_up_inode->direct_blocks_in_file; d++){
-		if(find==level_up_inode->direct_blocks_in_file[d]){
-		sd_receive(
-		}
-	}
-	///////////////////END Delete dir enteries in level up directory//////////////////
-
-
-/*	The logic on this should be good, but still need to...
-	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
-	should we limit the depth of filepaths to avoid this??? */
-int krec_delete(struct inode * cur_inode){
-	//base case
-	if (!cur_inode->is_dir){
-		//kdelete_single(cur_inode);
-	}
-	//we know it is a file
-	//TODO  work on recieving blocks from sd card
-	else{
-		int d; 
-		for(d=0; d<cur_inode->direct_blocks_in_file; d++){
-			int index = direct_blocks_in_file[d];
-			bv_lower(index, data_block_bitmap);
-		}
-		int i;
-		for(i=0; i<cur_inode->indirect_blocks_in_file; i++){
-			int z;
-			struct indirect_block one_block = cur_inode->indirect_blocks[i];
-			for(z=0; z<one_block.blocks_in_file; z++){
-				int index = one_block.data_blocks[z];
-				bv_lower(index, data_block_bitmap);
-			}
-			bv_lower(one_block.block_num, data_block_bitmap);
-		}
-		bv_lower(cur_inode->inum, inode_bitmap);
-	}
-	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
-
-	//////////////////END Delete references to file/folder direct/inder blocks//////////////////
-
-
-	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
-	//Then possibly move the last dir entry in place of text.txt entry
-	//can only delete directory if directory is empty
-
-	kfree(cur_inode->data_blocks);
-	kfree(cur_inode->indirect_blocks);
-	bv_free(cur_inode->perms);
-	kfree(cur_inode);
-	kfree(result->truncated_path);
-	kfree(result->last);
-	kfree(result);
-#endif
-	return 0;
-} // end kdelete();
-
+    
+    
+    
+    
+    kfree(result->truncated_path);
+    kfree(result->last);
+    kfree(result);
+    
+    
+} // end kdelete()
 
 // /*	The logic on this should be good, but still need to...
 // 	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
@@ -1269,7 +1279,7 @@ int krec_delete(struct inode * cur_inode){
 // int krec_delete(struct inode * cur_inode){
 // 	//base case
 // 	if (!cur_inode->is_dir){
-// 		kdelte_single(cur_inode);
+// 		kdelete_single(cur_inode);
 // 	}
 // 	//recursive step
 // 	else{
