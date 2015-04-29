@@ -4,6 +4,8 @@
 #include "vm.h"
 #include "memory.h"
 #include "klibc.h"
+#include <stdint.h>
+#include "swap_pqueue.h"
 
 /* Function: swap_framework
  * Purpose: To present an API for swapping pages to various swap spaces
@@ -19,15 +21,15 @@
  */
 
 #define SWAP_SPACES (1<<8)
-#define PAGE_ENTRIES (1<<12) // Assuming 4kB Pages right now
+#define PAGE_ENTRIES (11<<12) // Assuming 4kB Pages right now
 #define PAGE_SIZE (1<<12) // May carry an if statement later...
 
 struct swap_space_list {
 	struct swap_space_list *next;
-	struct swap_entry *head;
+	struct swap_entry *e_head;
 	uint8_t lower_bits; //swap space ID [8-bits]
 	uint16_t flags; //SWP_USED (1000 or 1), SWP_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-	uint8_t priority; //lower is better 
+	uint8_t priority; //lower is better
 }; // Total: 12 bytes
 
 struct swap_entry {
@@ -38,8 +40,7 @@ struct swap_entry {
 	void *data;
 }; // Total: 15 bytes 
 
-
-static struct swap_space_list *head;
+struct swap_space_list *head;
 static os_size_t memory_count;
 
 
