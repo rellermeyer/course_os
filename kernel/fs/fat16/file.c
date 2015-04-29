@@ -1235,20 +1235,28 @@ int kdelete(char* filepath) {
 		kfree(level_up_result);
 		return -1;
 	}
+	
+
+	///////////////////TODO Delete dir enteries in level up directory//////////////////
 		//WORK ON LOGIC
 		int d;
-		int find = (cur_inode->inum)+start_data_blocks_loc; //
+		cur_inode->data_blocks[(cur_inode->direct_blocks_in_file]
+		int find = start_data_blocks_loc + (cur_inode->inum); //datablock index
 	for(d=0; d<level_up_inode->direct_blocks_in_file; d++){
 		if(find==level_up_inode->direct_blocks_in_file[d]){
 		sd_receive(
 		}
 	}
-//Make sure folder is empty
+	///////////////////END Delete dir enteries in level up directory//////////////////
+
+
+	///////////////////Delete references to file/folder direct/inder blocks//////////////////
+	//Make sure folder is empty
 	if(cur_inode->is_dir){
 		if(dir_empty(cur_inode){
+			transmit_receive_bitmap('r', 'd', 0, 1);
 			//TODO create a recieve data block bm recieve
 			bv_lower(cur_inode->inum, inode_bitmap);
-			
 			
 		}
 	}
@@ -1272,8 +1280,14 @@ int kdelete(char* filepath) {
 		}
 		bv_lower(cur_inode->inum, inode_bitmap);
 	}
-	transmit_receive_bitmap('t', 'd', 0, 1);
+	transmit_receive_bitmap('t', 'd', 0, 1); // done with bitmap, so transmit to card
 	//find 
+
+	//////////////////END Delete references to file/folder direct/inder blocks//////////////////
+
+
+
+
 
 	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
 	//Then possibly move the last dir entry in place of text.txt entry
