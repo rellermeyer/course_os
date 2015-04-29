@@ -1230,21 +1230,44 @@ int kdelete_single(struct inode * cur_inode, int write_to_disk){
     return 1;
 } // end kdelete_single();
 
+/* deletes a single dir_entry */
+int kremove_dir_entry (struct inode* dir_inode, int tgt_inum) {
+    
+    
+}
+
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath) {
-	int inum = 0;
+	
+    int inum = 0;
+    
+    /* spaceholder for lowest inode */
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
-	kfind_dir(filepath, result);
+	
+    /* spaceholder for helper struct */
+    struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	
+    /* find the helper struct */
+    kfind_dir(filepath, result);
+    
+    /* find the lowest inode */
 	int error1 = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	/* TODO: Need to check that the file is closed here */
-	//here we have the file we were looking for! it is cur_inode.
+	
+    /* TODO: Need to check that the file is closed here */
 
+    /* spaceholder for the levelup inode */
 	struct inode* level_up_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	struct dir_helper* level_up_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
-	kfind_dir(filepath, level_up_result);
-	int error2 = kfind_inode(level_up_result->truncated_path, inum, level_up_result->dir_levels, level_up_inode);
+    
+    /* find the levelup inode */
+	int error2 = kfind_inode(filepath, inum, result->dir_levels, level_up_inode);
 
+    /* call delete single, deletes the lowest level (ie target) file and
+        updates all bitmaps, but DOES NOT the dir_entry in levelup dir */
+    kdelete_single(cur_inode, 1);
+    
+    /* delete dir_entry in levelup dir) */
+    kremove_dir_entry(level_up_inode, cur_inode->inum);
+    
 	if (error == -1 || error2 == -1) {
 		os_printf("something wrong in kfind_inode \n");
 		kfree(cur_inode->data_blocks);
@@ -1252,7 +1275,6 @@ int kdelete(char* filepath) {
         bv_free(cur_inode->perms);
         kfree(cur_inode);
         
-        kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);

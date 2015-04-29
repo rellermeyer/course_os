@@ -89,19 +89,6 @@ struct dir_helper //used by helper functions in file.c
 	char* last;
 };
 
-/* 
-struct directory
-{
-	struct inode inode;
-}; 
-*/
-
-// struct file
-// {
-// 	struct inode* inode;
-// 	// what to put here to avoid level of indirection?
-// };
-
 int kopen(char* filepath, char mode); //opens the file of filepath with permissions mode
 int kread(int fd, void* buf, int numBytes); //reads the open file corresponding to fd
 int kwrite(int fd, void* buf, int num_bytes); //writes the open file corresponding to fd
