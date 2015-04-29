@@ -303,7 +303,7 @@ uint32_t execute_process(pcb* pcb_p) {
 
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
 	vm_enable_vas(pcb_p->stored_vas);
-
+	os_printf("Should be VAS: %x\n",vm_get_current_vas());
 
 	//4-13-15: Store current program counter to new PCB's return register,
 	//         then call load_process_state to switch to new process
@@ -355,8 +355,7 @@ uint32_t sample_func(uint32_t x) {
 
 void setup_process_vas(pcb* pcb_p){
 init_proc_stack(pcb_p);
-//init_proc_heap(pcb_p);
-
+init_proc_heap(pcb_p);
 }
 
 //Initial page allocation for process stack in VAS
@@ -390,19 +389,19 @@ void init_proc_stack(pcb * pcb_p)
 }
 
 void init_proc_heap(pcb* pcb_p){
-
-	int retval = 0;
 	//Initial page allocation for a process heap in VAS
-	
 	print_process_state(pcb_p->PID);
-	retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
+	os_printf("PCB Vas: %x\n",pcb_p->stored_vas);
+	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
+	os_printf("This Vas: %x\n",vm_get_current_vas());
     if (retval) {
         os_printf("vm_allocate_page error code: %d\n", retval);
     }
     else{
     	os_printf("A page have been allocated for process heap at vptr: 0x%x\n",(void*) HEAP_BASE);
+
     }
-    os_printf("PID: %d\n",pcb_p->PID);
-    assert(0 ==1 && "FUCK");
+    os_printf("PID---->: %d\n",pcb_p->PID);
+    //assert(0 ==1 && "FUCK");
     print_process_state(pcb_p->PID);
 }
