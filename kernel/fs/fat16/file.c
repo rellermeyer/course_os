@@ -539,7 +539,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 			new_dir_block->num_entries++;
 			cur_inode->size += sizeof(struct dir_entry);
 			sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-			transmit_data_block_bitmap(new_dir_block->block_num, 0);
+			transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
 		}else{
 			//get the current indirect block and check to see if it has room to add another data block:
 			if(!flag_free_cur_indirect_block){
@@ -567,7 +567,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				}
 				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-				transmit_data_block_bitmap(new_dir_block->block_num, 0);
+				transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
 			}else{
 				if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
@@ -594,7 +594,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 					sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 					sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_data_block_bitmap(new_dir_block->block_num, 0);
+					transmit_receive_bitmap('t', 'd', new_dir_block->block_num, 0);
 					kfree(new_indirect_block);
 
 				}else{
@@ -924,7 +924,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				}
 				block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 				bv_set(new_data_block_loc, data_block_bitmap);
-				transmit_data_block_bitmap(new_data_block_loc, 0);
+				transmit_receive_bitmap('t', 'd', new_data_block_loc, 0);
 			}else{//(cur_inode->direct_blocks_in_file >= MAX_DATABLOCKS_PER_INODE
 				//get the current indirect block and check to see if it has room to add another data block:
 				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
@@ -952,7 +952,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 					block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 					bv_set(new_data_block_loc, data_block_bitmap);
 					sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-					transmit_data_block_bitmap(new_data_block_loc, 0);
+					transmit_receive_bitmap('t', 'd', new_data_block_loc, 0);
 				}else{ //last indirect block full
 					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 						/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block */
@@ -985,7 +985,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 						bv_set(new_data_block_loc, data_block_bitmap);
 						sd_transmit((void*) new_indirect_block, (new_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
-						transmit_data_block_bitmap(new_indirect_block_loc, 0);
+						transmit_receive_bitmap('t', 'd', new_indirect_block_loc, 0);
 						kfree(new_indirect_block);
 
 					}else{
@@ -1260,7 +1260,7 @@ int kdelete(char* filepath) {
 		}
 		bv_lower(cur_inode->inum, inode_bitmap);
 	}
-	transmit_data_block_bitmap(0, 1); 
+	transmit_receive_bitmap('t', 'd', 0, 1);
 	//find 
 
 	//(ex: /foo/cat/text.txt) Got rid of text.txt ... need to remove dir entery of cat. 
