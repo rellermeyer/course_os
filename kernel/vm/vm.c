@@ -25,6 +25,8 @@ static const int perm_mapping[16] = {
 	-1, // 1111 ???
 };
 
+
+
 static struct vas *vm_current_vas = (struct vas*)V_L1PTBASE;
 
 struct vm_free_list {
@@ -205,14 +207,24 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	}
 
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(cur_entry));
+	//TODO: FIX?
 	int l2_idx = ((unsigned int)vptr&0x000FF000)>>12;
 	if (l2_pagetable[l2_idx]) {
+		//TODO: this is where the error is being thrown
 		return VM_ERR_MAPPED;
 	}
 
 	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
+	// TODO: replace lvl2_permission with just permission?
+	//Temporary value, need to put in method header or replace:
+	int lvl2_perm = perm_mapping[perm];
+	int apx_bit = lvl2_perm & 4;
+	int ap_bits = lvl2_perm & 3;
+	//TODO: Lane please make sure correct!
+	//TODO: add l2_pagetable to vas?
+	l2_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4);
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
 	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
