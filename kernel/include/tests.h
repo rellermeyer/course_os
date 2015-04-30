@@ -11,6 +11,7 @@ typedef struct Test {
 
 // Run_tests takes an array of tests which it runs and prints the results.
 void run_tests(Test *test_group[], int num_tests);
+void run_fs_tests();
 
 int test1();
 int test2();
