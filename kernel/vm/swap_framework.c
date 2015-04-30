@@ -6,14 +6,14 @@
 
 void swap_init(){
 	// initialize the first swap space head
-	head = (struct swap_space_list*) kmalloc(sizeof(struct swap_space_list));
+	head = (struct swap_space*) kmalloc(sizeof(struct swap_space));
 	head->next = 0;
-	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
+  	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
 	// initialize & allocate swap entry space for swapper
-	head->head = (struct swap_entry*) kmalloc_aligned(entry_size * PAGE_ENTRIES, entry_size);
 	head->lower_bits = 0;
 	head->flags = 2;
-	head->priority = 0;	
+        head->priority = 0;
+	
 }
 
 
@@ -34,7 +34,12 @@ os_size_t sum_stored()
 int vm_swap_page(void *page, uint32_t *ID);
 
 int vm_register_swap_space(int (*store_page)(void *page, uint32_t *ID), int (*retrieve_page)
-		(void *page, uint32_t *ID), int priority);
+			   (void *page, uint32_t *ID), int priority){
+        uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
+       	head->head = (struct swap_entry*) kmalloc_aligned(entry_size * PAGE_ENTRIES, entry_size);
+	if (pqueue 
+	
+}       
 
 int vm_deregister_swap_space(int (*store_page)(void *page, uint32_t *ID), int (*retrieve_page)
 		(void *page, uint32_t *ID), int priority);
