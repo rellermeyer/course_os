@@ -6,6 +6,7 @@
  */
 
 #include "../include/array_list.h"
+#include "../include/klibc.h"
 
 arrl_handle* arrl_create() {
     return arrl_create_fixed(DEFAULT_BUCKET_SIZE);
@@ -168,7 +169,7 @@ uint32_t arrl_count(arrl_handle* arrl) {
 }
 
 uint32_t __find_next(arrl_handle* arrl, uint32_t start, void* elem) {
- //   uint32_t list_index;
+    uint32_t list_index;
     uint32_t list_size;
     uint32_t bucket_size;
 

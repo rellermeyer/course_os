@@ -7,15 +7,15 @@
 
 
 
-#include "priority_queue.h"
-#include "array_list.h"
-
 #ifndef KERNEL_INCLUDE_SCHEDULER_H_
 #define KERNEL_INCLUDE_SCHEDULER_H_
 
 #include "process.h"
 #include "klibc.h"
 #include "kthreads.h"
+#include "priority_queue.h"
+#include "array_list.h"
+#include "linked_list.h"
 
 typedef void (*sched_msg_callback_handler)(uint32_t src_pid, uint32_t event, char * data, int chunk_length, int remain_length);
 
