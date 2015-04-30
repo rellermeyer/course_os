@@ -33,7 +33,6 @@ pcb* process_create(uint32_t* file_p) {
 		//pass pcb to loader
 		//will return -1 if not an ELF file or other error
 		pcb_pointer->stored_vas = vm_new_vas();
-
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
 		if(!success) {
@@ -50,10 +49,10 @@ pcb* process_create(uint32_t* file_p) {
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
 		pcb_pointer->R15=success->e_entry;
+
 		//pcb_pointer->function = success->e_entry;
 		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
-		//assert(1==3)
-
+		pcb_pointer->current_state = PROCESS_NEW;
 
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
@@ -141,12 +140,12 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r9, %0"::"r"(pcb_p->R9):);
 	asm("MOV r10, %0"::"r"(pcb_p->R10):);
 	//asm("MOV r11, %0"::"r"(11):);
-	//assert(1==11);
 	asm("MOV r12, %0"::"r"(pcb_p->R12):);
 
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
-
+	
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
+//assert(1==11);
 
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
@@ -304,7 +303,7 @@ uint32_t execute_process(pcb* pcb_p) {
 
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
 	vm_enable_vas(pcb_p->stored_vas);
-
+	os_printf("Should be VAS: %x\n",vm_get_current_vas());
 
 	//4-13-15: Store current program counter to new PCB's return register,
 	//         then call load_process_state to switch to new process
@@ -318,27 +317,16 @@ uint32_t execute_process(pcb* pcb_p) {
 	
 
 	// Let's get a simple argc/argv layout going at 0x9f000000
-
-	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)STACK_BASE, VM_PERM_USER_RW);
-	os_printf("%d\n", retval);
-
 	// Stick the program name at stack_base
+	//assert(1==2);
+	
+	vm_enable_vas(pcb_p->stored_vas);
 
-	// Stick a NULL at STACK_TOP-sizeof(int*)
-	uint32_t *stack_top = (uint32_t*)STACK_TOP;
-	stack_top[-1] = 0;
-	stack_top[-2] = 0;
-	stack_top[-3] = 0;
-	stack_top[-4] = 0;
-	stack_top[-5] = STACK_BASE;
-	stack_top[-6] = 1;
-	os_strcpy(STACK_BASE, "name");
-	// We need to set sp (r13) to stack_top - 12
-	pcb_p->R13 = STACK_TOP - 4*6;
 	print_process_state(pcb_p->PID);
-	load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
+	load_process_state(pcb_p->PID);
+	
 
 	//Run main function (TODO: How do we run main functions that have input parameters?)
 	//pcb_p->function();
@@ -366,35 +354,92 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
-void setup_process_vas(uint32_t PID, uint32_t proc_size, uint32_t* entry_addr, uint32_t* block_addr){
-	/*
-	pcb* p = get_PCB(PID);
 
-	os_printf("setting up process vas at %x\n", p->process_l1pt);
-
-	os_memcpy(first_level_pt, p->process_l1pt, 16*1024);
-
-	uint32_t entry_section = (uint32_t)entry_addr>>20;
-	uint32_t entry_page = (uint32_t)entry_addr>>12;
-	uint32_t num_proc_pages = proc_size>>12;
-	if(proc_size%4096 > 0)
-		num_proc_pages++;
-
-	uint32_t target_addr = (uint32_t)block_addr;
-
-	//aborts if I try to allocate l2pt in here
-	//allocating in process_create for brute force testing
-	int i;
-	for(i = 0; i < 256; i++){
-		if(i>=entry_page && i<= entry_page+num_proc_pages){
-			p->l2pt[i] = target_addr | 0x0010 | 2;
-			target_addr += 4096;
+void setup_process_vas(pcb* pcb_p){
+	
+	//		assert(1==15);
+	for(int i = 0; i < 20; i++){
+		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
+		int x = vm_allocate_page(pcb_p->stored_vas, (void*)v, VM_PERM_USER_RW );		
+		vm_map_shared_memory(KERNEL_VAS, (void*)v, pcb_p->stored_vas, (void*)v, VM_PERM_USER_RW);
+				
 		}
+
+	int *copyIn = pcb_p->start;
+	int counter = 0;
+	uint32_t * v = pcb_p->start;
+	//*v = *copyIn;
+	while(counter < pcb_p->len){
+		*v = *copyIn;
+		copyIn+=1;
+		v+=1;
+		counter +=4;
 	}
 
-	p->process_l1pt[entry_section] = (uint32_t)p->l2pt | 1;
-	*/
+	for(int i = 0; i < 20; i++){
+		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
+		vm_free_mapping(KERNEL_VAS, (void*)v);
+			
+	}
+
+
 }
 
+//Initial page allocation for process stack in VAS
+//Allows for a variety of stack limits
+void init_proc_stack(pcb * pcb_p)
+{
+	int retval = 0;
+	for (int i = 0; i < (STACK_SIZE/BLOCK_SIZE); i ++)
+	{
+		retval = vm_allocate_page(pcb_p->stored_vas, (void*)(STACK_BASE+ (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+		if(retval){
+			os_printf("vm_allocate_page error code: %d\n", retval);
+			break;
+		}
+		else{
+		os_printf("A page have been allocated for process stack at vptr: 0x%x\n",(STACK_BASE+ (i * BLOCK_SIZE)));
+		}
+		vm_map_shared_memory(KERNEL_VAS, (void*)(STACK_BASE+(i * BLOCK_SIZE)), pcb_p->stored_vas, (void*)(STACK_BASE+(i * BLOCK_SIZE)), VM_PERM_USER_RW);
 
+	}
 
+	// Stick a NULL at STACK_TOP-sizeof(int*)
+	uint32_t *stack_top = (uint32_t*)STACK_TOP;
+	stack_top[-1] = 0;
+	stack_top[-2] = 0;
+	stack_top[-3] = 0;
+	stack_top[-4] = 0;
+	stack_top[-5] = STACK_BASE;
+	stack_top[-6] = 1;		
+	
+	os_strcpy(STACK_BASE, pcb_p->name);
+
+	// We need to set sp (r13) to stack_top - 12
+	pcb_p->R13 = STACK_TOP - 4*6;	
+	print_process_state(pcb_p->PID);
+
+	for (int i = 0; i < (STACK_SIZE/BLOCK_SIZE); i ++)
+	{
+		vm_free_mapping(KERNEL_VAS, (void*)(STACK_BASE+(i * BLOCK_SIZE)));
+
+	}
+}
+
+void init_proc_heap(pcb* pcb_p){
+	//Initial page allocation for a process heap in VAS
+	print_process_state(pcb_p->PID);
+	os_printf("PCB Vas: %x\n",pcb_p->stored_vas);
+	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
+	os_printf("This Vas: %x\n",vm_get_current_vas());
+    if (retval) {
+        os_printf("vm_allocate_page error code: %d\n", retval);
+    }
+    else{
+    	os_printf("A page have been allocated for process heap at vptr: 0x%x\n",(void*) HEAP_BASE);
+
+    }
+    os_printf("PID---->: %d\n",pcb_p->PID);
+    //assert(0 ==1 && "FUCK");
+    print_process_state(pcb_p->PID);
+}

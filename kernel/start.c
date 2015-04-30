@@ -107,13 +107,13 @@ void start2(uint32_t *p_bootargs)
 	int retval;
 	kfs_init(0,0,0);
 
-	run_fs_tests();
+	//run_fs_tests();
 
-	int fd = kopen("/hello", 'r');
-	os_printf("fd: %d\n", fd);
-	kclose(fd);
+	// int fd = kopen("/hello", 'r');
+	// os_printf("fd: %d\n", fd);
+	// kclose(fd);
 
-	while(1);
+	//while(1);
 
 	//asm volatile("swi 1");
 
