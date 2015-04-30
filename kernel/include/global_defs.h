@@ -16,10 +16,10 @@ typedef uint32_t size_t;
 
 #define NBBY 8
 
-#define STATUS_OK 1
-#define STATUS_FAIL 0
+#define STATUS_OK 0
+#define STATUS_FAIL -1
 
-#define TEST_FAIL   0
-#define TEST_OK     1
+#define TEST_OK     0
+#define TEST_FAIL   -1
 
 #endif //defined _GLOBAL_DEFS_H_

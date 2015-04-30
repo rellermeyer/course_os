@@ -86,7 +86,7 @@ alloc_handle * mem_get_allocator(){
     return allocator;
 }
 
-uint32_t mem_check(){
+int mem_check(){
     return alloc_check(allocator);
 }
 

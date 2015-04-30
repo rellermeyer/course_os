@@ -17,7 +17,7 @@ uint32_t gen_rand(uint64_t *state, int nbits) {
 
 //Tests the create function
 int test_mem_alloc_1() {
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Inconsistent memory to begin with...\n");
         return TEST_FAIL;
     }
@@ -29,7 +29,7 @@ int test_mem_alloc_1() {
 
     DEBUG("%s\n", p);
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("allocate(15) failed.\n\n");
         return TEST_FAIL;
     }
@@ -58,7 +58,7 @@ int test_mem_alloc_1() {
         return TEST_FAIL;
     }
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Memory is inconsistent :-(\n");
         return TEST_FAIL;
     }
@@ -72,7 +72,7 @@ int test_mem_alloc_1() {
 
     kfree(p);
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Memory is inconsistent :-(\n");
 	return TEST_FAIL;
     }
