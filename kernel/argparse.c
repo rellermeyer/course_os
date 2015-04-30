@@ -66,7 +66,11 @@ static void argparse_parse(char *cmdline)
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
-			process_create((uint32_t*) start);
+			pcb *test= process_create((uint32_t*) start);
+
+	
+
+			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
