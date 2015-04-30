@@ -75,49 +75,19 @@ static void argparse_parse(char *cmdline)
 			 
 
 			pcb *test= process_create((uint32_t*) start);
+			test->len = len;
 			start += PROC_LOCATION;
-			//start = round_up(start);
-			//os_printf("%X HIYA \n", start);
-			//assert(1==15);
-
-			for(int i = 0; i < 20; i++){
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				int x = vm_allocate_page(test->stored_vas, (void*)v, VM_PERM_USER_RW );		
-				vm_map_shared_memory(KERNEL_VAS, (void*)v, test->stored_vas, (void*)v, VM_PERM_USER_RW);
-				
-
-
-			
-			}
-
-			int *copyIn = start-PROC_LOCATION;
-			int counter = 0;
-			uint32_t * v = start;
-			//*v = *copyIn;
-			while(counter < len){
-				*v = *copyIn;
-				copyIn+=1;
-				v+=1;
-				counter +=4;
-			}
-
-
-			for(int i = 0; i < 20; i++){
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				vm_free_mapping(KERNEL_VAS, (void*)v);
-			
-			}
-
+			test->start = start;
 			test->name = name;
-
-
+			setup_process_vas(test);
+			init_proc_stack(test);
+			init_proc_heap(test);
 			//assert(1==15);		
 			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
 			os_printf("RUNNING TESTS\n");
-
 			os_printf("Running tests...\n");
 			Test *tests[2];
 			tests[0] = create_test("This passes", &test1);

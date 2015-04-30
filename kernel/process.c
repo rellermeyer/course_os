@@ -51,8 +51,7 @@ pcb* process_create(uint32_t* file_p) {
 		pcb_pointer->R15=success->e_entry;
 		//pcb_pointer->function = success->e_entry;
 		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
-		//assert(1==3)
-
+		pcb_pointer->current_state = PROCESS_NEW;
 
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
@@ -318,13 +317,14 @@ uint32_t execute_process(pcb* pcb_p) {
 
 	// Let's get a simple argc/argv layout going at 0x9f000000
 	// Stick the program name at stack_base
-	setup_process_vas(pcb_p);
 	//assert(1==2);
+	
 
 	print_process_state(pcb_p->PID);
-	load_process_state(pcb_p->PID);
 	pcb_p->has_executed = 1;
 	pcb_p->current_state = PROCESS_RUNNING;
+	load_process_state(pcb_p->PID);
+	
 
 	//Run main function (TODO: How do we run main functions that have input parameters?)
 	//pcb_p->function();
@@ -354,8 +354,31 @@ uint32_t sample_func(uint32_t x) {
 
 
 void setup_process_vas(pcb* pcb_p){
-init_proc_stack(pcb_p);
-init_proc_heap(pcb_p);
+	for(int i = 0; i < 20; i++){
+		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
+		int x = vm_allocate_page(pcb_p->stored_vas, (void*)v, VM_PERM_USER_RW );		
+		vm_map_shared_memory(KERNEL_VAS, (void*)v, pcb_p->stored_vas, (void*)v, VM_PERM_USER_RW);
+				
+		}
+
+	int *copyIn = pcb_p->start-PROC_LOCATION;
+	int counter = 0;
+	uint32_t * v = pcb_p->start;
+	//*v = *copyIn;
+	while(counter < pcb_p->len){
+		*v = *copyIn;
+		copyIn+=1;
+		v+=1;
+		counter +=4;
+	}
+
+
+	for(int i = 0; i < 20; i++){
+		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
+		vm_free_mapping(KERNEL_VAS, (void*)v);
+			
+	}
+
 }
 
 //Initial page allocation for process stack in VAS
