@@ -5,19 +5,12 @@
 #include "swap_framework.h"
 #include "swap_pqueue.h"
 
-void swap_init(){
+void swap_init()
+{
 	// initialize the first swap space head
-	head = (struct swap_space_list*) kmalloc(sizeof(struct swap_space_list));
-	head->next = 0;
-	head->lower_bits = 0;
-	head->flags = 2;
-	head->priority = 0;
-	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
-	// initialize & allocate swap entry space for swapper
-	head->head = (struct swap_entry*) kmalloc_aligned(entry_size * PAGE_ENTRIES, entry_size);
-	head->head->next = 0;
+	head = (struct swap_space*) kmalloc(sizeof(struct swap_space))
 }
-u
+
 int store_page(void *page, uint32_t *ID)
 {
 	
@@ -40,7 +33,22 @@ os_size_t sum_stored()
 int vm_swap_page(void *page, uint32_t *ID);
 
 int vm_register_swap_space(int (*store_page)(void *page, uint32_t *ID), int (*retrieve_page)
-		(void *page, uint32_t *ID), int priority);
+			   (void *page, uint32_t *ID), int priority)
+{
+	if (pqeueue_size() != 0){
+		head = (struct swap_space*) kmalloc(sizeof(struct swap_space));
+	}		 
+	head->pages_used = 0;
+	head->lower_bits = pqueue_size();
+	head->flags = 2;
+	head->priority = priority;
+	head->store_func = store_page;
+	head->retrieve_func = retrieve_page;
+	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
+	// TODO: Will vary allocation strategy based on given swap algorithms
+	head->e_head = (struct swap_entry*) kmalloc_aligned(entry_size * PAGE_ENTRIES, entry_size);
+        pqueue_add(head);	
+}       
 
 int vm_deregister_swap_space(int (*store_page)(void *page, uint32_t *ID), int (*retrieve_page)
 		(void *page, uint32_t *ID), int priority);
