@@ -28,9 +28,9 @@
 struct swap_space {
 	struct swap_entry *e_head;
         uint16_t pages_used;
-	uint8_t lower_bits; //swap space ID [8-bits]
-	uint16_t flags; //SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
-	uint8_t priority; //lower is better 
+	uint8_t lower_bits; // swap space ID [8-bits]
+	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
+	uint8_t priority; // lower is better 
         uint32_t *store_func;
         uint32_t *retrieve_func;
 }; // Total: 18 bytes
@@ -38,19 +38,19 @@ struct swap_space {
 
 struct swap_entry {
 	struct swap_entry *next;
-	uint32_t higher_bits; //swap entry ID [24-bit assuming 4kB pages]
-	uint16_t e_flags; //ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
+	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
+	uint16_t e_flags; // ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
         uint8_t free;
         void *data;
 }; // Total: 15 bytes 
 
-struct swap_space_list *head;
+struct swap_space *front;
 static os_size_t memory_count;
 
 
-// swap_init initializes swap framework
+// Swap_init initializes swap framework
 void swap_init();
-// void swap_init(os_size_t);  To be implemented... [specifies global page size]
+//void swap_init(os_size_t);  To be implemented... [specifies global page size]
 
 
 /* store_page will store a page to media - not main memory - storage, e.g. HDD
