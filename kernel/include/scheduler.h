@@ -5,14 +5,17 @@
  *      Author: mwkurian
  */
 
+
+
+#include "priority_queue.h"
+#include "array_list.h"
+
 #ifndef KERNEL_INCLUDE_SCHEDULER_H_
 #define KERNEL_INCLUDE_SCHEDULER_H_
 
-#include "priority_queue.h"
 #include "process.h"
 #include "klibc.h"
 #include "kthreads.h"
-#include "array_list.h"
 
 typedef void (*sched_msg_callback_handler)(uint32_t src_pid, uint32_t event, char * data, int chunk_length, int remain_length);
 
@@ -50,5 +53,6 @@ sched_task* sched_get_active_task();
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len);
 uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler);
 uint32_t sched_deregister_callback_handler();
+uint32_t sched_yield();
 
 #endif /* KERNEL_INCLUDE_SCHEDULER_H_ */

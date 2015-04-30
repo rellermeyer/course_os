@@ -110,7 +110,7 @@ unsigned int rand();
 // as the codebase grows, it is important to use these macros
 // so that we can filter out unnecessary messages esp. during
 // development
-#define LOG_LEVEL 2
+#define LOG_LEVEL 5
 
 #define DEBUG(...) if(LOG_LEVEL >= 5) os_printf(__VA_ARGS__)
 #define LOG(...) if(LOG_LEVEL >= 4) os_printf(__VA_ARGS__)
@@ -128,5 +128,6 @@ uint32_t kthr_create(kthread_callback_handler cb_handler);
 uint32_t kthr_wait(uint32_t tid);
 uint32_t kthr_start(uint32_t tid);
 uint32_t kthr_kill(uint32_t tid);
+uint32_t kthr_yield();
 
 #endif

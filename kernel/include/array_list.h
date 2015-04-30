@@ -13,13 +13,11 @@
 
 #define DEFAULT_BUCKET_SIZE 20
 
-typedef struct arrl_handle arrl_handle;
-
-struct arrl_handle {
-    void*** list;
-    int bucket_size;
-    int size;
-    int capacity;
+typedef struct arrl_handle {
+	void*** list;
+	int bucket_size;
+	int size;
+	int capacity;
 } arrl_handle;
 
 arrl_handle* arrl_create();

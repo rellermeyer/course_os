@@ -18,6 +18,8 @@ void initialize_timers(){
   timer_pointers[3] =(rasp_pi_timer*)TIMER_3;
 }
 
+int enable_timer(int timer_index);
+
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
   set_prescale(timer_index,2);
@@ -151,9 +153,9 @@ int enable_timer(int timer_index){
 void print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     os_printf("control byte:%x",timer_pointers[timer_index]->control); 
-  	return 0;
+  //	return 0;
   }
-  return -1;
+//  return -1;
 }
 
 /*starts interrupts every start_val ticks */

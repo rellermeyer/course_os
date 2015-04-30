@@ -81,6 +81,7 @@ uint32_t sched_init() {
     // last_err = "No error";
     inactive_tasks = prq_create_fixed(MAX_TASKS);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
+    all_tasks_map = hmap_create();
     active_task = 0;
 
     __sched_register_timer_irq();
@@ -115,7 +116,7 @@ uint32_t sched_free() {
     return STATUS_OK;
 }
 
-static uint32_t sched_tid = 0;
+static uint32_t sched_tid = 10;
 
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) {
     return __sched_create_task(kthread, niceness, KTHREAD);
@@ -126,12 +127,17 @@ uint32_t sched_create_task_from_process(pcb * pcb_pointer, int niceness) {
 }
 
 uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
+
+    DEBUG("[scheduler.c] __sched_create_task - pre\n");
+
     if (prq_count(inactive_tasks) >= MAX_TASKS) {
         // last_err = "Too many tasks";
         return STATUS_FAIL;
     }
 
     __sched_pause_timer_irq();
+
+    DEBUG("[scheduler.c] __sched_create_task - start\n");
 
     sched_task * task = (sched_task*) kmalloc(sizeof(sched_task));
 
@@ -144,18 +150,22 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
     task->state = TASK_STATE_NONE;
     task->node = 0;
     task->parent_tid = 0;
-    task->children_tids = arrl_create();
+   // task->children_tids = arrl_create();
     task->message_queue = llist_create();
     task->cb_handler = 0;
+
+    DEBUG("[scheduler.c] __sched_create_task - mid\n");
 
     hmap_put(all_tasks_map, task->tid, task);
 
     if (active_task) {
         task->parent_tid = active_task->tid;
-        arrl_append(active_task->children_tids, (void*) task->tid);
+   //     arrl_append(active_task->children_tids, (void*) task->tid);
     }
 
     __sched_resume_timer_irq();
+
+    DEBUG("[scheduler.c] __sched_create_task - end\n");
 
     return task->tid;
 
@@ -498,4 +508,9 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
      __sched_resume_timer_irq();*/
 
     return STATUS_OK;
+}
+
+uint32_t sched_yield(){
+	__sched_dispatch();
+	return STATUS_OK;
 }

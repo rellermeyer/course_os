@@ -38,6 +38,7 @@
 #include "tests/test_hash_map.h"
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
+#include "tests/test_kthreads.h"
 
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
@@ -105,6 +106,7 @@ void start2(uint32_t *p_bootargs)
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
+	run_kthr_tests();
 
 	asm volatile("swi 1");
 
