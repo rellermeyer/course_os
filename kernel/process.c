@@ -29,16 +29,18 @@ pcb* process_create(uint32_t* file_p) {
 	//This used to be == 0, which doesn't seem correct
 	if(free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
-		os_printf("PROCESS_CREATE_DEBUG: 36\n");
-		//pass pcb to loader
-		//will return -1 if not an ELF file or other error
+        
+        //Create the process VAS here so that we can use it when allocating process memory
 		pcb_pointer->stored_vas = vm_new_vas();
+
+        //Load the file. This function returns the parsed ELF header.
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
 		if(!success) {
 		 	return (pcb*) -1;
 		}
-
+    
+        //Debug, should be removed once scheduler works
 		os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
 
 
@@ -47,17 +49,16 @@ pcb* process_create(uint32_t* file_p) {
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
         //4-13-15: function pointer should point to main() of file pointer.
-        //         TODO: Eventually should be able to pass parameters. We don't know how yet.
+        //         TODO: Eventually should be able to pass parameters. Put them on the stack (argv/argc)
 		pcb_pointer->R15=success->e_entry;
 
-		//pcb_pointer->function = success->e_entry;
 		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
+
 		pcb_pointer->current_state = PROCESS_NEW;
 
 		pcb_pointer->has_executed = 0;
 		return pcb_pointer;
-		
-
+        
 	} else {
 		os_printf("Out of memory in pcb table\n");
 		return 0;
@@ -300,37 +301,36 @@ uint32_t execute_process(pcb* pcb_p) {
 		return 0;
 	}
 
-
+    //Copy the current process's program counter to the new process's return register
+    //The new process will use R14 to return to the parent function
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+    
+    //Switch to user virtual address space, this is self explanatory
 	vm_enable_vas(pcb_p->stored_vas);
+    
+    //Should be disabled once scheduler is working to prevent spam
 	os_printf("Should be VAS: %x\n",vm_get_current_vas());
-
-	//4-13-15: Store current program counter to new PCB's return register,
-	//         then call load_process_state to switch to new process
-
-	//save_process_state(pcb_p->PID);
-	//print_process_state(pcb_p->PID);
+    
+    //5-1-15: The following commented stuff is obsolete and only included for work reference
 	//assert(1==2 && "process.c - We're stopping right after loading process state.");
 	//4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
 	// assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");
 	//4-13-15: Create new virtual address space for process and switch into it
-	
-
 	// Let's get a simple argc/argv layout going at 0x9f000000
 	// Stick the program name at stack_base
-	//assert(1==2);
-	
 	vm_enable_vas(pcb_p->stored_vas);
 
 	print_process_state(pcb_p->PID);
-	pcb_p->has_executed = 1;
-	pcb_p->current_state = PROCESS_RUNNING;
-	load_process_state(pcb_p->PID);
-	
 
-	//Run main function (TODO: How do we run main functions that have input parameters?)
-	//pcb_p->function();
-	//os_printf("HELLO MY FRIEND");
+	pcb_p->has_executed = 1;
+    
+    //Set state to running, this should be modified when the process is tossed into wait queues, etc
+    //Check header file for a list of states
+	pcb_p->current_state = PROCESS_RUNNING;
+	
+    //This will overwrite all our operating registers with the ones saved in the struct.
+    //As soon as this is called the processor will start executing the new process.
+	load_process_state(pcb_p->PID);
 	while(1);
 	return pcb_p->PID;
 }
@@ -353,7 +353,6 @@ uint32_t sample_func(uint32_t x) {
 	os_printf("Sample function!! From process with PID: %d\n", x);
 	return 0;
 }
-
 
 void setup_process_vas(pcb* pcb_p){
 	
@@ -425,7 +424,6 @@ void init_proc_stack(pcb * pcb_p)
 
 	}
 }
-
 void init_proc_heap(pcb* pcb_p){
 	//Initial page allocation for a process heap in VAS
 	print_process_state(pcb_p->PID);
