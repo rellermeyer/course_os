@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "swap_pqueue.h"
 
+// Contributors: Noel Negusse and Jesse Thaden
 /* Function: swap_framework
  * Purpose: To present an API for swapping pages to various swap spaces
  * so that pages may be stored independently of other related operations
@@ -24,20 +25,23 @@
 #define PAGE_ENTRIES (11<<12) // Assuming 4kB Pages right now
 #define PAGE_SIZE (1<<12) // May carry an if statement later...
 
-struct swap_space_list {
-	struct swap_space_list *next;
+struct swap_space {
 	struct swap_entry *e_head;
+        uint16_t pages_used;
 	uint8_t lower_bits; //swap space ID [8-bits]
-	uint16_t flags; //SWP_USED (1000 or 1), SWP_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-	uint8_t priority; //lower is better
-}; // Total: 12 bytes
+	uint16_t flags; //SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
+	uint8_t priority; //lower is better 
+        uint32_t *store_func;
+        uint32_t *retrieve_func;
+}; // Total: 18 bytes
+
 
 struct swap_entry {
 	struct swap_entry *next;
 	uint32_t higher_bits; //swap entry ID [24-bit assuming 4kB pages]
 	uint16_t e_flags; //ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-	uint8_t free; //free pages out of 2^12 (assuming 4kB pages)
-	void *data;
+        uint8_t free;
+        void *data;
 }; // Total: 15 bytes 
 
 struct swap_space_list *head;
