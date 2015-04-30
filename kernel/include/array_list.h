@@ -16,7 +16,7 @@
 typedef struct arrl_handle arrl_handle;
 
 struct arrl_handle {
-    llist_handle * linked_list;
+    void*** list;
     int bucket_size;
     int size;
     int capacity;
