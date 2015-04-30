@@ -28,7 +28,7 @@ int retrieve_page(void *page, uint32_t *ID)
 os_size_t sum_stored()
 {
 	return memory_count;
-}
+						}
 
 int vm_swap_page(void *page, uint32_t *ID);
 
