@@ -23,6 +23,7 @@ typedef struct prq_handle {
 void prq_enqueue(prq_handle * queue, prq_node * node);
 prq_node * prq_dequeue(prq_handle * queue);
 void prq_remove(prq_handle * queue, prq_node * node);
+prq_node * prq_get(prq_handle * queue, int index);
 prq_handle* prq_create();
 prq_handle* prq_create_fixed(int n);
 void prq_free(prq_handle * queue);

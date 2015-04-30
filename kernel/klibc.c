@@ -579,7 +579,7 @@ unsigned int rand()
     return (z1 ^ z2 ^ z3 ^ z4);
 }
 
-uint32_t kthr_create(sched_msg_callback_handler cb_handler){
+uint32_t kthr_create(kthread_callback_handler cb_handler){
 	DEBUG("[klibc.c] kthr_create - start\n");
     kthread_handle * kthread = kthread_create(cb_handler);
     DEBUG("[klibc.c] kthr_create - mid\n");

@@ -11,10 +11,13 @@
 #include <global_defs.h>
 #include <stdint.h>
 
-typedef void (*kthread_callback_handler)();
+typedef uint32_t (*kthread_callback_handler)();
 
 typedef struct kthread_handle {
     kthread_callback_handler cb_handler;
+
+    int stack_set;
+    double stack[128];
 
     // TODO move to some register save/load class
     uint32_t R0;
@@ -41,5 +44,6 @@ uint32_t kthread_start(kthread_handle * kthread);
 uint32_t kthread_free(kthread_handle * kthread) ;
 uint32_t kthread_save_state(kthread_handle * kthread);
 uint32_t kthread_load_state(kthread_handle * kthread);
+uint32_t kthread_execute(kthread_handle * kthread);
 
 #endif /* KERNEL_INCLUDE_KTHREADS_H_ */

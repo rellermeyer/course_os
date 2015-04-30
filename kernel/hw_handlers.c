@@ -114,11 +114,21 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	vm_enable_vas(prev_vas);
 }
 
+#define ENABLE_MAX_INTERRUPT
+#define ENABLE_MAX_INTERRUPT_COUNT 5
+int interrupt_count = 0;
+
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
+#ifdef ENABLE_MAX_INTERRUPT
+	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+#endif
 	os_printf("PREFETCH ABORT HANDLER\n");
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
+#ifdef ENABLE_MAX_INTERRUPT
+	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+#endif
 	os_printf("DATA ABORT HANDLER\n");
 	int pc, lr, sp, fp;
 	asm volatile("mov %0, pc" : "=r" (pc));
