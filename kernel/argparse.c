@@ -69,10 +69,12 @@ static void argparse_parse(char *cmdline)
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
+
 			os_printf("START: %X \n", start+PROC_LOCATION);
 
 			int fd = kopen("/hello", 'r');
 			start += PROC_LOCATION;
+			os_printf("%d HIYADSDSF \n", fd);
 			
 			int* location = start;
 			int storage2 = 0;
@@ -96,7 +98,7 @@ static void argparse_parse(char *cmdline)
 
 			//assert(11==12);
 			
-			//os_printf("%X HEY HERE TAKE A LOOK \n", start);
+			os_printf("%X HEY HERE TAKE A LOOK \n", start);
 			test->len = 35920;
 			test->start = start;
 			test->name = name;
@@ -104,15 +106,6 @@ static void argparse_parse(char *cmdline)
 			init_proc_stack(test);
 //			init_proc_heap(test);
 
-			pcb *test= process_create((uint32_t*) start);
-			test->len = len;
-			start += PROC_LOCATION;
-			test->start = start;
-			test->name = name;
-			setup_process_vas(test);
-			init_proc_stack(test);
-			init_proc_heap(test);
-			//assert(1==15);		
 			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
