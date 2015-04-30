@@ -3,27 +3,30 @@
 #include "klibc.h"
 #include <stdint.h>
 #include "swap_framework.h"
+#include "swap_pqueue.h"
 
 void swap_init(){
 	// initialize the first swap space head
 	head = (struct swap_space*) kmalloc(sizeof(struct swap_space));
 	head->next = 0;
-  	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
-	// initialize & allocate swap entry space for swapper
 	head->lower_bits = 0;
 	head->flags = 2;
         head->priority = 0;
-	
-}
 
+}
 
 int store_page(void *page, uint32_t *ID)
 {
 	
 	memory_count+=4096;
+	return *ID;
 }
 
-int retrieve_page(void *page, uint32_t *ID);
+int retrieve_page(void *page, uint32_t *ID)
+{
+	
+	return *ID;
+}
 
 
 os_size_t sum_stored()
