@@ -20,7 +20,7 @@ struct arrl_handle {
     int bucket_size;
     int size;
     int capacity;
-};
+} arrl_handle;
 
 arrl_handle* arrl_create();
 arrl_handle* arrl_create_fixed(uint32_t bucket_size);

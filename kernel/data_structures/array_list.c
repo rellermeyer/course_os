@@ -71,7 +71,6 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
     for (list_index = 0; list_index < list_size; ++list_index) {
         for (bucket_index = 0; bucket_index < bucket_size; ++bucket_index) {
             if (elem == arrl->list[list_index][bucket_index]) {
-                kfree(elem);
                 goto out;
             }
         }
@@ -182,7 +181,6 @@ uint32_t __find_next(arrl_handle* arrl, uint32_t start, void* elem) {
             }
         }
     }
-
     return -1;
 }
 

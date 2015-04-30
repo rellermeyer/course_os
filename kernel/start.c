@@ -31,7 +31,7 @@
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
-// #include "scheduler.h"
+#include "scheduler.h"
 
 // Tests
 #include "tests/test_priority_queue.h"
@@ -91,6 +91,8 @@ void start2(uint32_t *p_bootargs)
 	INFO("Bootargs: %X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
+
+	sched_init();
 
 	// Test stuff...
 	/*int *p = (int*)0xFFFFFFF0;
