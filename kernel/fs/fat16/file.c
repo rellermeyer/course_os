@@ -1207,7 +1207,7 @@ int kdelete_single(struct inode * cur_inode, int write_to_disk){
             
             int z;
             int indy_index_add = (cur_inode->indirect_blocks[i] + FS->start_data_blocks_loc) * BLOCKSIZE;
-            sd_recieve((void*)cur_inder_block, indy_index_add);
+            sd_receive((void*)cur_inder_block, indy_index_add);
             
             for(z=0; z<cur_inder_block->blocks_in_file; z++){
                 
@@ -1268,7 +1268,7 @@ int kdelete(char* filepath) {
     /* delete dir_entry in levelup dir) */
     kremove_dir_entry(level_up_inode, cur_inode->inum);
     
-	if (error == -1 || error2 == -1) {
+	if (error1 == -1 || error2 == -1) {
 		os_printf("something wrong in kfind_inode \n");
 		kfree(cur_inode->data_blocks);
         kfree(cur_inode->indirect_blocks);
@@ -1279,9 +1279,9 @@ int kdelete(char* filepath) {
 		kfree(result->last);
 		kfree(result);
 		kfree(level_up_inode);
-		kfree(level_up_result->truncated_path);
+		/*kfree(level_up_result->truncated_path);
 		kfree(level_up_result->last);
-		kfree(level_up_result);
+		kfree(level_up_result);*/
 		return -1;
 	}
     
