@@ -100,13 +100,20 @@ static void argparse_parse(char *cmdline)
 			
 			pcb *test= process_create((uint32_t*) start);
 
-			
+				vm_enable_vas(test->stored_vas);
+
 			test->len = len;
 			test->start = start;
 			test->name = name;
 			setup_process_vas(test);
 			init_proc_stack(test);
 			init_proc_heap(test);
+			
+			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
+				uint32_t *v = start + (i* BLOCK_SIZE);
+				vm_free_mapping(KERNEL_VAS, (void*)v);		
+				
+			}
 
 			execute_process(test);
 		}

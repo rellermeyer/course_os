@@ -306,7 +306,6 @@ uint32_t execute_process(pcb* pcb_p) {
 	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
     
     //Switch to user virtual address space, this is self explanatory
-	vm_enable_vas(pcb_p->stored_vas);
     
     //Should be disabled once scheduler is working to prevent spam
 	os_printf("Should be VAS: %x\n",vm_get_current_vas());
