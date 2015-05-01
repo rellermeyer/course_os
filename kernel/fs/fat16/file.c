@@ -493,6 +493,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
 		dir_block->num_entries++;
 		cur_inode->size += sizeof(struct dir_entry);
+
+		cur_inode->direct_blocks_in_file++; //DOES THIS FIX THE PRINTING OF THE 404?????
+		
 		sd_transmit((void*) dir_block, (dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 		//os_printf("Sent main data block.\n");
 	}else{
