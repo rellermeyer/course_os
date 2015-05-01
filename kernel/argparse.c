@@ -12,9 +12,9 @@ void argparse_process(uint32_t *p_bootargs)
 {
 	for (atag_iterator(tag, p_bootargs))
 	{
-		os_printf("tag (+%d) %d\n",
+		/*os_printf("tag (+%d) %d\n",
 				(((uint32_t) ((uint32_t*) tag)) - ((uint32_t) p_bootargs)),
-				tag->header.tag);
+				tag->header.tag);*/
 		atag_print(tag);
 		if (tag->header.tag == ATAG_CMDLINE)
 		{
@@ -30,21 +30,21 @@ void atag_print(struct atag *t)
 	case ATAG_CORE:
 		if (t->header.size == 2)
 		{
-			os_printf("ATAG_CORE\n");
+			//os_printf("ATAG_CORE\n");
 		}
 		else
 		{
-			os_printf("ATAG_CORE (FLAGS=%d, PAGESIZE=%d, ROOTDEV=%d)\n",
+		/*	os_printf("ATAG_CORE (FLAGS=%d, PAGESIZE=%d, ROOTDEV=%d)\n",
 					t->content.core.flags, t->content.core.pagesize,
-					t->content.core.rootdev);
+					t->content.core.rootdev);*/
 		}
 		break;
 	case ATAG_MEM:
-		os_printf("ATAG_MEM (SIZE=%d, START=%d)\n", t->content.mem.size,
-				t->content.mem.start);
+	/*	os_printf("ATAG_MEM (SIZE=%d, START=%d)\n", t->content.mem.size,
+				t->content.mem.start);*/
 		break;
 	case ATAG_CMDLINE:
-		os_printf("ATAG_CMDLINE (%s)\n", &t->content.cmdline.cmdline);
+		//os_printf("ATAG_CMDLINE (%s)\n", &t->content.cmdline.cmdline);
 		break;
 	}
 }
@@ -55,7 +55,7 @@ static void argparse_parse(char *cmdline)
 
 	while (token != NULL)
 	{
-		os_printf("token: %s\n", token);
+		//os_printf("token: %s\n", token);
 
 		if (os_strcmp("-load", token) == 0)
 		{
@@ -63,16 +63,20 @@ static void argparse_parse(char *cmdline)
 			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
-			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
-					name, start, len);
+		/*	os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
+					name, start, len);*/
 
-			process_create((uint32_t*) start);
+			pcb *test= process_create((uint32_t*) start);
+
+	
+
+			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
-			os_printf("RUNNING TESTS\n");
+		//	os_printf("RUNNING TESTS\n");
 
-			os_printf("Running tests...\n");
+		//	os_printf("Running tests...\n");
 			Test *tests[2];
 			tests[0] = create_test("This passes", &test1);
 			tests[1] = create_test("This fails", &test2);

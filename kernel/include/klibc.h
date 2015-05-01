@@ -83,6 +83,7 @@ int os_strcmp(const char *left, const char *right);
  */
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
+void printf_receiver(void *userdata, void *data, uint32_t datalength);
 int os_printf(const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);
@@ -109,7 +110,7 @@ unsigned int rand();
 // as the codebase grows, it is important to use these macros
 // so that we can filter out unnecessary messages esp. during
 // development
-#define LOG_LEVEL 2
+#define LOG_LEVEL 5
 
 #define DEBUG(...) if(LOG_LEVEL >= 5) os_printf(__VA_ARGS__)
 #define LOG(...) if(LOG_LEVEL >= 4) os_printf(__VA_ARGS__)

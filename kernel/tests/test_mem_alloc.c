@@ -1,5 +1,5 @@
-#include "../include/tests.h"
-#include "../include/tests/test_mem_alloc.h"
+#include "tests.h"
+#include "tests/test_mem_alloc.h"
 #include "klibc.h"
 #include "vm.h"
 
@@ -17,7 +17,7 @@ uint32_t gen_rand(uint64_t *state, int nbits) {
 
 //Tests the create function
 int test_mem_alloc_1() {
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Inconsistent memory to begin with...\n");
         return TEST_FAIL;
     }
@@ -29,7 +29,7 @@ int test_mem_alloc_1() {
 
     DEBUG("%s\n", p);
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("allocate(15) failed.\n\n");
         return TEST_FAIL;
     }
@@ -58,7 +58,7 @@ int test_mem_alloc_1() {
         return TEST_FAIL;
     }
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Memory is inconsistent :-(\n");
         return TEST_FAIL;
     }
@@ -72,8 +72,9 @@ int test_mem_alloc_1() {
 
     kfree(p);
 
-    if (!kmcheck()) {
+    if (kmcheck()) {
         ERROR("Memory is inconsistent :-(\n");
+	return TEST_FAIL;
     }
 
     DEBUG("heap_size = %d bytes\n", km_size());
@@ -84,7 +85,11 @@ int test_mem_alloc_1() {
 //function running tests
 void run_mem_alloc_tests() {
     Test *tests[NUM_TESTS];
-    tests[0] = create_test("test_mem_alloc_1", &test_mem_alloc_1);
+    Test a; // We can't rely on kmalloc for a kmalloc test.
+    a.test_name = "test_mem_alloc_1";
+    a.testptr = &test_mem_alloc_1;
+    tests[0] = &a;
+    //tests[0] = create_test("test_mem_alloc_1", &test_mem_alloc_1);
+    os_printf("asdf\n");
     run_tests(tests, NUM_TESTS);
 }
-

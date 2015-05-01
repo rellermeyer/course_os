@@ -9,6 +9,8 @@
 #include "interrupt.h"
 #include "klibc.h"
 #include "vm.h"
+#include "file.h"
+#include "process.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
@@ -54,7 +56,7 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
-void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
+long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int callNumber;
 
 	// the link register currently holds the address of the instruction immediately
@@ -79,39 +81,157 @@ void  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// System Call Handler
 	switch(callNumber)
 	{
-	case SYSCALL_CREATE:
-		os_printf("Create system call called!\n");
-		break;
-	case SYSCALL_SWITCH:
-		os_printf("Switch system call called!\n");
-		break;
+	// case SYSCALL_CREATE:
+	// 	os_printf("Create system call called!\n");
+	// 	break;
+	// case SYSCALL_SWITCH:
+	// 	os_printf("Switch system call called!\n");
+	// 	break;
+	char* filepath;
+	int error;
+	char mode;
+	int fd;
+	void* buf;
+	int numBytes;
+
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
+		
+		// retrieve the args that delete() put in r1 and pass to kdelete():
+		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
+		// call kdelete(), passing appropriate args:
+		error = kdelete(filepath);
+		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
+		return (long)error;
 		break;
+
 	case SYSCALL_OPEN:
 		os_printf("Open system call called!\n");
+
+		// retrieve the args that open() put in r1, r2 and pass to kopen():
+		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
+		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
+		// call kopen(), passing appropriate args:
+		fd = kopen(filepath, mode);
+		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
+		return (long) fd;
 		break;
+
+	case SYSCALL_CREATE:
+		os_printf("Create system call called!\n");
+		// retrieve the args that create() put in r1, r2, r3 and pass to kcreate():
+		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
+		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
+		// call kcreate(), passing appropriate args:
+		error = kcreate(filepath, mode, 0);
+		// move fd that kopen() returns to a r1 to be retrieved by kcreate() and returned to user:
+		return (long) error;
+		break;
+
+	case SYSCALL_MKDIR:
+		os_printf("Mkdir system call called!\n");
+		// retrieve the args that mkdir() put in r1 and pass to kcreate():
+		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
+		// call kcreate(), passing appropriate args:
+		error = kcreate(filepath, 'w', 1);
+		// move error that kcreate() returns to a r1 to be retrieved by kcreate() and returned to user:
+		return (long) error;
+		break;
+
 	case SYSCALL_READ:
 		os_printf("Read system call called!\n");
+
+		// retrieve the args that read() put in r1, r2 and pass to kread():
+		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
+		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
+		asm volatile("mov r2, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
+		// call kread(), passing appropriate args:
+		// TODO: macro to translate process's virtual memory into kernel's view of virtual memory
+		int bytesRead = kread(fd, buf, numBytes);
+		// move fd that kread() returns to a r1 to be retrieved by read() and returned to user:
+		return (long)bytesRead;
 		break;
+
 	case SYSCALL_WRITE:
 		os_printf("Write system call called!\n");
+
+		// retrieve the args that write() put in r1, r2 and pass to kwrite():
+		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
+		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
+		asm volatile("mov r2, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
+		// call kwrite(), passing appropriate args:
+		int bytesWritten = kwrite(fd, buf, numBytes);
+		// move fd that kwrite() returns to a r1 to be retrieved by write() and returned to user:
+		return (long) bytesWritten;
 		break;
+
 	case SYSCALL_CLOSE:
 		os_printf("Close system call called!\n");
+
+		// retrieve the args that close() put in r1 and pass to kclose():
+		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
+		// call kclose(), passing appropriate args:
+		error = kclose(fd);
+		// move error that kclose() returns to a r1 to be retrieved by close() and returned to user:
+		return (long)error;
 		break;
+
+	case SYSCALL_SEEK:
+		os_printf("Seek system call called!\n");
+
+		// retrieve the args that seek() put in r1, r2 and pass to kseek():
+		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
+		asm volatile("mov r1, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
+		// call kseek(), passing appropriate args:
+		error = kseek(fd, numBytes);
+		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
+		return (long)error;
+		break;
+
+	case SYSCALL_COPY:
+		os_printf("Copy system call called!\n");
+
+		char* source;
+		char* dest;
+		// retrieve the args that seek() put in r1, r2 and pass to kseek():
+		asm volatile("mov r0, %[source1]":[source1]"=r" (source)::);
+		asm volatile("mov r1, %[dest1]":[dest1]"=r" (dest)::);
+		asm volatile("mov r2, %[mode1]":[mode1]"=r" (mode)::);
+		// call kcopy(), passing appropriate args:
+		error = kcopy(source, dest, mode);
+		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
+		return (long)error;
+		break;
+
+	case SYSCALL_LS:
+		os_printf("Ls system call called!\n");
+		// retrieve the args that mkdir() put in r1 and pass to kcreate():
+		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
+		// call kls(), passing appropriate args:
+		error = kls(filepath);
+		// move error that kls() returns to a r1 to be retrieved by kls() and returned to user:
+		return (long) error;
+		break;
+
 	case SYSCALL_SET_PERM:
 		os_printf("Set permission system call called!\n");
+		os_printf("Yet to be implemented\n");
+		return -1;
 		break;
+
 	case SYSCALL_MEM_MAP:
 		os_printf("Memory map system call called!\n");
+		os_printf("Yet to be implemented\n");
+		return -1;
 		break;
+
 	default:
 		os_printf("That wasn't a syscall you knob!\n");
+		return -1;
 		break;
-	}
 
 	vm_enable_vas(prev_vas);
+	}
 }
 
 #define ENABLE_MAX_INTERRUPT
@@ -131,6 +251,7 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 #endif
 	os_printf("DATA ABORT HANDLER\n");
 	int pc, lr, sp, fp;
+	// not sure this is correct syntax, did we [Spring 2015 do this?]
 	asm volatile("mov %0, pc" : "=r" (pc));
 	asm volatile("mov %0, lr" : "=r" (lr));
 	asm volatile("mov %0, sp" : "=r" (sp));
