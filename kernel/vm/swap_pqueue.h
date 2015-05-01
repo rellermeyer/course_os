@@ -46,14 +46,20 @@ uint16_t pqueue_size();
  */
 struct *pqueue_index(int);
 
-/*returns the specified value from the head of the list
- *It 'peeks' at the head of the list for a specified value
- *0 - lower_bits
- *1 - flags
- *2 - priority
- *3 - pages_free
+/* returns the specified value from the head of the list
+ * It 'peeks' at the head of the list for a specified value
+ * 0 - lower_bits
+ * 1 - flags
+ * 2 - priority
+ * 3 - pages_free
  */
 uint32_t pqueue_peek(int);
+
+/* pqueue_find finds the actual index of the swap space ID 
+ * (or lower_bit value)
+ * Return: index of found value
+ */ 
+uint16_t pqueue_find(int);
 
 
 #endif
