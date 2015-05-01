@@ -1486,3 +1486,28 @@ int kls(char* filepath) {
 	kfree(result);
 	return 0;
 }
+
+//gets the stats of a file
+struct stats * get_stats(char * filepath, struct stats * result) {
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, result);
+	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	if (error == -1 || cur_inode->is_dir) {
+		if (error == -1) {
+			os_printf("file not found, exiting kopen\n");
+		}
+		else {
+			os_printf("cannot open a directory, make the path end to a file\n");
+		}
+		kfree(cur_inode);
+		kfree(result->truncated_path);
+		kfree(result->last);
+		kfree(result);
+		return -1;
+	}
+	result->size = cur_inode->size;
+	result->fd_refs = cur_inode->fd_refs;
+	result->is_dir = cur_inode->is_dir;
+}
