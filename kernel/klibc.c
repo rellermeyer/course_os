@@ -265,14 +265,35 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 	return n;
 }
 
+// void printf_receiver(int_least32_t * userdata, int_least32_t *data, int_least32_t datalength)
+// {
+//     print_uart0(data);
+// }
+
+void printf_receiver(void *userdata, void *data, uint32_t datalength)
+{
+	int i;
+	char *s = (char*)data;
+	//print_uart0(data);
+	for (i=0; i<datalength; i++) {
+		print_char_uart0(s[i]);
+	}
+}
+
 int os_printf(const char *str_buf, ...)
 {
+	// print_uart0("in os_printf\n");
+	// int i;
+	// char *s = (char*)str_buf;
+	// for (i=0; i<sizeof(str_buf); i++) {
+	// 	print_char_uart0(s[i]);
+	// }
 	va_list args;
 	va_start(args, str_buf);
 	char buf[256];
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
-	print_uart0(buf);
+	q_send("printf", (uint32_t*) buf, n);
 	return n;
 }
 
