@@ -375,7 +375,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath;
+	char* iterator = filepath + 1; //root still level 0, so start from what's next
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
