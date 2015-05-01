@@ -23,4 +23,10 @@
 /user/hello/hello
 /user/libc/libc.a
 
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+
 NOTES
