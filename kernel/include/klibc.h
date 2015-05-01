@@ -78,7 +78,6 @@ int os_strcmp(const char *left, const char *right);
  */
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
-void printf_receiver(void *userdata, void *data, uint32_t datalength);
 int os_printf(const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);

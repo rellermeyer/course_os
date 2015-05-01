@@ -335,7 +335,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	int current_inum = starting_inum;
 	int a;
-	for(a = 0; a < dir_levels-1; a++) {
+	for(a = 0; a < dir_levels; a++) {
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
 
