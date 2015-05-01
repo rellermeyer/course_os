@@ -12,7 +12,7 @@ void run_tests(Test *tests[], int num_tests)
     os_printf("%s",tests[i]->test_name);
     os_printf(" ... ");
     //evaluates test here, if it passes prints PASSES else FAILS
-    if((tests[i]->testptr)())
+    if(!(tests[i]->testptr)())
     {
       os_printf("PASSES\n");
     }

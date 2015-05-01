@@ -56,6 +56,9 @@ typedef enum PROCESS_STATE
 
 #define MAX_PROCESSES  32
 
+#define STACK_BASE 0x9f000000
+#define STACK_TOP (STACK_BASE + BLOCK_SIZE)
+
 typedef struct pcb
 {
 	//ID data

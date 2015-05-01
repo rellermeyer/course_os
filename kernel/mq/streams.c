@@ -32,12 +32,9 @@ void q_create(char q_name[])
     //implement the below if we increase # of subscribers
 //	if (!os_strcmp(options,"rr")) {
 //		q->options = options;
-//            os_printf("printing rr\n");
 //	} else if(!os_strcmp(options,"broadcast")) {
 //		q->options = options;
-//		os_printf("printing broadcast\n");
 //	} else {
-//		os_printf("Error: options was %s. Expected \"rr\" or \"broadcast\"\n", options);
 //	}
 }
 
@@ -116,7 +113,6 @@ uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
         return ((uint32_t) current_queue->data);
     }
     // data too big
-    os_printf("Read to buffer failed\n");
     return 0;
 }
 
@@ -138,21 +134,20 @@ void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength)
     }
     // data is too big for buffer
     else{
-        os_printf("Read to buffer failed\n");
     }
 }
 
 // attaches an asynchronous receiver to the reply
 void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, void *data, uint32_t datalength))
 {
-    struct queue *reply_q = q_map[reply_qd];
-    reply_q->receiver = receiver;
+   struct queue *reply_q = q_map[reply_qd];
+   reply_q->receiver = receiver;
 }
 
-void q_reply_send(uint32_t reply_qd, void* data, uint32_t data_length) {
-    struct queue *reply_qd = q_map[reply_qd];
-    reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
-}
+// void q_reply_send(uint32_t reply_qd, void* data, uint32_t data_length) {
+//     struct queue *reply_qd = q_map[reply_qd];
+//     reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
+// }
 
 /*q_call seems to fail on q_send*/
 //void q_call(char q_name[], void * data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata)

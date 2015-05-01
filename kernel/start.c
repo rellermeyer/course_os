@@ -28,6 +28,7 @@
 #include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
+#include "include/open_table.h" //to initialize fs opentable
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
@@ -54,15 +55,11 @@ void uart_handler(void *null)
 
 void init_receiver(void *userdata, void *data, uint32_t datalength)
 {
-	//print_uart0("foobar.\n");
 	int i;
 	char *s = (char*)data;
-	//print_uart0(data);
 	for (i=0; i<datalength; i++) {
 		print_char_uart0(s[i]);
 	}
-	//print_uart0();
-	//print_uart0("data: %s\n", data);
 }
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
@@ -91,6 +88,8 @@ void vm_test_early();
 void start2(uint32_t *p_bootargs)
 {
 
+	
+	
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
 
@@ -111,20 +110,28 @@ void start2(uint32_t *p_bootargs)
 	  print_uart0("\n");*/
 
 	// Test stuff...
-	/*int *p = (int*)0xFFFFFFF0;
-	p[0] = 1;
-	os_printf("0x%x == 1?\n", p[0]);*/
 
-	//run_vm_tests();
+
+	ht_test();
+	q_test();
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, printf_receiver, 0x0);
+
+	//os_printf("There are %d free frames.\n", vm_count_free_frames());
+	run_vm_tests();
 	//INFO("There are %d free frames.\n", vm_count_free_frames());
 	//run_mem_alloc_tests();
 	//INFO("There are %d free frames.\n", vm_count_free_frames());
-	//run_prq_tests();
-	//run_hmap_tests();
-	ht_test();
-	q_test();
+	run_prq_tests();
+	run_hmap_tests();
 
-	//os_printf("There are %d free frames.\n", vm_count_free_frames());
+	int retval;
+	kfs_init(0,0);
+
+	run_fs_tests();
+	while(1);
+
 	//asm volatile("swi 1");
 
 	/*
@@ -134,13 +141,12 @@ void start2(uint32_t *p_bootargs)
 				Note: As of 4-15-15 this fails horribly with hello.o not being
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
-	q_create("printf");
-	int qd = q_open("printf");
-	q_subscribe(qd, printf_receiver, 0x0);
-	//test assert
+//test assert
+
 	//assert(1==2 && "Test assert please ignore");
 	init_all_processes();
 	argparse_process(p_bootargs);
+	
 
 	print_uart0("done parsing atag list\n");
 
