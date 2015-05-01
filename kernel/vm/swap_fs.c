@@ -1,6 +1,7 @@
 #include "file.h"
 #include "bitvector.h"
 #include "vm.h"
+#include "swap_fs.h"
 
 static bit_vector *free_bitvector;
 
