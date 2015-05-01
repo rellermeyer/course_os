@@ -282,7 +282,12 @@ void printf_receiver(void *userdata, void *data, uint32_t datalength)
 
 int os_printf(const char *str_buf, ...)
 {
-	
+	// print_uart0("in os_printf\n");
+	// int i;
+	// char *s = (char*)str_buf;
+	// for (i=0; i<sizeof(str_buf); i++) {
+	// 	print_char_uart0(s[i]);
+	// }
 	va_list args;
 	va_start(args, str_buf);
 	char buf[256];
