@@ -75,7 +75,7 @@ int kfs_format()
 
 	// Lay down the root inode
 	struct inode root_inode;
-	root_inode.inum = 1; // Isn't this redundant?
+	root_inode.inum = 0; // Isn't this redundant?
 	root_inode.fd_refs = 0;
 	root_inode.size = 0;
 	root_inode.is_dir = 1;
@@ -335,7 +335,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	int current_inum = starting_inum;
 	int a;
-	for(a = 0; a < dir_levels; a++) {
+	for(a = 0; a < dir_levels-1; a++) {
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
 
@@ -375,7 +375,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath + 1; //root still level 0, so start from what's next
+	char* iterator = filepath; //root still level 0, so start from what's next
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
