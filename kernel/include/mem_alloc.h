@@ -17,7 +17,7 @@ uint32_t init_heap();
 void *allocate(uint32_t, uint32_t* /*unused*/, int32_t/*unused*/);
 void deallocate(void*, uint32_t*/*unused*/, int32_t/*unused*/);
 alloc_handle* mem_get_allocator();
-uint32_t mem_check();
+int mem_check();
 uint32_t mem_get_heap_size();
 
 #endif

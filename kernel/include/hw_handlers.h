@@ -1,3 +1,6 @@
+#ifndef __HW_HANDLERS_H__
+#define __HW_HANDLERS_H__
+
 /*
  *
  *  Hardware Handler Interface for course_os
@@ -32,7 +35,7 @@
 #define BRANCH_INSTRUCTION	0xe59ff018	// ldr pc, pc+offset
 
 // System Call Types
-#define SYSCALL_CREATE 0
+#define SYSCALL_CREATE 0  
 #define SYSCALL_SWITCH 1
 #define SYSCALL_DELETE 2
 #define SYSCALL_OPEN 3
@@ -41,6 +44,10 @@
 #define SYSCALL_CLOSE 6
 #define SYSCALL_SET_PERM 7
 #define SYSCALL_MEM_MAP 8
+#define SYSCALL_SEEK 9
+#define SYSCALL_MKDIR 10
+#define SYSCALL_COPY 11   
+#define SYSCALL_LS 12  
 
 void init_vector_table(void); 
 
@@ -48,9 +55,12 @@ void init_vector_table(void);
 extern void _Reset();
 void reset_handler(void);
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void);	// 0x04
-void __attribute__((interrupt("SWI"))) software_interrupt_handler(void);	// 0x08
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void);	// 0x08
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void);	// 0x0c
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void);		// 0x10
 void reserved_handler(void);		// 0x14
 void __attribute__((interrupt("IRQ"))) irq_handler(void);			// 0x18
 void __attribute__((interrupt("FIQ"))) fiq_handler(void);			// 0x1c
+
+
+#endif
