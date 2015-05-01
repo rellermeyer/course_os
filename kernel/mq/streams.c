@@ -12,7 +12,7 @@ struct ht *q_table;
 struct queue *q_map[5000];
 uint32_t next;
 
-void q_create(char q_name[]/*, char options[]*/)
+void q_create(char q_name[])
 {
 	struct queue *q = 0x0;
     if (initialized < 0){
@@ -88,6 +88,7 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, u
 
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
+
     struct queue *q = q_map[qd];
     q->receiver(q->subscriber->userdata, data, datalength);
 }
@@ -167,25 +168,21 @@ void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * d
 
 void sample_receiver(void *userdata, void *data, uint32_t datalength)
 {
-	//print_uart0("foobar.\n");
 	int i;
 	char *s = (char*)data;
-	//print_uart0(data);
 	for (i=0; i<datalength; i++) {
 		print_char_uart0(s[i]);
 	}
-	//print_uart0();
-	//print_uart0("data: %s\n", data);
 }
 
 void q_test()
 {
-	// q_create("printf");
-	// int qd = q_open("printf");
-	// q_subscribe(qd, sample_receiver, 0x0);
+    q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, sample_receiver, 0x0);
 
-	// print_uart0("This is a test.\n");
-	// os_printf_v2("This is a 2nd test.\n");
+	print_uart0("This is a test.\n");
+	os_printf("This is a 2nd test.\n");
 	return;
 
     // os_printf_v2("this is a test\n");
