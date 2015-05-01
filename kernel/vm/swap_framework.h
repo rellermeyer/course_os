@@ -27,7 +27,7 @@
 
 struct swap_space {
 	struct swap_entry *e_head;
-        uint16_t pages_used;
+        uint16_t pages_free;
 	uint8_t lower_bits; // swap space ID [8-bits]
 	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
 	uint8_t priority; // lower is better 
@@ -63,7 +63,7 @@ void swap_init();
  */
 int store_page(void*, uint32_t*);
 // int store_page(void*, os_size_t, uint32_t*); To be implemented...
-int store_ext_page(void*, uint32_t*); // Waiting on file systems team to complete
+uint32_t store_ext_page(void*, uint32_t*); // Waiting on file systems team to complete
 
 
 /* retrieve_page will retrieve the page identified the ID pointer and
@@ -72,19 +72,19 @@ int store_ext_page(void*, uint32_t*); // Waiting on file systems team to complet
  *
  * Note: Page size was set by store_page 
  */
-int retrieve_page(void*, uint32_t*);
-int retrieve_ext_page(void*, uint32_t*); // Waiting on file systems team to complete
+uint32_t retrieve_page(void*, uint32_t*);
+uint32_t retrieve_ext_page(void*, uint32_t*); // Waiting on file systems team to complete
 
 
 // Returns: The total stored memory in bytes by function store_page(void*, uint32_t*)
 os_size_t sum_stored();
 
 
-/* vm_swap_page will swap pages between main memory (specified by void *page) 
- * and the auxillary swap spaces (specified by uint32_t *ID)
- * Returns: 0 or 1 if the page swap was a failure or success, respectively 
+/* vm_swap_page will store a page from main memory (specified by void *page) 
+ * and an auxillary swap spaces (specified by uint32_t *ID)
+ * Returns: returns the new ID of where the swap_space was stored and changes the ID pointer 
  */
-int vm_swap_page(void*, uint32_t*);
+uint32_t* vm_swap_page(void*, uint32_t*);
 
 
 /*
