@@ -4,6 +4,8 @@
 #include "klibc.h"
 #include "tests.h"
 #include "process.h"
+#include "file.h"
+
 
 static void argparse_parse(char *);
 
@@ -73,38 +75,37 @@ static void argparse_parse(char *cmdline)
 			os_printf("START: %X \n", start+PROC_LOCATION);
 
 			int fd = kopen("/hello", 'r');
+			struct stats fstats;
 			start += PROC_LOCATION;
-			os_printf("%d HIYADSDSF \n", fd);
-			
+			get_stats("/hello", &fstats);
+			 len = fstats.size;
+
 			int* location = start;
 			int storage2 = 0;
 			
-			for(int i = 0; i < 10; i++){
+			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
 				uint32_t *v = start + (i* BLOCK_SIZE);
 				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
 				
 			}
 
 			int counter =0;
-			while(counter < 35920){
+			while(counter < len){
 				kread(fd, location, 4);
 				location +=1;
 				counter +=4;
 			}
-			//assert(1==124);
 			
 			
 			pcb *test= process_create((uint32_t*) start);
 
-			//assert(11==12);
 			
-			os_printf("%X HEY HERE TAKE A LOOK \n", start);
-			test->len = 35920;
+			test->len = len;
 			test->start = start;
 			test->name = name;
 			setup_process_vas(test);
 			init_proc_stack(test);
-//			init_proc_heap(test);
+			init_proc_heap(test);
 
 			execute_process(test);
 		}
