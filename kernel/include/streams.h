@@ -37,6 +37,7 @@ uint32_t q_subscribe(uint32_t q, void (*receiver)(void *userdata, void *data, ui
 uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength);
 void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength);
 void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, void *data, uint32_t datalength));
+void q_reply_send(uint32_t reply_qd, void* data, uint32_t data_length);
 void sample_receiver(void *userdata, void *data, uint32_t datalength);
 void q_call(char q_name[], void *data, void (*receiver)(void *userdata, void *data, uint32_t datalength), void *userdata);
 void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata);
