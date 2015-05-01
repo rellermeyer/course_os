@@ -40,6 +40,9 @@
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
 
+#include "hashtable.h"
+#include "streams.h"
+
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
 extern int init_all_processes();
@@ -50,18 +53,31 @@ void uart_handler(void *null)
 	print_uart0("uart0!\n");
 }
 
+void init_receiver(void *userdata, void *data, uint32_t datalength)
+{
+	int i;
+	char *s = (char*)data;
+	for (i=0; i<datalength; i++) {
+		print_char_uart0(s[i]);
+	}
+}
+
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs)
 {
+	/*NOTICE: Do not use os_printf in start*/
+
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
+	
+
+
 	/*print_uart0("p_bootargs: ");
 	print_uart0((char*)p_bootargs);
 	print_uart0("\n");*/
-	os_printf("%X\n",*p_bootargs);
 	vm_init();
-	os_printf("Initialized VM datastructures.\n");
+	print_uart0("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
@@ -72,7 +88,8 @@ void vm_test_early();
 void start2(uint32_t *p_bootargs)
 {
 
-
+	
+	
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
 
@@ -85,22 +102,27 @@ void start2(uint32_t *p_bootargs)
 	print_uart0("MMU enabled\n");
 	//asm volatile("swi 1");
 	//while (1);
-
+	print_uart0("\nbefore courseOS\n");
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
-	INFO("Bootargs: %X\n",*p_bootargs);
+	//INFO("Bootargs: %X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
 
 	// Test stuff...
-	/*int *p = (int*)0xFFFFFFF0;
-	p[0] = 1;
-	os_printf("0x%x == 1?\n", p[0]);*/
 
+
+	ht_test();
+	q_test();
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, printf_receiver, 0x0);
+
+	//os_printf("There are %d free frames.\n", vm_count_free_frames());
 	run_vm_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
+	//INFO("There are %d free frames.\n", vm_count_free_frames());
 	//run_mem_alloc_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
+	//INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
 
@@ -119,9 +141,9 @@ void start2(uint32_t *p_bootargs)
 				Note: As of 4-15-15 this fails horribly with hello.o not being
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
+//test assert
 
 	//assert(1==2 && "Test assert please ignore");
-
 	init_all_processes();
 	argparse_process(p_bootargs);
 	
