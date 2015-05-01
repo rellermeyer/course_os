@@ -150,7 +150,6 @@ int32_t read_elf_header(Elf_Ehdr *h, unsigned char  *pointer) {
 	half_temp = get_value(2, h);
 	h->e_shstrndx = half_temp; //get_value(2, h);			// section header string table index
 
- 	
 	return 1;	// return success
 }
 
@@ -172,6 +171,7 @@ void read_program_header_table(Elf_Ehdr *eh, Elf_Phdr ph[], unsigned char *point
 		ph[i].p_align = get_value(4, eh);
 		i++;
 	}
+
 }
 
 /* Reads the section header table and places it into the the section header array */

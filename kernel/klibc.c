@@ -96,6 +96,8 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
     for (; i < size; i++) {
         *(d++) = *(s++);
     }
+    source -= size;
+    dest -= size;
 }
 
 // base is between 2 and 16, inclusive
