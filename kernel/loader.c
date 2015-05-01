@@ -118,10 +118,6 @@ Elf_Ehdr* load_file(pcb * pcb_p, uint32_t * file_pointer)
 		os_printf("No Program headers in ELF file. Exiting\n");
 		return 0;
 	}
-
-	
-
-
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
 	Elf_Shdr * sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
