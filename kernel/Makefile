@@ -38,8 +38,15 @@ flash.bin: kernel.img script.img
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
 
 # 32678*4096 = 128MiB
-card.sd:
+card.sd: fs-cmdline userhello
 	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+	fs/cmdline/buildfs ../user/hello/
+
+userhello:
+	make -C ../user/hello
+
+fs-cmdline:
+	make -C fs/cmdline
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
