@@ -41,8 +41,9 @@ flash.bin: kernel.img script.img
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
 
+# 32768*4096 = 128MiB
 card.sd:
-	dd if=/dev/zero of=card.sd conv=notrunc bs=128m count=1
+	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf

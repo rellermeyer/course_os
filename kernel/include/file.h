@@ -89,6 +89,13 @@ struct dir_helper //used by helper functions in file.c
 	char* last;
 };
 
+struct stats //statistics about the file
+{
+	int size; //size of the file
+	int fd_refs; //how many times it is open now
+	int is_dir; //is this a directory
+};
+
 int kopen(char* filepath, char mode); //opens the file of filepath with permissions mode
 int kread(int fd, void* buf, int numBytes); //reads the open file corresponding to fd
 int kwrite(int fd, void* buf, int num_bytes); //writes the open file corresponding to fd
@@ -145,6 +152,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space);;
 
 int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
+
+struct stats * get_stats(char * filepath, struct stats * result);
 
 
 #endif 
