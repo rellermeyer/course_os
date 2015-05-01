@@ -69,9 +69,7 @@ void init_receiver(void *userdata, void *data, uint32_t datalength)
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs)
 {
-	q_create("printf");
-	int qd = q_open("printf");
-	q_subscribe(qd, init_receiver, 0x0);
+	/*NOTICE: Do not use os_printf in start*/
 
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
@@ -81,9 +79,8 @@ void start(uint32_t *p_bootargs)
 	/*print_uart0("p_bootargs: ");
 	print_uart0((char*)p_bootargs);
 	print_uart0("\n");*/
-	os_printf("%X\n",*p_bootargs);
 	vm_init();
-	os_printf("Initialized VM datastructures.\n");
+	print_uart0("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
@@ -106,10 +103,10 @@ void start2(uint32_t *p_bootargs)
 	print_uart0("MMU enabled\n");
 	//asm volatile("swi 1");
 	//while (1);
-
+	print_uart0("\nbefore courseOS\n");
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
-	INFO("Bootargs: %X\n",*p_bootargs);
+	//INFO("Bootargs: %X\n",*p_bootargs);
 	/*print_uart0((char*)p_bootargs);
 	  print_uart0("\n");*/
 
@@ -119,16 +116,15 @@ void start2(uint32_t *p_bootargs)
 	os_printf("0x%x == 1?\n", p[0]);*/
 
 	//run_vm_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
+	//INFO("There are %d free frames.\n", vm_count_free_frames());
 	//run_mem_alloc_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
+	//INFO("There are %d free frames.\n", vm_count_free_frames());
 	//run_prq_tests();
 	//run_hmap_tests();
-
 	ht_test();
 	q_test();
 
-	os_printf("There are %d free frames.\n", vm_count_free_frames());
+	//os_printf("There are %d free frames.\n", vm_count_free_frames());
 	//asm volatile("swi 1");
 
 	/*
@@ -138,10 +134,11 @@ void start2(uint32_t *p_bootargs)
 				Note: As of 4-15-15 this fails horribly with hello.o not being
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
-
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, printf_receiver, 0x0);
 	//test assert
 	//assert(1==2 && "Test assert please ignore");
-
 	init_all_processes();
 	argparse_process(p_bootargs);
 
