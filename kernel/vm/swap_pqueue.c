@@ -6,7 +6,7 @@ void pqueue_init(struct *swap_space)
 	head = (struct *node) kmalloc(sizeof(struct node));
 	head->next = 0;
 	head->e_head = swap_space->e_head;
-	head->pages_used = swap_space->pages_used;
+	head->pages_free = swap_space->pages_free;
 	head->lower_bits = swap_space->lower_bits;
 	head->flags = swap_space->flags;
 	head->priority = swap_space->priority;
@@ -16,15 +16,15 @@ void pqueue_init(struct *swap_space)
 	s = 1;
 }
 
-void push(struct *swap_space)
+void pqueue_push(struct *swap_space)
 {
 	node *restore = path; int count=1;
 	path = head;
-	while(count<=size()){
+	while(count<=pqueue_size()){
 		if(path->priority > x && count==1){ //set as new head
 			head = (struct node*) kmalloc(sizeof(struct node));
 			head->next = path;
-			set(head, swap_space);
+			pqueue_set(head, swap_space);
 			path = restore;
 			break;
 		}
@@ -32,13 +32,13 @@ void push(struct *swap_space)
 			path = restore;
 			path->next = (struct node*) kmalloc(sizeof(struct node));
 			path = path->next;
-			set(path, swap_space);
+			pqueue_set(path, swap_space);
 			path->next = NULL;
 			break;
 		}
-		if(path->priority < x && count!=size() && (path->next)->val > x){ //set in between nodes
+		if(path->priority < x && count!=pqueue_size() && (path->next)->val > x){ //set in between nodes
 			node *temp = (struct node*) kmalloc(sizeof(struct node));
-			set(temp, swap_space);
+			pqueue_set(temp, swap_space);
 			temp->next = path->next;
 			path->next = temp;
 			path = restore;
@@ -52,20 +52,27 @@ void push(struct *swap_space)
 
 //set head to next node and delete previous node
 //pops from front
-void pop()
+void pqueue_pop_front()
 {
 	node *temp = head;
 	head = head->next;
 	free(temp);
 	s--;
-	if(head != NULL)
-		return head->val;
-	return 0;
 }
 
-void set(struct *h, struct *swap_space){
+void pqueue_pop_back()
+{
+	free(path);
+	path = head;
+	while(path->next == 0){
+		path = path->next;
+	}
+	s--;
+}
+
+void pqueue_set(struct *h, struct *swap_space){
 	h->e_head = swap_space->e_head;
-	h->pages_used = swap_space->pages_used;
+	h->pages_free = swap_space->pages_free;
 	h->lower_bits = swap_space->lower_bits;
 	h->flags = swap_space->flags;
 	h->priority = swap_space->priority;
@@ -73,10 +80,13 @@ void set(struct *h, struct *swap_space){
 	h->retrieve_func = swap_space->retrieve_func;	
 }
 
-struct index(int i)
+struct *pqueue_index(int i)
 {
 	if(x == 0){
 		return head;
+	}
+	if(x==(pqueue_size()-1)){
+		return path;
 	}
 	node *restore = head;
 	while(int x = 0; x<i; x++){
@@ -85,18 +95,19 @@ struct index(int i)
 	return restore;
 }
 
-uint8_t size()
+uint8_t pqueue_size()
 {
 	return s;	
 }
 
 // returns specified value from the head of list
-int peek(int type)
+int pqueue_peek(int type)
 {
 	switch(type){
 		case 0: return head->lower_bits;
 		case 1: return head->flags;
 		case 2: return head->priority;
+		case 3: return head->pages_free;
 	}
 }
 
