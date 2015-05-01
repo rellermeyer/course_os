@@ -493,6 +493,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
 		dir_block->num_entries++;
 		cur_inode->size += sizeof(struct dir_entry);
+
+		cur_inode->direct_blocks_in_file++; //DOES THIS FIX THE PRINTING OF THE 404?????
+
 		sd_transmit((void*) dir_block, (dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 		//os_printf("Sent main data block.\n");
 	}else{
@@ -785,10 +788,15 @@ int kopen(char* filepath, char mode){
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	//here we have the file we were looking for! it is cur_inode.
-	if (cur_inode->is_dir) {
-		os_printf("cannot open a directory, make the path end to a file\n");
+	if (error == -1 || cur_inode->is_dir) {
+		if (error == -1) {
+			os_printf("file not found, exiting kopen\n");
+		}
+		else {
+			os_printf("cannot open a directory, make the path end to a file\n");
+		}
 		kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
