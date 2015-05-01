@@ -33,14 +33,14 @@ int swapfs_store(void *page, uint32_t *id)
 	return idx;
 }
 
-int swapfs_receive(void *page, uint32_t id)
+int swapfs_receive(void *page, uint32_t *id)
 {
 	if (!bv_get(id, free_bitvector)) {
 		return -1;
 	}
 	int fd = kopen("/swap", 'w');
-	kseek(fd, id*BLOCK_SIZE);
+	kseek(fd, *id*BLOCK_SIZE);
 	kread(fd, page, BLOCK_SIZE);
 	kclose(fd);
-	return 0; // Success
+	return *id; // Success
 }
