@@ -75,7 +75,7 @@ int kfs_format()
 
 	// Lay down the root inode
 	struct inode root_inode;
-	root_inode.inum = 1; // Isn't this redundant?
+	root_inode.inum = 0; // Isn't this redundant?
 	root_inode.fd_refs = 0;
 	root_inode.size = 0;
 	root_inode.is_dir = 1;
@@ -375,7 +375,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath + 1; //root still level 0, so start from what's next
+	char* iterator = filepath; //root still level 0, so start from what's next
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
@@ -959,11 +959,11 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file] = new_indirect_block_loc;
 						cur_inode->indirect_blocks_in_file++;
 
-						if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
+						/*if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
 							//TODO: implement eviction policy...add the cur_inode to the cache:
 						}else{
 							*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
-						}
+							}*/
 
 						void *buf = kmalloc(BLOCKSIZE);
 						os_memcpy(new_indirect_block, buf, sizeof(struct indirect_block));

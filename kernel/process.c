@@ -40,7 +40,7 @@ pcb* process_create(uint32_t* file_p) {
 		 	return (pcb*) -1;
 		}
 
-	//	os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
+		os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
 
 
 		//fill the free space with a pcb pointer
@@ -51,7 +51,7 @@ pcb* process_create(uint32_t* file_p) {
         //         TODO: Eventually should be able to pass parameters. We don't know how yet.
 		pcb_pointer->R15=success->e_entry;
 		//pcb_pointer->function = success->e_entry;
-		//os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
+		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
 		//assert(1==3)
 
 
