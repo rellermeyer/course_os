@@ -47,8 +47,8 @@ uint32_t __mem_extend_heap(uint32_t amt)
         int retval = vm_allocate_page(KERNEL_VAS,
                 (void*) (MEM_START + buffer_size), VM_PERM_PRIVILEGED_RW);
         if (retval) {
-            /*os_printf("ERROR: vm_allocate_page(,%d,) returned %d\n",
-                    MEM_START + amt_added, retval);*/
+            os_printf("ERROR: vm_allocate_page(,%d,) returned %d\n",
+                    MEM_START + amt_added, retval);
             break;
         }
         amt_added += BLOCK_SIZE;
@@ -63,7 +63,7 @@ uint32_t init_heap()
     int retval = vm_allocate_page(KERNEL_VAS, (void*) MEM_START,
             VM_PERM_PRIVILEGED_RW);
     if (retval) {
-        //os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+        os_printf("ERROR: vm_allocate_page returned %d\n", retval);
         return STATUS_FAIL;
     }
 

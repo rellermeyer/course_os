@@ -9,7 +9,7 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
-OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/hashtable.o mq/streams.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
+OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
 
 all: flash.bin card.sd
 
@@ -37,9 +37,8 @@ flash.bin: kernel.img script.img
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
 
-# 32768*4096 = 128MiB
 card.sd:
-	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+	dd if=/dev/zero of=card.sd conv=notrunc bs=128m count=1
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
