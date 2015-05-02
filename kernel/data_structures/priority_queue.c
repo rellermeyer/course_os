@@ -119,6 +119,10 @@ void prq_remove(prq_handle * queue, prq_node * node) {
     __prq_shift_down(queue, index);
 }
 
+prq_node * prq_get(prq_handle * queue, int index){
+	return queue->heap[index + 1];
+}
+
 prq_node * prq_dequeue(prq_handle * queue) {
     if (!queue->count) {
         return 0;

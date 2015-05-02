@@ -265,35 +265,14 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 	return n;
 }
 
-// void printf_receiver(int_least32_t * userdata, int_least32_t *data, int_least32_t datalength)
-// {
-//     print_uart0(data);
-// }
-
-void printf_receiver(void *userdata, void *data, uint32_t datalength)
-{
-	int i;
-	char *s = (char*)data;
-	//print_uart0(data);
-	for (i=0; i<datalength; i++) {
-		print_char_uart0(s[i]);
-	}
-}
-
 int os_printf(const char *str_buf, ...)
 {
-	// print_uart0("in os_printf\n");
-	// int i;
-	// char *s = (char*)str_buf;
-	// for (i=0; i<sizeof(str_buf); i++) {
-	// 	print_char_uart0(s[i]);
-	// }
 	va_list args;
 	va_start(args, str_buf);
 	char buf[256];
 	int n = os_vsnprintf(buf, 255, str_buf, args);
 	va_end(args);
-	q_send("printf", (uint32_t*) buf, n);
+	print_uart0(buf);
 	return n;
 }
 
@@ -600,4 +579,34 @@ unsigned int rand()
     b = ((z4 << 3) ^ z4) >> 12;
     z4 = ((z4 & 4294967168U) << 13) ^ b;
     return (z1 ^ z2 ^ z3 ^ z4);
+}
+
+uint32_t kthr_create(kthread_callback_handler cb_handler){
+	static int priority = 0;
+    kthread_handle * kthread = kthread_create(cb_handler);
+    return sched_create_task_from_kthread(kthread, --priority);
+}
+
+uint32_t kthr_start(uint32_t tid){
+    return sched_start_task(tid);
+}
+
+uint32_t kthr_kill(uint32_t tid){
+    return sched_remove_task(tid);
+}
+
+uint32_t kthr_wait(uint32_t tid){
+    return sched_waittid(tid);
+}
+
+uint32_t kthr_yield(uint32_t tid){
+    return sched_yield(tid);
+}
+
+uint32_t kthr_register_message_callback(sched_msg_callback_handler cb_handler){
+	return sched_register_callback_handler(cb_handler);
+}
+
+uint32_t kthr_deregister_message_callback(){
+	return sched_deregister_callback_handler();
 }

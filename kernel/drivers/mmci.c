@@ -82,7 +82,7 @@ int init_sd()
 	// Eventually print some status message here if the SD card
 	// failed to initialize properly but for now just print 
 	// that it was loaded OK
-	//os_printf("\nSD card ready for transfer\n");
+	os_printf("\nSD card ready for transfer\n");
 	
 	return status();
 }

@@ -8,23 +8,21 @@
 #ifndef KERNEL_INCLUDE_ARRAY_LIST_H_
 #define KERNEL_INCLUDE_ARRAY_LIST_H_
 
-#include "linked_list.h"
-#include "klibc.h"
+#include <global_defs.h>
 
 #define DEFAULT_BUCKET_SIZE 20
 
-typedef struct arrl_handle arrl_handle;
-
-struct arrl_handle {
-    llist_handle * linked_list;
-    int bucket_size;
-    int size;
-    int capacity;
-};
+typedef struct arrl_handle {
+	void*** list;
+	int bucket_size;
+	int size;
+	int capacity;
+} arrl_handle;
 
 arrl_handle* arrl_create();
 arrl_handle* arrl_create_fixed(uint32_t bucket_size);
 void arrl_append(arrl_handle* arrl, void* elem);
+void* arrl_get(arrl_handle*, uint32_t);
 void arrl_remove(arrl_handle* arrl, void* elem);
 void arrl_remove_all(arrl_handle* arrl, void* elem);
 uint32_t arrl_contains(arrl_handle* arrl, void* elem);

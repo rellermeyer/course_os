@@ -9,7 +9,13 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
-OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/hashtable.o mq/streams.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
+#<<<<<<< HEAD
+#OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o process/scheduler.o drivers/timer.o data_structures/bitvector.o data_structures/array_list.o  data_structures/linked_list.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o threads/kthreads.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o tests/test_kthreads.o
+#=======
+#OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/hashtable.o mq/streams.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
+#>>>>>>> cadaad366e2bbe767a11ed75d5cac98d84f0f055
+
+OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o process/scheduler.o data_structures/array_list.o data_structures/linked_list.o threads/kthreads.o tests/test_kthreads.o process/jump.o
 
 all: flash.bin card.sd
 
@@ -21,10 +27,10 @@ CFLAGS += -Wall
 #CFLAGS += -Werror
 CFLAGS += -g
 
-run: flash.bin card.sd
+run: flash.bin | card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
-run-debug: flash.bin card.sd
+run-debug: flash.bin | card.sd
 	${QEMU} -S -s -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 gdb:
@@ -37,17 +43,22 @@ flash.bin: kernel.img script.img
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
 
-card.sd:
-	dd if=/dev/zero of=card.sd conv=notrunc bs=128m count=1
+# 32678*4096 = 128MiB
+card.sd: fs-cmdline userhello
+	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+	fs/cmdline/buildfs ../user/hello/
+
+userhello:
+	make -C ../user/hello
+
+fs-cmdline:
+	make -C fs/cmdline
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
 
 kernel.bin: kernel.elf
-	dd if=/dev/zero of=kernel.bin bs=4k count=64
-	$(OBJCOPY) -O binary kernel.elf kernel2.bin
-	dd if=kernel2.bin of=kernel.bin conv=notrunc bs=4k
-	dd if=../user/hello/hello of=kernel.bin conv=notrunc bs=4k seek=16
+	$(OBJCOPY) -O binary kernel.elf kernel.bin
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img

@@ -23,11 +23,16 @@
  * --------------Spring 2015---------------
  * 4/15/15: Added implementation of assert() 
  */
+
 #include <stdint.h>
 #include <stdarg.h>
 #include <global_defs.h>
+#include "kthreads.h"
+#include "scheduler.h"
+
 #ifndef __klibc_h
 #define __klibc_h
+
 typedef unsigned int os_size_t;
 
 // useful macros
@@ -78,7 +83,6 @@ int os_strcmp(const char *left, const char *right);
  */
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
-void printf_receiver(void *userdata, void *data, uint32_t datalength);
 int os_printf(const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);
@@ -116,6 +120,13 @@ unsigned int rand();
 //4-17-15: Initial panic * assert_fail functions added
 void panic();
 int _assert_fail(char *_file, unsigned int _line, char *_func);
-    //__attribute__ ((__noreturn__));
+    //__attribute__ ((__noreturn__));uint32_t kthr_kill(uint32_t tid);
+
+// kernel level threads
+uint32_t kthr_create(kthread_callback_handler cb_handler);
+uint32_t kthr_wait(uint32_t tid);
+uint32_t kthr_start(uint32_t tid);
+uint32_t kthr_kill(uint32_t tid);
+uint32_t kthr_yield();
 
 #endif

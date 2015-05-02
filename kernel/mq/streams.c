@@ -7,6 +7,10 @@
 #include "hashtable.h"
 #include "drivers/uart.h"
 
+/*only call scheduler stuff(emit, broadcast, wait, sched_yeild), not kthr
+ * do x = false whenever data comes in in test_kthread
+ * use sched_yield in while loop instead of interupt which gives other threads chance to run
+ * */
 static int initialized;
 struct ht *q_table;
 struct queue *q_map[5000];

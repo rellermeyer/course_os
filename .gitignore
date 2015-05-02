@@ -23,4 +23,6 @@
 /user/hello/hello
 /user/libc/libc.a
 
+kernel/fs/cmdline/buildfs
+
 NOTES
