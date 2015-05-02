@@ -97,8 +97,17 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			os_memcpy((uint32_t*) ((uint32_t)file_pointer + ph[i].p_offset), current_pointer, (os_size_t)ph[i].p_memsz);
 			current_pointer = (void*) ((uint32_t)current_pointer + ph[i].p_memsz);
 		}
-	}		
-	os_printf("\n\nEnd allocate_process_memory()");
+	}
+		
+	current_pointer = (void*) ((uint32_t)current_pointer + 4096);//Heap
+	pcb_p->heap_p = current_pointer;
+
+	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
+	
+	// setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
+
+	//entry_point_offset = entry_point_elf - addr_first;			
+	//entry_point = process_mem + entry_point_offset
 }	
 
 //Probably want to return a memory address rather than nothing.

@@ -32,7 +32,7 @@ pcb* process_create(uint32_t* file_p) {
         
         //Create the process VAS here so that we can use it when allocating process memory
 		pcb_pointer->stored_vas = vm_new_vas();
-        
+
         //Load the file. This function returns the parsed ELF header.
 		Elf_Ehdr* success = (Elf_Ehdr*)load_file(pcb_pointer, file_p);
 
@@ -51,7 +51,9 @@ pcb* process_create(uint32_t* file_p) {
         //4-13-15: function pointer should point to main() of file pointer.
         //         TODO: Eventually should be able to pass parameters. Put them on the stack (argv/argc)
 		pcb_pointer->R15=success->e_entry;
-		//os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
+
+		os_printf("%X ENTRY: %X \n",file_p, success->e_entry);
+
 		pcb_pointer->current_state = PROCESS_NEW;
 
 		pcb_pointer->has_executed = 0;
@@ -139,12 +141,12 @@ uint32_t load_process_state(uint32_t PID) {
 	asm("MOV r9, %0"::"r"(pcb_p->R9):);
 	asm("MOV r10, %0"::"r"(pcb_p->R10):);
 	//asm("MOV r11, %0"::"r"(11):);
-	//assert(1==11);
 	asm("MOV r12, %0"::"r"(pcb_p->R12):);
 
 	asm("MOV r13, %0"::"r"(pcb_p->R13):);
-
+	
 	asm("MOV r14, %0"::"r"(pcb_p->R14):);
+//assert(1==11);
 
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
@@ -316,21 +318,20 @@ uint32_t execute_process(pcb* pcb_p) {
 	//4-13-15: Create new virtual address space for process and switch into it
 	// Let's get a simple argc/argv layout going at 0x9f000000
 	// Stick the program name at stack_base
-	//assert(1==2); //debug: stopping here for now
-	
-    //Should disable once the scheduler works so it doesn't spam the screen
+	vm_enable_vas(pcb_p->stored_vas);
+
 	print_process_state(pcb_p->PID);
-    
-    //Flag the process as having been run once
+
 	pcb_p->has_executed = 1;
     
     //Set state to running, this should be modified when the process is tossed into wait queues, etc
     //Check header file for a list of states
 	pcb_p->current_state = PROCESS_RUNNING;
-    
+	
     //This will overwrite all our operating registers with the ones saved in the struct.
     //As soon as this is called the processor will start executing the new process.
 	load_process_state(pcb_p->PID);
+	while(1);
 	return pcb_p->PID;
 }
 
@@ -353,8 +354,9 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
-
 void setup_process_vas(pcb* pcb_p){
+	
+	//		assert(1==15);
 	for(int i = 0; i < 20; i++){
 		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
 		int x = vm_allocate_page(pcb_p->stored_vas, (void*)v, VM_PERM_USER_RW );		
@@ -362,7 +364,7 @@ void setup_process_vas(pcb* pcb_p){
 				
 		}
 
-	int *copyIn = pcb_p->start-PROC_LOCATION;
+	int *copyIn = pcb_p->start;
 	int counter = 0;
 	uint32_t * v = pcb_p->start;
 	//*v = *copyIn;
@@ -373,12 +375,12 @@ void setup_process_vas(pcb* pcb_p){
 		counter +=4;
 	}
 
-
 	for(int i = 0; i < 20; i++){
 		uint32_t *v = pcb_p->start + (i* BLOCK_SIZE);
 		vm_free_mapping(KERNEL_VAS, (void*)v);
 			
 	}
+
 
 }
 
@@ -397,7 +399,10 @@ void init_proc_stack(pcb * pcb_p)
 		else{
 		os_printf("A page have been allocated for process stack at vptr: 0x%x\n",(STACK_BASE+ (i * BLOCK_SIZE)));
 		}
+		vm_map_shared_memory(KERNEL_VAS, (void*)(STACK_BASE+(i * BLOCK_SIZE)), pcb_p->stored_vas, (void*)(STACK_BASE+(i * BLOCK_SIZE)), VM_PERM_USER_RW);
+
 	}
+
 	// Stick a NULL at STACK_TOP-sizeof(int*)
 	uint32_t *stack_top = (uint32_t*)STACK_TOP;
 	stack_top[-1] = 0;
@@ -405,13 +410,20 @@ void init_proc_stack(pcb * pcb_p)
 	stack_top[-3] = 0;
 	stack_top[-4] = 0;
 	stack_top[-5] = STACK_BASE;
-	stack_top[-6] = 1;
+	stack_top[-6] = 1;		
+	
 	os_strcpy(STACK_BASE, pcb_p->name);
+
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4*6;	
 	print_process_state(pcb_p->PID);
-}
 
+	for (int i = 0; i < (STACK_SIZE/BLOCK_SIZE); i ++)
+	{
+		vm_free_mapping(KERNEL_VAS, (void*)(STACK_BASE+(i * BLOCK_SIZE)));
+
+	}
+}
 void init_proc_heap(pcb* pcb_p){
 	//Initial page allocation for a process heap in VAS
 	print_process_state(pcb_p->PID);

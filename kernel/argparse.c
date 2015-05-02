@@ -69,10 +69,40 @@ static void argparse_parse(char *cmdline)
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
-
 			os_printf("START: %X \n", start+PROC_LOCATION);
 
-			 
+			int fd = kopen("/hello", 'r');
+			start += PROC_LOCATION;
+			
+			int* location = start;
+			int storage2 = 0;
+			
+			for(int i = 0; i < 10; i++){
+				uint32_t *v = start + (i* BLOCK_SIZE);
+				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
+				
+			}
+
+			int counter =0;
+			while(counter < 35920){
+				kread(fd, location, 4);
+				location +=1;
+				counter +=4;
+			}
+			//assert(1==124);
+			
+			
+			pcb *test= process_create((uint32_t*) start);
+
+			//assert(11==12);
+			
+			//os_printf("%X HEY HERE TAKE A LOOK \n", start);
+			test->len = 35920;
+			test->start = start;
+			test->name = name;
+			setup_process_vas(test);
+			init_proc_stack(test);
+//			init_proc_heap(test);
 
 			pcb *test= process_create((uint32_t*) start);
 			test->len = len;

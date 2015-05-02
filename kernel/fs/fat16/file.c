@@ -105,7 +105,7 @@ int kfs_format()
 
 /* make the global varrible */
 // initialize the filesystem:
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat){
 
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
 	DATA_BLOCK_TABLE_CACHE_SIZE = data_block_table_cache_size;
@@ -123,7 +123,9 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 	}//end else
 
 	// Bootstrap the FS...
-	kfs_format();
+	if (reformat) {
+		kfs_format();
+	}
 
 	//read in the super block from disk and store in memory:
 	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
