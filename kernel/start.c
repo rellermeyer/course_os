@@ -109,13 +109,15 @@ void start2(uint32_t *p_bootargs)
 	run_kthr_tests();
 
 	int retval;
-	kfs_init(0,0);
+	kfs_init(0,0,0);
 
-	pcb *test= process_create((uint32_t*) 0x20000);
-	execute_process(test);
+	//run_fs_tests();
 
-//	run_fs_tests();
-	while(1);
+	// int fd = kopen("/hello", 'r');
+	// os_printf("fd: %d\n", fd);
+	// kclose(fd);
+
+	//while(1);
 
 	//asm volatile("swi 1");
 

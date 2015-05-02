@@ -48,7 +48,7 @@ int os_strlen(char *s)
 int init_sd()
 {
 	// Noop
-	return 1;
+	return 0;
 }
 
 int sd_transmit(void *data, uint32_t addr)

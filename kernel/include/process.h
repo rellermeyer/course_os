@@ -56,8 +56,13 @@ typedef enum PROCESS_STATE
 
 #define MAX_PROCESSES  32
 
-#define STACK_BASE 0x9f000000
-#define STACK_TOP (STACK_BASE + BLOCK_SIZE)
+#define STACK_BASE 		0x9f000000 
+#define PROC_LOCATION	0x9ff00000
+#define STACK_SIZE 		(BLOCK_SIZE)
+#define STACK_TOP 		(STACK_BASE + STACK_SIZE)
+#define HEAP_BASE		0x9f0f0000	
+#define PROGRAM_BASE	0x003e8000
+
 
 typedef struct pcb
 {
@@ -72,6 +77,8 @@ typedef struct pcb
 	uint32_t (*function)();
 	uint32_t has_executed;
 	struct vas* stored_vas;
+	uint32_t start;
+	uint32_t len;
 	//CPU state data
 	PROCESS_STATE current_state;
 
@@ -164,7 +171,7 @@ uint32_t load_process_state(uint32_t PID);
 uint32_t save_process_state(uint32_t PID);
 uint32_t print_process_state(uint32_t PID);
 
-void setup_process_vas(uint32_t, uint32_t, uint32_t*, uint32_t*);
+void setup_process_vas(pcb* pcb_p);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
