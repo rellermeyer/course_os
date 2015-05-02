@@ -42,12 +42,18 @@ void init_fiqs(){
 // have to be built in the driver and passed to register_
 int register_interrupt_handler(int num, interrupt_handler_t *handler){
 
-	if(num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
+	if(num < 0 || num > MAX_NUM_INTERRUPTS){ // bad irq number
+		os_printf("Bad IRQ number\n");
 		return -1;
-	else if(handlers[num] != 0) // something has already been registered there
+	}
+	else if(handlers[num] != 0){ // something has already been registered there
+		os_printf("IRQ number already registered\n");
 		return -1;
-	else if(handler == 0) // we need a NULL macro
+	}
+	else if(handler == 0){ // we need a NULL macro
+		os_printf("handler number cannot be NULL\n");
 		return -1;
+	}
 	
 	// put the handler in the array
 	handlers[num] = handler;
@@ -158,9 +164,11 @@ os_printf("hello I'm interrupting");
 }
 // Create the handler
 void _schedule_register_timer_irq(){
+
         interrupt_handler_t *timer;
         timer->handler=&timer_interrupt_handler;
         register_interrupt_handler(4,timer);
+	os_printf("Processor %X\n",get_proc_status());
         initialize_timers();
 }
 
