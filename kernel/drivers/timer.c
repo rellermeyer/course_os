@@ -171,7 +171,7 @@ int disable_timer(int timer_index){
 //prints the configuration of the control byte
 int print_control_status(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
-    os_printf("control byte:%x",timer_pointers[timer_index]->control); 
+    os_printf("control status:%x",timer_pointers[timer_index]->interrupt_status); 
   	return 0;
   }
   return -1;

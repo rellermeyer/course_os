@@ -80,8 +80,8 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup kmalloc...
 	init_heap();
-	_schedule_register_timer_irq();
-        timer_test();
+//	_schedule_register_timer_irq();
+//        timer_test();
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 	//asm volatile("swi 1");
@@ -128,7 +128,7 @@ void start2(uint32_t *p_bootargs)
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
-	argparse_process(p_bootargs);
+//	argparse_process(p_bootargs);
 	
 
 	print_uart0("done parsing atag list\n");
@@ -141,7 +141,7 @@ void start2(uint32_t *p_bootargs)
 	//print_process_state(0);
 
 	//run_process_tests();
-
+	timer_test();
 	//print_PID();
 	// init_q();
 
