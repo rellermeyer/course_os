@@ -48,19 +48,20 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 	}
 	else if(handlers[num] != 0){ // something has already been registered there
 		os_printf("IRQ number already registered\n");
-		return -1;
+//		return -1;
 	}
 	else if(handler == 0){ // we need a NULL macro
 		os_printf("handler number cannot be NULL\n");
-		return -1;
+//		return -1;
 	}
 	
 	// put the handler in the array
 	handlers[num] = handler;
 
 	// enable the specific interrupt in hardware on the VIC
-	hw_interrupt_enable(num);
-
+	mmio_write(VIC_INT_SELECT, mmio_read(VIC_INT_SELECT) | (1<<num));
+	os_printf("irq status %X",mmio_read(VIC_INT_SELECT));
+	
 	// check to see if this is an FIQ
 	if (check_if_fiq[num])
 		// update the "select" register on the VIC
