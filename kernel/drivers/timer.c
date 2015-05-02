@@ -4,6 +4,7 @@ Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.ar
 //#include <stdint.h>
 #include "klibc.h"
 #include "drivers/timer.h"
+#include "interrupt.h"
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
 void initialize_timers(){
@@ -126,6 +127,7 @@ int set_prescale(int timer_index, int mode){
 
 //enables timer interrupt of the given timer index
 int enable_timer_interrupt(int timer_index){
+	//hw_interrupt_enable(4);
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x20;
     return 0;
@@ -196,31 +198,76 @@ void timer_start(int timer_index) {
 // and interrupt every 10 clicks.
 int start_timer_interrupts(int timer_index,int milliseconds){
 //	conversion(timer_index, milliseconds);
-  if(timer_index < 4 && timer_index >= 0){
-    initialize_timers();
-    timer_start(timer_index);
-    set_background_load_value(timer_index, milliseconds);
-    set_periodic_mode(timer_index);
-    enable_timer_interrupt(timer_index);     
-   // return 0;
-  }
- // return -1;
+	if(timer_index < 4 && timer_index >= 0){
+		//initialize_timers();
+		// One-shot
+		/*timer_pointers[timer_index]->timer_load_value = milliseconds;
+		timer_pointers[timer_index]->control = 0x21;
+		timer_pointers[timer_index]->control |= 1<<7;*/
+		set_background_load_value(timer_index, milliseconds);
+		set_periodic_mode(timer_index);
+		enable_timer_interrupt(timer_index);     
+		timer_start(timer_index);
+		// return 0;
+	}
+	// return -1;
 
 //just testing code
 /*while(1){
-                os_printf("\n%d",get_current_timer_value(1));
-                if(get_current_timer_value(1)==0){
-                        os_printf("\nInterrupt");
-                        //i--;
-                }
-        }*/
+  os_printf("\n%d",get_current_timer_value(1));
+  if(get_current_timer_value(1)==0){
+  os_printf("\nInterrupt");
+  //i--;
+  }
+  }*/
 	return 0;
 }
 
+void simple_timer_handler() {
+	os_printf("Simple timer handler called!\n");
+	while(1);
+}
+
 void timer_test(){
+	//asm volatile("cpsie if");
+	//mmio_write(PIC_ADDRESS+0x10, 1<<4);
+
+	//mmio_write(VIC_INT_ENCLEAR, 0xFFFFFFFF);
+	//mmio_write(VIC_INT_ENCLEAR, 0x0);
+	os_printf("int enclear: %X %X\n", VIC_INT_ENCLEAR, PIC_ADDRESS);
+
+	enable_interrupt(ALL_INTERRUPT_MASK);
+
+	interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
+	tmr_handler->handler = simple_timer_handler;
+	os_printf("fn ptr: %X\n", simple_timer_handler);
+	register_interrupt_handler(4, tmr_handler);
+
+	os_printf("FIQ status: %X\n", mmio_read(VIC_FIQ_STATUS));
 	initialize_timers();
-	start_timer_interrupts(1,5);
-	print_control_status(1);
-		
+	start_timer_interrupts(0,6000);
+	//print_control_status(1);
+
+	// Wait forever...
+	os_printf("\n");
+	int cnt = 0;
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	while (!(timer_pointers[0]->masked_interrupt_status&1)) {
+		cnt++;
+		//os_printf("%X\n", timer_pointers[1]->timer_actual_value);
+		int i;
+		for (i=0; i<1000; i++);
+	}
+	os_printf("%d\n", cnt);
+	os_printf("%X\n", mmio_read(PIC_ADDRESS+0x8));
+	os_printf("%X\n", mmio_read(VIC_IRQ_STATUS));
+	os_printf("%X\n", mmio_read(VIC_FIQ_STATUS));
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
+	while(1);
+
 	return;
-  }
+}
