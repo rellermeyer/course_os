@@ -582,10 +582,9 @@ unsigned int rand()
 }
 
 uint32_t kthr_create(kthread_callback_handler cb_handler){
-	DEBUG("[klibc.c] kthr_create - start\n");
+	static int priority = 0;
     kthread_handle * kthread = kthread_create(cb_handler);
-    DEBUG("[klibc.c] kthr_create - mid\n");
-    return sched_create_task_from_kthread(kthread, 0);
+    return sched_create_task_from_kthread(kthread, --priority);
 }
 
 uint32_t kthr_start(uint32_t tid){

@@ -5,6 +5,7 @@
 #include "../include/linked_list.h"
 #include "../include/array_list.h"
 #include "../include/hash_map.h"
+#include "../include/jump.h"
 #include "../include/kthreads.h"
 
 #define MAX_TASKS 100   // in the future, cap will be removed
@@ -195,6 +196,20 @@ void sched_waittid(uint32_t tid) {
 	}
 }
 
+void __sched_print_queues() {
+	int i;
+	DEBUG("active_tasks: [ ");
+	for (i = 0; i < prq_count(active_tasks); i++)
+		DEBUG("%d ", ((sched_task* )prq_get(active_tasks, i)->data)->tid);
+	DEBUG("]\n");
+	DEBUG("inactive_tasks: [ ");
+	for (i = 0; i < prq_count(inactive_tasks); i++)
+		DEBUG("%d ", ((sched_task* )prq_get(inactive_tasks, i)->data)->tid);
+	DEBUG("]\n");
+}
+
+jmp_buf start_buf;
+int running = 0;
 void __sched_dispatch() {
 	// prevent interrupts while handling another interrupt
 	__sched_pause_timer_irq();
@@ -202,123 +217,68 @@ void __sched_dispatch() {
 	// use the kernel memory
 	vm_use_kernel_vas();
 
+	if (active_task) {
+		if (IS_KTHREAD(active_task)) {
+			if (kthread_save_state(AS_KTHREAD(active_task))) {
+				DEBUG("Kthread state loaded\n");
+				return;
+			}
+
+			DEBUG("Kthread state saved\n");
+			prq_enqueue(active_tasks, active_task->node);
+		}
+	}
+
+	if (!running) {
+		if (jmp_set(&start_buf)) {
+			running = 0;
+			DEBUG("Finished current tasks\n");
+			return;
+		}
+		DEBUG("Saving resume state\n");
+		running = 1;
+	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0 ){
+		DEBUG("Finished tasks - jumping back\n");
+		jmp_goto(&start_buf, 5);
+	}
+
+	// add task from inactive -> active
 	if (prq_count(active_tasks) < MAX_ACTIVE_TASKS) {
 		if (prq_count(inactive_tasks) > 0) {
 			prq_enqueue(active_tasks, prq_dequeue(inactive_tasks)); // add to active_tasks if the task
 		}
 	}
 
+	__sched_print_queues();
+
+	// if queue is empty don't dispatch anything
 	if (prq_count(active_tasks) == 0) {
 		__sched_resume_timer_irq();
 		return;
 	}
 
-	int i;
-	DEBUG("active_tasks: [ ");
-	for (i = 0; i < prq_count(active_tasks); i++) {
-		DEBUG("%d ", ((sched_task* )prq_get(active_tasks, i)->data)->tid);
-	}
-	DEBUG("]\n");
+	// logging
+	// FIXME ensure that another task is running if priorities are the same
+	active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 
-	DEBUG("inactive_tasks: [ ");
-	for (i = 0; i < prq_count(inactive_tasks); i++) {
-		DEBUG("%d ", ((sched_task* )prq_get(inactive_tasks, i)->data)->tid);
-	}
-	DEBUG("]\n");
+	DEBUG("active_task id: %d\n", active_task->tid);
 
-	sched_task * last_task;
-
-	// check if there is active task
-	if (active_task) {
-		last_task = active_task;
-	} else {
-		prq_node * node = prq_peek(active_tasks);
-		last_task = (sched_task*) node->data;
-	}
-
-	DEBUG("Last task %d has state %d\n", last_task->tid, last_task->state);
-
-	switch (last_task->state) {
-		case TASK_STATE_INACTIVE: {
-			active_task = last_task;
-			last_task->state = TASK_STATE_ACTIVE;
-
-			DEBUG("Starting task %d\n", last_task->tid);
-
-			if (IS_PROCESS(last_task)) {
-				vm_enable_vas(AS_PROCESS(last_task)->stored_vas);
-				__sched_resume_timer_irq();
-				execute_process_no_vas(AS_PROCESS(last_task));
-			} else if (IS_KTHREAD(last_task)) {
-				kthread_execute(AS_KTHREAD(last_task));
-			}
-
-			__sched_pause_timer_irq();
-			__sched_remove_task(last_task);
-
-			// NOTE next interrupt will get the start the process
-
-			break;
-		}
-		case TASK_STATE_ACTIVE: {
-			if (prq_count(active_tasks) > 1) {
-				if (active_task) {
-					prq_remove(active_tasks, active_task->node);
-					prq_enqueue(active_tasks, active_task->node);
-				}
-
-				sched_task * next_task =
-						(sched_task*) prq_peek(active_tasks)->data;
-
-				DEBUG("Next task %d\n", next_task->tid);
-
-				if (next_task == active_task) {
-					break;
-				}
-
-				if (active_task) {
-					// old task
-					if (IS_PROCESS(active_task)) {
-						if (active_task == next_task) {
-							vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-							break;
-						}
-
-						save_process_state(AS_PROCESS(last_task)->PID);
-					} else if (IS_KTHREAD(active_task)) {
-						if (active_task == next_task) {
-							break;
-						}
-
-						DEBUG("Saving task state %d\n", active_task->tid);
-
-						kthread_save_state(AS_KTHREAD(active_task));
-					}
-				}
-
-				active_task = next_task;
-
-				// new task
-				if (IS_PROCESS(active_task)) {
-					vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-					__sched_emit_messages();
-					load_process_state(AS_PROCESS(active_task)->PID); // continue  with the next process
-				} else if (IS_KTHREAD(active_task)) {
-					// __sched_emit_messages();
-					if (next_task->state == TASK_STATE_INACTIVE) {
-						next_task->state = TASK_STATE_ACTIVE;
-						DEBUG("Starting task %d\n", next_task->tid);
-						kthread_execute(AS_KTHREAD(next_task));
-						__sched_remove_task(next_task);
-					} else if (active_task->state == TASK_STATE_ACTIVE) {
-						kthread_load_state(AS_KTHREAD(active_task));
-					}
-				}
-			}
-			break;
+	if (IS_KTHREAD(active_task)) {
+		if (active_task->state == TASK_STATE_ACTIVE) {
+			DEBUG("Loading state\n");
+			kthread_load_state(AS_KTHREAD(active_task), 5);
+		} else if (active_task->state == TASK_STATE_INACTIVE) {
+			active_task->state = TASK_STATE_ACTIVE;
+			DEBUG("Executing\n");
+			kthread_execute(AS_KTHREAD(active_task));
+		} else {
+			WARN("Task %d has unexpected state %d", active_task->tid,
+					active_task->state);
 		}
 	}
 
+	__sched_remove_task(active_task);
+	__sched_dispatch();
 	__sched_resume_timer_irq();
 }
 
@@ -554,5 +514,6 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
 
 uint32_t sched_yield() {
 	__sched_dispatch();
+
 	return STATUS_OK;
 }

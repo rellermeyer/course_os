@@ -46,8 +46,21 @@ uint32_t handler0(uint32_t pid) {
 	return 0;
 }
 
+uint32_t handler0_b(uint32_t pid) { // 12
+	INFO("handler1\n");
+	return 0;
+}
+
+uint32_t handler0_a(uint32_t pid) { // 11
+	INFO("handler0-start\n");
+	kthr_start(kthr_create(&handler0_b));
+	sched_yield();
+	INFO("handler0-end\n");
+	return 0;
+}
+
 int test_kthr_1() {
-	kthr_start(kthr_create(&handler0));
+	kthr_start(kthr_create(&handler0_a));
 	sched_yield();
 	return TEST_OK;
 }
