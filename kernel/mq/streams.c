@@ -14,35 +14,33 @@ uint32_t next;
 
 void q_create(char q_name[])
 {
-	struct queue *q = 0x0;
+    struct queue *q = 0x0;
     if (initialized < 0){
         initialized = 0;
     }
 
-	if (initialized == 0) {
-		initialized = 1;
-		q_table = ht_alloc(5000);
-		ht_add(q_table, q_name, (void*)q);
-	}else{
-		ht_add(q_table, q_name, (void*)q);
-	}
-
-
+    if (initialized == 0) {
+        initialized = 1;
+        q_table = ht_alloc(5000);
+        ht_add(q_table, q_name, (void*)q);
+    }else{
+        ht_add(q_table, q_name, (void*)q);
+    }
 
     //implement the below if we increase # of subscribers
-//	if (!os_strcmp(options,"rr")) {
-//		q->options = options;
-//	} else if(!os_strcmp(options,"broadcast")) {
-//		q->options = options;
-//	} else {
-//	}
+//  if (!os_strcmp(options,"rr")) {
+//      q->options = options;
+//  } else if(!os_strcmp(options,"broadcast")) {
+//      q->options = options;
+//  } else {
+//  }
 }
 
 uint32_t q_open(char q_name[])
 {
-	if (initialized == 0) {
+    if (initialized == 0) {
         return 0x0;
-	}
+    }
 
     //change this hack. Why isn't it initialized to 0 already?
     if (next < 0 || next > 5000){
@@ -54,30 +52,30 @@ uint32_t q_open(char q_name[])
     uint32_t qd = next;
     next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
     
-	return qd;
+    return qd;
 }
 // Adding message to queue
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
 {
-	int kilo = 1024;
-	if (datalen > 128 * kilo) {
-		//TODO: throw an error
-        return 0x0;
-	} 
+    //int kilo = 1024;
+    // if (datalen > 128 * kilo) {
+    //  //TODO: throw an error
+ //        return 0x0;
+    // } 
 
-	// TODO: Copy the data? Don't copy the data? Copy-on-write the data?
-	struct queue *q = q_map[qd];
+    // TODO: Copy the data? Don't copy the data? Copy-on-write the data?
+    struct queue *q = q_map[qd];
     q->data = data;
-	q->datalen = datalen;
+    q->datalen = datalen;
     //Accessing elements of q throws an error
-	return 0;
+    return 0;
 }
 
 uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, uint32_t datalength), void *userdata)
 {
     struct subscriber *user = 0x0;
     user->userdata = userdata;
-	struct queue *q = q_map[qd];
+    struct queue *q = q_map[qd];
     q->subscriber = user;
     q->receiver = receiver; 
     return 0;
@@ -85,9 +83,29 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, u
 
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
-
+    //get exact available space
+    void *startingPoint = data;
+    
+     // print_uart0("printing startingPoint below\n");
+    print_uart0(startingPoint);
+    // uint32_t spaceAvail = spaceAvailable();
+    uint32_t spaceAvail = 8;
     struct queue *q = q_map[qd];
-    q->receiver(q->subscriber->userdata, data, datalength);
+    while (datalength > spaceAvail) {
+        // print_uart0(startingPoint);
+        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        
+        q->receiver(q->subscriber->userdata, startingPoint, spaceAvail);
+        datalength = datalength - spaceAvail;
+        print_uart0("in while loop\n");
+        // int i;
+        // char *s = (char*)startingPoint;
+        // for (i=0; i< spaceAvail; i++) {
+        //     print_char_uart0(s[i]);
+        // }
+    } 
+    //TODO: delete data after sending
+    
 }
 
 // block, waiting for a message from the queue
@@ -169,22 +187,22 @@ void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * d
 
 void sample_receiver(void *userdata, void *data, uint32_t datalength)
 {
-	int i;
-	char *s = (char*)data;
-	for (i=0; i<datalength; i++) {
-		print_char_uart0(s[i]);
-	}
+    int i;
+    char *s = (char*)data;
+    for (i=0; i<datalength; i++) {
+        print_char_uart0(s[i]);
+    }
 }
 
 void q_test()
 {
     q_create("printf");
-	int qd = q_open("printf");
-	q_subscribe(qd, sample_receiver, 0x0);
+    int qd = q_open("printf");
+    q_subscribe(qd, sample_receiver, 0x0);
 
-	print_uart0("This is a test.\n");
-	os_printf("This is a 2nd test.\n");
-	return;
+    print_uart0("This is a test.\n");
+    os_printf("This is a 2nd test.\n");
+    return;
 
     // os_printf_v2("this is a test\n");
     // q_create("my_q");
