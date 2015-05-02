@@ -84,6 +84,7 @@ static void argparse_parse(char *cmdline)
 			int storage2 = 0;
 			
 			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
+				os_printf("argparse.c: allocating page %d of %d\n", i+1, (len/BLOCK_SIZE) + 1);
 				uint32_t *v = start + (i* BLOCK_SIZE);
 				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
 				
