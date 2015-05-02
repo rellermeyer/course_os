@@ -179,7 +179,7 @@ int print_control_status(int timer_index){
 
 void timer_start(int timer_index) {
   os_printf("Timer driver loaded\n");
-  //set_prescale(timer_index,2);
+  set_prescale(timer_index,2);
   enable_timer(timer_index);
   os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
   os_printf("control value:%x\n", timer_pointers[timer_index]->control);
@@ -200,22 +200,31 @@ int start_timer_interrupts(int timer_index,int milliseconds){
     initialize_timers();
     timer_start(timer_index);
     set_background_load_value(timer_index, milliseconds);
-    set_periodic_mode(timer_index);
+	set_free_running_mode(1);
+  //  set_periodic_mode(timer_index);
     enable_timer_interrupt(timer_index);     
    // return 0;
   }
  // return -1;
 
 //just testing code
-/*while(1){
+while(get_current_timer_value(1)){
                 os_printf("\n%d",get_current_timer_value(1));
-                if(get_current_timer_value(1)==0){
+   /*             if(get_current_timer_value(1)==0){
+                        os_printf("\nInterrupt");
+                        //i--;
+                }*/
+
+        }
+          if(get_current_timer_value(1)==0){
                         os_printf("\nInterrupt");
                         //i--;
                 }
-        }*/
+
 	return 0;
 }
+
+
 
 void timer_test(){
 	initialize_timers();
