@@ -19,6 +19,7 @@
 #define SAFE_NICE(n) MAX(MIN(MAX_NICENESS, n), n)
 #define KTHREAD 0
 #define PROCESS 1
+#define MAX_TASK_MSG_SPACE 2048 // bytes
 
 #define AS_PROCESS(a) ((pcb*) a->task)
 #define AS_KTHREAD(a) ((kthread_handle*) a->task)
@@ -149,10 +150,11 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
 	task->type = type;
 	task->state = TASK_STATE_NONE;
 	task->node = 0;
-	task->parent_tid = 0;
+	task->parent_tid = active_task ? active_task->tid : 0;
 	task->children_tids = arrl_create();
 	task->message_queue = llist_create();
 	task->cb_handler = 0;
+	task->available_space = MAX_TASK_MSG_SPACE;
 
 	hmap_put(all_tasks_map, task->tid, task);
 
@@ -203,11 +205,11 @@ void __sched_print_queues() {
 	int i;
 	DEBUG("active_tasks: [ ");
 	for (i = 0; i < prq_count(active_tasks); i++)
-		DEBUG("%d ", ((sched_task* )prq_get(active_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task* ) prq_get(active_tasks, i)->data)->tid);
 	DEBUG("]\n");
 	DEBUG("inactive_tasks: [ ");
 	for (i = 0; i < prq_count(inactive_tasks); i++)
-		DEBUG("%d ", ((sched_task* )prq_get(inactive_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task* ) prq_get(inactive_tasks, i)->data)->tid);
 	DEBUG("]\n");
 }
 
@@ -267,11 +269,13 @@ void __sched_dispatch() {
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			DEBUG("Loading state\n");
+			__sched_emit_messages();
 			jmp_goto(&AS_KTHREAD(active_task)->jmp_buffer, 5);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
 			DEBUG("Executing\n");
-			kthread_execute(AS_KTHREAD(active_task));
+			__sched_emit_messages();
+			kthread_execute(AS_KTHREAD(active_task), active_task->parent_tid, active_task->tid);
 		} else {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
@@ -284,16 +288,20 @@ void __sched_dispatch() {
 	__sched_resume_timer_irq();
 }
 
+// FIXME stack will be that of the kernel; protect it
 // issue messages for the active task
 void __sched_emit_messages() {
 	if (active_task->cb_handler) {
 		sched_message_chunk * chunk;
 		while ((chunk = llist_dequeue(active_task->message_queue)) != 0) {
-			active_task->cb_handler(chunk->src_pid, chunk->event, chunk->data,
-					chunk->chunk_length, chunk->remain_length);
+			active_task->cb_handler(chunk->src_tid, chunk->event, chunk->data,
+					chunk->length);
 			if (chunk) {
+				kfree(chunk->data);
 				kfree(chunk);
 			}
+			sched_task * sending_task = hmap_get(all_tasks_map, chunk->src_tid);
+			sending_task->available_space -= chunk->length;
 		}
 	}
 }
@@ -458,8 +466,43 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 	return STATUS_OK;
 }
 
+uint32_t sched_get_message_space() {
+	if (active_task) {
+		return active_task->available_space;
+	}
+
+	return 0;
+}
+
+// contract: callee must delete the data that is being passed
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
 		int len) {
+
+	sched_task * task = hmap_get(all_tasks_map, dest_pid);
+
+	if ((active_task->available_space - len) < 0) {
+		return STATUS_FAIL;
+	}
+
+	if (task) {
+		active_task->available_space -= len;
+		if (IS_PROCESS(active_task)) {
+
+		} else if (IS_KTHREAD(active_task)) {
+			if (task->message_queue) {
+				char * data_cpy = kmalloc(len);
+				sched_message_chunk * chunk = kmalloc(
+						sizeof(sched_message_chunk));
+				os_memcpy((uint32_t*) data, (uint32_t*) data_cpy, len);
+				chunk->data = data_cpy;
+				chunk->length = len;
+				chunk->event = event;
+				chunk->src_tid = active_task ? active_task->tid : 0;
+				llist_enqueue(task->message_queue, chunk);
+			}
+		}
+	}
+
 	/*sched_task * dest_task;
 
 	 if (!(dest_task = hmap_get(all_tasks_map, dest_pid))) {
@@ -497,10 +540,10 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
 	 // copy into kernel stack first.
 	 sched_message_chunk * chunk = kmalloc(sizeof(sched_message_chunk));
 	 chunk->data = task_mem_data_cpy;
-	 chunk->chunk_length = cpy_len;
+	 chunk->length = cpy_len;
 	 chunk->remain_length = len;
 	 chunk->event = event;
-	 chunk->src_pid = active_task ? active_task->pcb->PID : 0;
+	 chunk->src_tid = active_task ? active_task->pcb->PID : 0;
 
 	 llist_enqueue(dest_task->message_queue, chunk);
 	 }

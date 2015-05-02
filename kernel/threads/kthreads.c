@@ -20,11 +20,6 @@ kthread_handle* kthread_create(kthread_callback_handler cb_handler) {
 	return kthread;
 }
 
-uint32_t kthread_start(kthread_handle * kthread) {
-	kthread->cb_handler();
-	return STATUS_OK;
-}
-
 uint32_t kthread_free(kthread_handle * kthread) {
 	if (kthread) {
 		kfree(kthread);
@@ -34,16 +29,15 @@ uint32_t kthread_free(kthread_handle * kthread) {
 	return STATUS_FAIL;
 }
 
-uint32_t kthread_execute(kthread_handle * kthread) { /// A
+uint32_t kthread_execute(kthread_handle * kthread, uint32_t parent_tid, uint32_t tid) { /// A
 
 	uint32_t stack_start = (uint32_t) (kthread->stack - (128 * sizeof(double) - 1));
 
-	asm volatile("MOV r2, %0"::"r"(stack_start):);
-	asm volatile("MOV r13, r2":::);
+	asm volatile("MOV r13, %0"::"r"(stack_start));
 
 	// ignore the base pointer
 
-	kthread->cb_handler();
+	kthread->cb_handler(parent_tid, tid);
 
 	return STATUS_OK;
 }

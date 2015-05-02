@@ -602,3 +602,11 @@ uint32_t kthr_wait(uint32_t tid){
 uint32_t kthr_yield(uint32_t tid){
     return sched_yield(tid);
 }
+
+uint32_t kthr_register_message_callback(sched_msg_callback_handler cb_handler){
+	return sched_register_callback_handler(cb_handler);
+}
+
+uint32_t kthr_deregister_message_callback(){
+	return sched_deregister_callback_handler();
+}

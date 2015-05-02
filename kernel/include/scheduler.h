@@ -17,13 +17,14 @@
 #include "array_list.h"
 #include "linked_list.h"
 
-typedef void (*sched_msg_callback_handler)(uint32_t src_pid, uint32_t event, char * data, int chunk_length, int remain_length);
+typedef void (*sched_msg_callback_handler)(uint32_t src_tid, uint32_t event, char * data, int length);
 
 typedef struct sched_task {
     uint32_t parent_tid;
     uint32_t tid;
     uint32_t state;
     uint32_t type;
+    int available_space;
     int niceness;
     void * task;
     prq_node * node;
@@ -33,8 +34,8 @@ typedef struct sched_task {
 } sched_task;
 
 typedef struct sched_message_chunk {
-    uint32_t src_pid;
-    int chunk_length;
+    uint32_t src_tid;
+    int length;
     int remain_length;
     uint32_t event;
     char * data;
@@ -54,5 +55,6 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int 
 uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler);
 uint32_t sched_deregister_callback_handler();
 uint32_t sched_yield();
+uint32_t sched_get_message_space();
 
 #endif /* KERNEL_INCLUDE_SCHEDULER_H_ */
