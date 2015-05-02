@@ -104,7 +104,7 @@ int kdelete(char* filepath); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
 int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
 int kls(char* filepath); //shows contents of one directory
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size);
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat);
 int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
