@@ -106,12 +106,27 @@ void start2(uint32_t *p_bootargs)
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
-	run_kthr_tests();
+
+	int sp, bp;
+	asm volatile("MOV %0, r13":"=r"(sp)::);
+	asm volatile("MOV %0, r11":"=r"(bp)::);
+
+	LOG("SP: %X, BP: %X\n", sp, bp);
+
+	// run_kthr_tests();
+
+	asm volatile("MOV %0, r13":"=r"(sp)::);
+	asm volatile("MOV %0, r11":"=r"(bp)::);
+
+	LOG("SP: %X, BP: %X\n", sp, bp);
 
 	int retval;
 	kfs_init(0,0);
 
-	run_fs_tests();
+	pcb *test= process_create((uint32_t*) 0x20000);
+	execute_process(test);
+
+//	run_fs_tests();
 	while(1);
 
 	//asm volatile("swi 1");

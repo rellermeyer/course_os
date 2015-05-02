@@ -12,6 +12,10 @@
 #include "file.h"
 #include "process.h"
 
+#define ENABLE_MAX_INTERRUPT
+#define ENABLE_MAX_INTERRUPT_COUNT 5
+int interrupt_count = 0;
+
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
@@ -53,6 +57,9 @@ void reset_handler(void) {
 }
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
+#ifdef ENABLE_MAX_INTERRUPT
+	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+#endif
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
@@ -233,10 +240,6 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	vm_enable_vas(prev_vas);
 	}
 }
-
-#define ENABLE_MAX_INTERRUPT
-#define ENABLE_MAX_INTERRUPT_COUNT 5
-int interrupt_count = 0;
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
 #ifdef ENABLE_MAX_INTERRUPT

@@ -277,6 +277,7 @@ void __sched_dispatch() {
 		}
 	}
 
+	// FIXME jump to main and remove
 	__sched_remove_task(active_task);
 	__sched_dispatch();
 	__sched_resume_timer_irq();
