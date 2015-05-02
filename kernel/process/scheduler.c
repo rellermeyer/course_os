@@ -25,11 +25,13 @@
 #define IS_PROCESS(a) (a->type == PROCESS)
 #define IS_KTHREAD(a) (a->type == KTHREAD)
 
-static char last_err[200];
-static prq_handle * inactive_tasks;
-static prq_handle * active_tasks;
-static sched_task * active_task;
-static hmap_handle * all_tasks_map;
+char last_err[200];
+prq_handle * inactive_tasks;
+prq_handle * active_tasks;
+sched_task * active_task;
+hmap_handle * all_tasks_map;
+jmp_buf start_buf;
+uint32_t running;
 
 // NOTE
 // scheduler logic only. not tested
@@ -84,6 +86,7 @@ uint32_t sched_init() {
 	active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
 	all_tasks_map = hmap_create();
 	active_task = 0;
+	running = 0;
 
 	__sched_register_timer_irq();
 
@@ -208,8 +211,6 @@ void __sched_print_queues() {
 	DEBUG("]\n");
 }
 
-jmp_buf start_buf;
-int running = 0;
 void __sched_dispatch() {
 	// prevent interrupts while handling another interrupt
 	__sched_pause_timer_irq();
@@ -219,7 +220,7 @@ void __sched_dispatch() {
 
 	if (active_task) {
 		if (IS_KTHREAD(active_task)) {
-			if (kthread_save_state(AS_KTHREAD(active_task))) {
+			if (jmp_set(&AS_KTHREAD(active_task)->jmp_buffer)) {
 				DEBUG("Kthread state loaded\n");
 				return;
 			}
@@ -237,7 +238,7 @@ void __sched_dispatch() {
 		}
 		DEBUG("Saving resume state\n");
 		running = 1;
-	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0 ){
+	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
 		DEBUG("Finished tasks - jumping back\n");
 		jmp_goto(&start_buf, 5);
 	}
@@ -266,7 +267,7 @@ void __sched_dispatch() {
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			DEBUG("Loading state\n");
-			kthread_load_state(AS_KTHREAD(active_task), 5);
+			jmp_goto(&AS_KTHREAD(active_task)->jmp_buffer, 5);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
 			DEBUG("Executing\n");

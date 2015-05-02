@@ -598,3 +598,7 @@ uint32_t kthr_kill(uint32_t tid){
 uint32_t kthr_wait(uint32_t tid){
     return sched_waittid(tid);
 }
+
+uint32_t kthr_yield(uint32_t tid){
+    return sched_yield(tid);
+}
