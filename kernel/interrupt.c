@@ -69,6 +69,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 void handle_irq_interrupt(int interrupt_vector){
 	os_printf("handling interrupt %d\n", interrupt_vector);
 	// go to handler routine
+	os_printf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
 	handlers[interrupt_vector]->handler((void *) interrupt_vector);
 	// ok interrupt handled, clear it
 	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
@@ -79,6 +80,16 @@ void handle_irq_interrupt(int interrupt_vector){
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
+	int cpsr = get_proc_status();
+	os_printf("cpsr=%X\n", cpsr);
+	//restore_proc_status(cpsr);
+
+	/*int x = mmio_read(VIC_INT_ENABLE);
+	os_printf("VIC INT ENABLE = %X\n", x);
+	x |= (1<<4);
+	mmio_write(VIC_INT_ENABLE, x);*/
+	//hw_interrupt_enable(4);
+
 	// enable interrupt on the core
 	switch(mask) {
 		case IRQ_MASK:
@@ -152,10 +163,11 @@ void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
         function=callback_function;
         start_timer_interrupts(0,time);
 }
+
 void timer_interrupt_handler(){
-os_printf("hello I'm interrupting");
-//function(args);
+	os_printf("hello I'm interrupting");
 }
+
 // Create the handler
 void _schedule_register_timer_irq(){
         interrupt_handler_t *timer;
@@ -163,5 +175,3 @@ void _schedule_register_timer_irq(){
         register_interrupt_handler(4,timer);
         initialize_timers();
 }
-
-
