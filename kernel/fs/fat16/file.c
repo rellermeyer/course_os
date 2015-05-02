@@ -959,11 +959,11 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file] = new_indirect_block_loc;
 						cur_inode->indirect_blocks_in_file++;
 
-						if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
+						/*if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
 							//TODO: implement eviction policy...add the cur_inode to the cache:
 						}else{
 							*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
-						}
+							}*/
 
 						void *buf = kmalloc(BLOCKSIZE);
 						os_memcpy(new_indirect_block, buf, sizeof(struct indirect_block));
