@@ -19,7 +19,7 @@ void addFile(char *filename, char *dst_filename)
 
 int main(int argc, char **argv)
 {
-	kfs_init(0,0);
+	kfs_init(0,0,1);
 
 	// Create a file, I guess?
 	kclose(kcreate("/foobar", 'r', 0));
@@ -54,6 +54,11 @@ int main(int argc, char **argv)
 		addFile(buf, buf2);
 	}
 	closedir(dir);
+
+	// Try reading something....
+	fd = kopen("/hello", 'r');
+	printf("fd: %d\n", fd);
+	kclose(fd);
 
 	return 0;
 }
