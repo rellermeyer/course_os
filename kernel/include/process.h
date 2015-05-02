@@ -172,6 +172,8 @@ uint32_t save_process_state(uint32_t PID);
 uint32_t print_process_state(uint32_t PID);
 
 void setup_process_vas(pcb* pcb_p);
+void init_proc_heap(pcb* pcb_p);
+void init_proc_stack(pcb* pcb_p);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();

@@ -223,11 +223,9 @@ void __sched_dispatch() {
 	if (active_task) {
 		if (IS_KTHREAD(active_task)) {
 			if (jmp_set(&AS_KTHREAD(active_task)->jmp_buffer)) {
-				DEBUG("Kthread state loaded\n");
 				return;
 			}
 
-			DEBUG("Kthread state saved\n");
 			prq_enqueue(active_tasks, active_task->node);
 		}
 	}
@@ -235,13 +233,10 @@ void __sched_dispatch() {
 	if (!running) {
 		if (jmp_set(&start_buf)) {
 			running = 0;
-			DEBUG("Finished current tasks\n");
 			return;
 		}
-		DEBUG("Saving resume state\n");
 		running = 1;
 	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
-		DEBUG("Finished tasks - jumping back\n");
 		jmp_goto(&start_buf, 5);
 	}
 
@@ -264,16 +259,12 @@ void __sched_dispatch() {
 	// FIXME ensure that another task is running if priorities are the same
 	active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 
-	DEBUG("active_task id: %d\n", active_task->tid);
-
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
-			DEBUG("Loading state\n");
 			__sched_emit_messages();
 			jmp_goto(&AS_KTHREAD(active_task)->jmp_buffer, 5);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
-			DEBUG("Executing\n");
 			__sched_emit_messages();
 			kthread_execute(AS_KTHREAD(active_task), active_task->parent_tid, active_task->tid);
 		} else {
@@ -328,8 +319,6 @@ uint32_t sched_start_task(uint32_t tid) {
 
 		prq_enqueue(inactive_tasks, new_node);
 
-		DEBUG("Added task %d\n", task->tid);
-
 		if (IS_PROCESS(active_task)) {
 			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
 		} else if (IS_KTHREAD(active_task)) {
@@ -358,15 +347,13 @@ uint32_t sched_remove_task(uint32_t tid) {
 
 // contract
 // --------
-// must disable timer_interrupt
+// must disable timer_interruptU
 uint32_t __sched_remove_task(sched_task * task) {
 	if (task == NULL) {
 		return STATUS_FAIL;
 	}
 
 	uint32_t state = task->state;
-
-	DEBUG("Removing task %d\n", task->tid);
 
 	if (active_task == task) {
 		active_task = 0;
@@ -401,7 +388,6 @@ uint32_t __sched_remove_task(sched_task * task) {
 				sched_task * child_task = (sched_task*) hmap_get(all_tasks_map,
 						(uint32_t) arrl_get(task->children_tids, i));
 				if (child_task) {
-					DEBUG("Removing child_task %d\n", child_task->tid);
 					__sched_remove_task(child_task);
 				}
 			}

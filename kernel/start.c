@@ -40,6 +40,7 @@
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
 #include "tests/test_kthreads.h"
+#include "tests/test_process.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -111,6 +112,9 @@ void start2(uint32_t *p_bootargs)
 	int retval;
 	kfs_init(0,0,0);
 
+	init_all_processes();
+	run_prcs_tests();
+
 	//run_fs_tests();
 
 	// int fd = kopen("/hello", 'r');
@@ -131,8 +135,7 @@ void start2(uint32_t *p_bootargs)
 
 	//assert(1==2 && "Test assert please ignore");
 
-	init_all_processes();
-	argparse_process(p_bootargs);
+// 	argparse_process(p_bootargs);
 	
 
 	print_uart0("done parsing atag list\n");

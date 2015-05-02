@@ -15,7 +15,7 @@ GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 #OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/hashtable.o mq/streams.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
 #>>>>>>> cadaad366e2bbe767a11ed75d5cac98d84f0f055
 
-OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o process/scheduler.o data_structures/array_list.o data_structures/linked_list.o threads/kthreads.o tests/test_kthreads.o process/jump.o
+OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o process/scheduler.o data_structures/array_list.o data_structures/linked_list.o threads/kthreads.o tests/test_kthreads.o process/jump.o tests/test_process.o
 
 all: flash.bin card.sd
 

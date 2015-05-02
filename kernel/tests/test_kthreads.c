@@ -46,34 +46,29 @@
 //	return 0;
 //}
 
+int msg_received;
 uint32_t handler0_b(uint32_t parent_tid, uint32_t tid) { // 12
-	INFO("handler0_b-start parent-tid %d, tid: %d\n", parent_tid, tid);
 	char * msg = "whatsup!!!\0";
 	uint32_t msg_len = 11;
 	uint32_t event_id = 1;
 	if(sched_get_message_space() >= msg_len){
 		if(sched_post_message(parent_tid, event_id, msg, msg_len)){
-			LOG("Message fail\n");
-		} else {
-			LOG("Message sent!\n");
+			ERROR("Message fail\n");
 		}
 	}
-
-	INFO("handler0_b\n");
 
 	return 0;
 }
 
 uint32_t handler0_a_message_handler(uint32_t src_tid, uint32_t event, char * data, int length){
-	LOG("Message received from %d - %s\n", src_tid, data);
+	DEBUG("Message received from %d - %s\n", src_tid, data);
+	msg_received++;
 }
 
 uint32_t handler0_a(uint32_t parent_tid, uint32_t tid) { // 11
-	INFO("handler0-start parent-tid %d, tid: %d\n", parent_tid, tid);
 	sched_register_callback_handler(&handler0_a_message_handler);
 	kthr_start(kthr_create(&handler0_b));
 	kthr_yield();
-	INFO("handler0-end\n");
 	return 0;
 }
 
@@ -83,6 +78,8 @@ int test_kthr_1() {
 	asm volatile("MOV %0, r13":"=r"(sp_pre)::);
 	asm volatile("MOV %0, r11":"=r"(bp_pre)::);
 
+	msg_received = 0;
+
 	kthr_start(kthr_create(&handler0_a));
 	kthr_yield();
 
@@ -90,9 +87,10 @@ int test_kthr_1() {
 	asm volatile("MOV %0, r13":"=r"(sp_post)::);
 	asm volatile("MOV %0, r11":"=r"(bp_post)::);
 
-	if (sp_pre != sp_post || bp_pre != bp_post) {
+	if (sp_pre != sp_post || bp_pre != bp_post || msg_received != 1) {
 		ERROR("SP: %X, SP_AFTER: %X\n", sp_pre, sp_post);
 		ERROR("BP: %X, BP_AFTER: %X\n", bp_pre, bp_post);
+		ERROR("msg_received: %d", bp_pre, msg_received);
 		return TEST_FAIL;
 	}
 
