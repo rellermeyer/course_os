@@ -132,9 +132,6 @@ void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength)
         }
         reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
     }
-    // data is too big for buffer
-    else{
-    }
 }
 
 // attaches an asynchronous receiver to the reply
@@ -188,9 +185,11 @@ void q_test()
     os_printf("%s\n", (char*) test_q->data);
     uint32_t number = 0;
     uint32_t *sample_buffer = &number;
-    q_block_read(qd, *sample_buffer, 100);
+    q_create("printf_2");
+    int reply_qd = q_open("printf_2");
+    //q_block_read(qd, *sample_buffer, 100);
     // test buffer
-    os_printf("%s\n", (char*) sample_buffer);
+    //os_printf("%s\n", (char*) sample_buffer);
 
 
 	print_uart0("This is a test.\n");
