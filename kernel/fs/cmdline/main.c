@@ -1,8 +1,9 @@
 #include "file.h"
 #include<stdio.h>
 #include<dirent.h>
+#include<string.h>
 
-void addFile(const char *filename, const char *dst_filename)
+void addFile(char *filename, char *dst_filename)
 {
 	FILE *f = fopen(filename, "r");
 	kclose(kcreate(dst_filename, 'r', 0));
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
 		snprintf(buf2, 256, "/%s", entry->d_name);
 		addFile(buf, buf2);
 	}
-	closedir(entry);
+	closedir(dir);
 
 	return 0;
 }
