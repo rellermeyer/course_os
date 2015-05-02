@@ -4,6 +4,8 @@
 #include "klibc.h"
 #include "tests.h"
 #include "process.h"
+#include "file.h"
+
 
 static void argparse_parse(char *);
 
@@ -51,6 +53,7 @@ void atag_print(struct atag *t)
 
 static void argparse_parse(char *cmdline)
 {
+
 	char* token = os_strtok(cmdline, " ");
 
 	while (token != NULL)
@@ -63,15 +66,52 @@ static void argparse_parse(char *cmdline)
 			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
+
+
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
-			process_create((uint32_t*) start);
+
+			os_printf("START: %X \n", start+PROC_LOCATION);
+
+			int fd = kopen("/hello", 'r');
+			struct stats fstats;
+			start += PROC_LOCATION;
+			get_stats("/hello", &fstats);
+			 len = fstats.size;
+
+			int* location = start;
+			int storage2 = 0;
+			
+			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
+				uint32_t *v = start + (i* BLOCK_SIZE);
+				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
+				
+			}
+
+			int counter =0;
+			while(counter < len){
+				kread(fd, location, 4);
+				location +=1;
+				counter +=4;
+			}
+			
+			
+			pcb *test= process_create((uint32_t*) start);
+
+			
+			test->len = len;
+			test->start = start;
+			test->name = name;
+			setup_process_vas(test);
+			init_proc_stack(test);
+			init_proc_heap(test);
+
+			execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
 			os_printf("RUNNING TESTS\n");
-
 			os_printf("Running tests...\n");
 			Test *tests[2];
 			tests[0] = create_test("This passes", &test1);
@@ -141,4 +181,21 @@ int hex_value_of_character(char c)
 
 	// Return -1 if c was not a hex digit
 	return -1;
+}
+
+
+uint32_t round_up(uint32_t c){
+
+
+	c--;
+	c |= c >> 1;
+
+    c |= c >> 2;
+    c |= c >> 4;
+    c |= c >> 8;
+
+    c |= c >> 16;
+    c++;
+    return c;
+
 }

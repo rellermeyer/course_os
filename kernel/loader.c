@@ -37,6 +37,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
+	os_printf("This is the start of allocate_process_memory().\n All it loads the process RORW into Kernel Heap\n We don't want that.\n");	
 	os_size_t process_size = det_proc_size(h, ph);
 	void * process_mem = kmalloc_aligned(process_size, 4096);
 	void * current_pointer = process_mem;
@@ -70,10 +71,12 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	*      | ***** | <- process_mem	
 	*/
 	//Puts all the relevant segments into allocated region
-	int i = 0;
+
+	//TODO:4-23-15
+	
 	Boolean first_seg = TRUE;
 	uint32_t entry_point_offset = 0;
-	for(; i < (h->e_phnum); i++)
+	for(int i = 0;i < (h->e_phnum); i++)
         {
 		if(ph[i].p_type == PT_LOAD)
 		{
@@ -82,10 +85,12 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 			if(first_seg)
 			{
 				entry_point_offset = h->e_entry - ph[i].p_vaddr;
+				//os_printf("ENTRY POINT (e_entry): %X  P_VADDR: %X", h->e_entry, ph[i].p_vaddr);
+				//assert(1==2);
 				first_seg = FALSE;
 
-				os_printf("entry addr = %x\n", h->e_entry);
-				os_printf("prog header addr = %x\n", ph[i].p_vaddr);
+				//os_printf("entry addr = %x\n", h->e_entry);
+				//os_printf("prog header addr = %x\n", ph[i].p_vaddr);
 			}
 			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
@@ -99,19 +104,15 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
-	pcb_p->R13 = (uint32_t)current_pointer + 2*4096;
-	
-	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
-
-	pcb_p->R15 = (uint32_t)(entry_point_offset + process_mem); // set PC
+	// setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
 	//entry_point_offset = entry_point_elf - addr_first;			
-	//entry_point = process_mem + entry_point_offset	
+	//entry_point = process_mem + entry_point_offset
 }	
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
+Elf_Ehdr* load_file(pcb * pcb_p, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr)); // Get elf header
 	os_printf("elf header= %x\n", h);
@@ -119,18 +120,31 @@ uint32_t load_file(pcb * process_control_block, uint32_t * file_pointer)
 
 	if(i == -1) {
 		os_printf("File is Not an ELF File. Exiting\n");
-		return -1;
+		return 0;
 	}
 
 	if(h->e_phnum == 0) {
 		os_printf("No Program headers in ELF file. Exiting\n");
-		return -1;
+		return 0;
 	}
 	
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
+	Elf_Shdr * sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
+
+	//allocate pages for the read only segment
+
+	//allocate pages for text section
+
 	
-	allocate_process_memory(process_control_block, h, ph, file_pointer);
-	return 1;
+	//assert(1 == 2 && "load_file");
+
+	//read_section_header_table(h, sh, (uint32_t*)file_pointer);
+	// /vm_enable_vas(pcb_p->stored_vas);
+
+	//allocate_process_memory(pcb_p, h, ph, file_pointer);
+
+	//vm_use_kernel_vas();
+	return h;
 }
 

@@ -28,6 +28,7 @@
 #include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
+#include "include/open_table.h" //to initialize fs opentable
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
@@ -38,7 +39,6 @@
 #include "tests/test_hash_map.h"
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
-
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -101,11 +101,20 @@ void start2(uint32_t *p_bootargs)
 	///timer_test();
 /*	run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
-	run_mem_alloc_tests();
+	//run_mem_alloc_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
 */
+
+	//run_fs_tests();
+
+	// int fd = kopen("/hello", 'r');
+	// os_printf("fd: %d\n", fd);
+	// kclose(fd);
+
+	//while(1);
+
 	//asm volatile("swi 1");
 
 	/*
@@ -116,11 +125,11 @@ void start2(uint32_t *p_bootargs)
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
 
-	//test assert
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
 	argparse_process(p_bootargs);
+	
 
 	print_uart0("done parsing atag list\n");
 
