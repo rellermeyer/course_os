@@ -21,10 +21,10 @@ CFLAGS += -Wall
 #CFLAGS += -Werror
 CFLAGS += -g
 
-run: flash.bin card.sd
+run: flash.bin | card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
-run-debug: flash.bin card.sd
+run-debug: flash.bin | card.sd
 	${QEMU} -S -s -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 gdb:
@@ -52,10 +52,7 @@ kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
 
 kernel.bin: kernel.elf
-	dd if=/dev/zero of=kernel.bin bs=4k count=64
-	$(OBJCOPY) -O binary kernel.elf kernel2.bin
-	dd if=kernel2.bin of=kernel.bin conv=notrunc bs=4k
-	dd if=../user/hello/hello of=kernel.bin conv=notrunc bs=4k seek=16
+	$(OBJCOPY) -O binary kernel.elf kernel.bin
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
