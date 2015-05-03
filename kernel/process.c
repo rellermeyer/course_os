@@ -355,8 +355,7 @@ uint32_t process_execute(pcb* pcb_p) {
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 	process_load_state(pcb_p->PID);
-	while (1)
-		;
+	while (1);
 	return pcb_p->PID;
 }
 
@@ -450,7 +449,6 @@ void __process_init_stack(pcb * pcb_p) {
 
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
 		vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
-
 	}
 }
 

@@ -20,8 +20,6 @@ typedef struct kthread_handle {
     int stack_set;
     double stack[128];
 
-    jmp_buf jmp_buffer;
-
 } kthread_handle;
 
 kthread_handle* kthread_create(kthread_callback_handler cb_handler);

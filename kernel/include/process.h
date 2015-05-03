@@ -3,6 +3,7 @@
 #include "global_defs.h"
 #include <stdint.h>
 #include "vm.h"
+#include "jump.h"
 
 /* LOG:
  3/15: Initial skeleton and comments by Josh Guan.

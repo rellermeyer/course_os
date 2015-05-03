@@ -29,6 +29,7 @@ OBJS=stdio/printf.o \
      internal/syscall_ret.o \
      internal/libc.o \
      dummy/dummy.o \
+     process/process_syscalls.o \
      env/__libc_start_main.o \
      env/__environ.o \
      exit/exit.o \

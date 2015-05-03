@@ -41,6 +41,7 @@
 #include "tests/test_vm.h"
 #include "tests/test_kthreads.h"
 #include "tests/test_process.h"
+#include "tests/test_sched_process.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -87,7 +88,8 @@ void start2(uint32_t *p_bootargs) {
 //	run_prq_tests();
 //	run_hmap_tests();
 	run_kthr_tests();
-	run_prcs_tests();
+//	run_sched_prcs_tests();
+// run_prcs_tests();
 //	run_fs_tests();
 
 	/*

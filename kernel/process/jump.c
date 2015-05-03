@@ -1,6 +1,7 @@
 #include "../include/jump.h"
+#include "../include/klibc.h"
 
-uint32_t jmp_set(jmp_buf * buffer){
+uint32_t jmp_set(jmp_buf * buffer) {
 	int zero = 0;
 
 	// store
@@ -27,7 +28,8 @@ uint32_t jmp_set(jmp_buf * buffer){
 	return ret;
 }
 
-uint32_t jmp_goto(jmp_buf * buffer, uint32_t value){
+uint32_t  jmp_goto(jmp_buf * buffer,
+		uint32_t value) {
 
 	// load the resume
 	asm volatile("MOV r1, %0"::"r"(value):);
@@ -51,4 +53,23 @@ uint32_t jmp_goto(jmp_buf * buffer, uint32_t value){
 	asm volatile("MOV r15, r0":::);
 
 	return STATUS_OK;
+}
+
+void jmp_print(jmp_buf * buffer){
+	DEBUG("r0 [0x%x]\n", buffer->R0);
+	DEBUG("r1 [0x%x]\n", buffer->R1);
+	DEBUG("r2 [0x%x]\n", buffer->R2);
+	DEBUG("r3 [0x%x]\n", buffer->R3);
+	DEBUG("r4 [0x%x]\n", buffer->R4);
+	DEBUG("r5 [0x%x]\n", buffer->R5);
+	DEBUG("r6 [0x%x]\n", buffer->R6);
+	DEBUG("r7 [0x%x]\n", buffer->R7);
+	DEBUG("r8 [0x%x]\n", buffer->R8);
+	DEBUG("r9 [0x%x]\n", buffer->R9);
+	DEBUG("r10 [0x%x]\n", buffer->R10);
+	DEBUG("r11 [0x%x]\n", buffer->R11);
+	DEBUG("r12 [0x%x]\n", buffer->R12);
+	DEBUG("r13 [0x%x]\n", buffer->R13);
+	DEBUG("r14 [0x%x]\n", buffer->R14);
+	DEBUG("r15 [0x%x]\n", buffer->R15);
 }
