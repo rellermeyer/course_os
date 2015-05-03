@@ -389,11 +389,22 @@ void process_init(pcb * pcb_p) {
 
 // Copy over from kernel to user space
 void __process_init_vas(pcb* pcb_p) {
+	int retval = 0;
+
 	for (int i = 0; i < 20; i++) {
 		uint32_t *v = (uint32_t *)(pcb_p->start + (i * BLOCK_SIZE));
-		vm_allocate_page(pcb_p->stored_vas, (void*) v, VM_PERM_USER_RW);
-		vm_map_shared_memory(KERNEL_VAS, (void*) v, pcb_p->stored_vas,
+		retval = vm_allocate_page(pcb_p->stored_vas, (void*) v, VM_PERM_USER_RW);
+		if (retval) {
+			ERROR("__process_init_vas: vm_allocate_page error code: %d\n", retval);
+			break;
+		}
+
+		retval = vm_map_shared_memory(KERNEL_VAS, (void*) v, pcb_p->stored_vas,
 				(void*) v, VM_PERM_USER_RW);
+		if (retval) {
+			ERROR("__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n", retval, i);
+			break;
+		}
 
 	}
 
@@ -410,7 +421,12 @@ void __process_init_vas(pcb* pcb_p) {
 
 	for (int i = 0; i < 20; i++) {
 		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
-		vm_free_mapping(KERNEL_VAS, (void*) v);
+		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
+
+		if (retval) {
+			ERROR("__process_init_vas: vm_free_mapping error code: %d\n", retval);
+			break;
+		}
 	}
 }
 
@@ -423,13 +439,17 @@ void __process_init_stack(pcb * pcb_p) {
 		retval = vm_allocate_page(pcb_p->stored_vas,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
 		if (retval) {
-			ERROR("vm_allocate_page error code: %d\n", retval);
+			ERROR("__process_init_stack: vm_allocate_page error code: %d\n", retval);
 			break;
 		}
 
-		vm_map_shared_memory(KERNEL_VAS,
+		retval = vm_map_shared_memory(KERNEL_VAS,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+		if (retval) {
+			ERROR("__process_init_stack: vm_map_shared_memory error code: %d\n", retval);
+			break;
+		}
 	}
 
 	// Stick a NULL at STACK_TOP-sizeof(int*)
@@ -448,7 +468,11 @@ void __process_init_stack(pcb * pcb_p) {
 //	print_process_state(pcb_p->PID);
 
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
-		vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
+		retval = vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
+		if (retval) {
+			ERROR("__process_init_stack: vm_free_mapping error code: %d\n", retval);
+			break;
+		}
 	}
 }
 
@@ -458,7 +482,7 @@ void __process_init_heap(pcb* pcb_p) {
 	int retval = vm_allocate_page(pcb_p->stored_vas, (void*) HEAP_BASE,
 	VM_PERM_USER_RW);
 	if (retval) {
-		ERROR("vm_allocate_page error code: %d\n", retval);
+		ERROR("__process_init_heap: vm_allocate_page error code: %d\n", retval);
 	}
 	//assert(0 ==1 && "FUCK");
 	//process_print_state(pcb_p->PID);
