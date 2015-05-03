@@ -21,4 +21,6 @@ run:
 	@$(MAKE) -C ./kernel run
 .PHONY: run
 
+docs:
+	doxygen cosconfig
 	 
