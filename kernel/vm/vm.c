@@ -116,7 +116,7 @@ uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
             //4KB Small pages
             //Documentation shows XN1 designating small pages just checking for 2?
             uint32_t *page_addr = (*coarse_addr&0xFFFFF000) + *vptr&0x00000FFF;
-            
+        }
      
     }else{
         //check bit 18 to determine if 1MB or 16MB sections
@@ -249,8 +249,10 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	int ap_bits = lvl2_perm & 3;
 	//TODO: Lane please make sure correct!
 	//TODO: add l2_pagetable to vas?
-	l2_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4);
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4);
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
+
+	//cancelling apbit?
 	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
