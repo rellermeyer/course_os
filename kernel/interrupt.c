@@ -102,6 +102,7 @@ void enable_interrupt(interrupt_t mask) {
 			asm volatile("cpsie if");
 			break;
 	}
+	os_printf("hii:%x\n",get_proc_status());
 }
 
 

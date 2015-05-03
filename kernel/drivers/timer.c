@@ -236,7 +236,7 @@ void timer_test(){
 	//mmio_write(VIC_INT_ENCLEAR, 0x0);
 	os_printf("int enclear: %X %X\n", VIC_INT_ENCLEAR, PIC_ADDRESS);
 
-	enable_interrupt(ALL_INTERRUPT_MASK);
+//	enable_interrupt(ALL_INTERRUPT_MASK);
 
 	/*interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
 	tmr_handler->handler = simple_timer_handler;
@@ -245,7 +245,7 @@ void timer_test(){
 
 	os_printf("FIQ status: %X\n", mmio_read(VIC_FIQ_STATUS));
 	initialize_timers();
-	start_timer_interrupts(0,6);
+	start_timer_interrupts(0,60);
 	//print_control_status(1);
 
 	// Wait forever...
