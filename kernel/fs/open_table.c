@@ -105,3 +105,17 @@ int file_is_open(int fd) {
         //return (table[fd] != 0x0);
 }
 
+//this function checks whether the file is open or not
+int inode_is_open(struct inode* cur_inode) {
+        int i;
+        for(i = 0; i < SYSTEM_SIZE; i++){
+                if(table[i] != 0x0){
+                        if((table[i]->linked_file)->inum == cur_inode->inum){
+                                return 1; // file is open
+                        }//end if
+                }//end outer if
+        }//end for
+
+        return 0; //file is not open
+}//end inode_is_open() function
+
