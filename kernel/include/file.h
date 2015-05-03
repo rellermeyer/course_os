@@ -94,6 +94,13 @@ struct dir_helper //used by helper functions in file.c
 	char* last;
 };
 
+struct stats //statistics about the file
+{
+	int size; //size of the file
+	int fd_refs; //how many times it is open now
+	int is_dir; //is this a directory
+};
+
 int kopen(char* filepath, char mode); //opens the file of filepath with permissions mode
 int kread(int fd, void* buf, int numBytes); //reads the open file corresponding to fd
 int kwrite(int fd, void* buf, int num_bytes); //writes the open file corresponding to fd
@@ -103,7 +110,7 @@ int kdelete(char* filepath); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
 int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
 int kls(char* filepath); //shows contents of one directory
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size);
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat);
 int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -150,6 +157,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space);;
 
 int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
+
+struct stats * get_stats(char * filepath, struct stats * result);
 
 
 #endif 

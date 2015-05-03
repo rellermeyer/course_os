@@ -10,8 +10,8 @@
 #define MAX_DATABLOCKS_PER_INODE 68
 #define DIR_ENTRY_SIZE 40
 #define MAX_NUM_INDIRECT_BLOCKS 50
-#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK (BLOCKSIZE/4)-2
-#define MAX_DIR_ENTRIES_PER_DATA_BLOCK (int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2
+#define MAX_DATABLOCKS_PER_INDIRECT_BLOCK ((BLOCKSIZE/4)-2)
+#define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
 
 //IMPORTANT!! ---------------------------------------------------------------------------------------------------
 //all constants are in units of block NUMBER																	|
@@ -88,18 +88,12 @@ struct dir_helper //used by helper functions in file.c
 	char* last;
 };
 
-/* 
-struct directory
+struct stats //statistics about the file
 {
-	struct inode inode;
-}; 
-*/
-
-// struct file
-// {
-// 	struct inode* inode;
-// 	// what to put here to avoid level of indirection?
-// };
+	int size; //size of the file
+	int fd_refs; //how many times it is open now
+	int is_dir; //is this a directory
+};
 
 int kopen(char* filepath, char mode); //opens the file of filepath with permissions mode
 int kread(int fd, void* buf, int numBytes); //reads the open file corresponding to fd
@@ -110,7 +104,7 @@ int kdelete(char* filepath); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
 int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
 int kls(char* filepath); //shows contents of one directory
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size);
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat);
 int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,7 +129,14 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 //result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
 void kfind_dir(char* filepath, struct dir_helper* result);
 
-int transmit_data_block_bitmap(int bit_index, int all);
+//transmits or receives the data block bitvector or the inode bitvecotr to and from disk
+// First parameter: TRANSMIT or RECEIVE (defined)
+// Second paramter: put pointer to bitvector (example: data_block_bitmap for data, inode_bitmap for inodes)
+// Third parameter: put where that bitvecotr starts in memory (example: FS->data_bitmap_loc for data, FS->inode_bitmap_loc for inode)
+// Fourth parameter: how many there are (example: FS->max_data_blocks for data, FS->max_inodes for inodes)
+// index = index you would put in the bitvector
+// all = 0 for only one index, 1 for all the bitvector
+int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all);
 
 /* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
 	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
@@ -150,6 +151,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space);;
 
 int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
+
+struct stats * get_stats(char * filepath, struct stats * result);
 
 
 #endif 
