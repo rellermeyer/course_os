@@ -66,6 +66,9 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 
 long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int callNumber;
+
+	// TODO please update the code to store the return value to RET
+	//      may have to manually store into the return register
 	int r0, r1, r2, r3, RET;
 
 	// the link register currently holds the address of the instruction immediately
@@ -277,10 +280,10 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;	
 
 	case SYSCALL_PRINTF:
-		if(vm_map_shared_memory(KERNEL_VAS, (void*)r0, prev_vas, (void*)r0, VM_PERM_USER_RW)){
-			LOG("Error!\n");
-		}
+	// TODO fix address
+		vm_map_shared_memory(KERNEL_VAS, (void*)r0, prev_vas, (void*)r0, VM_PERM_USER_RW);
 		os_printf((char*)r0);
+		vm_free_mapping(KERNEL_VAS, (void*)r0);
 		RET = STATUS_OK;
 		break;
 	default:
