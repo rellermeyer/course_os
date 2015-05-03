@@ -119,10 +119,10 @@ void start2(uint32_t *p_bootargs)
 	//test assert
 	//assert(1==2 && "Test assert please ignore");
 
-	init_all_processes();
-	argparse_process(p_bootargs);
-
-	print_uart0("done parsing atag list\n");
+//	init_all_processes();
+//	argparse_process(p_bootargs);
+//
+//	print_uart0("done parsing atag list\n");
 
 	//init_kheap(31 * 0x100000);
 	//init_uheap(0x100000);
