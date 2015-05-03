@@ -48,6 +48,9 @@
 #define SYSCALL_MKDIR 10
 #define SYSCALL_COPY 11   
 #define SYSCALL_LS 12  
+#define SYSCALL_MALLOC 13
+#define SYSCALL_CALLOC 14
+#define SYSCALL_FREE 15
 
 void init_vector_table(void); 
 

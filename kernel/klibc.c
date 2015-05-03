@@ -580,3 +580,21 @@ unsigned int rand()
     z4 = ((z4 & 4294967168U) << 13) ^ b;
     return (z1 ^ z2 ^ z3 ^ z4);
 }
+
+void* umalloc(uint32_t size)
+{
+	os_printf("Umalloc: Need to set up user level heap\n");
+	//need to setup a userlevel heap.
+}
+
+void* ucalloc(uint32_t num, uint32_t size)
+{
+	os_printf("Umalloc:Need to set up user level heap\n");
+	//need to setup a userlevel heap
+}
+
+void ufree(void* ptr)
+{
+	os_printf("Need to set up user level heap\n");
+	//need to setup a userlevel heap.
+}

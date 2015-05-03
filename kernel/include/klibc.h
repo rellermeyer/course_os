@@ -98,6 +98,10 @@ void kfree(void*);
 uint32_t km_size();
 uint32_t kmcheck();
 
+void* umalloc(uint32_t size); //does user level malloc work
+void* ucalloc(uint32_t num, uint32_t size); //does user level calloc work
+void  ufree(void*); //does user level free work
+
 int32_t abs(int32_t);
 unsigned int rand();
 
