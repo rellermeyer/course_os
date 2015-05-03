@@ -49,6 +49,8 @@
 #define SYSCALL_COPY 11   
 #define SYSCALL_LS 12  
 
+#define SYSCALL_PRCS_YIELD 20
+
 void init_vector_table(void); 
 
 // vector table handlers, should be loaded at 0x00 in this order!

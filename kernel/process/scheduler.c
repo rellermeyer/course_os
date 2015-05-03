@@ -374,7 +374,7 @@ uint32_t __sched_remove_task(sched_task * task) {
 
 			if (IS_PROCESS(task)) {
 				vm_use_kernel_vas();
-				free_PCB(AS_PROCESS(task));
+				process_free_PCB(AS_PROCESS(task));
 			} else if (IS_KTHREAD(task)) {
 				// FIXME add later
 			}

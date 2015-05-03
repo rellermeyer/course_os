@@ -100,14 +100,14 @@ void dispatch(pcb *PCB) {
   if (!PCB->current_state || PCB->current_state == PROCESS_NEW) // TODO: not sure if this is correct
   {
     PCB->current_state = PROCESS_RUNNING;
-    execute_process(PCB); // Found in process.c
+    process_execute(PCB); // Found in process.c
   }
   else
   {
     //4-15-15: This will load the VAS and jump to the location the state was saved in task_yield()
     //TODO: is this all that needs to be done here to switch into the process?
     vm_enable_vas(PCB->stored_vas);
-    load_process_state(PCB->PID); // From process.c
+    process_load_state(PCB->PID); // From process.c
     ///execute_process(PCB); //This is incorrect
   }
 }
@@ -147,7 +147,7 @@ void task_yield()
   currentNode->PCB->current_state = PROCESS_READY;
   //4-15-15: also save the VAS for the process. Hopefully this is all we need to do.
   currentNode->PCB->stored_vas = vm_get_current_vas();
-  int has_jumped = save_process_state(currentNode->PCB->PID);
+  int has_jumped = process_save_state(currentNode->PCB->PID);
 
   if (has_jumped == FALSE)
   {

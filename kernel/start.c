@@ -44,115 +44,64 @@
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
-extern int init_all_processes();
-extern int vm_count_free_frames();
+extern int process_global_init();
 
-void uart_handler(void *null)
-{
+void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
-void start(uint32_t *p_bootargs)
-{
+void start(uint32_t *p_bootargs) {
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
-	/*print_uart0("p_bootargs: ");
-	print_uart0((char*)p_bootargs);
-	print_uart0("\n");*/
-	os_printf("%X\n",*p_bootargs);
+	INFO("%X\n", *p_bootargs);
 	vm_init();
-	os_printf("Initialized VM datastructures.\n");
+	INFO("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
-void vm_test_early();
-
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
-void start2(uint32_t *p_bootargs)
-{
+void start2(uint32_t *p_bootargs) {
 
-
+	// Initialize
+	// ----------
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
-
-	//vm_test_early();
-
-	// Setup kmalloc...
 	init_heap();
+	sched_init();
+	kfs_init(0, 0, 0);
+	process_global_init();
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
-	//asm volatile("swi 1");
-	//while (1);
-
 	print_uart0("\nCourseOS!\n");
-	//p_bootargs = (uint32_t*)0x100;
-	INFO("Bootargs: %X\n",*p_bootargs);
-	/*print_uart0((char*)p_bootargs);
-	  print_uart0("\n");*/
 
-	sched_init();
+	INFO("Bootargs: %X\n", *p_bootargs);
 
-	// Test stuff...
-	/*int *p = (int*)0xFFFFFFF0;
-	p[0] = 1;
-	os_printf("0x%x == 1?\n", p[0]);*/
-
-	run_vm_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
-	//run_mem_alloc_tests();
-	INFO("There are %d free frames.\n", vm_count_free_frames());
-	run_prq_tests();
-	run_hmap_tests();
+	// Test cases
+	// ----------
+//	run_vm_tests();
+//	run_mem_alloc_tests();
+//	run_prq_tests();
+//	run_hmap_tests();
 	run_kthr_tests();
-
-	int retval;
-	kfs_init(0,0,0);
-
-	init_all_processes();
 	run_prcs_tests();
-
-	//run_fs_tests();
-
-	// int fd = kopen("/hello", 'r');
-	// os_printf("fd: %d\n", fd);
-	// kclose(fd);
-
-	//while(1);
-
-	//asm volatile("swi 1");
+//	run_fs_tests();
 
 	/*
-	4-15-15: 	#Prakash: 	What happens if we let the program load here?
-							Let's make argparse_process() do its thing
+	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
+	 Let's make argparse_process() do its thing
 
-				Note: As of 4-15-15 this fails horribly with hello.o not being
-				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
-	*/
+	 Note: As of 4-15-15 this fails horribly with hello.o not being
+	 recognized as an ELF file and DATA ABORT HANDLER being syscalled
+	 */
 
-	//assert(1==2 && "Test assert please ignore");
-
-// 	argparse_process(p_bootargs);
-	
-
+//	argparse_process(p_bootargs);
 	print_uart0("done parsing atag list\n");
 
-	//init_kheap(31 * 0x100000);
-	//init_uheap(0x100000);
-
-	//initialize pcb table and PID
-	/* init_all_processes(); */
-	//print_process_state(0);
-
-	//run_process_tests();
-
-	//print_PID();
-	// init_q();
-
-	//main();
-	//asm volatile("wfi");
-	while (1);
+	while (1) {
+		// wait
+	}
 }

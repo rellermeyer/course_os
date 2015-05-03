@@ -11,6 +11,7 @@
 #include "vm.h"
 #include "file.h"
 #include "process.h"
+#include "scheduler.h"
 
 #define ENABLE_MAX_INTERRUPT
 #define ENABLE_MAX_INTERRUPT_COUNT 5
@@ -231,7 +232,11 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Yet to be implemented\n");
 		return -1;
 		break;
-
+	case SYSCALL_PRCS_YIELD:
+		LOG("Process yield system call called!\n");
+		error = sched_yield();
+		return (long) error;
+		break;
 	default:
 		os_printf("That wasn't a syscall you knob!\n");
 		return -1;

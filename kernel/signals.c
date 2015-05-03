@@ -14,7 +14,7 @@ SIGTERM
 
 void signal_mask (char * type, int index, uint32_t PID)
 {
-	pcb* pcb_t = get_PCB(PID);
+	pcb* pcb_t = process_get_PCB(PID);
 	pcb_t.mask[index]->type = type;	
 }
 

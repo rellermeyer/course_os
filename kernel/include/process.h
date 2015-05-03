@@ -67,7 +67,7 @@ typedef enum PROCESS_STATE
 typedef struct pcb
 {
 	//ID data
-	char* name; /* for debugging purposes */
+	char* arg; /* for debugging purposes */
 	uint32_t PID;
 	uint32_t starting_address;
 	uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
@@ -156,24 +156,23 @@ typedef struct pcb
 //output
 //create a corresponding pcb ds
 uint32_t* pcb_table; //Table showing all initialized processes.
-uint32_t* next_free_slot_in_pcb_table();
-void print_pcb_table();
+uint32_t* process_next_free_slot_in_pcb_table();
+void process_print_pcb_table();
 int init_pcb_table();
-pcb* process_create(uint32_t* file_p);
+pcb *process_create_from_file(char * file, char * arg);
+pcb* process_create(uint32_t* file_p, uint32_t len, char * arg);
 uint32_t process_destroy(int PID);
-void print_PID();
-pcb* get_PCB(uint32_t PID);
-uint32_t free_PCB(pcb* pcb_p);
-uint32_t* get_address_of_PCB(uint32_t PID);
-uint32_t execute_process(pcb* pcb_p);
+void process_print_PID();
+pcb* process_get_PCB(uint32_t PID);
+uint32_t process_free_PCB(pcb* pcb_p);
+uint32_t* process_get_address_of_PCB(uint32_t PID);
+uint32_t process_execute(pcb* pcb_p);
 uint32_t execute_process_no_vas(pcb* pcb_p);
-uint32_t load_process_state(uint32_t PID);
-uint32_t save_process_state(uint32_t PID);
-uint32_t print_process_state(uint32_t PID);
+uint32_t process_load_state(uint32_t PID);
+uint32_t process_save_state(uint32_t PID);
+uint32_t process_print_state(uint32_t PID);
 
-void setup_process_vas(pcb* pcb_p);
-void init_proc_heap(pcb* pcb_p);
-void init_proc_stack(pcb* pcb_p);
+void process_init(pcb* pcb_p);
 
 // static void process_exit(process p); //harder because we have to clean up
 // int fork();
