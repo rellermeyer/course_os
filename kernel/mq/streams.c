@@ -19,7 +19,8 @@ uint32_t next;
 void q_create(char q_name[])
 {
     struct queue *q = 0x0;
-    if (initialized < 0){
+    print_uart0("initialized queue\n");
+    if (initialized != 0){
         initialized = 0;
     }
 
@@ -61,12 +62,6 @@ uint32_t q_open(char q_name[])
 // Adding message to queue
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
 {
-    //int kilo = 1024;
-    // if (datalen > 128 * kilo) {
-    //  //TODO: throw an error
- //        return 0x0;
-    // } 
-
     // TODO: Copy the data? Don't copy the data? Copy-on-write the data?
     struct queue *q = q_map[qd];
     q->data = data;
@@ -88,26 +83,17 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, u
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
     //get exact available space
-    print_uart0("in q_send\n");
     void *startingPoint = data;
     
-     // print_uart0("printing startingPoint below\n");
     print_uart0(startingPoint);
     // uint32_t spaceAvail = spaceAvailable();
-    uint32_t spaceAvail = 8;
+    uint32_t spaceAvail = 1028;
     struct queue *q = q_map[qd];
     while (datalength > spaceAvail) {
-        // print_uart0(startingPoint);
         startingPoint = (uint32_t)&startingPoint + spaceAvail;
         
         q->receiver(q->subscriber->userdata, startingPoint, spaceAvail);
         datalength = datalength - spaceAvail;
-        print_uart0("in while loop\n");
-        // int i;
-        // char *s = (char*)startingPoint;
-        // for (i=0; i< spaceAvail; i++) {
-        //     print_char_uart0(s[i]);
-        // }
     } 
     //TODO: delete data after sending
     
@@ -168,16 +154,6 @@ void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, vo
 //     struct queue *reply_qd = q_map[reply_qd];
 //     reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
 // }
-
-/*q_call seems to fail on q_send*/
-//void q_call(char q_name[], void * data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata)
-//{
-//    q_create(q_name);
-//    uint32_t qd = q_open(q_name);
-//    q_publish(qd, (uint32_t*) data, sizeof(data));
-//    q_subscribe(qd, &receiver, (void*) userdata);
-//    q_send(qd, (uint32_t*) data, sizeof(data));
-//}
 
 void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata)
 {
