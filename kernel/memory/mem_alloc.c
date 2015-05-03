@@ -8,6 +8,11 @@ uint32_t buffer_size;
 alloc_handle * allocator;
 uint32_t __mem_extend_heap(uint32_t amt);
 
+alloc_handle * proc_allocator;
+uint32_t proc_buffer_size;
+uint32_t __mem_extend_proc_heap(uint32_t amt,struct vas* pvas);
+uint32_t *nextProcBlock = (uint32_t*) MEM_START;
+
 //bump pointer allocation
 void *mem_alloc(uint32_t size)
 {
@@ -71,6 +76,47 @@ uint32_t init_heap()
     allocator = alloc_create((uint32_t*) MEM_START, buffer_size, &__mem_extend_heap);
     return STATUS_OK;
 }
+
+uint32_t init_process_heap(struct vas* vas)
+{
+    int retval = vm_allocate_page(vas, (void*) PROC_START, VM_PERM_USER_RW);
+    vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, vas, (void*)PROC_START, VM_PERM_USER_RW);
+    if (retval) {
+        os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+        return STATUS_FAIL;
+    }
+    else{
+        os_printf("Page allocated for process heap at %x:\n",PROC_START);
+    }
+
+    proc_buffer_size = BLOCK_SIZE;
+    proc_allocator = alloc_create((uint32_t*) PROC_START, proc_buffer_size, &__mem_extend_proc_heap);
+    vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
+    return STATUS_OK;
+}
+
+uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
+{
+    os_printf("\n\n\n\n FUCK YOU \n\n\n\n");
+    uint32_t amt_added = 0;
+    while (amt_added < amt) 
+    {
+        int retval = vm_allocate_page(pvas, (void*) PROC_START, VM_PERM_USER_RW);
+        vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, pvas, (void*)PROC_START, VM_PERM_USER_RW);
+        if (retval) {
+            os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+            return STATUS_FAIL;
+        }
+        else{
+            os_printf("Page allocated for process heap at %x:\n",PROC_START);
+        }
+        amt_added += BLOCK_SIZE;
+        proc_buffer_size += BLOCK_SIZE;
+    }
+    vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
+    return amt_added;
+}
+
 
 void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 {
