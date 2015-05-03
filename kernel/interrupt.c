@@ -166,6 +166,8 @@ void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
 
 void timer_interrupt_handler(){
 	os_printf("hello I'm interrupting");
+//	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
+	return;
 }
 
 // Create the handler
