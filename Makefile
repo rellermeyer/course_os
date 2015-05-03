@@ -22,5 +22,7 @@ run:
 .PHONY: run
 
 docs:
-	doxygen cosconfig
+	doxygen doxyfile
+	$(MAKE) -C latex pdf
+	mv ./latex/refman.pdf course_os_docs.pdf
 	 
