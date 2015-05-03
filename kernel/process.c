@@ -335,7 +335,6 @@ uint32_t process_execute(pcb* pcb_p) {
 	DEBUG("PID---->: %d\n", pcb_p->PID);
 	DEBUG("Should be VAS: %x\n", vm_get_current_vas());
 
-	//5-1-15: The following commented stuff is obsolete and only included for work reference
 	//assert(1==2 && "process.c - We're stopping right after loading process state.");
 	//4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
 	// assert(!pcb_p->stored_vas && "Assert error: trying to enter execute_process with already initialized process!");

@@ -105,6 +105,7 @@ static void argparse_parse(char *cmdline)
 //			test->name = name;
 //			process_init(test);
 //			process_execute(test);
+
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{

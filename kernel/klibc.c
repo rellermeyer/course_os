@@ -610,3 +610,17 @@ uint32_t kthr_register_message_callback(sched_msg_callback_handler cb_handler){
 uint32_t kthr_deregister_message_callback(){
 	return sched_deregister_callback_handler();
 }
+void* umalloc(uint32_t size) {
+	os_printf("Umalloc: Need to set up user level heap\n");
+	//need to setup a userlevel heap.
+}
+
+void* ucalloc(uint32_t num, uint32_t size) {
+	os_printf("Umalloc:Need to set up user level heap\n");
+	//need to setup a userlevel heap
+}
+
+void ufree(void* ptr) {
+	os_printf("Need to set up user level heap\n");
+	//need to setup a userlevel heap.
+}
