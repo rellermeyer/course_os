@@ -164,7 +164,7 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
 	os_printf("IRQ HANDLER\n");
-	disable_interrupts();	
+	int cpsr=disable_interrupts_save();	
 
 	// Discover source of interrupt
 	int i = 0;
@@ -178,6 +178,8 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 		}
 	}
 	// we've gone through the VIC and handled all active interrupts
+	restore_proc_status(cpsr);
+	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
 	enable_interrupts();
 }
 

@@ -213,13 +213,13 @@ int start_timer_interrupts(int timer_index,int milliseconds){
 	// return -1;
 
 //just testing code
-/*while(1){
-  os_printf("\n%d",get_current_timer_value(1));
-  if(get_current_timer_value(1)==0){
-  os_printf("\nInterrupt");
+while(1){
+  os_printf("\n%d",get_current_timer_value(timer_index));
+  if(get_current_timer_value(timer_index)==0){
+  os_printf("\nInterrupt Control Val:%X \t Process Val:%X\t VIC Val:%X\t",get_timer_control_value(timer_index),get_proc_status(),mmio_read(VIC_INT_ENABLE));
   //i--;
   }
-  }*/
+  }
 	return 0;
 }
 
@@ -249,17 +249,17 @@ void timer_test(){
 	//print_control_status(1);
 
 	// Wait forever...
-	os_printf("\n");
+/*	os_printf("\n");
 	int cnt = 0;
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
-/*	while (!(timer_pointers[0]->masked_interrupt_status&1)) {
+	while (!(timer_pointers[0]->masked_interrupt_status&1)) {
 		cnt++;
 		//os_printf("%X\n", timer_pointers[1]->timer_actual_value);
 		int i;
 		for (i=0; i<1000; i++);
-	}*/
+	}
 	os_printf("%d\n", cnt);
 	os_printf("%X\n", mmio_read(PIC_ADDRESS+0x8));
 	os_printf("%X\n", mmio_read(VIC_IRQ_STATUS));
@@ -268,6 +268,6 @@ void timer_test(){
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	while(1);
-
+*/
 	return;
 }
