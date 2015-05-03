@@ -415,7 +415,7 @@ void __process_init_vas(pcb* pcb_p) {
 			break;
 		}
 
-		retval = vm_map_shared_memory(KERNEL_VAS, (void*) v, pcb_p->stored_vas,
+		retval = vm_map_shared_memory(KERNEL_VAS, (void*) v + (i * BLOCK_SIZE), pcb_p->stored_vas,
 				(void*) v, VM_PERM_USER_RW);
 		if (retval) {
 			ERROR("__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n", retval, i);

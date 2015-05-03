@@ -38,7 +38,7 @@ uint32_t jmp_goto(jmp_buf * buffer, uint32_t value) {
 
 	// load the rest
 	asm volatile("MOV r2, %0"::"r"(buffer->R11):);
-	asm volatile("MOV r0, %0"::"r"(buffer->R15 + 4):);
+	asm volatile("MOV r0, %0"::"r"(buffer->R15):);
 
 	asm volatile("MOV r4, %0"::"r"(buffer->R4):);
 	asm volatile("MOV r5, %0"::"r"(buffer->R5):);
