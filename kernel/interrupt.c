@@ -57,14 +57,17 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 	
 	// put the handler in the array
 	handlers[num] = handler;
-	hw_interrupt_enable(num);
+//	hw_interrupt_enable(num);
 	// enable the specific interrupt in hardware on the VIC
-	mmio_write(VIC_INT_SELECT, mmio_read(VIC_INT_SELECT) | (1<<num));
-	os_printf("irq status %X",mmio_read(VIC_INT_SELECT));
+	//mmio_write(VIC_INT_SELECT, mmio_read(VIC_INT_SELECT) & 0xffffffef);
+//	mmio_write(VIC_INT_SELECT, mmio_read(VIC_INT_SELECT) | 1<<num);
+	os_printf("VIC INT SELECT %X\n",mmio_read(VIC_INT_SELECT));
+	os_printf("VIC INT ENABLE %X\n",mmio_read(VIC_INT_ENABLE));
 	
 	// check to see if this is an FIQ
 	if (check_if_fiq[num])
 		// update the "select" register on the VIC
+	
 		vic_select_fiq(num);
 
 	// return a success value
@@ -166,9 +169,12 @@ os_printf("hello I'm interrupting");
 // Create the handler
 void _schedule_register_timer_irq(){
 	enable_interrupt(ALL_INTERRUPT_MASK);
+	os_printf("VIC_INT_SELECT %X",mmio_read(VIC_INT_SELECT));
+	//disable_interrupt(FIQ_MASK);
         interrupt_handler_t *timer=kmalloc(sizeof(interrupt_handler_t));
         timer->handler=&timer_interrupt_handler;
-        register_interrupt_handler(4,timer);
+      //  mmio_write(VIC_INT_SELECT, mmio_read(VIC_INT_SELECT) & 0xffffffef);
+	register_interrupt_handler(4,timer);
 	os_printf("Processor %X\n",get_proc_status());
         initialize_timers();
 }
