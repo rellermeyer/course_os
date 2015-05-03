@@ -98,6 +98,31 @@ uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
 	}
+    uint32_t *translate = 0;
+    //Index in to the L1_ptable
+    translate = (uint32_t*)((*vptr&0xFFFE0000) + *vas->l1_pagetable);
+    //if it is zero
+    if((*translate&0x3) == 0){
+        //invalid
+    }else if(*translate&0x3 == 1){
+        //Dereferencing l1 descriptor to get Coarse base address and to 
+        //index into coarse page table
+        uint32_t *coarse_addr = *translate + ((*vptr &0x0001FC00));
+        if((*coarse_addr & 3) == 0){
+            //invalid what error? 
+        }else if((*coarse_addr & 3) == 1){
+            //large pages... not setup??
+        }else if((*coarse_addr & 3) == 2){
+            //4KB Small pages
+            //Documentation shows XN1 designating small pages just checking for 2?
+            uint32_t *page_addr = (*coarse_addr&0xFFFFF000) + *vptr&0x00000FFF;
+            
+     
+    }else{
+        //check bit 18 to determine if 1MB or 16MB sections
+    }
+
+    //return *page_addr;
 	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
 }
 
