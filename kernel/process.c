@@ -391,8 +391,24 @@ void process_init(pcb * pcb_p) {
 void __process_init_vas(pcb* pcb_p) {
 	int retval = 0;
 
-	for (int i = 0; i < 20; i++) {
-		uint32_t *v = (uint32_t *)(pcb_p->start + (i * BLOCK_SIZE));
+	// --------------
+	// | S   | D2   |  S: src
+	// | D   |      |  D: dest
+	// --------------
+
+	// incase it was already mapped
+	for (int i = 20; i < 40; i++) {
+		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
+		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
+
+		if (retval) {
+			ERROR("__process_init_vas: vm_free_mapping error code: %d\n", retval);
+			break;
+		}
+	}
+
+	for (int i = 20; i < 40; i++) {
+		uint32_t *v = (uint32_t *)(pcb_p->start + ((i - 20) * BLOCK_SIZE));
 		retval = vm_allocate_page(pcb_p->stored_vas, (void*) v, VM_PERM_USER_RW);
 		if (retval) {
 			ERROR("__process_init_vas: vm_allocate_page error code: %d\n", retval);
@@ -410,7 +426,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 	int *copyIn = pcb_p->start;
 	int counter = 0;
-	uint32_t * v = pcb_p->start;
+	uint32_t * v = pcb_p->start + 20 * BLOCK_SIZE;
 
 	while (counter < pcb_p->len) {
 		*v = *copyIn;
@@ -419,7 +435,7 @@ void __process_init_vas(pcb* pcb_p) {
 		counter += 4;
 	}
 
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 40; i++) {
 		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 
