@@ -13,6 +13,11 @@
 #define MAX_NUM_INDIRECT_BLOCKS 50
 #define MAX_DATABLOCKS_PER_INDIRECT_BLOCK ((BLOCKSIZE/4)-2)
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
+#define TRUE 1
+#define FALSE 0
+#define ERROR -1
+#define SUCCESS 0
+
 
 //IMPORTANT!! ---------------------------------------------------------------------------------------------------
 //all constants are in units of block NUMBER																	|
