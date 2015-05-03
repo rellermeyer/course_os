@@ -208,18 +208,19 @@ int start_timer_interrupts(int timer_index,int milliseconds){
  // return -1;
 
 //just testing code
-while(get_current_timer_value(1)){
+/*while(get_current_timer_value(1)){
                 os_printf("\n%d",get_current_timer_value(1));
    /*             if(get_current_timer_value(1)==0){
                         os_printf("\nInterrupt");
                         //i--;
                 }*/
 
-        }
+  /*      }
           if(get_current_timer_value(1)==0){
                         os_printf("\nInterrupt");
                         //i--;
-                }
+
+                } */
 
 	return 0;
 }
@@ -229,7 +230,8 @@ while(get_current_timer_value(1)){
 void timer_test(){
 	initialize_timers();
 	start_timer_interrupts(1,5);
-	print_control_status(1);
+	timer_pointers[0]->masked_interrupt_status&1;
+//	print_control_status(1);
 		
 	return;
   }

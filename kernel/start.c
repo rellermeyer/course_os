@@ -80,7 +80,7 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup kmalloc...
 	init_heap();
-//	_schedule_register_timer_irq();
+	_schedule_register_timer_irq();
 //        timer_test();
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");

@@ -84,13 +84,12 @@ void handle_irq_interrupt(int);
 
 /* VIC Interrupt Mappings */
 #define VIC_IRQ_STATUS		PIC_ADDRESS	  // status of pending irqs after masking (R)
-#define VIC_FIQ_STATUS		(*((volatile uint32_t *)(PIC_ADDRESS+0x004))) // status of pending fiqs after masking (R)
-#define VIC_RAW_STATUS		(*((volatile uint32_t *)(PIC_ADDRESS+0x008))) // pending irqs before masking by enable register (R)
-#define VIC_INT_SELECT		(*((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
-#define VIC_INT_ENABLE		(*((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
-#define VIC_INT_ENCLEAR		(*((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
-//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030))) // the ISR of the currently active interrupt
-
+#define VIC_FIQ_STATUS		(((volatile uint32_t *)(PIC_ADDRESS+0x004))) // status of pending fiqs after masking (R)
+#define VIC_RAW_STATUS		(((volatile uint32_t *)(PIC_ADDRESS+0x008))) // pending irqs before masking by enable register (R)
+#define VIC_INT_SELECT		(((volatile uint32_t *)(PIC_ADDRESS+0x00C))) // select whether source generates an IRQ or FIQ (R/W)
+#define VIC_INT_ENABLE		(((volatile uint32_t *)(PIC_ADDRESS+0x010))) // actually enable interrupt lines (1 = YES) (R/W)
+#define VIC_INT_ENCLEAR		(((volatile uint32_t *)(PIC_ADDRESS+0x014))) // clear enabled lines in VICINTENABLE (1=clear)
+//#define VIC_VECT_ADDR		(*((volatile uint32_t *)(PIC_ADDRESS=0x030)))
 // these should be used in conjunction with the bit shift mappings below
 #define hw_interrupt_enable(n)	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | (1 << n))
 #define hw_interrupt_disable(n)	mmio_write(VIC_INT_ENCLEAR, (1 << n));
