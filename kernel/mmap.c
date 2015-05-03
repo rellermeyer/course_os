@@ -34,7 +34,7 @@ void mmap(void *p_bootargs) {
 	//stash register state on the stack
 	asm volatile("push {r0-r11}");
 
-	os_printf("%X\n",p_bootargs);
+	//os_printf("%X\n",p_bootargs);
 
 /*
 	int pte;
@@ -50,7 +50,7 @@ void mmap(void *p_bootargs) {
 	//TODO:. Collin LOOOK HERE
 	first_level_pt = (unsigned int *)(P_L1PTBASE + PAGE_TABLE_SIZE);
 	//first_level_pt = 0x00200000 + 0x4000 = 0x00204000
-	os_printf("first_level_pt=%X\n",first_level_pt);
+	//os_printf("first_level_pt=%X\n",first_level_pt);
 
 	int i;
 	for (i=0; i<PAGE_TABLE_SIZE>>2; i++) {
@@ -119,7 +119,7 @@ void mmap(void *p_bootargs) {
 
 	unsigned int pt_addr = (unsigned int)first_level_pt;
 
-	os_printf("0x%X\n", first_level_pt[(PMAPBASE+0x100000)>>20]);
+	//os_printf("0x%X\n", first_level_pt[(PMAPBASE+0x100000)>>20]);
 
 	//TTBR0
 	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
@@ -148,11 +148,11 @@ void mmap(void *p_bootargs) {
 	control |= 0x1007; //0b01000000000111 (No high vectors)
 	control |= 1<<23; // Enable ARMv6
 	control |= 1<<29; // Enable ForceAP
-	os_printf("control reg: 0x%x\n", control);
+	//os_printf("control reg: 0x%x\n", control);
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
 
-	os_printf("Got here\n");
+	//os_printf("Got here\n");
 
 	// Build the free frame list
 	vm_build_free_frame_list((void*)PMAPBASE + 0x100000, (void*)PMAPTOP);//(void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));

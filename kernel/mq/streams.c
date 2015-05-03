@@ -88,6 +88,7 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, u
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
     //get exact available space
+    print_uart0("in q_send\n");
     void *startingPoint = data;
     
      // print_uart0("printing startingPoint below\n");
@@ -198,9 +199,14 @@ void sample_receiver(void *userdata, void *data, uint32_t datalength)
 void q_test()
 {
     // test client
+    print_uart0("in q_test\n");
+    print_uart0("again!\n");
     q_create("printf");
+    print_uart0("before q_open\n");
 	int qd = q_open("printf");
+    print_uart0("before q_subscribe\n");
 	q_subscribe(qd, sample_receiver, 0x0);
+    print_uart0("after q_subscribe\n");
     q_publish(qd, "first message", 13);
     struct queue *test_q = q_map[qd];
     // check client message
