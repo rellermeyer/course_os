@@ -12,6 +12,11 @@
 #include "file.h"
 #include "process.h"
 
+void timer_handler_foobar(void) {
+	os_printf("Hello?\n");
+	while(1);
+}
+
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
@@ -43,6 +48,14 @@ void init_vector_table(void) {
     mmio_write( 0x34, &reserved_handler ); 
     mmio_write( 0x38, &irq_handler ); 
     mmio_write( 0x3C, &fiq_handler ); 
+
+    // Write the vector table for IRQ and FIQ to the VIC
+    /*mmio_write(PIC_ADDRESS+0x100, timer_handler_foobar);
+    mmio_write(PIC_ADDRESS+0x200, 0x14);
+    mmio_write(PIC_ADDRESS+0x34, timer_handler_foobar);*/
+
+    // Enable some interrupts...
+    //mmio_write(PIC_ADDRESS+0x10, 1<<4);
 }
 
 
