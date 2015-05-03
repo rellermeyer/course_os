@@ -66,26 +66,19 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
 
 long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int callNumber;
+	int r0, r1, r2, r3, RET;
 
 	// the link register currently holds the address of the instruction immediately
 	// after the SVC call
 	// possible that syscall # passed directly in r7, not sure yet though
 	register int address asm("lr"); 
-	
-	// load the SVC call and mask to get the number
-	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
+	asm volatile("MOV %0, r7":"=r"(callNumber)::);
+	asm volatile("MOV %0, r0":"=r"(r0)::);
+	asm volatile("MOV %0, r1":"=r"(r1)::);
+	asm volatile("MOV %0, r2":"=r"(r2)::);
+	asm volatile("MOV %0, r3":"=r"(r3)::);
 
-
-
-
-	asm("MOV %0, r7":"=r"(callNumber)::);
-
-
-
-
-
-	// We have to switch VASs to the kernel's VAS if we want to do anything
 	struct vas *prev_vas = vm_get_current_vas();
 	vm_use_kernel_vas();
 
@@ -235,6 +228,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_SET_PERM:
+		vm_use_kernel_vas();
 		os_printf("Set permission system call called!\n");
 		os_printf("Yet to be implemented\n");
 		return -1;
@@ -283,9 +277,11 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;	
 
 	case SYSCALL_PRINTF:
-		os_printf("Printf system call called!\n");
-		asm volatile("MOV %0, r0":"=r"(output)::);
-		return 0;
+		if(vm_map_shared_memory(KERNEL_VAS, (void*)r0, prev_vas, (void*)r0, VM_PERM_USER_RW)){
+			LOG("Error!\n");
+		}
+		os_printf((char*)r0);
+		RET = STATUS_OK;
 		break;
 	default:
 		os_printf("That wasn't a syscall you knob!\n");
@@ -294,6 +290,8 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	}
 
 	vm_enable_vas(prev_vas);
+
+	return RET;
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
