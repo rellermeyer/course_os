@@ -160,6 +160,7 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 
 static void out(FILE *f, const char *s, size_t l)
 {
+	while(1);
 	__fwritex((void *)s, l, f);
 }
 

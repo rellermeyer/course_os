@@ -1,3 +1,4 @@
+
 include $(CURDIR)/../config.mk
 
 TOOLCHAIN_PATH:=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
@@ -36,17 +37,22 @@ flash.bin: kernel.img script.img
 	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
 	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
 
-card.sd:
-	dd if=/dev/zero of=card.sd conv=notrunc bs=128M count=1
+# 32678*4096 = 128MiB
+card.sd: fs-cmdline userhello
+	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+	fs/cmdline/buildfs ../user/hello/
+
+userhello:
+	make -C ../user/hello
+
+fs-cmdline:
+	make -C fs/cmdline
 
 kernel.elf: $(OBJS)
 	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
 
 kernel.bin: kernel.elf
-	dd if=/dev/zero of=kernel.bin bs=4k count=64
-	$(OBJCOPY) -O binary kernel.elf kernel2.bin
-	dd if=kernel2.bin of=kernel.bin conv=notrunc bs=4k
-	dd if=../user/hello/hello of=kernel.bin conv=notrunc bs=4k seek=16
+	$(OBJCOPY) -O binary kernel.elf kernel.bin
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
