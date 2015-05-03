@@ -63,9 +63,19 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// after the SVC call
 	// possible that syscall # passed directly in r7, not sure yet though
 	register int address asm("lr"); 
-	        
+	
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+
+
+
+
+
+	asm("MOV %0, r7":"=r"(callNumber)::);
+
+
+
+
 
 	// We have to switch VASs to the kernel's VAS if we want to do anything
 	struct vas *prev_vas = vm_get_current_vas();
@@ -75,7 +85,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 	// Print out syscall # for debug purposes
 	os_printf("Syscall #: ");
-	os_printf("%x", callNumber);
+	os_printf("%d", callNumber);
 	os_printf("\n");
 
 	// System Call Handler
@@ -95,6 +105,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int numBytes;
 	uint32_t byte_size;
 	void* ptr;
+	char* output;
 
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
@@ -255,6 +266,13 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		ufree(ptr);
 		return 0;
 		break;	
+
+	case SYSCALL_PRINTF:
+		os_printf("Printf system call called!\n");
+		asm volatile("mov r0, %[output]":[output]"=r" (output)::);
+		os_printf(output);
+		return 0;
+		break;
 
 	default:
 		os_printf("That wasn't a syscall you knob!\n");

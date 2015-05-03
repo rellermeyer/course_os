@@ -109,8 +109,6 @@ uint32_t save_process_state(uint32_t PID){
 	asm("MOV %0, r14":"=r"(pcb_p->R14)::);
 	asm("MOV %0, r15":"=r"(pcb_p->R15)::);
 
-
-
 	return 1;
 
 }
