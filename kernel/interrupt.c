@@ -31,6 +31,9 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 
 // Setup FIQ interrupts
 void init_fiqs(){
+	for(int i=0;i<MAX_NUM_INTERRUPTS;i++){
+		check_if_fiq[i]=0;
+	}
 	check_if_fiq[11] = 1; // synchronous serial port
 	check_if_fiq[17] = 1; // DMA controller  
 }
@@ -41,6 +44,7 @@ void init_fiqs(){
 // also, since we don't really have a working malloc, the handler structure will
 // have to be built in the driver and passed to register_
 int register_interrupt_handler(int num, interrupt_handler_t *handler){
+	init_fiqs();
 
 	if(num < 0 || num > MAX_NUM_INTERRUPTS){ // bad irq number
 		os_printf("Bad IRQ number\n");
