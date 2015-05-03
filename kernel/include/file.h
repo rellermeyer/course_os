@@ -15,7 +15,7 @@
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
 #define TRUE 1
 #define FALSE 0
-#define ERROR -1
+#define FS_ERROR -1
 #define SUCCESS 0
 
 
@@ -106,15 +106,24 @@ int kread(int fd, void* buf, int numBytes); //reads the open file corresponding 
 int kwrite(int fd, void* buf, int num_bytes); //writes the open file corresponding to fd
 int kclose(int fd); //closes the cpen file corresponding to fd
 int kseek(int fd, int num_bytes); //moves the offset of the open file fd
-int kdelete(char* filepath); //deletes the file or directory following filepath
+int kdelete(char* filepath, int recursive); //deletes the file or directory following filepath
 int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
 int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
 int kls(char* filepath); //shows contents of one directory
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat);
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat); // initialize the filesystem:
 int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // /* HELPER FUNCTIONS */
+
+
+int kdelete_single_helper(struct inode * cur_inode);
+
+//delete the file or directory at filepath. Return -1 if the file does not exist 
+int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode);
+
+/* deletes a single dir_entry */
+int kremove_dir_entry (struct inode* cur_inode, int tgt_inum);
 
 //from the index, gets the corresponding indirect block, either from cache or from disk
 void get_indirect_block(int index, struct indirect_block* cur_indirect_block);
@@ -157,8 +166,6 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space);;
 
 int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
-
-struct stats * get_stats(char * filepath, struct stats * result);
 
 
 #endif 

@@ -5,7 +5,7 @@
 #include "tests.h"
 #include "process.h"
 #include "file.h"
-
+//
 
 static void argparse_parse(char *);
 
@@ -62,60 +62,60 @@ static void argparse_parse(char *cmdline)
 
 		if (os_strcmp("-load", token) == 0)
 		{
-			char* name = os_strtok(NULL, " ");
-			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
-			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
+			// char* name = os_strtok(NULL, " ");
+			// uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
+			// uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
 
 
-			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
-					name, start, len);
+			// os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
+			// 		name, start, len);
 
 
-			os_printf("START: %X \n", start+PROC_LOCATION);
+			// os_printf("START: %X \n", start+PROC_LOCATION);
 
-			int fd = kopen("/hello", 'r');
-			struct stats fstats;
-			start += PROC_LOCATION;
-			get_stats("/hello", &fstats);
-			 len = fstats.size;
+			// int fd = kopen("/hello", 'r');
+			// struct stats fstats;
+			// start += PROC_LOCATION;
+			// get_stats("/hello", &fstats);
+			//  len = fstats.size;
 
-			int* location = start;
-			int storage2 = 0;
+			// int* location = start;
+			// int storage2 = 0;
 			
-			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
-				os_printf("argparse.c: allocating page %d of %d\n", i+1, (len/BLOCK_SIZE) + 1);
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
+			// for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
+			// 	os_printf("argparse.c: allocating page %d of %d\n", i+1, (len/BLOCK_SIZE) + 1);
+			// 	uint32_t *v = start + (i* BLOCK_SIZE);
+			// 	int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
 				
-			}
+			// }
 
-			int counter =0;
-			while(counter < len){
-				kread(fd, location, 4);
-				location +=1;
-				counter +=4;
-			}
+			// int counter =0;
+			// while(counter < len){
+			// 	kread(fd, location, 4);
+			// 	location +=1;
+			// 	counter +=4;
+			// }
 			
 			
-			pcb *test= process_create((uint32_t*) start);
+			// pcb *test= process_create((uint32_t*) start);
 
-				vm_enable_vas(test->stored_vas);
+			// 	vm_enable_vas(test->stored_vas);
 
-			test->len = len;
-			test->start = start;
-			test->name = name;
-			setup_process_vas(test);
-			init_proc_stack(test);
-			init_proc_heap(test);
+			// test->len = len;
+			// test->start = start;
+			// test->name = name;
+			// setup_process_vas(test);
+			// init_proc_stack(test);
+			// init_proc_heap(test);
 			
-			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				vm_free_mapping(KERNEL_VAS, (void*)v);		
+			// for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
+			// 	uint32_t *v = start + (i* BLOCK_SIZE);
+			// 	vm_free_mapping(KERNEL_VAS, (void*)v);		
 				
-			}
+			// }
 
-			execute_process(test);
+			// execute_process(test);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{

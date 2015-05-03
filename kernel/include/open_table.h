@@ -35,6 +35,8 @@ int delete_from_opentable(int fd); //deletes a file from the opentable, returns 
 
 int file_is_open(int fd); //checks if there is an entry corrensponding to that fd
 
+int inode_is_open(struct inode* cur_inode);
+
 struct file_descriptor* get_descriptor(int fd); //returns the filedescriptor struct linked to fd 
 
 #endif 
