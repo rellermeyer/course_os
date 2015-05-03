@@ -87,9 +87,9 @@ void start2(uint32_t *p_bootargs) {
 	init_vector_table();
 	init_heap();
 	print_uart0("after init_vector_table\n");
-	//sched_init();
-	//kfs_init(0, 0, 0);
-	//process_global_init();
+	sched_init();
+	kfs_init(0, 0, 0);
+	process_global_init();
 
 
 	// ht_test();
@@ -111,11 +111,11 @@ void start2(uint32_t *p_bootargs) {
 
 	// Test cases
 	// ----------
-//	run_vm_tests();
+	run_vm_tests();
 //	run_mem_alloc_tests();
 //	run_prq_tests();
 //	run_hmap_tests();
-//	run_kthr_tests();
+	run_kthr_tests();
 //	run_sched_prcs_tests();
     // run_prcs_tests();
 //	run_fs_tests();
