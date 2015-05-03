@@ -170,7 +170,7 @@ void timer_interrupt_handler(){
 
 // Create the handler
 void _schedule_register_timer_irq(){
-        interrupt_handler_t *timer;
+        interrupt_handler_t *timer=kmalloc(sizeof(interrupt_handler_t));
         timer->handler=&timer_interrupt_handler;
         register_interrupt_handler(4,timer);
         initialize_timers();

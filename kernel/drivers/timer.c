@@ -238,14 +238,14 @@ void timer_test(){
 
 	enable_interrupt(ALL_INTERRUPT_MASK);
 
-	interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
+	/*interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
 	tmr_handler->handler = simple_timer_handler;
 	os_printf("fn ptr: %X\n", simple_timer_handler);
-	register_interrupt_handler(4, tmr_handler);
+	register_interrupt_handler(4, tmr_handler);*/
 
 	os_printf("FIQ status: %X\n", mmio_read(VIC_FIQ_STATUS));
 	initialize_timers();
-	start_timer_interrupts(0,6000);
+	start_timer_interrupts(0,6);
 	//print_control_status(1);
 
 	// Wait forever...
@@ -254,12 +254,12 @@ void timer_test(){
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
 	os_printf("Timer: %d\n", timer_pointers[0]->timer_actual_value);
-	while (!(timer_pointers[0]->masked_interrupt_status&1)) {
+/*	while (!(timer_pointers[0]->masked_interrupt_status&1)) {
 		cnt++;
 		//os_printf("%X\n", timer_pointers[1]->timer_actual_value);
 		int i;
 		for (i=0; i<1000; i++);
-	}
+	}*/
 	os_printf("%d\n", cnt);
 	os_printf("%X\n", mmio_read(PIC_ADDRESS+0x8));
 	os_printf("%X\n", mmio_read(VIC_IRQ_STATUS));
