@@ -8,6 +8,8 @@
 int test_prcs_1() {
 	pcb *test = process_create_from_file("/hello", "whats up!");
 	process_init(test);
+	pcb *test2 = process_create_from_file("/hello", "whats up!");
+	process_init(test2);
 	process_execute(test);
 
 	return TEST_OK;

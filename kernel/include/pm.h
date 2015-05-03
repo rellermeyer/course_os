@@ -14,6 +14,7 @@ typedef struct
 	uint32_t PMU;
 
 	//registers
+	unsigned long CPSR;
 	uint32_t R0;
 	uint32_t R1;
 	uint32_t R2;

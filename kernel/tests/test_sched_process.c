@@ -6,8 +6,10 @@
 #define NUM_TESTS 1
 
 int test_sched_prcs_1() {
-	sched_task * task = sched_create_task_from_process("/hello", -5);
-	sched_start_task(task);
+	sched_start_task(sched_create_task_from_process("/hello", -5));
+	sched_start_task(sched_create_task_from_process("/hello", -5));
+//	sched_start_task(sched_create_task_from_process("/hello", -3));
+//	sched_start_task(sched_create_task_from_process("/hello", -2));
 	sched_yield();
 
 	return TEST_OK;

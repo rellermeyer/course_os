@@ -215,7 +215,7 @@ void __sched_print_queues() {
 	DEBUG("]\n");
 }
 
-void  __sched_dispatch() {
+void __sched_dispatch() {
 	// prevent interrupts while handling another interrupt
 	__sched_pause_timer_irq();
 
@@ -227,8 +227,7 @@ void  __sched_dispatch() {
 			return;
 		}
 
-		jmp_print(&active_task->jmp_buffer);
-
+		// jmp_print(&active_task->jmp_buffer);
 		prq_enqueue(active_tasks, active_task->node);
 	}
 
@@ -238,7 +237,10 @@ void  __sched_dispatch() {
 			running = 0;
 			return;
 		}
+
+	//	jmp_print(&start_buf);
 		running = 1;
+
 	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
 		jmp_goto(&start_buf, TASK_RESUME);
 	}
@@ -258,14 +260,29 @@ void  __sched_dispatch() {
 		return;
 	}
 
-	// logging
-	// FIXME ensure that another task is running if priorities are the same
-	active_task = (sched_task*) prq_dequeue(active_tasks)->data;
+	// alternate between equal priorities
+	if(prq_count(active_tasks) > 1){
+		sched_task * next_task = (sched_task*) prq_dequeue(active_tasks)->data;
+		sched_task * foll_task = (sched_task*) prq_peek(active_tasks)->data;
+		if(next_task->niceness == foll_task->niceness){
+			active_task = foll_task;
+			active_task = (sched_task*) prq_dequeue(active_tasks)->data;
+			prq_enqueue(active_tasks, next_task->node);
+		} else {
+			active_task = next_task;
+		}
+	} else {
+		active_task = (sched_task*) prq_dequeue(active_tasks)->data;
+	}
+	
+
+	LOG("active_task %d\n", active_task->tid);
 
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
-			jmp_print(&active_task->jmp_buffer);
+		//	jmp_print(&active_task->jmp_buffer);
+			LOG("Loading\n");
 			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
@@ -279,13 +296,15 @@ void  __sched_dispatch() {
 	} else if (IS_PROCESS(active_task)) {
 		LOG("Active_task is a process!\n");
 		if (active_task->state == TASK_STATE_ACTIVE) {
-			__sched_emit_messages();
+			LOG("Loading from memory!\n");
+		//	__sched_emit_messages();
 			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer; // move to kernel stack
 			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
 			__sched_resume_timer_irq();
 			jmp_goto(&jmp_buffer_cpy, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
-			active_task->state = TASK_STATE_INACTIVE;
+			LOG("Loading from file!\n");
+			active_task->state = TASK_STATE_ACTIVE;
 			active_task->task = process_create_from_file(active_task->task,
 					"hey whats up!!!");
 			process_init(AS_PROCESS(active_task));

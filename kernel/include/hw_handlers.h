@@ -52,8 +52,7 @@
 #define SYSCALL_CALLOC 14
 #define SYSCALL_FREE 15
 #define SYSCALL_PRINTF 16
-
-#define SYSCALL_PRCS_YIELD 20
+#define SYSCALL_PRCS_YIELD 17
 
 void init_vector_table(void); 
 

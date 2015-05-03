@@ -19,6 +19,7 @@ uint32_t jmp_set(jmp_buf * buffer) {
 	asm volatile("MOV %0, r12":"=r"(buffer->R12)::);
 	asm volatile("MOV %0, r13":"=r"(buffer->R13)::);
 	asm volatile("MOV %0, r14":"=r"(buffer->R14)::);
+//	asm volatile("MRS %0, CPSR":"=r"(buffer->CPSR)::);
 	asm volatile("MOV r1, %0"::"r"(zero):);
 	asm volatile("MOV %0, r15":"=r"(buffer->R15)::);
 
@@ -28,8 +29,9 @@ uint32_t jmp_set(jmp_buf * buffer) {
 	return ret;
 }
 
-uint32_t  jmp_goto(jmp_buf * buffer,
-		uint32_t value) {
+uint32_t jmp_goto(jmp_buf * buffer, uint32_t value) {
+	int x = 1;
+	while(x);
 
 	// load the resume
 	asm volatile("MOV r1, %0"::"r"(value):);
@@ -48,6 +50,7 @@ uint32_t  jmp_goto(jmp_buf * buffer,
 	asm volatile("MOV r12, %0"::"r"(buffer->R12):);
 	asm volatile("MOV r13, %0"::"r"(buffer->R13):);
 	asm volatile("MOV r14, %0"::"r"(buffer->R14):);
+//	asm volatile("MRS CPSR, %0":"r"(buffer->CPSR):);
 
 	asm volatile("MOV r11, r2":::);
 	asm volatile("MOV r15, r0":::);
@@ -55,7 +58,7 @@ uint32_t  jmp_goto(jmp_buf * buffer,
 	return STATUS_OK;
 }
 
-void jmp_print(jmp_buf * buffer){
+void jmp_print(jmp_buf * buffer) {
 	DEBUG("r0 [0x%x]\n", buffer->R0);
 	DEBUG("r1 [0x%x]\n", buffer->R1);
 	DEBUG("r2 [0x%x]\n", buffer->R2);

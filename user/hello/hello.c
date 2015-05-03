@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <process.h>
 
 int main() {
-    printf("Hello world... from hello.c\n");
+    printf((char*)0x48);
+    process_yield();
     while(1);
 }

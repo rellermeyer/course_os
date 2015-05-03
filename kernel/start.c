@@ -87,9 +87,9 @@ void start2(uint32_t *p_bootargs) {
 //	run_mem_alloc_tests();
 //	run_prq_tests();
 //	run_hmap_tests();
-	run_kthr_tests();
+//	run_kthr_tests();
 //	run_sched_prcs_tests();
-// run_prcs_tests();
+ run_prcs_tests();
 //	run_fs_tests();
 
 	/*

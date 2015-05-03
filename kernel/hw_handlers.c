@@ -251,13 +251,16 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		return (long) error;
 		break;
 	case SYSCALL_MALLOC:
-		os_printf("malloc system call called!\n");
-		//Assuming that the userlevel syscall wrappers work		
-		//retrieve args of malloc, put in r1, pass to malloc 
-		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = umalloc(byte_size);
-		//I want to return the pointer to the beggining of allocated block(s);
-		return (long) ptr;
+		LOG("Process yield system call called!\n");
+		error = sched_yield();
+		return (long) error;
+//		os_printf("malloc system call called!\n");
+//		//Assuming that the userlevel syscall wrappers work
+//		//retrieve args of malloc, put in r1, pass to malloc
+//		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
+//		ptr = umalloc(byte_size);
+//		//I want to return the pointer to the beggining of allocated block(s);
+//		return (long) ptr;
 		break;
 
 	case SYSCALL_CALLOC:
@@ -281,8 +284,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 	case SYSCALL_PRINTF:
 		os_printf("Printf system call called!\n");
-		asm volatile("mov r0, %[output]":[output]"=r" (output)::);
-		os_printf(output);
+		asm volatile("MOV %0, r0":"=r"(output)::);
 		return 0;
 		break;
 	default:

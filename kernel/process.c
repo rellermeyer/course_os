@@ -84,7 +84,7 @@ pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
 		//         TODO: Eventually should be able to pass parameters. Put them on the stack (argv/argc)
 		pcb_pointer->R15 = success->e_entry;
 
-		os_printf("%X ENTRY: %X \n", file_p, success->e_entry);
+		// os_printf("%X ENTRY: %X \n", file_p, success->e_entry);
 
 		pcb_pointer->current_state = PROCESS_NEW;
 
@@ -418,6 +418,7 @@ void __process_init_vas(pcb* pcb_p) {
 //Allows for a variety of stack limits
 void __process_init_stack(pcb * pcb_p) {
 	int retval = 0;
+
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
 		retval = vm_allocate_page(pcb_p->stored_vas,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
