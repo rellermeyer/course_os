@@ -142,13 +142,16 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
         }
         //jump to the next block
         else {
+        	//os_printf("i=%d heap size=%d abs(header)=%d\n", i, allocator->heap_size, abs(header));
             i = i + abs(header) + 2 * sizeof(int32_t);
         }
+    ///os_printf("New i=%d\n", i);
     }
 
     // Allocate some more memory.
     uint32_t new_amt = size + 2 * sizeof(uint32_t);
     uint32_t *header = __alloc_extend_heap(allocator, new_amt);
+    os_printf("Extending? Returned %X\n", header);
 
     if (header == 0) {
         return 0;

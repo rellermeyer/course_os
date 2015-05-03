@@ -2,7 +2,7 @@
 #include <process.h>
 
 int main() {
-    printf((char*)0x48);
+    printf("Whats up from process!\n");
     process_yield();
     while(1);
 }

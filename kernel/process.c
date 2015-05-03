@@ -21,8 +21,11 @@ pcb * process_create_from_file(char * file, char * arg) {
 #define START 0x20000
 #define PROC_LOCATION 0x9ff00000
 
+	DEBUG("create from file 1\n");
+
 	struct stats fstats;
 	int fd = kopen(file, 'r');
+	DEBUG("asdf\n");
 	uint32_t start = START + PROC_LOCATION;
 	uint32_t len;
 
@@ -30,9 +33,14 @@ pcb * process_create_from_file(char * file, char * arg) {
 
 	len = fstats.size;
 
-	for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++) {
+	DEBUG("create from file \n");
+
+	int  i;
+	for (i = 0; i < (len / BLOCK_SIZE) + 1; i++) {
 		uint32_t *v = (uint32_t*) (start + (i * BLOCK_SIZE));
-		vm_allocate_page(KERNEL_VAS, (void*) v, VM_PERM_USER_RW);
+		int retval = vm_allocate_page(KERNEL_VAS, (void*) v, VM_PERM_USER_RW);
+		if (retval)
+			os_printf("create_from_file: %d for %X\n", retval, v);
 	}
 
 	int counter = 0;
@@ -42,6 +50,12 @@ pcb * process_create_from_file(char * file, char * arg) {
 		location += 1;
 		counter += 4;
 	}
+	//kclose(fd);
+
+	// Test kmalloc
+	os_printf("Testing kmalloc...\n");
+	void *p = kmalloc(14);
+	os_printf("%X\n", p);
 
 	return process_create((uint32_t*) start, len, arg);
 }
@@ -59,6 +73,8 @@ pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
 	//This used to be == 0, which doesn't seem correct
 	if (free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
+
+		DEBUG("pcreate \n");
 
 		pcb_pointer->len = len;
 		pcb_pointer->start = file_p;
@@ -124,22 +140,22 @@ uint32_t process_save_state(uint32_t PID) {
 		return 0;
 	}
 
-	asm("MOV %0, r0":"=r"(pcb_p->R0)::);
-	asm("MOV %0, r1":"=r"(pcb_p->R1)::);
-	asm("MOV %0, r2":"=r"(pcb_p->R2)::);
-	asm("MOV %0, r3":"=r"(pcb_p->R3)::);
-	asm("MOV %0, r4":"=r"(pcb_p->R4)::);
-	asm("MOV %0, r5":"=r"(pcb_p->R5)::);
-	asm("MOV %0, r6":"=r"(pcb_p->R6)::);
-	asm("MOV %0, r7":"=r"(pcb_p->R7)::);
-	asm("MOV %0, r8":"=r"(pcb_p->R8)::);
-	asm("MOV %0, r9":"=r"(pcb_p->R9)::);
-	asm("MOV %0, r10":"=r"(pcb_p->R10)::);
-	asm("MOV %0, r11":"=r"(pcb_p->R11)::);
-	asm("MOV %0, r12":"=r"(pcb_p->R12)::);
-	asm("MOV %0, r13":"=r"(pcb_p->R13)::);
-	asm("MOV %0, r14":"=r"(pcb_p->R14)::);
-	asm("MOV %0, r15":"=r"(pcb_p->R15)::);
+	asm volatile("MOV %0, r0":"=r"(pcb_p->R0)::);
+	asm volatile("MOV %0, r1":"=r"(pcb_p->R1)::);
+	asm volatile("MOV %0, r2":"=r"(pcb_p->R2)::);
+	asm volatile("MOV %0, r3":"=r"(pcb_p->R3)::);
+	asm volatile("MOV %0, r4":"=r"(pcb_p->R4)::);
+	asm volatile("MOV %0, r5":"=r"(pcb_p->R5)::);
+	asm volatile("MOV %0, r6":"=r"(pcb_p->R6)::);
+	asm volatile("MOV %0, r7":"=r"(pcb_p->R7)::);
+	asm volatile("MOV %0, r8":"=r"(pcb_p->R8)::);
+	asm volatile("MOV %0, r9":"=r"(pcb_p->R9)::);
+	asm volatile("MOV %0, r10":"=r"(pcb_p->R10)::);
+	asm volatile("MOV %0, r11":"=r"(pcb_p->R11)::);
+	asm volatile("MOV %0, r12":"=r"(pcb_p->R12)::);
+	asm volatile("MOV %0, r13":"=r"(pcb_p->R13)::);
+	asm volatile("MOV %0, r14":"=r"(pcb_p->R14)::);
+	asm volatile("MOV %0, r15":"=r"(pcb_p->R15)::);
 
 	return 1;
 
@@ -159,21 +175,21 @@ uint32_t process_load_state(uint32_t PID) {
 		return 0;
 	}
 
-	asm("MOV r0, %0"::"r"(pcb_p->R0):);
-	asm("MOV r1, %0"::"r"(pcb_p->R1):);
-	asm("MOV r2, %0"::"r"(pcb_p->R2):);
-	asm("MOV r3, %0"::"r"(pcb_p->R3):);
-	asm("MOV r4, %0"::"r"(pcb_p->R4):);
-	asm("MOV r5, %0"::"r"(pcb_p->R5):);
-	asm("MOV r6, %0"::"r"(pcb_p->R6):);
-	asm("MOV r7, %0"::"r"(pcb_p->R7):);
-	asm("MOV r8, %0"::"r"(pcb_p->R8):);
-	asm("MOV r9, %0"::"r"(pcb_p->R9):);
-	asm("MOV r10, %0"::"r"(pcb_p->R10):);
-	asm("MOV r12, %0"::"r"(pcb_p->R12):);
-	asm("MOV r13, %0"::"r"(pcb_p->R13):);
-	asm("MOV r14, %0"::"r"(pcb_p->R14):);
-	asm("MOV r15, %0"::"r"(pcb_p->R15):);
+	asm volatile("MOV r0, %0"::"r"(pcb_p->R0):);
+	asm volatile("MOV r1, %0"::"r"(pcb_p->R1):);
+	asm volatile("MOV r2, %0"::"r"(pcb_p->R2):);
+	asm volatile("MOV r3, %0"::"r"(pcb_p->R3):);
+	asm volatile("MOV r4, %0"::"r"(pcb_p->R4):);
+	asm volatile("MOV r5, %0"::"r"(pcb_p->R5):);
+	asm volatile("MOV r6, %0"::"r"(pcb_p->R6):);
+	asm volatile("MOV r7, %0"::"r"(pcb_p->R7):);
+	asm volatile("MOV r8, %0"::"r"(pcb_p->R8):);
+	asm volatile("MOV r9, %0"::"r"(pcb_p->R9):);
+	asm volatile("MOV r10, %0"::"r"(pcb_p->R10):);
+	asm volatile("MOV r12, %0"::"r"(pcb_p->R12):);
+	asm volatile("MOV r13, %0"::"r"(pcb_p->R13):);
+	asm volatile("MOV r14, %0"::"r"(pcb_p->R14):);
+	asm volatile("MOV r15, %0"::"r"(pcb_p->R15):);
 
 	return 1;
 }
@@ -326,7 +342,9 @@ uint32_t process_execute(pcb* pcb_p) {
 
 	//Copy the current process's program counter to the new process's return register
 	//The new process will use R14 to return to the parent function
-	asm("MOV %0, r15":"=r"(pcb_p->R14)::);
+	asm volatile("MOV %0, r15":"=r"(pcb_p->R14)::);
+
+	process_print_state(pcb_p->PID);
 
 	//Switch to user virtual address space, this is self explanatory
 //	vm_enable_vas(pcb_p->stored_vas);
@@ -382,9 +400,27 @@ void __process_init_heap(pcb* pcb_p);
 void __process_init_stack(pcb* pcb_p);
 
 void process_init(pcb * pcb_p) {
+	DEBUG("init vas\n");
 	__process_init_vas(pcb_p);
+	/*{
+			os_printf("Testing kmalloc 3...\n");
+			void *p = kmalloc(14);
+			os_printf("p=%X\n",p);
+			}*/
+	DEBUG("init stack\n");
 	__process_init_stack(pcb_p);
+	/*{
+			os_printf("Testing kmalloc 4...\n");
+			void *p = kmalloc(14);
+			os_printf("p=%X\n",p);
+			}*/
+	DEBUG("init heap\n");
 	__process_init_heap(pcb_p);
+	/*{
+			os_printf("Testing kmalloc 5...\n");
+			void *p = kmalloc(14);
+			os_printf("p=%X\n",p);
+			}*/
 }
 
 // Copy over from kernel to user space
@@ -415,7 +451,7 @@ void __process_init_vas(pcb* pcb_p) {
 			break;
 		}
 
-		retval = vm_map_shared_memory(KERNEL_VAS, (void*) v + (i * BLOCK_SIZE), pcb_p->stored_vas,
+		retval = vm_map_shared_memory(KERNEL_VAS, (void*) pcb_p->start + (i * BLOCK_SIZE), pcb_p->stored_vas,
 				(void*) v, VM_PERM_USER_RW);
 		if (retval) {
 			ERROR("__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n", retval, i);
@@ -437,6 +473,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 	for (int i = 0; i < 40; i++) {
 		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
+		//LOG("Trying to free: %X\n", v);
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 
 		if (retval) {
@@ -484,6 +521,12 @@ void __process_init_stack(pcb * pcb_p) {
 //	print_process_state(pcb_p->PID);
 
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
+		//os_printf("i=%d\n",i);
+		/*{
+			//os_printf("Testing kmalloc 7...\n");
+			void *p = kmalloc(14);
+			os_printf("p=%X\n",p);
+			}*/
 		retval = vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
 		if (retval) {
 			ERROR("__process_init_stack: vm_free_mapping error code: %d\n", retval);

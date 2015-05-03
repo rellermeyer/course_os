@@ -202,6 +202,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
 		vas->l1_pagetable[(unsigned int)vptr>>20] = (uint32_t)vm_vtop(KERNEL_VAS, vptr_coarse_pt) | 1;
 		cur_entry = vas->l1_pagetable[(unsigned int)vptr>>20];
+		//os_printf("Allocated coarse page table. vas=%X vptr=%X pptr=%X l2pt=%X\n", vas, vptr, pptr, vptr_coarse_pt);
 	}
 
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(cur_entry));
@@ -223,9 +224,11 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	// TODO: If this is a paged frame, then we need to throw an error
 	if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
 		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
-	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
+	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 1) {
 		// We have to free the mapping in the L2 page table
-		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_L2ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		//os_printf("Freeing mapping: %X %X %X (entry=%X)\n", l2pt, vptr, vas, vas->l1_pagetable[(unsigned int)vptr>>20]);
+		//os_printf("L1 entry: %X\n",VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
 		VM_L2_ENTRY(l2pt, vptr) = 0;
 	}
 	return 0;
@@ -249,10 +252,11 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 		// We need to allocate a coarse page table...
 		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
 		vas->l1_pagetable[(unsigned int)this_ptr>>20] = (uint32_t)vm_vtop(KERNEL_VAS, vptr_coarse_pt) | 1;
-		//LOG("Allocated coarse page table.\n");
+		//LOG("Allocated coarse page table (vas=%X) %X (entry=%X)\n", vas, vptr_coarse_pt, vas->l1_pagetable[(unsigned int)this_ptr>>20]);
 		//LOG("Should be zero: %X (%X)\n", vptr_coarse_pt[0], vptr_coarse_pt);
 	}
 	uint32_t *this_l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(vas->l1_pagetable[(unsigned int)this_ptr>>20]));
+	//LOG("this_l2pt: %X\n", this_l2pt);
 	if (VM_L2_ENTRY(this_l2pt, this_ptr)) {
 		//LOG("Should be zero: %X (this_l2pt=%X, idx=%d)\n", VM_L2_ENTRY(this_l2pt, this_ptr), this_l2pt, ((unsigned int)this_ptr&0x000FF000)>>12);
 		return VM_ERR_MAPPED;
@@ -272,7 +276,7 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)this_ptr>>20] = pptr | (perm<<10) | 2;
 	VM_L2_ENTRY(this_l2pt, this_ptr) = pptr | (1<<4) | 2;
-	LOG("%X\n", VM_L2_ENTRY(this_l2pt, this_ptr));
+	//LOG("%X\n", VM_L2_ENTRY(this_l2pt, this_ptr));
 
 	vm_enable_vas(prev_vas);
 	return 0;

@@ -10,10 +10,24 @@ int test_prcs_1() {
 	DEBUG("Creating first process...\n");
 	pcb *test = process_create_from_file("/hello", "whats up!");
 	process_init(test);
-//	DEBUG("Creating second process...\n");
-//	pcb *test2 = process_create_from_file("/hello", "whats up!");
-//	process_init(test2);
+
+	/*{
+		os_printf("Testing kmalloc 2...\n");
+		void *p = kmalloc(14);
+		os_printf("p=%X\n",p);
+		process_execute(test);
+		}*/
+
+	// DEBUG("Creating second process...\n");
+	// pcb *test2 = process_create_from_file("/hello", "whats up!");
+	// process_init(test2);
 	process_execute(test);
+
+	/*{
+	os_printf("Testing kmalloc 1...\n");
+	void *p = kmalloc(14);
+	os_printf("p=%X\n",p);
+	}*/
 
 	return TEST_OK;
 }

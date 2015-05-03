@@ -293,7 +293,7 @@ void __sched_dispatch() {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
 		}
-	} else if (IS_PROCESS(active_task)) {
+	} /*else if (IS_PROCESS(active_task)) {
 		LOG("Active_task is a process!\n");
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			LOG("Loading from memory!\n");
@@ -316,7 +316,7 @@ void __sched_dispatch() {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
 		}
-	}
+	}*/
 
 	// FIXME jump to main and remove
 	__sched_remove_task(active_task);

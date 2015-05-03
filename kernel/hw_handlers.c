@@ -85,12 +85,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	struct vas *prev_vas = vm_get_current_vas();
 	vm_use_kernel_vas();
 
-	os_printf("SOFTWARE INTERRUPT HANDLER\n");
-
-	// Print out syscall # for debug purposes
-	os_printf("Syscall #: ");
-	os_printf("%d", callNumber);
-	os_printf("\n");
+	os_printf("SOFTWARE INTERRUPT HANDLER [%d]\n", callNumber);
 
 	// System Call Handler
 	switch(callNumber)

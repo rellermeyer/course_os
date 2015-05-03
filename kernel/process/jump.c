@@ -30,8 +30,6 @@ uint32_t jmp_set(jmp_buf * buffer) {
 }
 
 uint32_t jmp_goto(jmp_buf * buffer, uint32_t value) {
-	int x = 1;
-	while(x);
 
 	// load the resume
 	asm volatile("MOV r1, %0"::"r"(value):);
