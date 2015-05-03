@@ -128,7 +128,7 @@ void start2(uint32_t *p_bootargs)
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
-	argparse_process(p_bootargs);
+	//argparse_process(p_bootargs);
 	
 
 	print_uart0("done parsing atag list\n");
