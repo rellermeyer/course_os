@@ -11,7 +11,6 @@ uint32_t __mem_extend_heap(uint32_t amt);
 alloc_handle * proc_allocator;
 uint32_t proc_buffer_size;
 uint32_t __mem_extend_proc_heap(uint32_t amt,struct vas* pvas);
-uint32_t *nextProcBlock = (uint32_t*) MEM_START;
 
 //bump pointer allocation
 void *mem_alloc(uint32_t size)
@@ -127,6 +126,17 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 {
     return alloc_deallocate(allocator, ptr);
 }
+
+void* proc_allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
+{
+    return alloc_allocate(proc_allocator, size);
+}
+
+void proc_deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
+{
+    return alloc_deallocate(proc_allocator, ptr);
+}
+
 
 alloc_handle * mem_get_allocator(){
     return allocator;

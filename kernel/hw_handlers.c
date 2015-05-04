@@ -70,9 +70,9 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 
 
-
+	//register int r0 asm("r0");
 	asm("MOV %0, r7":"=r"(callNumber)::);
-
+	//os_printf("\n\naddress 0x%x:\n\n",(uint32_t *)r0);
 
 
 
@@ -248,14 +248,14 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		return (long) ptr;
 		break;
 
-	case SYSCALL_CALLOC:
-		os_printf("SYSCALL_CALLOC system call called!\n");
+	case SYSCALL_ALLIGNED_ALLOC:
+		os_printf("alligned_alloc system call called!\n");
 		//Assuming that the userlevel syscall wrappers work
-		uint32_t num;
+		uint32_t allign;
 		//retrieve args of malloc, put in r1, pass to malloc 
-		asm volatile("mov r0, %[num1]":[num1]"=r" (num)::);
-		asm volatile("mov r1, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = ucalloc(num,byte_size);
+		asm volatile("mov r1, %[allign1]":[allign1]"=r" (allign)::);
+		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
+		ptr = ualligned_alloc(byte_size,allign);
 		//I want to return the pointer to the beggining of allocated block(s);
 		return (long) ptr;
 		break;

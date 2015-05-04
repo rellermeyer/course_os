@@ -9,7 +9,8 @@
 #define SYSCALL_SET_PERM 7 
 #define SYSCALL_MEM_MAP 8
 #define SYSCALL_MALLOC 13
-#define SYSCALL_FREE 14
+#define SYSCALL_ALLIGNED_ALLOC 14
+#define SYSCALL_FREE 15
 
 
 /***********************************
@@ -21,12 +22,12 @@
 Returns a pointer to the beggining of the block */  
 void* malloc(uint32_t size);
 
-/*Calloc: Allocates a block of memory for an array of 
+/*alligned_alloc: Allocates a block of memory for an array of 
 num elements, each of them size bytes long. All bits
 are initalized to zero. Returns a pointer of the block*/
-void* calloc(uint32_t num, uint32_t size);
+void* alligned_alloc(uint32_t num, uint32_t size);
 
 /*Free: Deallocates a block of memory previously
-allocated by Malloc, Calloc, etc.. */
+allocated by Malloc, alligned_alloc, etc.. */
 void free(void* ptr);
 
