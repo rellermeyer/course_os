@@ -1509,8 +1509,6 @@ int kcopy(char* source, char* dest, char mode) {
 		kfree(source_dir_helper);
 		return ERR_GEN;
 	}
-	
-	struct inode *dest_inode = dest_fd_struct->linked_file;  ///TODO ISN'T USED, G: WHY IS IT HERE
 	//at this point dest_inode is the inode of the created destination
 	
 	void *buffer = (void*) kmalloc(source_inode->size);
