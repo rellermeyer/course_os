@@ -13,9 +13,11 @@ int test_fs_1()
 
 	//retval = kcreate("/", 0xFF, 1);
 	//os_printf("%d\n", retval);
+	int fd2 = kcreate("/", 'w', 0);
 	int fd = kcreate("/foobar", 'w', 0);
 	os_printf("%d\n", fd);
 	kclose(fd);
+	kclose(fd2);
 
 	os_printf("\nOpening file...\n");
 	fd = kopen("/foobar", 'w');
@@ -39,8 +41,8 @@ int test_fs_1()
 	kclose(fd);
 
 	// Test kls, just for grins. :)
-	os_printf("\nRunning kls...\n");
-	kls("/");
+	//os_printf("\nRunning kls...\n");
+	//kls("/");
 
 	return 0;
 }
@@ -81,7 +83,7 @@ int test_fs_2() {
 		//os_printf("%d is valid.\n", i);
 	}
 	kclose(fd);
-
+	get_stats("/foobar2", )
 	return 0;
 }
 

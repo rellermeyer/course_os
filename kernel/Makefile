@@ -82,4 +82,4 @@ clean:
 	rm -f data_structures/*.o
 	rm -f mq/*.o
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
-	@echo "('rm sd.card')"
+	@echo "('rm card.sd')"

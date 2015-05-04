@@ -124,7 +124,7 @@ int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // /* HELPER FUNCTIONS */
-
+int get_stats(char * filepath, struct stats * result);
 
 int kdelete_single_helper(struct inode * cur_inode);
 
