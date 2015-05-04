@@ -44,8 +44,10 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 
 	if(num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
 		return -1;
-	else if(handlers[num] != 0) // something has already been registered there
+	else if(handlers[num] != 0){ // something has already been registered there
+		os_printf("Already registered\n");
 		return -1;
+	}
 	else if(handler == 0) // we need a NULL macro
 		return -1;
 	
