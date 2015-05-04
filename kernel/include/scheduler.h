@@ -25,7 +25,8 @@ typedef struct sched_task {
     uint32_t tid;
     uint32_t state;
     uint32_t type;
-    char * arg;
+    char * argv;
+    char * argc;
     int available_space;
     int niceness;
     void * task;
@@ -52,7 +53,7 @@ uint32_t sched_remove_task(uint32_t pid);
 uint32_t sched_get_active_tid();
 void sched_waitpid(uint32_t pid);
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness);
-uint32_t sched_create_task_from_process(char * file, int niceness, char * arg);
+uint32_t sched_create_task_from_process(char * file, int niceness, int argc, char ** argv);
 sched_task* sched_get_active_task();
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data, int len);
 uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler);

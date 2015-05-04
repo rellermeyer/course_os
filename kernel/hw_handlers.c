@@ -19,52 +19,52 @@ int interrupt_count = 0;
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
-    /* This doesn't seem to work well with virtual memory; reverting
-     * to old method.       
-    extern uint32_t vector_table_start, vector_table_end;
-    uint32_t *src = &vector_table_start;
-    uint32_t *dst = (uint32_t *) HIVECTABLE;
+	/* This doesn't seem to work well with virtual memory; reverting
+	 * to old method.
+	 extern uint32_t vector_table_start, vector_table_end;
+	 uint32_t *src = &vector_table_start;
+	 uint32_t *dst = (uint32_t *) HIVECTABLE;
 
-    while(src < &vector_table_end)
-	*dst++ = *src++;
-    */
+	 while(src < &vector_table_end)
+	 *dst++ = *src++;
+	 */
 
-    /* Primary Vector Table */
-    mmio_write( 0x00, BRANCH_INSTRUCTION);
-    mmio_write( 0x04, BRANCH_INSTRUCTION);
-    mmio_write( 0x08, BRANCH_INSTRUCTION);
-    mmio_write( 0x0C, BRANCH_INSTRUCTION);
-    mmio_write( 0x10, BRANCH_INSTRUCTION);
-    mmio_write( 0x14, BRANCH_INSTRUCTION);
-    mmio_write( 0x18, BRANCH_INSTRUCTION);
-    mmio_write( 0x1C, BRANCH_INSTRUCTION);
+	/* Primary Vector Table */
+	mmio_write(0x00, BRANCH_INSTRUCTION);
+	mmio_write(0x04, BRANCH_INSTRUCTION);
+	mmio_write(0x08, BRANCH_INSTRUCTION);
+	mmio_write(0x0C, BRANCH_INSTRUCTION);
+	mmio_write(0x10, BRANCH_INSTRUCTION);
+	mmio_write(0x14, BRANCH_INSTRUCTION);
+	mmio_write(0x18, BRANCH_INSTRUCTION);
+	mmio_write(0x1C, BRANCH_INSTRUCTION);
 
-    /* Secondary Vector Table */
-    mmio_write( 0x20, &reset_handler); 
-    mmio_write( 0x24, &undef_instruction_handler ); 
-    mmio_write( 0x28, &software_interrupt_handler ); 
-    mmio_write( 0x2C, &prefetch_abort_handler ); 
-    mmio_write( 0x30, &data_abort_handler ); 
-    mmio_write( 0x34, &reserved_handler ); 
-    mmio_write( 0x38, &irq_handler ); 
-    mmio_write( 0x3C, &fiq_handler ); 
+	/* Secondary Vector Table */
+	mmio_write(0x20, &reset_handler);
+	mmio_write(0x24, &undef_instruction_handler);
+	mmio_write(0x28, &software_interrupt_handler);
+	mmio_write(0x2C, &prefetch_abort_handler);
+	mmio_write(0x30, &data_abort_handler);
+	mmio_write(0x34, &reserved_handler);
+	mmio_write(0x38, &irq_handler);
+	mmio_write(0x3C, &fiq_handler);
 }
-
 
 /* handlers */
 void reset_handler(void) {
-    os_printf("RESET HANDLER\n");
-    _Reset();
+	os_printf("RESET HANDLER\n");
+	_Reset();
 }
 
-void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void){
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void) {
 #ifdef ENABLE_MAX_INTERRUPT
-	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
+		return;
 #endif
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
-long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	int callNumber;
 
 	// TODO please update the code to store the return value to RET
@@ -74,7 +74,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// the link register currently holds the address of the instruction immediately
 	// after the SVC call
 	// possible that syscall # passed directly in r7, not sure yet though
-	register int address asm("lr"); 
+	register int address asm("lr");
 
 	asm volatile("MOV %0, r7":"=r"(callNumber)::);
 	asm volatile("MOV %0, r0":"=r"(r0)::);
@@ -223,6 +223,17 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Yet to be implemented\n");
 		return -1;
 		break;
+	case SYSCALL_PRCS_LISTEN:
+		LOG("SYSCALL_PRCS_YIELD\n");
+		sched_msg_callback_handler cb_handler = (sched_msg_callback_handler) r0;
+		error = sched_register_callback_handler(cb_handler);
+		return (long) error;
+		break;
+	case SYSCALL_PRCS_EMIT:
+		LOG("SYSCALL_PRCS_YIELD\n");
+		error = sched_post_message(r0, r1, r2, r3);
+		return (long) error;
+		break;
 	case SYSCALL_PRCS_YIELD:
 		LOG("SYSCALL_PRCS_YIELD\n");
 		error = sched_yield();
@@ -266,8 +277,8 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	case SYSCALL_PRINTF:
 		// TODO fix address
 		vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
-				VM_PERM_USER_RW);
-		os_printf((char*) r0);
+		VM_PERM_USER_RW);
+		os_printf("[%d] %s", r1, (char*) r0);
 		vm_free_mapping(KERNEL_VAS, (void*) r0);
 		RET = STATUS_OK;
 		break;
@@ -282,16 +293,18 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	return RET;
 }
 
-void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {
 #ifdef ENABLE_MAX_INTERRUPT
-	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
+		return;
 #endif
 	os_printf("PREFETCH ABORT HANDLER\n");
 }
 
-void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 #ifdef ENABLE_MAX_INTERRUPT
-	if(++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT) return;
+	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
+		return;
 #endif
 	os_printf("DATA ABORT HANDLER\n");
 	int pc, lr, sp, fp;
@@ -300,7 +313,7 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	asm volatile("mov %0, lr" : "=r" (lr));
 	asm volatile("mov %0, sp" : "=r" (sp));
 	asm volatile("mov %0, fp" : "=r" (fp));
-	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp); 
+	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
 
 	// Get the DSFR
 	int dsfr;
@@ -308,42 +321,43 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void){
 	os_printf("DSFR: 0x%X\n", dsfr);
 
 	switch (dsfr) {
-	case 6: // Access bit.
-		// Set it to 1 so we don't get notified again.
-		// TODO: The eviction policy will listen to this.
-		*((unsigned int*)(V_L1PTBASE + 2*PAGE_TABLE_SIZE)) |= (1<<4);
-		break;
-	default:
-		break;
+		case 6: // Access bit.
+			// Set it to 1 so we don't get notified again.
+			// TODO: The eviction policy will listen to this.
+			*((unsigned int*) (V_L1PTBASE + 2 * PAGE_TABLE_SIZE)) |= (1 << 4);
+			break;
+		default:
+			break;
 	};
 }
 
-void reserved_handler(void){
+void reserved_handler(void) {
 	os_printf("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
-void __attribute__((interrupt("IRQ"))) irq_handler(void){
+void __attribute__((interrupt("IRQ"))) irq_handler(void) {
 
 	os_printf("IRQ HANDLER\n");
-	disable_interrupts();	
+	disable_interrupts()
+	;
 
 	// Discover source of interrupt
 	int i = 0;
 	// do a straight run through the VIC_INT_STATUS to determine
 	// which interrupt lines need to be tended to
-	for(i = 0; i < MAX_NUM_INTERRUPTS; i++){
+	for (i = 0; i < MAX_NUM_INTERRUPTS; i++) {
 		// is the line active?
-		if((1 << i) & mmio_read(VIC_IRQ_STATUS)) {
+		if ((1 << i) & mmio_read(VIC_IRQ_STATUS)) {
 			// activate that specific handler
-			handle_irq_interrupt(i);	
+			handle_irq_interrupt(i);
 		}
 	}
 	// we've gone through the VIC and handled all active interrupts
 	enable_interrupts();
 }
 
-void __attribute__((interrupt("FIQ"))) fiq_handler(void){
+void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
 	os_printf("FIQ HANDLER\n");
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4

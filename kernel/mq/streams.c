@@ -174,31 +174,31 @@ void sample_receiver(void *userdata, void *data, uint32_t datalength)
 
 void q_test()
 {
-    // test client
-    print_uart0("in q_test\n");
-    print_uart0("again!\n");
-    q_create("printf");
-    print_uart0("before q_open\n");
-	int qd = q_open("printf");
-    print_uart0("before q_subscribe\n");
-	q_subscribe(qd, sample_receiver, 0x0);
-    print_uart0("after q_subscribe\n");
-    q_publish(qd, "first message", 13);
-    struct queue *test_q = q_map[qd];
-    // check client message
-    os_printf("%s\n", (char*) test_q->data);
-    uint32_t number = 0;
-    uint32_t *sample_buffer = &number;
-    q_create("printf_2");
-    int reply_qd = q_open("printf_2");
-    //q_block_read(qd, *sample_buffer, 100);
-    // test buffer
-    //os_printf("%s\n", (char*) sample_buffer);
-
-
-    print_uart0("This is a test.\n");
-    os_printf("This is a 2nd test.\n");
-    return;
+//    // test client
+//    print_uart0("in q_test\n");
+//    print_uart0("again!\n");
+//    q_create("printf");
+//    print_uart0("before q_open\n");
+//	int qd = q_open("printf");
+//    print_uart0("before q_subscribe\n");
+//	q_subscribe(qd, sample_receiver, 0x0);
+//    print_uart0("after q_subscribe\n");
+//    q_publish(qd, "first message", 13);
+//    struct queue *test_q = q_map[qd];
+//    // check client message
+//    os_printf("%s\n", (char*) test_q->data);
+//    uint32_t number = 0;
+//    uint32_t *sample_buffer = &number;
+//    q_create("printf_2");
+//    int reply_qd = q_open("printf_2");
+//    //q_block_read(qd, *sample_buffer, 100);
+//    // test buffer
+//    //os_printf("%s\n", (char*) sample_buffer);
+//
+//
+//    print_uart0("This is a test.\n");
+//    os_printf("This is a 2nd test.\n");
+//    return;
 
     // os_printf_v2("this is a test\n");
     // q_create("my_q");

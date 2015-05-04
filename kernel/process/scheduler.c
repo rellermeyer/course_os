@@ -71,7 +71,7 @@ void __sched_resume_timer_irq();
 void __sched_dispatch();
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, char * arg);
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, int argc, char ** argv);
 void __sched_emit_messages();
 void __sched_register_timer_irq() {
 }
@@ -149,15 +149,15 @@ uint32_t sched_free() {
 static uint32_t sched_tid = 10;
 
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) {
-	return __sched_create_task(kthread, niceness, KTHREAD, NO_ARG);
+	return __sched_create_task(kthread, niceness, KTHREAD, NO_ARG, NO_ARG);
 }
 
 // defer process create
-uint32_t sched_create_task_from_process(char * file, int niceness, char * arg) {
-	return __sched_create_task(file, niceness, PROCESS, arg);
+uint32_t sched_create_task_from_process(char * file, int niceness, int argc, char ** argv) {
+	return __sched_create_task(file, niceness, PROCESS, argc, argv);
 }
 
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, char * arg) {
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, int argc, char ** argv) {
 
 	if (prq_count(inactive_tasks) >= MAX_TASKS) {
 		// last_err = "Too many tasks";
@@ -181,7 +181,8 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, char
 	task->message_queue = llist_create();
 	task->cb_handler = 0;
 	task->available_space = MAX_TASK_MSG_SPACE;
-	task->arg = arg;
+	task->argv = argv;
+	task->argc = argc;
 
 	hmap_put(all_tasks_map, task->tid, task);
 
@@ -270,7 +271,7 @@ void __sched_dispatch() {
 			return;
 		} else if (ret == TASK_CREATE_PROCESS) {
 			active_task->task = process_create_from_file(active_task->task,
-					active_task->arg);
+					active_task->argc, active_task->argv);
 			process_init(AS_PROCESS(active_task));
 			// FIXME delay timer irq
 			__sched_resume_timer_irq();

@@ -16,7 +16,7 @@ int process_global_init() {
 	return 0;
 }
 
-pcb * process_create_from_file(char * file, char * arg) {
+pcb * process_create_from_file(char * file, int argc, char ** argv) {
 
 #define START 0x20000
 #define PROC_LOCATION 0x9ff00000
@@ -49,7 +49,7 @@ pcb * process_create_from_file(char * file, char * arg) {
 
 //	kclose(fd);
 
-	return process_create((uint32_t*) start, len, arg);
+	return process_create((uint32_t*) start, len, argc, argv);
 }
 
 /*Spring 2015 course_os: Sathya Sankaran, Rakan Stanbouly, Jason Sim
@@ -58,7 +58,7 @@ pcb * process_create_from_file(char * file, char * arg) {
  returns pcb pointer upon success
  returns 0 if there is no more room in pcb table
  file_p is a file pointer that we will create the process with */
-pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
+pcb* process_create(uint32_t* file_p, uint32_t len, int argc, char ** argv) {
 
 	uint32_t* free_space_in_pcb_table = process_next_free_slot_in_pcb_table();
 
@@ -68,7 +68,8 @@ pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
 
 		pcb_pointer->len = len;
 		pcb_pointer->start = file_p;
-		pcb_pointer->arg = arg;
+		pcb_pointer->argv = argv;
+		pcb_pointer->argc = argc;
 
 		//Create the process VAS here so that we can use it when allocating process memory
 		pcb_pointer->stored_vas = vm_new_vas();
@@ -316,7 +317,7 @@ uint32_t process_free_PCB(pcb* pcb_p) {
 		os_printf("Can not free. Not a valid PCB.\n");
 		return 0;
 	}
-	pcb_p->arg = 0;
+	pcb_p->argv = 0;
 	pcb_p->PID = 0;
 
 	return 1;
@@ -361,7 +362,8 @@ uint32_t process_execute(pcb* pcb_p) {
 
 	jmp_goto(&p.R0, p.R0);
 
-	while (1);
+	while (1)
+		;
 	return pcb_p->PID;
 }
 
@@ -479,7 +481,39 @@ void __process_init_stack(pcb * pcb_p) {
 	stack_top[-5] = STACK_BASE;
 	stack_top[-6] = 1;
 
-	os_strcpy((char*) STACK_BASE, pcb_p->arg);
+	// set ptr to charc
+	uint32_t * stack_argc = STACK_BASE;
+	*stack_argc = pcb_p->argc;
+
+	// get ptr to charv **
+	uint32_t * stack_argv_ptr = STACK_BASE + sizeof(uint32_t);
+
+	uint32_t arg_stack = STACK_BASE + sizeof(uint32_t)
+			+ sizeof(char*) * pcb_p->argc;
+
+	for (int i = 0; i < pcb_p->argc; i++) {
+		// check the length of string
+		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
+		// copy in the content
+		os_strcpy((char*) arg_stack, pcb_p->argv[i]);
+		// store address
+		*stack_argv_ptr = arg_stack;
+		// increment the char array
+		arg_stack += arg_len;
+		// append with 0
+		*((char*) arg_stack) = '\0';
+		// include the 0 in len
+		arg_stack += 1;
+		// increment the array
+		stack_argv_ptr += 1;
+	}
+
+	uint32_t argc = *((uint32_t*) STACK_BASE);
+	char ** argv = (char**)(STACK_BASE + sizeof(uint32_t));
+
+	for(int i = 0; i < argc; i++){
+		LOG("process_init: arg[%d][%s]\n", i, argv[i]);
+	}
 
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4 * 6;

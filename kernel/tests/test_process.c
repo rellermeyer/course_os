@@ -7,8 +7,10 @@
 #define NUM_TESTS 1
 
 int test_prcs_1() {
-	DEBUG("Creating first process...\n");
-	pcb *test = process_create_from_file("/hello", "whats up!");
+	char * argv_1[2];
+	argv_1[0] = "Process 11";
+	argv_1[1] = "How are you?";
+	pcb *test = process_create_from_file("/hello", 2, (char**) argv_1);
 	process_init(test);
 
 	/*{
@@ -19,8 +21,8 @@ int test_prcs_1() {
 		}*/
 
 	// DEBUG("Creating second process...\n");
-    pcb *test2 = process_create_from_file("/hello", "whats up!");
-	process_init(test2);
+//    pcb *test2 = process_create_from_file("/hello", 2, argv_1);
+//	process_init(test2);
 	process_execute(test);
 
 	/*{

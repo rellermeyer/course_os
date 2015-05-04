@@ -68,7 +68,8 @@ typedef enum PROCESS_STATE
 typedef struct pcb
 {
 	//ID data
-	char* arg; /* for debugging purposes */
+	char** argv;
+	uint32_t argc;
 	uint32_t PID;
 	uint32_t starting_address;
 	uint32_t process_number; // is this a mapping to actual executable image? or does it describe total number of processes?
@@ -160,8 +161,8 @@ uint32_t* pcb_table; //Table showing all initialized processes.
 uint32_t* process_next_free_slot_in_pcb_table();
 void process_print_pcb_table();
 int init_pcb_table();
-pcb *process_create_from_file(char * file, char * arg);
-pcb* process_create(uint32_t* file_p, uint32_t len, char * arg);
+pcb *process_create_from_file(char * file, int argc, char ** argv);
+pcb* process_create(uint32_t* file_p, uint32_t len, int argc, char ** argv);
 uint32_t process_destroy(int PID);
 void process_print_PID();
 pcb* process_get_PCB(uint32_t PID);
