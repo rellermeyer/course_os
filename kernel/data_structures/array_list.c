@@ -60,7 +60,7 @@ void* arrl_get(arrl_handle* arrl, uint32_t index) {
     return arrl->list[list_index][bucket_index];
 }
 
-void arrl_remove(arrl_handle* arrl, void* elem) {
+void* arrl_remove(arrl_handle* arrl, void* elem) {
     uint32_t bucket_size;
     uint32_t list_size;
     uint32_t bucket_index;
@@ -77,6 +77,8 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
         }
     }
 
+    return 0;
+
     // Except the last bucket, shift each bucket up by one and copy first element of the next bucket to the last cell of the current bucket
     out: while (list_index != list_size) {
         os_memcpy(arrl->list[list_index][bucket_index + 1],
@@ -90,6 +92,17 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
             arrl->list[list_index][bucket_index],
             ((arrl->size % bucket_index) - 1) * sizeof(void*));
     --arrl->size;
+
+    return elem;
+}
+
+void arrl_free(arrl_handle* arrl) {
+    uint32_t array_size = arrl->capacity / arrl->bucket_size;
+    uint32_t bucket_size = arrl->bucket_size;
+    for(uint32_t index = 0; index < array_size; ++index) {
+        kfree(arrl->list[index*bucket_size]);
+    }
+    kfree(arrl->list);
 }
 
 /*
