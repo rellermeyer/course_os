@@ -143,6 +143,15 @@ void vm_use_kernel_vas() {
 	vm_enable_vas((struct vas*)V_L1PTBASE);
 }
 
+/**
+ * vm_allocate_page allocates a page of size BLOCK_SIZE and allows the VAS
+ * to access the page at address vptr.
+ *
+ * @param vas Virtual Address Space which we allocate the page in.
+ * @param vptr Virtual pointer which we map the newly allocated page to.
+ * @param permission The permissions which we should put on the new mapping.
+ * @return 0 or an error code in VM_ERR_* (see vm.h).
+ */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	CHECK_VPTR;
 
@@ -169,6 +178,18 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	return 0;
 }
 
+/**
+ * vm_allocate_pages allocates enough pages, starting at vptr, to cover the
+ * following nbytes of memory. This function essentially calls
+ * vm_allocate_page repeatedly until enough pages have been allocated.
+ *
+ * @param vas VAS which we allocate the pages in.
+ * @param vptr Virtual pointer to start allocating pages at.
+ * @param nbytes The number of bytes to allocate starting at vptr.
+ * @param permission The permissions to apply to the allocated memory.
+ * @return A pointer to the end of the allocated space. Note that the amount
+ *         of memory allocated may be more than nbytes.
+ */
 void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
 	unsigned char *p = (unsigned char*)vptr;
 	while (p-(unsigned char*)vptr < nbytes) {
@@ -178,6 +199,12 @@ void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permis
 	return p;
 }
 
+/**
+ * Gets the entry corresponding to vptr from the L1 table table.
+ *
+ * @param table A L1 page table.
+ * @param vptr The virtual pointer to get the entry for.
+ */
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
 #define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
@@ -207,10 +234,20 @@ int vm_free_page(struct vas *vas, void *vptr) {
 	return 0;
 }
 
+/**
+ * Marks a page as "pinned". Actually is a no-op until the swapping framework
+ * is done.
+ *
+ * @param vas
+ * @param vptr Virtual address to pin.
+ */
 int vm_pin(struct vas *vas, void *vptr) {
 	return 0;
 }
 
+/**
+ * Marks a page as "unpinned". Actually is a no-op.
+ */
 int vm_unpin(struct vas *vas, void *vptr) {
 	return 0;
 }
@@ -270,7 +307,38 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-// We're going to have to switch to the kernel's VAS, then copy it over.
+/**
+ * Will make the memory that accessible to other_vas at other_ptr
+ * accessible to vas at this_ptr.
+ * It can then be unmapped from either using a typical vm_free_mapping
+ * or vm_free_page. The behavior of vm_free_mapping and vm_free_page
+ * will be made equivalent.
+ * For both, the behavior will be to free the frame if a frame was
+ * allocated (via vm_allocate_page) and the page is not shared. If the
+ * page is shared, then both will behave like vm_free_mapping.
+ *
+ * It is an error for other_ptr to point to an area not mapped in other_vas.
+ *
+ * For example, given vas1 and vas2:
+ *
+ * vm_allocate_page(vas2,0x10)
+ * vm_map_shared_memory(vas1, 0x20, vas2, 0x10)
+ * // Now vas1's 0x20 points to the same memory as vas2's 0x10
+ * vm_free_page(vas2, 0x10)
+ * // Now vas1 is the sole owner of the memory at vas1's 0x20
+ * vm_free_mapping(vas1, 0x20)
+ * // Now that frame has been freed
+ *
+ * All the pointers have to be a multiple of BLOCK_SIZE.
+ *
+ * Return values:
+ * 0                 - success
+ * VM_ERR_BADV       - this_ptr was not a multiple of BLOCK_SIZE.
+ * VM_ERR_BADP       - other_ptr was not a multiple of BLOCK_SIZE.
+ * VM_ERR_NOT_MAPPED - other_ptr is not mapped in other_vas.
+ * VM_ERR_MAPPED     - this_ptr is already mapped in vas.
+ * VM_ERR_BADPERM    - permission is bad.
+ */
 int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission) {
 	if ((unsigned int)this_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
 	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
