@@ -17,8 +17,6 @@
 #define ENABLE_MAX_INTERRUPT_COUNT 5
 int interrupt_count = 0;
 
-int count = 0;
-
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
@@ -50,8 +48,6 @@ void init_vector_table(void) {
     mmio_write( 0x34, &reserved_handler ); 
     mmio_write( 0x38, &irq_handler ); 
     mmio_write( 0x3C, &fiq_handler ); 
-
-    count = 0;
 }
 
 
@@ -89,36 +85,27 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	struct vas *prev_vas = vm_get_current_vas();
 	vm_use_kernel_vas();
 
-	os_printf("SOFTWARE INTERRUPT HANDLER [%d]\n", callNumber);
-
 	// System Call Handler
-	switch(callNumber)
-	{
-	// case SYSCALL_CREATE:
-	// 	os_printf("Create system call called!\n");
-	// 	break;
-	// case SYSCALL_SWITCH:
-	// 	os_printf("Switch system call called!\n");
-	// 	break;
-	char* filepath;
-	int error;
-	char mode;
-	int fd;
-	void* buf;
-	int numBytes;
-	uint32_t byte_size;
-	void* ptr;
-	char* output;
+	switch (callNumber) {
+		char* filepath;
+		int error;
+		char mode;
+		int fd;
+		void* buf;
+		int numBytes;
+		uint32_t byte_size;
+		void* ptr;
+		char* output;
 
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
-		
+
 		// retrieve the args that delete() put in r1 and pass to kdelete():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kdelete(), passing appropriate args:
 		error = kdelete(filepath);
 		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
-		return (long)error;
+		return (long) error;
 		break;
 
 	case SYSCALL_OPEN:
@@ -165,7 +152,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// TODO: macro to translate process's virtual memory into kernel's view of virtual memory
 		int bytesRead = kread(fd, buf, numBytes);
 		// move fd that kread() returns to a r1 to be retrieved by read() and returned to user:
-		return (long)bytesRead;
+		return (long) bytesRead;
 		break;
 
 	case SYSCALL_WRITE:
@@ -189,7 +176,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// call kclose(), passing appropriate args:
 		error = kclose(fd);
 		// move error that kclose() returns to a r1 to be retrieved by close() and returned to user:
-		return (long)error;
+		return (long) error;
 		break;
 
 	case SYSCALL_SEEK:
@@ -201,7 +188,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// call kseek(), passing appropriate args:
 		error = kseek(fd, numBytes);
 		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
-		return (long)error;
+		return (long) error;
 		break;
 
 	case SYSCALL_COPY:
@@ -216,7 +203,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// call kcopy(), passing appropriate args:
 		error = kcopy(source, dest, mode);
 		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
-		return (long)error;
+		return (long) error;
 		break;
 
 	case SYSCALL_LS:
@@ -242,21 +229,18 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		return -1;
 		break;
 	case SYSCALL_PRCS_YIELD:
-		LOG("Process yield system call called! %d\n", count);
-	//	if(++count == 2) while(callNumber);
+		LOG("Process yield system call called!\n");
 		error = sched_yield();
 		return (long) error;
 		break;
 	case SYSCALL_MALLOC:
-		error = sched_yield();
-		return (long) error;
-//		os_printf("malloc system call called!\n");
-//		//Assuming that the userlevel syscall wrappers work
-//		//retrieve args of malloc, put in r1, pass to malloc
-//		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-//		ptr = umalloc(byte_size);
-//		//I want to return the pointer to the beggining of allocated block(s);
-//		return (long) ptr;
+		os_printf("malloc system call called!\n");
+		//Assuming that the userlevel syscall wrappers work
+		//retrieve args of malloc, put in r1, pass to malloc
+		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
+		ptr = umalloc(byte_size);
+		//I want to return the pointer to the beggining of allocated block(s);
+		return (long) ptr;
 		break;
 
 	case SYSCALL_CALLOC:
@@ -266,7 +250,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		//retrieve args of malloc, put in r1, pass to malloc 
 		asm volatile("mov r0, %[num1]":[num1]"=r" (num)::);
 		asm volatile("mov r1, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = ucalloc(num,byte_size);
+		ptr = ucalloc(num, byte_size);
 		//I want to return the pointer to the beggining of allocated block(s);
 		return (long) ptr;
 		break;
@@ -276,13 +260,14 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
 		ufree(ptr);
 		return 0;
-		break;	
+		break;
 
 	case SYSCALL_PRINTF:
-	// TODO fix address
-		vm_map_shared_memory(KERNEL_VAS, (void*)r0, prev_vas, (void*)r0, VM_PERM_USER_RW);
-		os_printf((char*)r0);
-		vm_free_mapping(KERNEL_VAS, (void*)r0);
+		// TODO fix address
+		vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
+				VM_PERM_USER_RW);
+		os_printf((char*) r0);
+		vm_free_mapping(KERNEL_VAS, (void*) r0);
 		RET = STATUS_OK;
 		break;
 	default:

@@ -1,5 +1,3 @@
-
-
 .global jmp_set
 .global jmp_goto
 

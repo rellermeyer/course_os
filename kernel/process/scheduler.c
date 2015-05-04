@@ -235,7 +235,6 @@ void __sched_dispatch() {
 			return;
 		}
 
-		// jmp_print(&active_task->jmp_buffer);
 		prq_enqueue(active_tasks, active_task->node);
 	}
 
@@ -256,7 +255,6 @@ void __sched_dispatch() {
 			return;
 		}
 
-		//	jmp_print(&start_buf);
 		running = 1;
 
 	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
@@ -282,8 +280,7 @@ void __sched_dispatch() {
 	if (prq_count(active_tasks) > 1) {
 		sched_task * next_task = (sched_task*) prq_dequeue(active_tasks)->data;
 		sched_task * foll_task = (sched_task*) prq_peek(active_tasks)->data;
-		if (next_task->niceness == foll_task->niceness) {
-			active_task = foll_task;
+		if (next_task->niceness == foll_task->niceness && next_task == active_task) {
 			active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 			prq_enqueue(active_tasks, next_task->node);
 		} else {
