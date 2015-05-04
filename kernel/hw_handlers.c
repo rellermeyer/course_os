@@ -187,7 +187,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 	os_printf("enabled CSPR:%X\n",get_proc_status());
 	enable_timer(0);
 	//int cpsr=disable_interrupt_save(IRQ);
-	
+
 	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
 }
 
