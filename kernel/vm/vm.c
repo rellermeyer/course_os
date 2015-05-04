@@ -253,7 +253,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
 
 	//cancelling apbit?
-	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
+	//l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
 
@@ -262,9 +262,9 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	// TODO: If this is a paged frame, then we need to throw an error
 	if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
 		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
-	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
+	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 1) {
 		// We have to free the mapping in the L2 page table
-		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(vas->l1_pagetable[(unsigned int)vptr>>20]));
 		VM_L2_ENTRY(l2pt, vptr) = 0;
 	}
 	return 0;
