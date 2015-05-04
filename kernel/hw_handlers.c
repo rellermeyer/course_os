@@ -98,8 +98,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		char* output;
 
 	case SYSCALL_DELETE:
-		os_printf("Delete system call called!\n");
-
+		os_printf("SYSCALL_DELETE\n");
 		// retrieve the args that delete() put in r1 and pass to kdelete():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kdelete(), passing appropriate args:
@@ -109,8 +108,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_OPEN:
-		os_printf("Open system call called!\n");
-
+		os_printf("SYSCALL_OPEN\n");
 		// retrieve the args that open() put in r1, r2 and pass to kopen():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
@@ -121,7 +119,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_CREATE:
-		os_printf("Create system call called!\n");
+		os_printf("SYSCALL_CREATE\n");
 		// retrieve the args that create() put in r1, r2, r3 and pass to kcreate():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
@@ -132,7 +130,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_MKDIR:
-		os_printf("Mkdir system call called!\n");
+		os_printf("SYSCALL_MKDIR\n");
 		// retrieve the args that mkdir() put in r1 and pass to kcreate():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kcreate(), passing appropriate args:
@@ -142,8 +140,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_READ:
-		os_printf("Read system call called!\n");
-
+		os_printf("SYSCALL_READ\n");
 		// retrieve the args that read() put in r1, r2 and pass to kread():
 		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
 		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
@@ -156,8 +153,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_WRITE:
-		os_printf("Write system call called!\n");
-
+		os_printf("SYSCALL_WRITE\n");
 		// retrieve the args that write() put in r1, r2 and pass to kwrite():
 		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
 		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
@@ -169,8 +165,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_CLOSE:
-		os_printf("Close system call called!\n");
-
+		os_printf("SYSCALL_CLOSE\n");
 		// retrieve the args that close() put in r1 and pass to kclose():
 		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
 		// call kclose(), passing appropriate args:
@@ -180,8 +175,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_SEEK:
-		os_printf("Seek system call called!\n");
-
+		os_printf("SYSCALL_SEEK\n");
 		// retrieve the args that seek() put in r1, r2 and pass to kseek():
 		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
 		asm volatile("mov r1, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
@@ -192,8 +186,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_COPY:
-		os_printf("Copy system call called!\n");
-
+		os_printf("SYSCALL_COPY\n");
 		char* source;
 		char* dest;
 		// retrieve the args that seek() put in r1, r2 and pass to kseek():
@@ -207,7 +200,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_LS:
-		os_printf("Ls system call called!\n");
+		os_printf("SYSCALL_LS\n");
 		// retrieve the args that mkdir() put in r1 and pass to kcreate():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kls(), passing appropriate args:
@@ -217,6 +210,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_SET_PERM:
+		LOG("SYSCALL_SET_PERM\n");
 		vm_use_kernel_vas();
 		os_printf("Set permission system call called!\n");
 		os_printf("Yet to be implemented\n");
@@ -224,17 +218,18 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_MEM_MAP:
+		LOG("SYSCALL_MEM_MAP\n");
 		os_printf("Memory map system call called!\n");
 		os_printf("Yet to be implemented\n");
 		return -1;
 		break;
 	case SYSCALL_PRCS_YIELD:
-		LOG("Process yield system call called!\n");
+		LOG("SYSCALL_PRCS_YIELD\n");
 		error = sched_yield();
 		return (long) error;
 		break;
 	case SYSCALL_MALLOC:
-		os_printf("malloc system call called!\n");
+		os_printf("SYSCALL_MALLOC\n");
 		//Assuming that the userlevel syscall wrappers work
 		//retrieve args of malloc, put in r1, pass to malloc
 		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
@@ -244,7 +239,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_CALLOC:
-		os_printf("SYSCALL_CALLOC system call called!\n");
+		os_printf("SYSCALL_CALLOC\n");
 		//Assuming that the userlevel syscall wrappers work
 		uint32_t num;
 		//retrieve args of malloc, put in r1, pass to malloc 
@@ -256,12 +251,18 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 
 	case SYSCALL_FREE:
-		os_printf("Free system call called!\n");
+		os_printf("SYSCALL_FREE\n");
 		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
 		ufree(ptr);
 		return 0;
 		break;
 
+	case SYSCALL_SWITCH:
+		os_printf("SYSCALL_SWITCH\n");
+		sched_remove_task(sched_get_active_tid());
+		error = sched_yield();
+		return error;
+		break;
 	case SYSCALL_PRINTF:
 		// TODO fix address
 		vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
@@ -271,7 +272,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		RET = STATUS_OK;
 		break;
 	default:
-		os_printf("That wasn't a syscall you knob!\n");
+		os_printf("SYSCALL_UNDEFINED\n");
 		return -1;
 		break;
 	}

@@ -16,6 +16,7 @@
 #include "priority_queue.h"
 #include "array_list.h"
 #include "linked_list.h"
+#include "jump.h"
 
 typedef void (*sched_msg_callback_handler)(uint32_t src_tid, uint32_t event, char * data, int length);
 
@@ -24,6 +25,7 @@ typedef struct sched_task {
     uint32_t tid;
     uint32_t state;
     uint32_t type;
+    char * arg;
     int available_space;
     int niceness;
     void * task;
@@ -46,11 +48,11 @@ uint32_t sched_init();
 uint32_t sched_free();
 uint32_t sched_add_task(sched_task * task);
 uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness);
-uint32_t shed_remove_task(uint32_t pid);
+uint32_t sched_remove_task(uint32_t pid);
 uint32_t sched_get_active_tid();
 void sched_waitpid(uint32_t pid);
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness);
-uint32_t sched_create_task_from_process(char * file, int niceness);
+uint32_t sched_create_task_from_process(char * file, int niceness, char * arg);
 sched_task* sched_get_active_task();
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data, int len);
 uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler);

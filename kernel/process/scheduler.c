@@ -15,6 +15,7 @@
 #define TASK_RESUME 5
 #define TASK_FINISHED 10
 #define TASK_CREATE_PROCESS 11
+#define TASK_RESUME_PROCESS 12
 #define TASK_STATE_FINISHED 4   // task has run by the scheduler and finished
 #define TASK_STATE_INACTIVE  3  // task is in the wait queue (about to be  executed)
 #define TASK_STATE_ACTIVE 2     // task is part of the running tasks; it is being interleaved and executed atm
@@ -23,6 +24,7 @@
 #define KTHREAD 0x88
 #define PROCESS 0x99
 #define MAX_TASK_MSG_SPACE 2048 // bytes
+#define NO_ARG 0
 
 #define AS_PROCESS(a) ((pcb*) a->task)
 #define AS_KTHREAD(a) ((kthread_handle*) a->task)
@@ -69,7 +71,7 @@ void __sched_resume_timer_irq();
 void __sched_dispatch();
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type);
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, char * arg);
 void __sched_emit_messages();
 void __sched_register_timer_irq() {
 }
@@ -78,6 +80,26 @@ void __sched_deregister_timer_irq() {
 void __sched_pause_timer_irq() {
 }
 void __sched_resume_timer_irq() {
+}
+
+// TODO move this out of there
+void jmp_print(jmp_buf * buffer) {
+    DEBUG("r0[0x%X]\n", buffer->R0);
+    DEBUG("r1[0x%X]\n", buffer->R1);
+    DEBUG("r2[0x%X]\n", buffer->R2);
+    DEBUG("r3[0x%X]\n", buffer->R3);
+    DEBUG("r4[0x%X]\n", buffer->R4);
+    DEBUG("r5[0x%X]\n", buffer->R5);
+    DEBUG("r6[0x%X]\n", buffer->R6);
+    DEBUG("r7[0x%X]\n", buffer->R7);
+    DEBUG("r8[0x%X]\n", buffer->R8);
+    DEBUG("r9[0x%X]\n", buffer->R9);
+    DEBUG("r10[0x%X]\n", buffer->R10);
+    DEBUG("r11[0x%X]\n", buffer->R11);
+    DEBUG("r12[0x%X]\n", buffer->R12);
+    DEBUG("r13[0x%X]\n", buffer->R13);
+    DEBUG("r14[0x%X]\n", buffer->R14);
+    DEBUG("r15[0x%X]\n", buffer->R15);
 }
 
 // Initialize the scheduler. Should be called by the kernel ONLY
@@ -127,15 +149,15 @@ uint32_t sched_free() {
 static uint32_t sched_tid = 10;
 
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) {
-	return __sched_create_task(kthread, niceness, KTHREAD);
+	return __sched_create_task(kthread, niceness, KTHREAD, NO_ARG);
 }
 
 // defer process create
-uint32_t sched_create_task_from_process(char * file, int niceness) {
-	return __sched_create_task(file, niceness, PROCESS);
+uint32_t sched_create_task_from_process(char * file, int niceness, char * arg) {
+	return __sched_create_task(file, niceness, PROCESS, arg);
 }
 
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, char * arg) {
 
 	if (prq_count(inactive_tasks) >= MAX_TASKS) {
 		// last_err = "Too many tasks";
@@ -159,6 +181,7 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type) {
 	task->message_queue = llist_create();
 	task->cb_handler = 0;
 	task->available_space = MAX_TASK_MSG_SPACE;
+	task->arg = arg;
 
 	hmap_put(all_tasks_map, task->tid, task);
 
@@ -209,11 +232,11 @@ void __sched_print_queues() {
 	int i;
 	DEBUG("active_tasks: [ ");
 	for (i = 0; i < prq_count(active_tasks); i++)
-		DEBUG("%d ", ((sched_task*) prq_get(active_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task* ) prq_get(active_tasks, i)->data)->tid);
 	DEBUG("]\n");
 	DEBUG("inactive_tasks: [ ");
 	for (i = 0; i < prq_count(inactive_tasks); i++)
-		DEBUG("%d ", ((sched_task*) prq_get(inactive_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task* ) prq_get(inactive_tasks, i)->data)->tid);
 	DEBUG("]\n");
 }
 
@@ -225,11 +248,12 @@ void __sched_dispatch() {
 	vm_use_kernel_vas();
 
 	if (active_task) {
-		if (IS_PROCESS(active_task)) {
-			asm volatile("ldr %0, [sp, #8]":"=r"(active_task->jmp_buffer.R14)::);
-		}
+		LOG("Saving tid: %d\n", active_task->tid);
 		if (jmp_set(&active_task->jmp_buffer)) {
+			LOG("Loading tid: %d\n", active_task->tid);
+			jmp_print(&active_task->jmp_buffer);
 			if (IS_PROCESS(active_task)) {
+				LOG("Loading VAS of tid: %d\n", active_task->tid);
 				vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
 			}
 			return;
@@ -246,12 +270,15 @@ void __sched_dispatch() {
 			return;
 		} else if (ret == TASK_CREATE_PROCESS) {
 			active_task->task = process_create_from_file(active_task->task,
-					"hey whats up!!!");
+					active_task->arg);
 			process_init(AS_PROCESS(active_task));
 			// FIXME delay timer irq
 			__sched_resume_timer_irq();
 			// NOTE vm_enable_vas called inside process_execute
 			process_execute(AS_PROCESS(active_task));
+			return;
+		} else if (ret == TASK_RESUME_PROCESS) {
+			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 			return;
 		}
 
@@ -268,7 +295,7 @@ void __sched_dispatch() {
 		}
 	}
 
-	__sched_print_queues();
+	// __sched_print_queues();
 
 	// if queue is empty don't dispatch anything
 	if (prq_count(active_tasks) == 0) {
@@ -280,7 +307,8 @@ void __sched_dispatch() {
 	if (prq_count(active_tasks) > 1) {
 		sched_task * next_task = (sched_task*) prq_dequeue(active_tasks)->data;
 		sched_task * foll_task = (sched_task*) prq_peek(active_tasks)->data;
-		if (next_task->niceness == foll_task->niceness && next_task == active_task) {
+		if (next_task->niceness == foll_task->niceness
+				&& next_task == active_task) {
 			active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 			prq_enqueue(active_tasks, next_task->node);
 		} else {
@@ -290,12 +318,12 @@ void __sched_dispatch() {
 		active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 	}
 
-	LOG("active_task %d\n", active_task->tid);
+	LOG("\n\nactive_task %d\n", active_task->tid);
 
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
-			//	jmp_print(&active_task->jmp_buffer);
+			//  jmp_print(&active_task->jmp_buffer);
 			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
@@ -308,11 +336,8 @@ void __sched_dispatch() {
 		}
 	} else if (IS_PROCESS(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
-			//	__sched_emit_messages();
-			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer; // move to kernel stack
-			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-			__sched_resume_timer_irq();
-			jmp_goto(&jmp_buffer_cpy, TASK_RESUME);
+			jmp_goto(&start_buf, TASK_RESUME_PROCESS);
+			//  __sched_emit_messages();
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
 			jmp_goto(&start_buf, TASK_CREATE_PROCESS);
@@ -324,7 +349,7 @@ void __sched_dispatch() {
 
 	// FIXME jump to main and remove
 	__sched_remove_task(active_task);
-	__sched_dispatch();
+	__sched_dispatch(0);
 	__sched_resume_timer_irq();
 }
 
