@@ -1,5 +1,7 @@
 #include <elf.h>
 #include "libc.h"
+#include "stdio.h"
+// #include "uthreads.h"
 
 void __init_tls(size_t *);
 void __init_security(size_t *);
@@ -50,6 +52,8 @@ int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv)
 	for (; a<(uintptr_t)&__init_array_end; a+=sizeof(void(*)()))
 		(*(void (**)())a)();
 #endif
+
+	//uthread_init();
 
 	/* Pass control to to application */
 	exit(main(argc, argv, envp));
