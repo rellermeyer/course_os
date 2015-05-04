@@ -43,6 +43,9 @@
 #include "tests/test_process.h"
 #include "tests/test_sched_process.h"
 
+#include "hashtable.h"
+#include "streams.h"
+
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
 extern int process_global_init();
@@ -51,14 +54,25 @@ void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
+void init_receiver(void *userdata, void *data, uint32_t datalength)
+{
+	int i;
+	char *s = (char*)data;
+	for (i=0; i<datalength; i++) {
+		print_char_uart0(s[i]);
+	}
+}
+
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
+	/*NOTICE: Do not use os_printf in start*/
+
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
-	INFO("%X\n", *p_bootargs);
+	print_uart0("This is working so far...\n");
 	vm_init();
-	INFO("Initialized VM datastructures.\n");
+	print_uart0("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
@@ -69,11 +83,28 @@ void start2(uint32_t *p_bootargs) {
 	// Initialize
 	// ----------
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
+	print_uart0("before init_vector_table\n");
 	init_vector_table();
 	init_heap();
+	print_uart0("after init_vector_table\n");
+	q_create("printf");
+	int qd = q_open("printf");
+	q_subscribe(qd, printf_receiver, 0x0);
 	sched_init();
 	kfs_init(0, 0, 0);
 	process_global_init();
+
+
+	 ht_test();
+	 print_uart0("after ht_test\n");
+	 q_test();
+	 print_uart0("after q_test\n");
+
+	// q_create("printf");
+	// int qd = q_open("printf");
+	// q_subscribe(qd, printf_receiver, 0x0);
+	os_printf("this is printing\n");
+	
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
@@ -83,7 +114,7 @@ void start2(uint32_t *p_bootargs) {
 
 	// Test cases
 	// ----------
-//	run_vm_tests();
+	run_vm_tests();
 //	run_mem_alloc_tests();
 //	run_prq_tests();
 //	run_hmap_tests();
