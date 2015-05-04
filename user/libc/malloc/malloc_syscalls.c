@@ -22,8 +22,8 @@ void* malloc(uint32_t size)
 }
 
 /*alligned_alloc: Allocates an alligned block of memory, returns
-pointer to the beggining of the block. If size <= 0, 
-a null pointer is returned.*/
+pointer to the 
+If size <= 0, a null pointer is returned.*/
 
 void* alligned_alloc(uint32_t num, uint32_t size)
 {

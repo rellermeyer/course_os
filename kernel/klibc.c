@@ -584,9 +584,7 @@ unsigned int rand()
 
 void* umalloc(uint32_t size)
 {
-	void* block = (void*) proc_allocate(size,0, 0);
-	//print for debug
-	os_printf("malloc returned ptr: %x\n", block);
+	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
 	return block;
 }
 
@@ -618,8 +616,6 @@ void* ualligned_alloc(uint32_t size, uint32_t alignment)
 }
 
 void ufree(void* ptr)
-{	
-	os_printf("ufree for user free is currently broken\n");
-	os_printf("ptr being passed in: %x\n", ptr);
-	proc_deallocate((uint32_t*) ptr, 0, 0);
+{
+	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
 }

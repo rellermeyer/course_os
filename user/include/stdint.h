@@ -18,7 +18,7 @@
 #define __NEED_uintmax_t
 
 #include <bits/alltypes.h>
-#include <malloc_syscalls.h>
+
 typedef int8_t int_fast8_t;
 typedef int64_t int_fast64_t;
 
