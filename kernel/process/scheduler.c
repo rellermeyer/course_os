@@ -224,6 +224,10 @@ void __sched_dispatch() {
 
 	if (active_task) {
 		if (jmp_set(&active_task->jmp_buffer)) {
+			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
+			LOG("RESUMINGED!!!!\n");
+			int x = 1;
+			while(x);
 			return;
 		}
 
@@ -231,10 +235,25 @@ void __sched_dispatch() {
 		prq_enqueue(active_tasks, active_task->node);
 	}
 
+#define TASK_FINISHED 10
+#define TASK_CREATE_PROCESS 11
+
 	if (!running) {
-		if (jmp_set(&start_buf)) {
+		int ret = jmp_set(&start_buf);
+		LOG("Scheduler - start_buff %d\n", ret);
+		if (ret == TASK_FINISHED) {
 			active_task = 0;
 			running = 0;
+			return;
+		} else if (ret == TASK_CREATE_PROCESS){
+			active_task->task = process_create_from_file(active_task->task,
+					"hey whats up!!!");
+			process_init(AS_PROCESS(active_task));
+			// FIXME delay timer irq
+			__sched_resume_timer_irq();
+			// NOTE vm_enable_vas called inside process_execute
+			LOG("STARTING PROCESS\n");
+			process_execute(AS_PROCESS(active_task));
 			return;
 		}
 
@@ -242,7 +261,7 @@ void __sched_dispatch() {
 		running = 1;
 
 	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
-		jmp_goto(&start_buf, TASK_RESUME);
+		jmp_goto(&start_buf, TASK_FINISHED);
 	}
 
 	// add task from inactive -> active
@@ -293,7 +312,7 @@ void __sched_dispatch() {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
 		}
-	} /*else if (IS_PROCESS(active_task)) {
+	} else if (IS_PROCESS(active_task)) {
 		LOG("Active_task is a process!\n");
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			LOG("Loading from memory!\n");
@@ -305,18 +324,12 @@ void __sched_dispatch() {
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			LOG("Loading from file!\n");
 			active_task->state = TASK_STATE_ACTIVE;
-			active_task->task = process_create_from_file(active_task->task,
-					"hey whats up!!!");
-			process_init(AS_PROCESS(active_task));
-			// FIXME delay timer irq
-			__sched_resume_timer_irq();
-			// NOTE vm_enable_vas called inside process_execute
-			process_execute(AS_PROCESS(active_task));
+			jmp_goto(&start_buf, TASK_CREATE_PROCESS);
 		} else {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
 		}
-	}*/
+	}
 
 	// FIXME jump to main and remove
 	__sched_remove_task(active_task);

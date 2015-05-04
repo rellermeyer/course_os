@@ -21,7 +21,8 @@ pcb * process_create_from_file(char * file, char * arg) {
 #define START 0x20000
 #define PROC_LOCATION 0x9ff00000
 
-	DEBUG("create from file 1\n");
+	void * d = kmalloc(15);
+	DEBUG("create from file 1 %x\n", d);
 
 	struct stats fstats;
 	int fd = kopen(file, 'r');
@@ -43,6 +44,8 @@ pcb * process_create_from_file(char * file, char * arg) {
 			os_printf("create_from_file: %d for %X\n", retval, v);
 	}
 
+	LOG("TESTING!!\n");
+
 	int counter = 0;
 	int* location = (int*) start;
 	while (counter < len) {
@@ -50,7 +53,8 @@ pcb * process_create_from_file(char * file, char * arg) {
 		location += 1;
 		counter += 4;
 	}
-	//kclose(fd);
+
+//	kclose(fd);
 
 	// Test kmalloc
 	os_printf("Testing kmalloc...\n");
@@ -165,16 +169,24 @@ uint32_t process_save_state(uint32_t PID) {
 //R14 is the Link Register
 //The last register to be loaded is the PC
 //return 0 if fail
-//return 1 for success
+//return 14 for success
 uint32_t process_load_state(uint32_t PID) {
 	uint32_t* process_to_load = process_get_address_of_PCB(PID);
 	pcb* pcb_p = process_get_PCB(PID);
 
-	if (process_to_load == 0 || pcb_p == 0) {
+	LOG("LOADING STATE\n");
+
+	/*if (process_to_load == 0 || pcb_p == 0) {
 		os_printf("Invalid PID in load_process_state");
 		return 0;
-	}
+	}*/
 
+	LOG("%X\n", pcb_p->R14);
+
+//	int x = 1;
+//	while(x);
+
+	jmp_goto(&pcb_p->R0, pcb_p->R0);
 	asm volatile("MOV r0, %0"::"r"(pcb_p->R0):);
 	asm volatile("MOV r1, %0"::"r"(pcb_p->R1):);
 	asm volatile("MOV r2, %0"::"r"(pcb_p->R2):);
@@ -342,7 +354,9 @@ uint32_t process_execute(pcb* pcb_p) {
 
 	//Copy the current process's program counter to the new process's return register
 	//The new process will use R14 to return to the parent function
-	asm volatile("MOV %0, r15":"=r"(pcb_p->R14)::);
+//	pcb_p->R14 = pcb_p->R15;
+
+	pcb_p->R14 = pcb_p->R15;
 
 	process_print_state(pcb_p->PID);
 
@@ -359,19 +373,25 @@ uint32_t process_execute(pcb* pcb_p) {
 	//4-13-15: Create new virtual address space for process and switch into it
 	// Let's get a simple argc/argv layout going at 0x9f000000
 	// Stick the program name at stack_base
-//	vm_enable_vas(pcb_p->stored_vas);
-
-//	print_process_state(pcb_p->PID);
-
 	pcb_p->has_executed = 1;
 
 	//Set state to running, this should be modified when the process is tossed into wait queues, etc
 	//Check header file for a list of states
 	pcb_p->current_state = PROCESS_RUNNING;
+	vm_enable_vas(pcb_p->stored_vas);
+
+//	print_process_state(pcb_p->PID);
+
+	pcb p = *pcb_p;
 
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
-	process_load_state(pcb_p->PID);
+
+	LOG("asdf\n");
+//	int x = 1;
+//	while(x);
+	jmp_goto(&p.R0, p.R0);
+
 	while (1);
 	return pcb_p->PID;
 }

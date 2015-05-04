@@ -17,6 +17,8 @@
 #define ENABLE_MAX_INTERRUPT_COUNT 5
 int interrupt_count = 0;
 
+int count = 0;
+
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
@@ -48,6 +50,8 @@ void init_vector_table(void) {
     mmio_write( 0x34, &reserved_handler ); 
     mmio_write( 0x38, &irq_handler ); 
     mmio_write( 0x3C, &fiq_handler ); 
+
+    count = 0;
 }
 
 
@@ -238,12 +242,12 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		return -1;
 		break;
 	case SYSCALL_PRCS_YIELD:
-		LOG("Process yield system call called!\n");
+		LOG("Process yield system call called! %d\n", count);
+		if(++count == 2) while(callNumber);
 		error = sched_yield();
 		return (long) error;
 		break;
 	case SYSCALL_MALLOC:
-		LOG("Process yield system call called!\n");
 		error = sched_yield();
 		return (long) error;
 //		os_printf("malloc system call called!\n");

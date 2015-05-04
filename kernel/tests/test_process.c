@@ -19,8 +19,8 @@ int test_prcs_1() {
 		}*/
 
 	// DEBUG("Creating second process...\n");
-	// pcb *test2 = process_create_from_file("/hello", "whats up!");
-	// process_init(test2);
+    pcb *test2 = process_create_from_file("/hello", "whats up!");
+	process_init(test2);
 	process_execute(test);
 
 	/*{
