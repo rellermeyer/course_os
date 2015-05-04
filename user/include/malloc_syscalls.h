@@ -25,7 +25,7 @@ void* malloc(uint32_t size);
 /*alligned_alloc: Allocates a block of memory for an array of 
 num elements, each of them size bytes long. All bits
 are initalized to zero. Returns a pointer of the block*/
-void* alligned_alloc(uint32_t num, uint32_t size);
+void* alligned_alloc(uint32_t size, uint32_t alignment);
 
 /*Free: Deallocates a block of memory previously
 allocated by Malloc, alligned_alloc, etc.. */
