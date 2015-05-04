@@ -13,10 +13,19 @@
 #define MAX_NUM_INDIRECT_BLOCKS 50
 #define MAX_DATABLOCKS_PER_INDIRECT_BLOCK ((BLOCKSIZE/4)-2)
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
-#define TRUE 1
-#define FALSE 0
-#define FS_ERROR -1
-#define SUCCESS 0
+
+
+//error codes used in return:
+#define NULL 0x0 //null
+#define TRUE 1 //for a boolean like function
+#define FALSE 0 //for a boolean like function
+#define ERR_GEN -1 //general error
+#define ERR_FULL -2 //error signaling end of resources
+#define ERR_INVALID -3 //invalid parameter
+#define ERR_404 -4 //file not found
+#define ERR_SD -5 //sd card error
+#define ERR_PERM -6 //permission error
+#define SUCCESS 0 //no error
 
 
 //IMPORTANT!! ---------------------------------------------------------------------------------------------------
