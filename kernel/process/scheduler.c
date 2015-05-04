@@ -207,11 +207,11 @@ void __sched_print_queues() {
 	int i;
 	DEBUG("active_tasks: [ ");
 	for (i = 0; i < prq_count(active_tasks); i++)
-		DEBUG("%d ", ((sched_task* ) prq_get(active_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task*) prq_get(active_tasks, i)->data)->tid);
 	DEBUG("]\n");
 	DEBUG("inactive_tasks: [ ");
 	for (i = 0; i < prq_count(inactive_tasks); i++)
-		DEBUG("%d ", ((sched_task* ) prq_get(inactive_tasks, i)->data)->tid);
+		DEBUG("%d ", ((sched_task*) prq_get(inactive_tasks, i)->data)->tid);
 	DEBUG("]\n");
 }
 
@@ -223,11 +223,13 @@ void __sched_dispatch() {
 	vm_use_kernel_vas();
 
 	if (active_task) {
+		if (IS_PROCESS(active_task)) {
+			asm volatile("ldr %0, [sp, #8]":"=r"(active_task->jmp_buffer.R14)::);
+		}
 		if (jmp_set(&active_task->jmp_buffer)) {
-			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-			LOG("RESUMINGED!!!!\n");
-			int x = 1;
-			while(x);
+			if (IS_PROCESS(active_task)) {
+				vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
+			}
 			return;
 		}
 
@@ -245,7 +247,7 @@ void __sched_dispatch() {
 			active_task = 0;
 			running = 0;
 			return;
-		} else if (ret == TASK_CREATE_PROCESS){
+		} else if (ret == TASK_CREATE_PROCESS) {
 			active_task->task = process_create_from_file(active_task->task,
 					"hey whats up!!!");
 			process_init(AS_PROCESS(active_task));
@@ -257,7 +259,7 @@ void __sched_dispatch() {
 			return;
 		}
 
-	//	jmp_print(&start_buf);
+		//	jmp_print(&start_buf);
 		running = 1;
 
 	} else if (prq_count(inactive_tasks) == 0 && prq_count(active_tasks) == 0) {
@@ -280,10 +282,10 @@ void __sched_dispatch() {
 	}
 
 	// alternate between equal priorities
-	if(prq_count(active_tasks) > 1){
+	if (prq_count(active_tasks) > 1) {
 		sched_task * next_task = (sched_task*) prq_dequeue(active_tasks)->data;
 		sched_task * foll_task = (sched_task*) prq_peek(active_tasks)->data;
-		if(next_task->niceness == foll_task->niceness){
+		if (next_task->niceness == foll_task->niceness) {
 			active_task = foll_task;
 			active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 			prq_enqueue(active_tasks, next_task->node);
@@ -293,14 +295,13 @@ void __sched_dispatch() {
 	} else {
 		active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 	}
-	
 
 	LOG("active_task %d\n", active_task->tid);
 
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
-		//	jmp_print(&active_task->jmp_buffer);
+			//	jmp_print(&active_task->jmp_buffer);
 			LOG("Loading\n");
 			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
@@ -316,7 +317,7 @@ void __sched_dispatch() {
 		LOG("Active_task is a process!\n");
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			LOG("Loading from memory!\n");
-		//	__sched_emit_messages();
+			//	__sched_emit_messages();
 			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer; // move to kernel stack
 			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
 			__sched_resume_timer_irq();

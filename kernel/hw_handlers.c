@@ -243,7 +243,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		break;
 	case SYSCALL_PRCS_YIELD:
 		LOG("Process yield system call called! %d\n", count);
-		if(++count == 2) while(callNumber);
+	//	if(++count == 2) while(callNumber);
 		error = sched_yield();
 		return (long) error;
 		break;
