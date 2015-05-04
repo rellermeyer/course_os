@@ -13,6 +13,8 @@
 #define MAX_NICENESS -20
 #define MIN_NICENESS 20
 #define TASK_RESUME 5
+#define TASK_FINISHED 10
+#define TASK_CREATE_PROCESS 11
 #define TASK_STATE_FINISHED 4   // task has run by the scheduler and finished
 #define TASK_STATE_INACTIVE  3  // task is in the wait queue (about to be  executed)
 #define TASK_STATE_ACTIVE 2     // task is part of the running tasks; it is being interleaved and executed atm
@@ -237,12 +239,8 @@ void __sched_dispatch() {
 		prq_enqueue(active_tasks, active_task->node);
 	}
 
-#define TASK_FINISHED 10
-#define TASK_CREATE_PROCESS 11
-
 	if (!running) {
 		int ret = jmp_set(&start_buf);
-		LOG("Scheduler - start_buff %d\n", ret);
 		if (ret == TASK_FINISHED) {
 			active_task = 0;
 			running = 0;
@@ -254,7 +252,6 @@ void __sched_dispatch() {
 			// FIXME delay timer irq
 			__sched_resume_timer_irq();
 			// NOTE vm_enable_vas called inside process_execute
-			LOG("STARTING PROCESS\n");
 			process_execute(AS_PROCESS(active_task));
 			return;
 		}
@@ -302,7 +299,6 @@ void __sched_dispatch() {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
 			//	jmp_print(&active_task->jmp_buffer);
-			LOG("Loading\n");
 			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
@@ -314,16 +310,13 @@ void __sched_dispatch() {
 					active_task->state);
 		}
 	} else if (IS_PROCESS(active_task)) {
-		LOG("Active_task is a process!\n");
 		if (active_task->state == TASK_STATE_ACTIVE) {
-			LOG("Loading from memory!\n");
 			//	__sched_emit_messages();
 			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer; // move to kernel stack
 			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
 			__sched_resume_timer_irq();
 			jmp_goto(&jmp_buffer_cpy, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
-			LOG("Loading from file!\n");
 			active_task->state = TASK_STATE_ACTIVE;
 			jmp_goto(&start_buf, TASK_CREATE_PROCESS);
 		} else {

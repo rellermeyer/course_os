@@ -49,8 +49,6 @@ struct inode** inode_table_temp;
 struct data_block** data_block_table_cache;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
-static int lane = 0;
-
 int kfs_format()
 {
 	// Lay down the superblock to block 1
@@ -109,7 +107,6 @@ int kfs_format()
 // initialize the filesystem:
 int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat){
 
-	lane = 0;
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
 	DATA_BLOCK_TABLE_CACHE_SIZE = data_block_table_cache_size;
 	// TODO: Reading the root inode has weird issues (getting is_dir==0) with inode table block cache.
@@ -354,11 +351,6 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 
 		// Store inode with current_inum current_inum in result_inode 
 		get_inode(current_inum, result_inode);
-
-//		if(++lane == 3){
-//			os_printf("file.c %d\n", lane);
-//			while(lane);
-//		}
 
 		//Set new current_inum to the next_path's current_inum
 		current_inum = get_inum_from_direct_data_block(result_inode, next_path);
@@ -795,7 +787,6 @@ int kopen(char* filepath, char mode){
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
-	os_printf("kopen 1 %s\n", filepath);
 	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	//here we have the file we were looking for! it is cur_inode.
 	if (error == -1 || cur_inode->is_dir) {

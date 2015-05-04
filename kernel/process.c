@@ -22,29 +22,22 @@ pcb * process_create_from_file(char * file, char * arg) {
 #define PROC_LOCATION 0x9ff00000
 
 	void * d = kmalloc(15);
-	DEBUG("create from file 1 %x\n", d);
 
 	struct stats fstats;
 	int fd = kopen(file, 'r');
-	DEBUG("asdf\n");
 	uint32_t start = START + PROC_LOCATION;
 	uint32_t len;
 
 	get_stats(file, &fstats);
-
 	len = fstats.size;
 
-	DEBUG("create from file \n");
-
-	int  i;
+	int i;
 	for (i = 0; i < (len / BLOCK_SIZE) + 1; i++) {
 		uint32_t *v = (uint32_t*) (start + (i * BLOCK_SIZE));
 		int retval = vm_allocate_page(KERNEL_VAS, (void*) v, VM_PERM_USER_RW);
 		if (retval)
 			os_printf("create_from_file: %d for %X\n", retval, v);
 	}
-
-	LOG("TESTING!!\n");
 
 	int counter = 0;
 	int* location = (int*) start;
@@ -55,11 +48,6 @@ pcb * process_create_from_file(char * file, char * arg) {
 	}
 
 //	kclose(fd);
-
-	// Test kmalloc
-	os_printf("Testing kmalloc...\n");
-	void *p = kmalloc(14);
-	os_printf("%X\n", p);
 
 	return process_create((uint32_t*) start, len, arg);
 }
@@ -78,11 +66,10 @@ pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
 	if (free_space_in_pcb_table != 0) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 
-		DEBUG("pcreate \n");
-
 		pcb_pointer->len = len;
 		pcb_pointer->start = file_p;
 		pcb_pointer->arg = arg;
+
 		//Create the process VAS here so that we can use it when allocating process memory
 		pcb_pointer->stored_vas = vm_new_vas();
 
@@ -93,22 +80,16 @@ pcb* process_create(uint32_t* file_p, uint32_t len, char * arg) {
 			return (pcb*) -1;
 		}
 
-		//Debug, should be removed once scheduler works
-		os_printf("THIS IS R13: %X \n", pcb_pointer->R13);
-
-		//fill the free space with a pcb pointer
+		// fill the free space with a pcb pointer
 		*free_space_in_pcb_table = (uint32_t) pcb_pointer;
 		//initialize PCB		
 		pcb_pointer->PID = ++GLOBAL_PID;
 		//4-13-15: function pointer should point to main() of file pointer.
 		//         TODO: Eventually should be able to pass parameters. Put them on the stack (argv/argc)
 		pcb_pointer->R15 = success->e_entry;
-
-		// os_printf("%X ENTRY: %X \n", file_p, success->e_entry);
-
 		pcb_pointer->current_state = PROCESS_NEW;
-
 		pcb_pointer->has_executed = 0;
+
 		return pcb_pointer;
 
 	} else {
@@ -177,9 +158,9 @@ uint32_t process_load_state(uint32_t PID) {
 	LOG("LOADING STATE\n");
 
 	/*if (process_to_load == 0 || pcb_p == 0) {
-		os_printf("Invalid PID in load_process_state");
-		return 0;
-	}*/
+	 os_printf("Invalid PID in load_process_state");
+	 return 0;
+	 }*/
 
 	LOG("%X\n", pcb_p->R14);
 
@@ -354,18 +335,11 @@ uint32_t process_execute(pcb* pcb_p) {
 
 	//Copy the current process's program counter to the new process's return register
 	//The new process will use R14 to return to the parent function
-//	pcb_p->R14 = pcb_p->R15;
 
 	pcb_p->R14 = pcb_p->R15;
 
-	process_print_state(pcb_p->PID);
-
-	//Switch to user virtual address space, this is self explanatory
-//	vm_enable_vas(pcb_p->stored_vas);
-
 	//Should be disabled once scheduler is working to prevent spam
 	DEBUG("PID---->: %d\n", pcb_p->PID);
-	DEBUG("Should be VAS: %x\n", vm_get_current_vas());
 
 	//assert(1==2 && "process.c - We're stopping right after loading process state.");
 	//4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
@@ -380,34 +354,16 @@ uint32_t process_execute(pcb* pcb_p) {
 	pcb_p->current_state = PROCESS_RUNNING;
 	vm_enable_vas(pcb_p->stored_vas);
 
-//	print_process_state(pcb_p->PID);
-
 	pcb p = *pcb_p;
 
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
-	LOG("asdf\n");
-//	int x = 1;
-//	while(x);
 	jmp_goto(&p.R0, p.R0);
 
 	while (1);
 	return pcb_p->PID;
 }
-
-//executes a process function
-//return 1 upon success
-//return 0 upon failure
-// uint32_t execute_process_no_vas(pcb* pcb_p) {
-//     if(!pcb_p) {
-//         os_printf("Cannot execute process. Exiting.\n");
-//         return 0;
-//     }
-//     pcb_p->has_executed = 1;
-//     pcb_p->function(pcb_p->PID);
-//     return 1;
-// }
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {
@@ -420,27 +376,9 @@ void __process_init_heap(pcb* pcb_p);
 void __process_init_stack(pcb* pcb_p);
 
 void process_init(pcb * pcb_p) {
-	DEBUG("init vas\n");
 	__process_init_vas(pcb_p);
-	/*{
-			os_printf("Testing kmalloc 3...\n");
-			void *p = kmalloc(14);
-			os_printf("p=%X\n",p);
-			}*/
-	DEBUG("init stack\n");
 	__process_init_stack(pcb_p);
-	/*{
-			os_printf("Testing kmalloc 4...\n");
-			void *p = kmalloc(14);
-			os_printf("p=%X\n",p);
-			}*/
-	DEBUG("init heap\n");
 	__process_init_heap(pcb_p);
-	/*{
-			os_printf("Testing kmalloc 5...\n");
-			void *p = kmalloc(14);
-			os_printf("p=%X\n",p);
-			}*/
 }
 
 // Copy over from kernel to user space
@@ -458,23 +396,29 @@ void __process_init_vas(pcb* pcb_p) {
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 
 		if (retval) {
-			ERROR("__process_init_vas: vm_free_mapping error code: %d\n", retval);
+			ERROR("__process_init_vas: vm_free_mapping error code: %d\n",
+					retval);
 			break;
 		}
 	}
 
 	for (int i = 20; i < 40; i++) {
-		uint32_t *v = (uint32_t *)(pcb_p->start + ((i - 20) * BLOCK_SIZE));
-		retval = vm_allocate_page(pcb_p->stored_vas, (void*) v, VM_PERM_USER_RW);
+		uint32_t *v = (uint32_t *) (pcb_p->start + ((i - 20) * BLOCK_SIZE));
+		retval = vm_allocate_page(pcb_p->stored_vas, (void*) v,
+		VM_PERM_USER_RW);
 		if (retval) {
-			ERROR("__process_init_vas: vm_allocate_page error code: %d\n", retval);
+			ERROR("__process_init_vas: vm_allocate_page error code: %d\n",
+					retval);
 			break;
 		}
 
-		retval = vm_map_shared_memory(KERNEL_VAS, (void*) pcb_p->start + (i * BLOCK_SIZE), pcb_p->stored_vas,
+		retval = vm_map_shared_memory(KERNEL_VAS,
+				(void*) pcb_p->start + (i * BLOCK_SIZE), pcb_p->stored_vas,
 				(void*) v, VM_PERM_USER_RW);
 		if (retval) {
-			ERROR("__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n", retval, i);
+			ERROR(
+					"__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n",
+					retval, i);
 			break;
 		}
 
@@ -493,11 +437,10 @@ void __process_init_vas(pcb* pcb_p) {
 
 	for (int i = 0; i < 40; i++) {
 		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
-		//LOG("Trying to free: %X\n", v);
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
-
 		if (retval) {
-			ERROR("__process_init_vas: vm_free_mapping error code: %d\n", retval);
+			ERROR("__process_init_vas: vm_free_mapping error code: %d\n",
+					retval);
 			break;
 		}
 	}
@@ -512,7 +455,8 @@ void __process_init_stack(pcb * pcb_p) {
 		retval = vm_allocate_page(pcb_p->stored_vas,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
 		if (retval) {
-			ERROR("__process_init_stack: vm_allocate_page error code: %d\n", retval);
+			ERROR("__process_init_stack: vm_allocate_page error code: %d\n",
+					retval);
 			break;
 		}
 
@@ -520,7 +464,8 @@ void __process_init_stack(pcb * pcb_p) {
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
 		if (retval) {
-			ERROR("__process_init_stack: vm_map_shared_memory error code: %d\n", retval);
+			ERROR("__process_init_stack: vm_map_shared_memory error code: %d\n",
+					retval);
 			break;
 		}
 	}
@@ -534,22 +479,17 @@ void __process_init_stack(pcb * pcb_p) {
 	stack_top[-5] = STACK_BASE;
 	stack_top[-6] = 1;
 
-	os_strcpy((char*)STACK_BASE, pcb_p->arg);
+	os_strcpy((char*) STACK_BASE, pcb_p->arg);
 
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4 * 6;
-//	print_process_state(pcb_p->PID);
 
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
-		//os_printf("i=%d\n",i);
-		/*{
-			//os_printf("Testing kmalloc 7...\n");
-			void *p = kmalloc(14);
-			os_printf("p=%X\n",p);
-			}*/
-		retval = vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
+		retval = vm_free_mapping(KERNEL_VAS,
+				(void*) (STACK_BASE + (i * BLOCK_SIZE)));
 		if (retval) {
-			ERROR("__process_init_stack: vm_free_mapping error code: %d\n", retval);
+			ERROR("__process_init_stack: vm_free_mapping error code: %d\n",
+					retval);
 			break;
 		}
 	}
@@ -563,6 +503,4 @@ void __process_init_heap(pcb* pcb_p) {
 	if (retval) {
 		ERROR("__process_init_heap: vm_allocate_page error code: %d\n", retval);
 	}
-	//assert(0 ==1 && "FUCK");
-	//process_print_state(pcb_p->PID);
 }
