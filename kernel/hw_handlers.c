@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "klibc.h"
 #include "vm.h"
+#include "drivers/timer.h"
 
 void timer_handler_foobar(void) {
 	os_printf("Hello?\n");
@@ -164,8 +165,10 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
 	os_printf("IRQ HANDLER\n");
-	int cpsr=disable_interrupt_save(IRQ);	
-	os_printf("disabled CSPR:%X\n",cpsr);
+//	hw_interrupt_disable(4);
+	disable_timer(0);
+//	int cpsr=disable_interrupt_save(IRQ);	
+//	os_printf("disabled CSPR:%X\n",cpsr);
 	// Discover source of interrupt
 	int i = 0;
 	// do a straight run through the VIC_INT_STATUS to determine
@@ -180,9 +183,12 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 	// we've gone through the VIC and handled all active interrupts
 	//restore_proc_status(cpsr);
 	//mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
-	enable_interrupt(IRQ_MASK);
+//	enable_interrupt(IRQ_MASK);
 	os_printf("enabled CSPR:%X\n",get_proc_status());
-	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
+	enable_timer(0);
+	//int cpsr=disable_interrupt_save(IRQ);
+	
+//	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
