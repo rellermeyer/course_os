@@ -1593,14 +1593,8 @@ int get_stats(char * filepath, struct stats * result) {
 	struct dir_helper* help_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, help_result);
 	int error = kfind_inode(filepath, inum, (help_result->dir_levels + 1), cur_inode);
-	if (error < 0 || cur_inode->is_dir) {
-		if (error < 0) {
-			os_printf("file not found, exiting kopen\n");
-		}
-		else {
-			os_printf("cannot open a directory, make the path end to a file\n");
-			error = ERR_INVALID;
-		}
+	if (error < 0) {
+		os_printf("file not found, exiting kopen\n");
 		kfree(cur_inode);
 		kfree(help_result->truncated_path);
 		kfree(help_result->last);
@@ -1610,5 +1604,9 @@ int get_stats(char * filepath, struct stats * result) {
 	result->size = cur_inode->size;
 	result->fd_refs = cur_inode->fd_refs;
 	result->is_dir = cur_inode->is_dir;
+	kfree(cur_inode);
+	kfree(help_result->truncated_path);
+	kfree(help_result->last);
+	kfree(help_result);
 	return SUCCESS;
 }//end get_stats function
