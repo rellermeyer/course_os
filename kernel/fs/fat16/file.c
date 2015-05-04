@@ -339,6 +339,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 	int a;
 	for(a = 0; a < dir_levels-1; a++) {
 		int k = 1;
+		// int k = 0;
 		char next_path[MAX_NAME_LENGTH] = {0};
 
 		//get path of next inode
@@ -346,7 +347,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 			next_path[k-1] = filepath[k];
 			k++;
 		}//end of litte while to find next_path
-
+		os_printf("in kfind_inode, filepath is: %s\n", next_path);
 		filepath += k;
 
 		// Store inode with current_inum current_inum in result_inode 
@@ -486,6 +487,10 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	new_dir_entry.inum = free_inode_loc;
 	os_strcpy(new_dir_entry.name, result->last);
 	new_dir_entry.name_length = os_strlen(result->last);
+
+	os_printf("in add_dir_entry, new_dir_entry.inum is: %d\n", new_dir_entry.inum); //DEBUGLINE
+	os_printf("in add_dir_entry, new_dir_entry.name is: %s\n", new_dir_entry.name); //DEBUGLINE
+	os_printf("in add_dir_entry, new_dir_entry.name_length is: %d\n", new_dir_entry.name_length); //DEBUGLINE
 
 	//check to see if the data block we recieved above has room to add a new dir_entry to it; if not, create a new data block, if possible:
 	//os_printf("Adding entry to data blocks.\n");
@@ -792,6 +797,13 @@ int kopen(char* filepath, char mode){
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result);
 	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	// int error = kfind_inode(filepath, inum, (result->dir_levels), cur_inode);
+	os_printf("error is: %d\n", error);
+	os_printf("result->dir_levels = %d\n", result->dir_levels); //DEBUGLINE
+	os_printf("result->truncated_path = %s\n", result->truncated_path); //DEBUGLINE
+	os_printf("result->last = %s\n", result->last); //DEBUGLINE
+
+	
 	//here we have the file we were looking for! it is cur_inode.
 	if (error < 0 || cur_inode->is_dir) {
 		if (error < 0) {
@@ -805,6 +817,7 @@ int kopen(char* filepath, char mode){
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
+
 		return error; //return same error
 	}
 
@@ -1168,7 +1181,9 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		return fd;
 	}
 	else { //directories are not added to open table
-		return error;
+		os_printf("Directory Successfully added\n");
+		os_printf("but dirs are not added to open file table, so retunring SUCCESS, not an fd\n");
+		return SUCCESS;
 	}
 }//end of kcreate() function
 
