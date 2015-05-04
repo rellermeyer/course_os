@@ -19,11 +19,33 @@ struct vas {
 	struct vas *next;
 };
 
+/**
+ * Indicates that the virtual pointer passed was invalid. Possible it was not
+ * a multiple of BLOCK_SIZE.
+ */
 #define VM_ERR_BADV -1
+
+/**
+ * Indicates that the physical pointer passed was invalid. Possibly it was not
+ * a multiple of BLOCK_SIZE.
+ */
 #define VM_ERR_BADP -2
+
+/**
+ * Indicates that the virtual pointer passed has already been mapped.
+ */
 #define VM_ERR_MAPPED -3
+
+/**
+ * Indicates that the permission being passed is not valid. For example,
+ * VM_PERM_USER_RO | VM_PERM_USER_RW.
+ */
 #define VM_ERR_BADPERM -4
 #define VM_ERR_UNKNOWN -5
+
+/**
+ * Indicates that the pointer passed is not mapped, even though it must be.
+ */
 #define VM_ERR_NOT_MAPPED -6
 
 #define KERNEL_VAS ((struct vas*)V_L1PTBASE)
@@ -57,33 +79,10 @@ struct vas {
 
 void vm_init();
 
-/**
- * vm_allocate_page and vm_free_page allocate and free pages, and allow the
- * VAS to access them at the given virtual address (vptr).
- * Note that you cannot call free_page on a virtual address that was
- * mapped using set_mapping.
- * Return values:
- * 0              - success
- * VM_ERR_BADV    - vptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_MAPPED  - vptr is already mapped in this VAS.
- * VM_ERR_BADPERM - permission is not valid (see above).
- *
- * free_page return values:
- * 0                 - success
- * VM_ERR_BADV       - vptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_MAPPED     - vptr was mapped using set_mapping, not allocate_page.
- * VM_ERR_NOT_MAPPED - vptr is not mapped in this VAS.
- */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission);
 void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission);
 int vm_free_page(struct vas *vas, void *vptr);
 
-/**
- * vm_pin and vm_unpin currently do nothing. However, in the future, they will
- * prevent pages from being swapped out of physical memory.
- * Return values:
- * 0 - Success.
- */
 int vm_pin(struct vas *vas, void *vptr);
 int vm_unpin(struct vas *vas, void *vptr);
 
@@ -106,38 +105,6 @@ int vm_unpin(struct vas *vas, void *vptr);
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
 int vm_free_mapping(struct vas *vas, void *vptr);
 
-/**
- * Will make the memory that accessible to other_vas at other_ptr
- * accessible to vas at this_ptr.
- * It can then be unmapped from either using a typical vm_free_mapping
- * or vm_free_page. The behavior of vm_free_mapping and vm_free_page
- * will be made equivalent.
- * For both, the behavior will be to free the frame if a frame was
- * allocated (via vm_allocate_page) and the page is not shared. If the
- * page is shared, then both will behave like vm_free_mapping.
- *
- * It is an error for other_ptr to point to an area not mapped in other_vas.
- *
- * For example, given vas1 and vas2:
- *
- * vm_allocate_page(vas2,0x10)
- * vm_map_shared_memory(vas1, 0x20, vas2, 0x10)
- * // Now vas1's 0x20 points to the same memory as vas2's 0x10
- * vm_free_page(vas2, 0x10)
- * // Now vas1 is the sole owner of the memory at vas1's 0x20
- * vm_free_mapping(vas1, 0x20)
- * // Now that frame has been freed
- *
- * All the pointers have to be a multiple of BLOCK_SIZE.
- *
- * Return values:
- * 0                 - success
- * VM_ERR_BADV       - this_ptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_BADP       - other_ptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_NOT_MAPPED - other_ptr is not mapped in other_vas.
- * VM_ERR_MAPPED     - this_ptr is already mapped in vas.
- * VM_ERR_BADPERM    - permission is bad.
- */
 int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission);
 
 /**
