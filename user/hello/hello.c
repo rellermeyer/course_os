@@ -6,5 +6,7 @@ int main() {
     printf("Whats up from process!\n");
     process_yield();
     printf("Whats up from process RESUMED!!!!\n");
+    process_yield();
+    printf("Whats up from process RESUMED 2!!!!\n");
     while(1);
 }
