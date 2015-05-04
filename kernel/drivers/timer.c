@@ -214,7 +214,7 @@ int start_timer_interrupts(int timer_index,int milliseconds){
 
 //just testing code
 //int count=0;
-while(1){
+/*while(1){
   os_printf("\n%d",get_current_timer_value(timer_index));
   if(get_current_timer_value(timer_index)==0){
   os_printf("\nInterrupt Control Val:%X \t Process Val:%X\t VIC Val:%X\t",get_timer_control_value(timer_index),get_proc_status(),mmio_read(VIC_INT_ENABLE));
@@ -222,11 +222,11 @@ while(1){
   }
   if(get_current_timer_value(timer_index)==0){
 	hw_interrupt_enable(4);
-	}
+	}*/
 //   if(get_current_timer_value(timer_index==9&count>0))
 //	hw_interrupt_enable(4);
 			
-}  
+//}  
 	
 	return 0;
 }

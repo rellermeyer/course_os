@@ -188,7 +188,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 	enable_timer(0);
 	//int cpsr=disable_interrupt_save(IRQ);
 	
-//	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
+	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){
