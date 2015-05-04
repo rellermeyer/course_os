@@ -100,7 +100,7 @@ int kfs_format()
 	os_memcpy(&i, block, 1);
 	sd_transmit(block, sblock.inode_bitmap_loc*BLOCKSIZE);*/
 
-	return 0;
+	return SUCCESS;
 }
 
 /* make the global varrible */
@@ -188,7 +188,7 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	fs_table_init(); //initializes open_table stuff
 
 	os_printf("Finished initializing table...\n");
-	return 0;
+	return SUCCESS;
 	//what was this for? don't think we need it...
 	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
 	// receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
@@ -225,7 +225,7 @@ int kfs_shutdown(){
 	//TODO: free anything else that needs to be freed...
 
 	fs_table_shutdown(); //frees open_table stuff
-	return 0;
+	return SUCCESS;
 }//end kfs_shutdown() function
 
 
@@ -355,21 +355,21 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 		//Set new current_inum to the next_path's current_inum
 		current_inum = get_inum_from_direct_data_block(result_inode, next_path);
 
-		if(current_inum == -1){
+		if(current_inum < 0){
 			//current_inum not found in any direct blocks of result_inode
 			//look for it in the indirect blocks now
 			current_inum = get_inum_from_indirect_data_block(result_inode, next_path);
 		}
 
-		if(current_inum == -1){
+		if(current_inum < 0){
 			//next_path not found in current_inode
 			os_printf("404 ERROR! File not found.\nPlease ensure full filepath is specified starting from root (/)\n");
-			return -1;
+			return ERR_404; //file not found
 		}
 	}//outer most for loop
 	//current_inum of target inode found, store that inode in result_inode
 	get_inode(current_inum, result_inode);
-	return 0;
+	return SUCCESS;
 }//end kfind_inode() helper function
 
 //finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
@@ -424,7 +424,7 @@ int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int m
 	int error = 0;
 	int num_blocks = (max/(8 * BLOCKSIZE)) + 1;
 	if (t_or_r != TRANSMIT || t_or_r != RECEIVE) {
-		return -1;
+		return ERR_INVALID;
 	}
 	if(all){  //transmit or receive all the bitvector
 		int i;
@@ -506,11 +506,13 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		os_printf("ERROR: This code is untested. I don't allow you to go further. Halting. ~ Lane\n");
 		while (1);
 		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
-		if(new_data_block_loc == -1){//disk is full
+		if(new_data_block_loc < 0){//disk is full
 			os_printf("ERROR! Disk full\n");
 			kfree(dir_block);
-			if (cur_indirect_block != 0x0) kfree(cur_indirect_block);
-			return -1;
+			if (cur_indirect_block != NULL) {
+				kfree(cur_indirect_block);
+			}
+			return ERR_FULL;
 		}
 		bv_set(new_data_block_loc, data_block_bitmap);
 		struct dir_data_block* new_dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
@@ -561,11 +563,13 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 					/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block, 
 						then add the new dir_entry to the new data block: */
 					int new_indirect_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
-					if (new_indirect_block_loc == -1) { //no free blocks
+					if (new_indirect_block_loc < 0) { //no free blocks
 						os_printf("disk space over \n");
 						kfree(dir_block);
-						if (cur_indirect_block != 0x0) kfree(cur_indirect_block);
-						return -1;
+						if (cur_indirect_block != NULL) {
+							kfree(cur_indirect_block);
+						}
+						return ERR_FULL;
 					}
 					struct indirect_block* new_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 
@@ -594,7 +598,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				}else{
 					//file has reached max allowable size:
 					os_printf("ERROR! Operation failed because file has reached max allowable size\n");
-					return -1;
+					return ERR_FULL;
 				}
 			}
 		}
@@ -604,18 +608,18 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	if(flag_free_cur_indirect_block){
 		kfree(cur_indirect_block);
 	}
-	return 0;
+	return SUCCESS;
 }//end add_dir_entry() helper function
 
 int get_block_address(struct inode *file_inode, int file_block_num){
 	if(file_block_num < 0){
 		os_printf("Invalid block number");
-		return -1;
+		return ERR_INVALID;
 	}
 	if(file_block_num < MAX_DATABLOCKS_PER_INODE){
 		//os_printf("Writing out file block num for block %d from direct data blocks (%d direct blocks).\n", file_block_num, file_inode->direct_blocks_in_file);
 		if (file_block_num >= file_inode->direct_blocks_in_file) {
-			return -1;
+			return ERR_GEN;
 		}
 		return (file_inode->data_blocks[file_block_num] + FS->start_data_blocks_loc) * BLOCKSIZE;
 	}
@@ -624,7 +628,7 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	//Get the indirect block num that contain the target block
 	int indirect_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) / MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	if(indirect_block_num >= file_inode->indirect_blocks_in_file || indirect_block_num > (MAX_NUM_INDIRECT_BLOCKS - 1)){
-		return -1;
+		return ERR_GEN;
 	}
 
 	struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
@@ -632,7 +636,7 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 
 	int indirect_block_direct_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	if (cur_indirect_block->blocks_in_file <= indirect_block_direct_block_num) {
-		return -1;
+		return ERR_GEN;
 	}
 	int block_address = cur_indirect_block->data_blocks[indirect_block_direct_block_num];
 	block_address = (block_address + FS->start_data_blocks_loc) * BLOCKSIZE;
@@ -647,15 +651,15 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 	// Actually get the data for 1 block (the SD Driver will put it in transferSpace for us)
 	int file_block_num = offset / BLOCKSIZE;
 	int block_address = get_block_address(c_inode, file_block_num);
-	if (block_address == -1) {
-		return -1;
+	if (block_address < 0) {
+		return block_address; //return same error
 	}
 	//os_printf("Reading from block address %d...\n", block_address);
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	os_printf("failed to receive block number %d\n", block_address);
-	 	return -1;
+	 	return ERR_SD;
 	}//end if block_num
 
 	if((local_offset == 0) && (bytes_left < BLOCKSIZE)) { 
@@ -706,7 +710,7 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 	//this should never happen...print for debugging. TODO: remove after debugged
 	// Except sometimes it should happen? If we're reading from a block boundary?
 	//os_printf("Error! In f1() in kread()...this should never happend! local_offset=%d bytes_left=%d\n", local_offset, bytes_left);
-	return 0;
+	return ERR_GEN;
 
 }//end of read_partial_block() helper function
 
@@ -717,14 +721,14 @@ int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int byt
 	// Actually get the data for 1 block (the SD Driver will put it in transfer_space for us)
 	int file_block_num = offset / BLOCKSIZE;
 	int block_address = get_block_address(c_inode, file_block_num);
-	if (block_address == -1) {
-		return -1;
+	if (block_address < 0) {
+		return block_address; //return same error
 	}
 	int success = sd_receive(transfer_space, block_address);
 	if(success < 0){
 	 	// failed on a block receive, therefore the whole kread fails; return failure error
 	 	os_printf("failed to receive block number %d\n", file_block_num);
-	 	return -1;
+	 	return ERR_SD;
 	}//end if
 	/*	______________________
 		|~~~~~~~~~~~~~~~~~~~~~|
@@ -774,13 +778,13 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 
 
 int kopen(char* filepath, char mode){
-	if (filepath == 0x0) {
+	if (filepath == NULL) {
 		os_printf("no directory specified \n");
-		return -1;
+		return ERR_INVALID;
 	}
-	if (mode == 0x0) {
+	if (mode == NULL) {
 		os_printf("no mode specified \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	int fd;
 	int inum = 0;
@@ -789,18 +793,19 @@ int kopen(char* filepath, char mode){
 	kfind_dir(filepath, result);
 	int error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
 	//here we have the file we were looking for! it is cur_inode.
-	if (error == -1 || cur_inode->is_dir) {
-		if (error == -1) {
+	if (error < 0 || cur_inode->is_dir) {
+		if (error < 0) {
 			os_printf("file not found, exiting kopen\n");
 		}
 		else {
 			os_printf("cannot open a directory, make the path end to a file\n");
+			error = ERR_INVALID;
 		}
 		kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
-		return -1;
+		return error; //return same error
 	}
 
 	// TODO: Permissions need some work, because the bitvector cannot be pulled out like this. :(
@@ -839,15 +844,15 @@ int kopen(char* filepath, char mode){
 int kread(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
-		return -1;
+		return ERR_INVALID;
 	}
-	if (buf == 0x0) {
+	if (buf == NULL) {
 		os_printf("no buffer \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	if (num_bytes <= 0) {
 		os_printf("invalid number of bytes \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	int bytes_read = 0;
 	uint32_t* buf_offset = buf; //this allows us to move data incrementally to user's buf via buf_offset
@@ -857,7 +862,7 @@ int kread(int fd_int, void* buf, int num_bytes) {
 	//os_printf("%d\n", fd->permission);
 	if ((fd->permission != 'r') && (fd->permission != 'b')) {
 		os_printf("no permission\n");
-		return -1;
+		return ERR_PERM;
 	}
 
 	bytes_read = read_inode(fd->linked_file, fd->offset, buf_offset, num_bytes);
@@ -871,21 +876,21 @@ int kread(int fd_int, void* buf, int num_bytes) {
 int kwrite(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
-		return -1;
+		return ERR_INVALID;
 	}
-	if (buf == 0x0) {
+	if (buf == NULL) {
 		os_printf("no buffer \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	if (num_bytes <= 0) {
 		os_printf("invalid number of bytes \n");
-		return -1;
+		return ERR_INVALID;
 	}
     struct file_descriptor* fd = get_descriptor(fd_int);
 
     if ((fd->permission != 'w' && fd->permission != 'a')){
         os_printf("ERROR! File was opened without write permissions.\nYou may or may not have permission to write to this file.\nTry opneing with 'w' permission\n");
-        return -1;
+        return ERR_PERM;
     }
 
     int total_bytes_left = num_bytes;
@@ -907,11 +912,11 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 		int block_address = get_block_address(cur_inode, file_block_num);
 
 		//if get_block_address == -1, we know we need to allocate more space for the file
-		if(block_address == -1){
+		if(block_address < 0){
 			int new_data_block_loc = bv_firstFree(data_block_bitmap);
-			if(new_data_block_loc == -1){//disk is completley full
+			if(new_data_block_loc < 0){//disk is completley full
 				os_printf("ERROR! disk full\n");
-				return -1;
+				return ERR_FULL;
 			}
 			block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 			bv_set(new_data_block_loc, data_block_bitmap);
@@ -946,9 +951,9 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 					if(cur_inode->indirect_blocks_in_file < MAX_NUM_INDIRECT_BLOCKS){
 						/*	Case (3): add a new indirect block to the cur_inode, then add a new data block to the new indirect block */
 						int new_indirect_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
-						if(new_indirect_block_loc == -1){
+						if(new_indirect_block_loc < 0){
 							os_printf("ERROR! Disk full\n");
-							return -1;
+							return ERR_FULL;
 						}
 						bv_set(new_indirect_block_loc, data_block_bitmap);
 
@@ -977,7 +982,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 					}else{
 						//file has reached max allowable size:
 						os_printf("ERROR! Operation failed because file has reached max allowable size\n");
-						return -1;
+						return ERR_FULL;
 					}
 				}
 			}
@@ -1043,11 +1048,12 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 int kclose(int fd) {
 	if (fd < 0 || fd >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	int error;
 	if(!file_is_open(fd)) { 
-		os_printf("file not open"); return -1; 
+		os_printf("file not open"); 
+		return ERR_GEN; 
 	}
 	error = delete_from_opentable(fd); //this also frees inode
 	return error;
@@ -1058,38 +1064,38 @@ int kclose(int fd) {
 int kseek(int fd_int, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
-		return -1;
+		return ERR_INVALID;
 	}
 	if (num_bytes <= 0) {
 		os_printf("num of bytes not valid \n");
-		return -1;
+		return ERR_INVALID;
 	}
     struct file_descriptor* fd = get_descriptor(fd_int);
     if (fd->permission != 'r' || fd->permission != 'w') {
         os_printf("no permission \n");
-        return -1;
+        return ERR_PERM;
     } else if ((num_bytes > 0) && ((fd->offset + num_bytes) > ((fd->linked_file)->size))){
     	os_printf("Error! file offset exceeds file size \n");
-		return -1;
+		return ERR_GEN;
     } else if ((num_bytes < 0) && ((fd->offset + num_bytes) < 0)){
 		os_printf("Error! file offset exceeds beginning of file \n");
-		return -1;
+		return ERR_GEN;
 	}//end if else  */
-fd->offset += num_bytes;	
-return 0;
+	fd->offset += num_bytes;	
+	return SUCCESS;
 } // end kseek();
 
 
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, char mode, int is_this_a_dir) {
-	if (filepath == 0x0) {
+	if (filepath == NULL) {
 		os_printf("filepath not valid \n");
-		return -1;	
+		return ERR_INVALID;	
 	}
-	if (mode == 0x0) {
+	if (mode == NULL) {
 		os_printf("filepath not valid \n");
-		return -1;	
+		return ERR_INVALID;	
 	}
 	int fd;
 	int inum = 0;
@@ -1100,13 +1106,13 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 
 	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
 	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
-	if (free_inode_loc == -1) {
+	if (free_inode_loc < 0) {
 		os_printf("Disk has reached max number of files allowed. \n");
 		kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
-		return -1;
+		return ERR_FULL;
 	}
 	bv_set(free_inode_loc, inode_bitmap);
 	struct inode * new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
@@ -1170,75 +1176,67 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 int dir_empty(struct inode* cur_inode){
 	if(!cur_inode->is_dir){
 		os_printf("This file is not a directory\n");
-		return 0;//return 0, because it's not a dir
+		return FALSE;//return 0, because it's not a dir
 	}//end else
 	if((cur_inode->direct_blocks_in_file == 0) && (cur_inode->indirect_blocks_in_file == 0)){
         if(cur_inode->size == 0){
-            return 1; //return true because the dir is empty
+            return TRUE; //return true because the dir is empty
         } else {
             /* TODO: Remove after debugging */
             os_printf("LOGIC ERROR: File size does not sync with file properties");
-            return -1;//error bc we should never get here
+            return ERR_GEN;//error bc we should never get here
         }
 	}
 	else {
 		os_printf("Your current directory still has files in it\n");
-		return 0;//return false, bc the dir is not empty
+		return FALSE;//return false, bc the dir is not empty
 	}
 }
 
 int kdelete_single_helper(struct inode * cur_inode){
-    
     if (cur_inode->is_dir){
         //we know it's a directory
         if(dir_empty(cur_inode)) {
            
             bv_lower(cur_inode->inum, inode_bitmap);
-            return 0;//no error
+            return SUCCESS;//no error
         }
         else {
             os_printf("This file is a non-empty directory, so cannot be deleted");
-            return -1;//error
+            return ERR_GEN;//error
         }
     }
     //we know it is a file
     else{
-        
         int d;
         for(d=0; d<cur_inode->direct_blocks_in_file; d++){
             
             int index = cur_inode->data_blocks[d];
             bv_lower(index, data_block_bitmap);
-        }
-        
+        }       
         struct indirect_block* cur_inder_block = (struct indirect_block*)kmalloc(sizeof(struct indirect_block));
-        int i;
-        
-        for(i=0; i<cur_inode->indirect_blocks_in_file; i++){
-            
+        int i;       
+        for(i=0; i<cur_inode->indirect_blocks_in_file; i++){          
             int z;
             int indy_index_add = (cur_inode->indirect_blocks[i] + FS->start_data_blocks_loc) * BLOCKSIZE;
-            sd_receive((void*)cur_inder_block, indy_index_add);
-            
+            sd_receive((void*)cur_inder_block, indy_index_add);            
             for(z=0; z<cur_inder_block->blocks_in_file; z++){
                 
                 int index = cur_inder_block->data_blocks[z];
                 bv_lower(index, data_block_bitmap);
-            }
-            
+            }          
             bv_lower(cur_inder_block->block_num, data_block_bitmap);
-        }
-        
+        }      
         kfree(cur_inder_block);
         bv_lower(cur_inode->inum, inode_bitmap);
     }
-    return 0;
+    return SUCCESS;
 } // end kdelete_single_helper();
+
 
 /* deletes a single dir_entry */
 int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc = tgt_inum
 	//os_printf("Removing dir entry.\n");
-
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
 	struct indirect_block* cur_indirect_block;
@@ -1265,14 +1263,12 @@ int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc 
 				cur_inode->size -= sizeof(struct dir_entry);
 				sd_transmit((void*) dir_block, (cur_inode->data_blocks[i] + FS->start_data_blocks_loc)*BLOCKSIZE);
 				kfree(dir_block);
-				return 1;
+				return SUCCESS;
 			}//end if
 		}//end for
 	}//end outer for
-
 	//search through indirect data blocks:
 	cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-	
 	for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
 		get_indirect_block(k, cur_indirect_block);
 		for(i = 0; i < cur_indirect_block->blocks_in_file; i++){
@@ -1305,51 +1301,38 @@ int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc 
 					sd_transmit((void*) dir_block, (cur_indirect_block->data_blocks[i] + FS->start_data_blocks_loc)*BLOCKSIZE);
 					kfree(dir_block);
 					kfree(cur_indirect_block);
-					return 1;	
+					return SUCCESS;	
 				}//end if
 			}//end for
 		}//end outer for
 	}//end outer outer for
 	kfree(dir_block);
 	kfree(cur_indirect_block);
-	return -1;
+	return ERR_404;
 }//end kremove_dir_entry() function
+
 
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode) {
-
     /* call delete_single_helper, deletes the lowest level (ie target) file and
         updates all bitmaps, but DOES NOT remove the dir_entry in levelup dir */
     int error = kdelete_single_helper(cur_inode);
-    if(error == 0){
+    if(!error){ //if kdeletesinglehelper was successful
     	sd_transmit((void*) cur_inode, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
     	/* delete dir_entry in levelup dir) */
     	error = kremove_dir_entry(level_up_inode, cur_inode->inum);
    		if(error < 0){
 			os_printf("ERROR! Could not find dir_entry in level_up_inode...BIG PROBLEM!!!\n");
-		 //    kfree(cur_inode);
-		 //    kfree(result->truncated_path);
-			// kfree(result->last);
-			// kfree(result);
 			kfree(level_up_inode);
 			return error;
 		}//end inner if
     	sd_transmit((void*) cur_inode, (level_up_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
     }else{
-  //       kfree(cur_inode);
-  //       kfree(result->truncated_path);
-		// kfree(result->last);
-		// kfree(result);
 		kfree(level_up_inode);
-		return -1;
+		return error; //return same error
 	}
-
-    // kfree(cur_inode);
- //    kfree(result->truncated_path);
-	// kfree(result->last);
-	// kfree(result);
 	kfree(level_up_inode);
-  	return 0; //return 0 on success
+  	return SUCCESS;
 } // end kdelete_single()
 
 
@@ -1359,15 +1342,16 @@ int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode) {
 	should we limit the depth of filepaths to avoid this??? */
 int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
 	//base case
-	int error = dir_empty(cur_inode);
-	if (error == 1){
-		kdelete_single(cur_inode, level_up_inode);
+	int error;
+	int status = dir_empty(cur_inode);
+	if (status == TRUE){ //dir is empty
+		error = kdelete_single(cur_inode, level_up_inode);
 	//SHOULDN'T FREE IT	kfree(level_up_inode);
-	}else if(error == -1){
-		return -1; //fatal error, shouldn't happen, so return -1
+	}else if(status < 0){ //WTF?
+		return ERR_GEN; 
 	}
 	//recursive step
-	else{
+	else{ //status == 0, meaning is not empty
 		int i;
 		int direct_data_block_address;
 		struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(sizeof(struct dir_data_block));
@@ -1413,6 +1397,7 @@ int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
 		kfree(cur_indirect_block);
 		kfree(dir_block);
 	}//end if else	
+	return SUCCESS; 
 }//end krec_delete()
 
 //---------------------------------------------------
@@ -1439,17 +1424,17 @@ int kdelete(char* filepath, int recursive) {
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
-		return -1;
+		return error;
 	}
     /* Check to ensure the file is not currently open...if it is return an error and notify user */
 	if(inode_is_open(cur_inode)){
-		os_printf("This file cannot be deleted, because it is currently open\n");
+		os_printf("File %d cannot be deleted, because it is currently open\n", cur_inode->inum);
 		kfree(cur_inode);
 		kfree(level_up_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
-		return -1;
+		return ERR_GEN;
 	}
 	error = kfind_inode(filepath, inum, (result->dir_levels), level_up_inode);
 	if(recursive){
@@ -1474,7 +1459,7 @@ int kdelete(char* filepath, int recursive) {
 		return error;
 	}//end if else
 	os_printf("we should never reach this!!!\n");
-    return -1;
+    return ERR_GEN;
 } // end kdelete()
 
 
@@ -1491,13 +1476,13 @@ int kcopy(char* source, char* dest, char mode) {
 	struct inode *source_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	//find the source inode
 	error = kfind_inode(source, inum, (source_dir_helper->dir_levels + 1), source_inode);
-	if (error == -1) {  //kfind_inode unsuccessful 
+	if (error < 0) {  //kfind_inode unsuccessful 
 		os_printf("kfind_inode unsuccessful \n");
 		kfree(source_inode);
 		kfree(source_dir_helper->truncated_path);
 		kfree(source_dir_helper->last);
 		kfree(source_dir_helper);
-		return -1;
+		return ERR_404;
 	}
 	//at this point source_inode is the inode of the source
 	int copy_directory = source_inode->is_dir; //checks if we are copying a direcory or a file
@@ -1505,24 +1490,24 @@ int kcopy(char* source, char* dest, char mode) {
 	//2. cerate destination
 	int dest_fd = 0;
 	dest_fd = kcreate(dest, mode, copy_directory); //creates the new file or directory
-	if (dest_fd == -1) { //some problem occurred in kcreate
+	if (dest_fd < 0) { //some problem occurred in kcreate
 		os_printf("kcreate unsuccessful \n");
 		kfree(source_inode);
 		kfree(source_dir_helper->truncated_path);
 		kfree(source_dir_helper->last);
 		kfree(source_dir_helper);
-		return -1;
+		return ERR_GEN;
 	}
 
 	//3. find destination
 	struct file_descriptor *dest_fd_struct = get_descriptor(dest_fd);
-	if (dest_fd_struct == 0x0) {  //get_descriptor had problems
+	if (dest_fd_struct == NULL) {  //get_descriptor had problems
 		os_printf("get_descriptor unsuccessful \n");
 		kfree(source_inode);
 		kfree(source_dir_helper->truncated_path);
 		kfree(source_dir_helper->last);
 		kfree(source_dir_helper);
-		return -1;
+		return ERR_GEN;
 	}
 	
 	struct inode *dest_inode = dest_fd_struct->linked_file;  ///TODO ISN'T USED, G: WHY IS IT HERE
@@ -1533,7 +1518,6 @@ int kcopy(char* source, char* dest, char mode) {
 	if (!error) {
 		error = kwrite(dest_fd, buffer, source_inode->size);
 	}
-
 	kfree(buffer);
 	kfree(source_inode);
 	kfree(source_dir_helper->truncated_path);
@@ -1551,21 +1535,21 @@ int kls(char* filepath) {
 	kfind_dir(filepath, result); 
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
-	if (error == -1 || cur_inode->is_dir == 0) {  //kfind_inode unsuccessful or cannot ls
-		if (error == -1) { //kfind
+	if (error < 0 || cur_inode->is_dir == 0) {  //kfind_inode unsuccessful or cannot ls
+		if (error < 0) { //kfind
 			os_printf("kfind_inode unsuccessful \n"); 
 		}
 		else { //cannot ls
 			os_printf("this is not a directory but a file, cannot ls a file \n"); 
+			error = ERR_INVALID;
 		}
 		kfree(cur_inode);
 		kfree(result->truncated_path);
 		kfree(result->last);
 		kfree(result);
-		return -1;
+		return error; //return same error
 	}
 	//at this point, cur_inode is a directory and we need to print all the names of its contents. 
-
 	//1. print from direct blocks
 	int i;
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
@@ -1578,7 +1562,6 @@ int kls(char* filepath) {
 			os_printf("entry: %s \n", file_dir.name);
 		}//inner for
 	}//outer for
-
 	//2. print from indirect blocks
 	struct indirect_block *cur_indirect_block = (struct indirect_block *) kmalloc(sizeof(struct indirect_block));
 	int cur_indirect_block_num;
@@ -1596,14 +1579,13 @@ int kls(char* filepath) {
 			}//inner for
 		}//outer for
 	}//end for
-
 	kfree(cur_indirect_block);
 	kfree(dir_spaceholder);
 	kfree(cur_inode);
 	kfree(result->truncated_path);
 	kfree(result->last);
 	kfree(result);
-	return 0;
+	return SUCCESS;
 }
 
 //gets the stats of a file
@@ -1613,21 +1595,22 @@ int get_stats(char * filepath, struct stats * result) {
 	struct dir_helper* help_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, help_result);
 	int error = kfind_inode(filepath, inum, (help_result->dir_levels + 1), cur_inode);
-	if (error == -1 || cur_inode->is_dir) {
-		if (error == -1) {
+	if (error < 0 || cur_inode->is_dir) {
+		if (error < 0) {
 			os_printf("file not found, exiting kopen\n");
 		}
 		else {
 			os_printf("cannot open a directory, make the path end to a file\n");
+			error = ERR_INVALID;
 		}
 		kfree(cur_inode);
 		kfree(help_result->truncated_path);
 		kfree(help_result->last);
 		kfree(help_result);
-		return -1;
+		return error; //return same error
 	}
 	result->size = cur_inode->size;
 	result->fd_refs = cur_inode->fd_refs;
 	result->is_dir = cur_inode->is_dir;
-	return 0;
+	return SUCCESS;
 }//end get_stats function
