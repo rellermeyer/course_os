@@ -67,15 +67,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
-
-
-
-	register int r0 asm("r0");
 	asm("MOV %0, r7":"=r"(callNumber)::);
-	os_printf("\n\n r0: 0x%x\n\n",(uint32_t *)r0);
-
-
-
 
 	// We have to switch VASs to the kernel's VAS if we want to do anything
 	struct vas *prev_vas = vm_get_current_vas();
