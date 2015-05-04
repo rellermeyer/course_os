@@ -113,6 +113,7 @@ uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
         amt_added += BLOCK_SIZE;
         proc_buffer_size += BLOCK_SIZE;
     }
+    
     vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
     return amt_added;
 }
