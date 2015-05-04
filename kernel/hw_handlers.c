@@ -70,9 +70,9 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 
 
-	//register int r0 asm("r0");
+	register int r0 asm("r0");
 	asm("MOV %0, r7":"=r"(callNumber)::);
-	//os_printf("\n\naddress 0x%x:\n\n",(uint32_t *)r0);
+	os_printf("\n\n r0: 0x%x\n\n",(uint32_t *)r0);
 
 
 
@@ -264,6 +264,8 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Free system call called!\n");
 		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
 		ufree(ptr);
+		os_printf("\n\n ptr: %x \n\n",ptr);
+		os_printf("\n\n long ptr: %x \n\n",(long)ptr);
 		return 0;
 		break;	
 
