@@ -37,6 +37,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
+	os_printf("This is the start of allocate_process_memory().\n All it loads the process RORW into Kernel Heap\n We don't want that.\n");	
 	os_size_t process_size = det_proc_size(h, ph);
 	void * process_mem = kmalloc_aligned(process_size, 4096);
 	void * current_pointer = process_mem;
@@ -72,10 +73,10 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 	//Puts all the relevant segments into allocated region
 
 	//TODO:4-23-15
-	int i = 0;
+	
 	Boolean first_seg = TRUE;
 	uint32_t entry_point_offset = 0;
-	for(; i < (h->e_phnum); i++)
+	for(int i = 0;i < (h->e_phnum); i++)
         {
 		if(ph[i].p_type == PT_LOAD)
 		{
@@ -103,15 +104,15 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 
 	current_pointer = (void*) ((uint32_t)current_pointer + 2*4096); //Stack pointer
 	
-	setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
+	// setup_process_vas(pcb_p->PID, process_size, (uint32_t*) h->e_entry, process_mem);
 
 	//entry_point_offset = entry_point_elf - addr_first;			
-	//entry_point = process_mem + entry_point_offset	
+	//entry_point = process_mem + entry_point_offset
 }	
 
 //Probably want to return a memory address rather than nothing.
 //Take a process control block and pointer to the start of an ELF file in memory.
-Elf_Ehdr* load_file(pcb * process_control_block, uint32_t * file_pointer)
+Elf_Ehdr* load_file(pcb * pcb_p, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr)); // Get elf header
 	os_printf("elf header= %x\n", h);
@@ -130,10 +131,18 @@ Elf_Ehdr* load_file(pcb * process_control_block, uint32_t * file_pointer)
 	Elf_Phdr * ph = (Elf_Phdr *) kmalloc(h->e_phnum * sizeof(Elf_Phdr));	
 	Elf_Shdr * sh = (Elf_Shdr *) kmalloc(h->e_shnum * sizeof(Elf_Shdr));
 	read_program_header_table(h, ph, (unsigned char *)file_pointer);
-	//read_section_header_table(h, sh, (uint32_t*)file_pointer);
-	// /vm_enable_vas(process_control_block->stored_vas);
 
-	allocate_process_memory(process_control_block, h, ph, file_pointer);
+	//allocate pages for the read only segment
+
+	//allocate pages for text section
+
+	
+	//assert(1 == 2 && "load_file");
+
+	//read_section_header_table(h, sh, (uint32_t*)file_pointer);
+	// /vm_enable_vas(pcb_p->stored_vas);
+
+	//allocate_process_memory(pcb_p, h, ph, file_pointer);
 
 	//vm_use_kernel_vas();
 	return h;

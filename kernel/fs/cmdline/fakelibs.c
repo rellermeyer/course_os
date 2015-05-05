@@ -1,6 +1,7 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+#include<stdint.h>
 
 /* Memory management */
 
@@ -17,12 +18,12 @@ void kfree(void *ptr)
 /* klibc functions */
 
 // GAH src is the 1st argument.
-int os_memcpy(void *src, void *dst, int len)
+void *os_memcpy(void *src, void *dst, int len)
 {
 	return memcpy(dst, src, len);
 }
 
-int os_memset(void *ptr, char c, int len)
+void *os_memset(void *ptr, char c, int len)
 {
 	return memset(ptr, c, len);
 }
@@ -32,7 +33,7 @@ int os_strcmp(char *s1, char *s2)
 	return strcmp(s1, s2);
 }
 
-int os_strcpy(char *s1, char *s2)
+char *os_strcpy(char *s1, char *s2)
 {
 	return strcpy(s1, s2);
 }
@@ -44,12 +45,13 @@ int os_strlen(char *s)
 
 /* SD card */
 
-void init_sd()
+int init_sd()
 {
 	// Noop
+	return 0;
 }
 
-void sd_transmit(void *data, int addr)
+int sd_transmit(void *data, uint32_t addr)
 {
 	FILE *f = fopen("card.sd", "r+");
 	fseek(f, addr, SEEK_SET);
@@ -57,7 +59,7 @@ void sd_transmit(void *data, int addr)
 	fclose(f);
 }
 
-void sd_receive(void *data, int addr)
+int sd_receive(void *data, uint32_t addr)
 {
 	FILE *f = fopen("card.sd", "r+");
 	fseek(f, addr, SEEK_SET);

@@ -70,6 +70,8 @@ int swapfs_retreive(void *page, uint32_t *id)
 		return -1;
 	}
 
+	// bv_lower() here?
+
 	if ((fd = kopen("/swap", 'r')) < 0){
 		return -1;
 	}

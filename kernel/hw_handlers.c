@@ -63,9 +63,19 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// after the SVC call
 	// possible that syscall # passed directly in r7, not sure yet though
 	register int address asm("lr"); 
-	        
+	
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
+
+
+
+
+
+	asm("MOV %0, r7":"=r"(callNumber)::);
+
+
+
+
 
 	// We have to switch VASs to the kernel's VAS if we want to do anything
 	struct vas *prev_vas = vm_get_current_vas();
@@ -75,7 +85,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 
 	// Print out syscall # for debug purposes
 	os_printf("Syscall #: ");
-	os_printf("%x", callNumber);
+	os_printf("%d", callNumber);
 	os_printf("\n");
 
 	// System Call Handler
@@ -93,6 +103,9 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	int fd;
 	void* buf;
 	int numBytes;
+	uint32_t byte_size;
+	void* ptr;
+	char* output;
 
 	case SYSCALL_DELETE:
 		os_printf("Delete system call called!\n");
@@ -223,6 +236,42 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Memory map system call called!\n");
 		os_printf("Yet to be implemented\n");
 		return -1;
+		break;
+
+	case SYSCALL_MALLOC:
+		os_printf("malloc system call called!\n");
+		//Assuming that the userlevel syscall wrappers work		
+		//retrieve args of malloc, put in r1, pass to malloc 
+		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
+		ptr = umalloc(byte_size);
+		//I want to return the pointer to the beggining of allocated block(s);
+		return (long) ptr;
+		break;
+
+	case SYSCALL_CALLOC:
+		os_printf("SYSCALL_CALLOC system call called!\n");
+		//Assuming that the userlevel syscall wrappers work
+		uint32_t num;
+		//retrieve args of malloc, put in r1, pass to malloc 
+		asm volatile("mov r0, %[num1]":[num1]"=r" (num)::);
+		asm volatile("mov r1, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
+		ptr = ucalloc(num,byte_size);
+		//I want to return the pointer to the beggining of allocated block(s);
+		return (long) ptr;
+		break;
+
+	case SYSCALL_FREE:
+		os_printf("Free system call called!\n");
+		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
+		ufree(ptr);
+		return 0;
+		break;	
+
+	case SYSCALL_PRINTF:
+		os_printf("Printf system call called!\n");
+		asm volatile("mov r0, %[output]":[output]"=r" (output)::);
+		os_printf(output);
+		return 0;
 		break;
 
 	default:

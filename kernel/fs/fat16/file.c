@@ -75,7 +75,7 @@ int kfs_format()
 
 	// Lay down the root inode
 	struct inode root_inode;
-	root_inode.inum = 1; // Isn't this redundant?
+	root_inode.inum = 0; // Isn't this redundant?
 	root_inode.fd_refs = 0;
 	root_inode.size = 0;
 	root_inode.is_dir = 1;
@@ -105,7 +105,7 @@ int kfs_format()
 
 /* make the global varrible */
 // initialize the filesystem:
-int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
+int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat){
 
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
 	DATA_BLOCK_TABLE_CACHE_SIZE = data_block_table_cache_size;
@@ -123,7 +123,9 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size){
 	}//end else
 
 	// Bootstrap the FS...
-	kfs_format();
+	if (reformat) {
+		kfs_format();
+	}
 
 	//read in the super block from disk and store in memory:
 	FS =  (struct superblock*) kmalloc(BLOCKSIZE);
@@ -335,7 +337,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	int current_inum = starting_inum;
 	int a;
-	for(a = 0; a < dir_levels; a++) {
+	for(a = 0; a < dir_levels-1; a++) {
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
 
@@ -375,7 +377,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath;
+	char* iterator = filepath; //root still level 0, so start from what's next
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
@@ -493,9 +495,6 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		dir_block->dir_entries[dir_block->num_entries] = new_dir_entry;
 		dir_block->num_entries++;
 		cur_inode->size += sizeof(struct dir_entry);
-
-		cur_inode->direct_blocks_in_file++; //DOES THIS FIX THE PRINTING OF THE 404?????
-
 		sd_transmit((void*) dir_block, (dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 		//os_printf("Sent main data block.\n");
 	}else{
@@ -962,11 +961,11 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 						cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file] = new_indirect_block_loc;
 						cur_inode->indirect_blocks_in_file++;
 
-						if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
+						/*if(indirect_block_table_cache[new_indirect_block->block_num] == NULL){
 							//TODO: implement eviction policy...add the cur_inode to the cache:
 						}else{
 							*(indirect_block_table_cache[new_indirect_block->block_num]) = *(new_indirect_block);
-						}
+							}*/
 
 						void *buf = kmalloc(BLOCKSIZE);
 						os_memcpy(new_indirect_block, buf, sizeof(struct indirect_block));
@@ -1485,4 +1484,29 @@ int kls(char* filepath) {
 	kfree(result->last);
 	kfree(result);
 	return 0;
+}
+
+//gets the stats of a file
+struct stats * get_stats(char * filepath, struct stats * result) {
+	int inum = 0;
+	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
+	struct dir_helper* help_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	kfind_dir(filepath, help_result);
+	int error = kfind_inode(filepath, inum, (help_result->dir_levels + 1), cur_inode);
+	if (error == -1 || cur_inode->is_dir) {
+		if (error == -1) {
+			os_printf("file not found, exiting kopen\n");
+		}
+		else {
+			os_printf("cannot open a directory, make the path end to a file\n");
+		}
+		kfree(cur_inode);
+		kfree(help_result->truncated_path);
+		kfree(help_result->last);
+		kfree(help_result);
+		return -1;
+	}
+	result->size = cur_inode->size;
+	result->fd_refs = cur_inode->fd_refs;
+	result->is_dir = cur_inode->is_dir;
 }
