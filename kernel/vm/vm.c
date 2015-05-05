@@ -211,11 +211,16 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		return VM_ERR_MAPPED;
 	}
 
-	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
+	int lvl2_perm = perm;//perm_mapping[perm];
+	int apx_bit = (lvl2_perm & 4) >> 2;
+	int ap_bits = lvl2_perm & 3;
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4) | 2;
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
-	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
+	//os_printf("permission=%d lvl2_perm=%X apx=%X ap=%X\n", permission, lvl2_perm, apx_bit, ap_bits);
+	//l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
 
@@ -226,9 +231,7 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
 	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 1) {
 		// We have to free the mapping in the L2 page table
-		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_L2ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
-		//os_printf("Freeing mapping: %X %X %X (entry=%X)\n", l2pt, vptr, vas, vas->l1_pagetable[(unsigned int)vptr>>20]);
-		//os_printf("L1 entry: %X\n",VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(vas->l1_pagetable[(unsigned int)vptr>>20]));
 		VM_L2_ENTRY(l2pt, vptr) = 0;
 	}
 	return 0;
