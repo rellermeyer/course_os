@@ -356,4 +356,4 @@ int status(){
 uint32_t stat = read_mmci(STATUS);
 int error= stat & STATUS_ERR;
 return (~error+1);
-
+}
