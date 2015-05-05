@@ -92,37 +92,56 @@ uint32_t *vm_alloc_coarse_page_table()
 	return vptr;
 }
 
+
+/**
+ *vm_vtop: Virtual to Physical Address Translation
+ *  
+ *  @Param vas Current virtual address space
+ *  @Param vptr Virtual Address pointer to be translated
+ *
+ */
 uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
 	}
-    uint32_t *translate = 0;
+    uint32_t vptr_addr = (uint32_t) vptr;
     //Index in to the L1_ptable
-    translate = (uint32_t*)((*vptr&0xFFFE0000) + *vas->l1_pagetable);
+    uint32_t l1_descriptor;
+    uint32_t l2_descriptor;
+    uint32_t l2_entry;
     //if it is zero
-    if((*translate&0x3) == 0){
+    l1_descriptor = *((uint32_t*)((vptr_addr&0xFFF00000) + (uint32_t)vas->l1_pagetable));
+    if((l1_descriptor&0x3) == 0){
         //invalid
-    }else if(*translate&0x3 == 1){
+    }else if(l1_descriptor&0x3 == 1){
         //Dereferencing l1 descriptor to get Coarse base address and to 
         //index into coarse page table
-        uint32_t *coarse_addr = *translate + ((*vptr &0x0001FC00));
-        if((*coarse_addr & 3) == 0){
+        l2_descriptor = *(uint32_t*)((l1_descriptor&0xFFFFFC00) + (vptr_addr&0xFF000));
+        if((l2_descriptor & 3) == 0){
             //invalid what error? 
-        }else if((*coarse_addr & 3) == 1){
-            //large pages... not setup??
-        }else if((*coarse_addr & 3) == 2){
+        }else if((l2_descriptor & 3) == 1){
+            //64KB Pages NOT Implemented
+        }else if((l2_descriptor & 3) == 2){
             //4KB Small pages
-            //Documentation shows XN1 designating small pages just checking for 2?
-            uint32_t *page_addr = (*coarse_addr&0xFFFFF000) + *vptr&0x00000FFF;
+            l2_entry = *(uint32_t*)((l2_descriptor&0xFFFFF000) + (vptr_addr&0x00000FFF));
         }
      
     }else{
-        //check bit 18 to determine if 1MB or 16MB sections
-    }
+        //Bit set for supersections
+        if(0x40000&l1_descriptor){
+            //Supersections Not Implemented 
+        }else{
+            //Sections
+            uint32_t *section_entry = *((uint32_t*)((l1_descriptor&0xFF000000) + (vptr_addr&0x00FFFFFF)));
+            return section_entry;
+        }
 
-    //return *page_addr;
+    }
+    
+    //TODO: TEST!
+    //return l2_entry;
 	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
 }
 
@@ -132,6 +151,11 @@ uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
 	}
+    
+    int i;
+    for( i = 0; i < 1 <<14; i++){
+        if((vas->l1_pagetable
+
 	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
