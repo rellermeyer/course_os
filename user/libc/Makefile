@@ -31,8 +31,9 @@ OBJS=stdio/printf.o \
      dummy/dummy.o \
      env/__libc_start_main.o \
      env/__environ.o \
-     malloc/malloc_syscalls.o
-     exit/_Exit.o
+     malloc/malloc_syscalls.o \
+     exit/_Exit.o \
+     exit/exit.o
 
 CFLAGS = -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
