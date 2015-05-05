@@ -1,13 +1,26 @@
-/*****************************************************************
- * Crude SD Card (MMCI) Driver                                   *
- * Programmed By: Joseph Bourque, Matt Davidson, Weston Selleck  *
- * Framework, QC, and Support: Lane Kolbly                       *
- * Completed: 4/20/2015    Last Updated: 4/20/2015               *
- *****************************************************************/
+/**
+ * @file MMCI (Multimedia Card Interface) Driver
+ *
+ * @author  Joseph Bourque, Matt Davidson, Weston Selleck \n
+ *          QC and Support: Lane Kolbly
+ *
+ * @version 1.0
+ *
+ * @section DESCRIPTION
+ *
+ * The driver for the SD card; provides an interface between the
+ * operating system and the SD card controller. Currently set up
+ * to use FIFO for input and output 
+ *
+ * TODO: Need to implement DMA support at some time in the future
+ *       (Not needed until multi-threading implemented)
+ *
+ * Completed On: 4/20/2015           Last Updated: 5/5/2015
+ */
 #include "klibc.h"
 #include "mmci.h"
 
-// MMCI Definitions
+// MMCI Definitions - Used to access SD card registers; DO NOT CHANGE!
 #define MMCI_BASE 0x10005000
 #define CMD 0x00C
 #define DCTRL 0x02C
@@ -22,7 +35,7 @@
 #define RESP_3 0x20
 #define DATA_LEN 0x028
 
-// bit shift definitions
+// bit shift definitions - Used to modify SD card registers; DO NOT CHANGE!
 #define EXE (1 << 10)
 #define RESP (1 << 6)
 #define LRESP (1 << 7)
@@ -38,10 +51,25 @@
 
 
 
+/**
+ * Initialize SD Card Method
+ *
+ * Initializes SD card putting it in the transfer state; this should
+ * be called when the kernel boots up; readies the SD card for 
+ * data transfer. Right now this function chooses the first available
+ * SD card.
+ *
+ * TODO: Add to/split up this function in order to work with multiple
+ *       SD cards i.e. let the user set up additional SD cards past
+ *       the first
+ *
+ * @return 
+ * 
+ * If the SD card was initialized correctly; this returns 0; otherwise
+ * this will return a negative integer value based on the value stored
+ * in the status register
+ */
 
-// Initializes SD card putting it in the transfer state; this should
-// be called when the kernel boots up; readies the SD card for 
-// data transfer
 int init_sd()
 {
 	asm volatile("cpsie if");
@@ -87,20 +115,44 @@ int init_sd()
 	return status();
 }
 
-// Returns the maximum capacity of the SD card; Since our SD card is
-// set at 512kB only this is just a stub function for now but this
-// may need to be expanded later in the event we want to support
-// variable SD card size i.e. find the capacity of the SD card vs.
-// using a static capacity
+/**
+ * SD Capacity Method
+ *
+ * Returns the maximum capacity of the SD card in bytes; for our 
+ * current needs it computes the size statically
+ *
+ * TODO: Eventually this needs to be set up to calculate the size
+ *       of the SD card dynamically to account for different sized
+ *       SD cards
+ *
+ * @return Returns the size of the SD card (in bytes)
+ */
 uint32_t sd_capacity()
 {
-	return SD_BLOCK_SIZE*1024;
+	return 128*1024*1024;
 }
 
-// Writes the contents of the FIFO buffer to the SD
-// card; writes a single block; returns 0 if the
-// transmission was successful and error code if there was 
-// an error
+/**
+ * Transmit to SD Card Method
+ *
+ * Writes the contents of the FIFO buffer to the SD card; Writes
+ * A single block at a time.
+ *
+ * @param  
+ *
+ * void* buffer - Holds a single block of data and treats it as a 
+                  bitstream
+ * @param  
+ * 
+ * uint32_t address - Holds the address of the block of the SD card 
+ *                    to write to; the address is a multiple of the 
+ *                    block size 
+ * @return 
+ * 
+ * If the write was successful this returns 0; otherwise
+ * this returns a negative integer based on the status
+ * flags set             
+ */
 int sd_transmit(void* buffer, uint32_t address)
 {
 	//Set the block length on the SD card
@@ -116,9 +168,29 @@ int sd_transmit(void* buffer, uint32_t address)
 	return status();
 }
 
-// Reads the contents of the FIFO buffer to the SD
-// card; reads a single block and returns 0 if the
-// transmission succeeded and error code if there was an error
+/**
+ * Receive from the SD Card Method
+ *
+ * Reads the contents of the FIFO buffer from the SD card; reads 
+ * a single block at a time from the passed address and stores it
+ * in the passed buffer
+ *
+ * @param  
+ * 
+ * void* buffer - Serves a a recepticle to place the information
+ *                read from disk
+ * @param 
+ *
+ * uint32_t address - stores the address on disk to read from
+ *                    disk addresses are a mulitple of block 
+ *                    size
+ * 
+ * @return 
+ *
+ * Returns 0 if the read was successful; otherwise returns a 
+ * negative integer based on the value stored in the status
+ * register
+ */
 int sd_receive(void* buffer, uint32_t address)
 {
 	//Clear out FIFO and set to read
@@ -134,9 +206,16 @@ int sd_receive(void* buffer, uint32_t address)
 	return status();
 }
 
-// Resets all non-dynamic status flags; returns 0
-// if the clear was successful and error code if there was an error
-// an error
+/**
+ * Clear Method
+ *
+ * Resets all non-dynamic status flags 
+ *
+ * @return 
+ *
+ * Returns 0 if the clear was successful; otherwise returns a negative
+ * integer based off the value stored in the status register
+ */
 int clear()
 {
 	// Return that the clear succeeded for now
@@ -146,14 +225,27 @@ int clear()
 }
 
 
-
 ///// Helper Functions ///// Helper Functions ///// Helper Functions /////
 
 
-
-// Push bits into FIFO buffer from the address passed 
-// into the push bits function; Returns 0 if successful 
-//  and error code if there was an error
+/**
+ * Push Bytes
+ *
+ * Helper method for the sd_transmit method; pushes bits into
+ * the fifo buffer using the passed buffer space
+ *
+ * @param  
+ *
+ * void* buffer - An address which represents 1 block of data;
+ *                provides a space for FIFO to interact with
+ *                when writing to the SD card	   
+ *
+ * @return 
+ *
+ * Returns 0 if the write was successful; otherwise returns a 
+ * negative integer based on the value stored in the status
+ * register
+ */
 int push_bytes(void* buffer)
 {
 	//Clear out FIFO and set to write
@@ -169,9 +261,25 @@ int push_bytes(void* buffer)
 	return status();
 }
 
-// Pull bits out of the FIFO buffer and store them at the 
-// address passed into the pull bits function; returns 0 
-// if successful and  and error code if there was an error
+/**
+ * Pull Bytes Method
+ *
+ * Helper function for the sd_recieve method; pulls bits out of 
+ * the FIFO buffer and stores them in the buffer passed into
+ * the function (buffer represents 1 block of data)
+ *
+ * @param 
+ * 
+ * void* buffer - An address in memory representing 1 block
+ *                of data; provides a space for FIFO to store
+ *                the result of the read from the SD card
+ *
+ * @return 
+ *
+ * Returns 0 if the read was successful; otherwise returns a 
+ * negative integer based on the value stored in the status
+ * register
+ */
 int pull_bytes(void* buffer)
 {
 	int i = 0;
@@ -184,13 +292,44 @@ int pull_bytes(void* buffer)
 	return status();
 }
 
-// Stub function used to run MMCI commands
+/**
+ * Run MMCI Method
+ *
+ * This method is primarily used to run the various mmci commands
+ * and it does so by using ARM assembly to store a value in register
+ * corresponding to an MMCI command
+ *
+ * @param  
+ *
+ * uint32_t cmd - Stores the address offset based on the MMCI base
+ *                address for a MMCI command.
+ *
+ * @param  
+ *
+ * uint32_t args - Represents the bits which will actually be set
+ *                 on the register when running a specific command
+ */
 void run_mmci(uint32_t cmd, uint32_t args)
 {
 	uint32_t reg_address = MMCI_BASE+cmd;
 	asm volatile("str %0,[%1]" : : "r" (args), "r" (reg_address));
 }
 
+/**
+ * Read MMCI Method
+ *
+ * This method is primarily used for getting some response from a MMCI 
+ * register (response register, status register, etc.)
+ *
+ * @param  
+ *
+ * uint32_t target - Passes in the target register to read; represented
+ *                   as an offset to the MMCI base address
+
+ * @return 
+ *
+ * Returns the value stored in the target register as an integer value
+ */
 uint32_t read_mmci(uint32_t target)
 {
 	uint32_t response;
@@ -199,14 +338,23 @@ uint32_t read_mmci(uint32_t target)
 	return response;
 }
 
-//Because multiple bits could be set, thus giving multiple errors:
-//1. convert abs|number| to binary example: -3 would be 011
-//if no error - will return 0
-//if -1 , error code 0
-// if -2 , error code 1
-//if -3 , error cod 0 and 1 */
+/**
+ * Status Method 
+ *
+ * Helper method which handles error detection for the driver; because
+ * multiple bits can be set due to multiple errors; combine bits where
+ * neccessary to obtain error code
+ *
+ *@return
+ *
+ * if no error - will return 0
+ * if -1 , error code 0
+ * if -2 , error code 1
+ * if -3 , error code 0 and 1
+ */
 int status(){
 uint32_t stat = read_mmci(STATUS);
 int error= stat & STATUS_ERR;
 return (~error+1);
 }
+

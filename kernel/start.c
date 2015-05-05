@@ -42,6 +42,7 @@
 #include "tests/test_kthreads.h"
 #include "tests/test_process.h"
 #include "tests/test_sched_process.h"
+#include "tests/test_user_mode.h"
 
 #include "hashtable.h"
 #include "streams.h"
@@ -114,14 +115,17 @@ void start2(uint32_t *p_bootargs) {
 
 	// Test cases
 	// ----------
-	run_vm_tests();
+	//run_vm_tests();
 //	run_mem_alloc_tests();
 //	run_prq_tests();
 //	run_hmap_tests();
-	run_kthr_tests();
-//	run_sched_prcs_tests();
-    // run_prcs_tests();
+//	run_kthr_tests();
+//	run_arrl_tests();
+//	 run_umode_tests();
+    run_sched_prcs_tests();
+ // run_prcs_tests();
 //	run_fs_tests();
+
 
 	/*
 	 4-15-15: 	#Prakash: 	What happens if we let the program load here?

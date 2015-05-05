@@ -6,11 +6,17 @@
 #define NUM_TESTS 1
 
 int test_sched_prcs_1() {
-	sched_start_task(sched_create_task_from_process("/hello", -5));
-	sched_start_task(sched_create_task_from_process("/hello", -5));
-//	sched_start_task(sched_create_task_from_process("/hello", -3));
-//	sched_start_task(sched_create_task_from_process("/hello", -2));
-	sched_yield();
+
+#define PRIORITY -5
+
+	char * argv_1[2];
+	argv_1[0] = "Process 11";
+	argv_1[1] = "How are you?";
+
+	sched_start_task(sched_create_task_from_process("/hello", PRIORITY, 2, argv_1));
+	sched_start_task(sched_create_task_from_process("/hello", PRIORITY, 2, argv_1));
+
+	sched_yield(0);
 
 	return TEST_OK;
 }

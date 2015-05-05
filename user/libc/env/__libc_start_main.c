@@ -1,5 +1,7 @@
 #include <elf.h>
 #include "libc.h"
+#include "stdio.h"
+// #include "uthreads.h"
 
 void __init_tls(size_t *);
 void __init_security(size_t *);
