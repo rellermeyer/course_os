@@ -66,7 +66,7 @@ pcb* process_create(uint32_t* file_p, uint32_t len, int argc, char ** argv) {
 		pcb* pcb_pointer = (pcb*) kmalloc(sizeof(pcb));
 
 		pcb_pointer->len = len;
-		pcb_pointer->start = file_p;
+		pcb_pointer->start = (uint32_t) file_p;
 		pcb_pointer->argv = argv;
 		pcb_pointer->argc = argc;
 
@@ -152,7 +152,6 @@ uint32_t process_save_state(uint32_t PID) {
 //return 0 if fail
 //return 14 for success
 uint32_t process_load_state(uint32_t PID) {
-	uint32_t* process_to_load = process_get_address_of_PCB(PID);
 	pcb* pcb_p = process_get_PCB(PID);
 
 	LOG("LOADING STATE\n");
@@ -167,7 +166,7 @@ uint32_t process_load_state(uint32_t PID) {
 //	int x = 1;
 //	while(x);
 
-	process_jmp_goto(&pcb_p->R0, pcb_p->R0);
+	process_jmp_goto((jmp_buf*)&pcb_p->R0, pcb_p->R0);
 
 	return 1;
 }
@@ -337,14 +336,16 @@ uint32_t process_execute(pcb* pcb_p) {
 	//Set state to running, this should be modified when the process is tossed into wait queues, etc
 	//Check header file for a list of states
 	pcb_p->current_state = PROCESS_RUNNING;
-	vm_enable_vas(pcb_p->stored_vas);
-
 	pcb p = *pcb_p;
+
+	vm_enable_vas(pcb_p->stored_vas);
 
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
-	jmp_goto(&p.R0, p.R0);
+// 	while(pcb_p->stored_vas);
+
+	process_jmp_goto((jmp_buf*)&p.R0, p.R0);
 
 	while (1)
 		;
@@ -379,7 +380,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 	// incase it was already mapped
 	for (int i = 20; i < 40; i++) {
-		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
+		uint32_t *v = (uint32_t*)(pcb_p->start + (i * BLOCK_SIZE));
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 
 		if (retval) {
@@ -401,7 +402,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 		retval = vm_map_shared_memory(KERNEL_VAS,
 				(void*) pcb_p->start + (i * BLOCK_SIZE), pcb_p->stored_vas,
-				(void*) v, VM_PERM_USER_RW);
+				(void*) v, VM_PERM_PRIVILEGED_RW);
 		if (retval) {
 			ERROR(
 					"__process_init_vas: vm_map_shared_memory error code: %d at [%d]\n",
@@ -411,9 +412,9 @@ void __process_init_vas(pcb* pcb_p) {
 
 	}
 
-	int *copyIn = pcb_p->start;
+	int *copyIn = (int*) pcb_p->start;
 	int counter = 0;
-	uint32_t * v = pcb_p->start + 20 * BLOCK_SIZE;
+	uint32_t * v = (uint32_t*)(pcb_p->start + 20 * BLOCK_SIZE);
 
 	while (counter < pcb_p->len) {
 		*v = *copyIn;
@@ -423,7 +424,7 @@ void __process_init_vas(pcb* pcb_p) {
 	}
 
 	for (int i = 0; i < 40; i++) {
-		uint32_t *v = pcb_p->start + (i * BLOCK_SIZE);
+		uint32_t *v = (uint32_t*)(pcb_p->start + (i * BLOCK_SIZE));
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 		if (retval) {
 			ERROR("__process_init_vas: vm_free_mapping error code: %d\n",
@@ -449,7 +450,7 @@ void __process_init_stack(pcb * pcb_p) {
 
 		retval = vm_map_shared_memory(KERNEL_VAS,
 				(void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
-				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+				(void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_PRIVILEGED_RW);
 		if (retval) {
 			ERROR("__process_init_stack: vm_map_shared_memory error code: %d\n",
 					retval);
@@ -466,30 +467,25 @@ void __process_init_stack(pcb * pcb_p) {
 	stack_top[-5] = STACK_BASE;
 	stack_top[-6] = 1;
 
-	// set ptr to charc
+//	// set ptr to charc
 //	uint32_t * stack_argc = STACK_BASE;
-//	*stack_argc = pcb_p->argc;
+//	int index = -5 - pcb_p->argc;
 //
 //	// get ptr to charv **
-//	uint32_t * stack_argv_ptr = STACK_BASE + sizeof(uint32_t);
-//
-//	uint32_t arg_stack = STACK_BASE + sizeof(uint32_t)
-//			+ sizeof(char*) * pcb_p->argc;
+//	uint32_t * stack_argv_ptr = STACK_BASE;
 //
 //	for (int i = 0; i < pcb_p->argc; i++) {
 //		// check the length of string
 //		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
 //		// copy in the content
-//		os_strcpy((char*) arg_stack, pcb_p->argv[i]);
+//		os_strcpy((char*) stack_argv_ptr, pcb_p->argv[i]);
 //		// store address
-//		*stack_argv_ptr = arg_stack;
+//		stack_top[index++] = stack_argv_ptr;
 //		// increment the char array
-//		arg_stack += arg_len;
+//		stack_argv_ptr += arg_len;
 //		// append with 0
-//		*((char*) arg_stack) = '\0';
+//		*((char*) stack_argv_ptr) = '\0';
 //		// include the 0 in len
-//		arg_stack += 1;
-//		// increment the array
 //		stack_argv_ptr += 1;
 //	}
 //

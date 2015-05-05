@@ -16,7 +16,7 @@ int test_sched_prcs_1() {
 	sched_start_task(sched_create_task_from_process("/hello", PRIORITY, argv_1, 2));
 	sched_start_task(sched_create_task_from_process("/hello", PRIORITY, argv_1, 2));
 
-	sched_yield();
+	sched_yield(0);
 
 	return TEST_OK;
 }

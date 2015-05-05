@@ -259,8 +259,8 @@ void __sched_dispatch(uint32_t arg) {
 			//	LOG("Loading tid: %d; Returning to %X\n", active_task->tid,
 			//			active_task->ret);
 			//	jmp_print(&active_task->jmp_buffer);
-			//	while(active_task);
-			proces_enter_umode(active_task->ret);
+			// while(active_task);
+			// proces_enter_umode(active_task->ret);
 			return;
 		}
 
