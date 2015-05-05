@@ -167,16 +167,14 @@ void sample_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
     for (i=0; i<length; i++) {
         print_char_uart0(s[i]);
     }
-
-    LOG("WHATSUP!!!\n");
 }
 
 
 
 void child_receiver(uint32_t parent_tid, uint32_t tid)
 {
-    char * msg = "sent from child\n";
-    uint32_t msg_len = sizeof(msg);
+    char * msg = "-------------sent from child-------------\n";
+    uint32_t msg_len = os_strlen(msg);
     uint32_t event_id = 1;
     os_printf("In child_receiver. parent_tid is %d tid is %d\n", parent_tid, tid);
 
@@ -197,7 +195,6 @@ void parent_reciever(uint32_t parent_tid, uint32_t tid)
     kthr_start(kthr_create(&child_receiver));
     os_printf("in parent_reciever. started child thread\n");
     kthr_yield();
-    LOG("BACKSDFSDFSDF!!!\n");
     os_printf("in parent_reciever. done yielding\n");
 }
 
@@ -229,7 +226,6 @@ void q_test()
     sched_init();
     kthr_start(kthr_create(&parent_reciever));
     kthr_yield();
-    LOG("How are ou!!!!\n");
     q_send(qd, mydata, sizeof(mydata));
 
 
