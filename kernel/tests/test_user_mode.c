@@ -8,7 +8,10 @@
 int test_umode_1() {
 	int x = 1;
 	while(x);
-	x += 2;
+	// increment by the next instructions
+	asm volatile("ADD R1, PC, #20":::);
+	// load CPSR into R0
+	asm volatile("MOV LR, R1":::);
 	// load CPSR into R0
 	asm volatile("MRS R0, CPSR":::);
 	// clear mode field
