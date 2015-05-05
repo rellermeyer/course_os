@@ -152,10 +152,6 @@ uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
 		while (1);
 	}
     
-    int i;
-    for( i = 0; i < 1 <<14; i++){
-        if((vas->l1_pagetable
-
 	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
