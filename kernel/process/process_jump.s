@@ -1,3 +1,4 @@
+.global process_set_stackpointer
 .global process_jmp_set
 .global process_jmp_goto
 
@@ -5,6 +6,16 @@
 .global process_jmp_set
 .global process_jmp_goto
 .global proces_enter_umode
+
+process_set_stackpointer:
+	// Switch to system mode (same SP as user mode)
+	mov r0,lr
+	mov r1,sp
+	msr cpsr, #0x1F
+	mov lr,r0
+	mov sp,r1
+	//mov sp,r0
+	bx lr
 
 process_jmp_set:
 	str r2, [r0, #8]

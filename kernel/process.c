@@ -306,6 +306,8 @@ uint32_t process_free_PCB(pcb* pcb_p) {
 	return 1;
 }
 
+void process_set_stackpointer(uint32_t sp);
+
 /* executes a process function
  return PID upon success
  return 0 upon failure
@@ -343,8 +345,9 @@ uint32_t process_execute(pcb* pcb_p) {
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
-// 	while(pcb_p->stored_vas);
+ 	while(pcb_p->stored_vas);
 
+	process_set_stackpointer(p.R13);
 	process_jmp_goto((jmp_buf*)&p.R0, p.R0);
 
 	while (1)
