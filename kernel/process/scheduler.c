@@ -280,8 +280,6 @@ void __sched_dispatch(uint32_t arg) {
 			// FIXME delay timer irq
 			__sched_resume_timer_irq();
 			// NOTE vm_enable_vas called inside process_execute
-//			asm volatile ("mov r0, #0x10":::);
-//			asm volatile ("msr CPSR, r0":::);
 			process_execute(AS_PROCESS(active_task));
 			return;
 		} else if (ret == TASK_RESUME_PROCESS) {

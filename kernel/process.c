@@ -166,7 +166,7 @@ uint32_t process_load_state(uint32_t PID) {
 //	int x = 1;
 //	while(x);
 
-	process_jmp_goto((jmp_buf*)&pcb_p->R0, pcb_p->R0);
+	process_jmp_goto((jmp_buf*) &pcb_p->R0, pcb_p->R0);
 
 	return 1;
 }
@@ -345,8 +345,6 @@ uint32_t process_execute(pcb* pcb_p) {
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
- 	while(pcb_p->stored_vas);
-
 	process_set_stackpointer(p.R13);
 	process_jmp_goto((jmp_buf*)&p.R0, p.R0);
 
@@ -383,7 +381,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 	// incase it was already mapped
 	for (int i = 20; i < 40; i++) {
-		uint32_t *v = (uint32_t*)(pcb_p->start + (i * BLOCK_SIZE));
+		uint32_t *v = (uint32_t*) (pcb_p->start + (i * BLOCK_SIZE));
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 
 		if (retval) {
@@ -417,7 +415,7 @@ void __process_init_vas(pcb* pcb_p) {
 
 	int *copyIn = (int*) pcb_p->start;
 	int counter = 0;
-	uint32_t * v = (uint32_t*)(pcb_p->start + 20 * BLOCK_SIZE);
+	uint32_t * v = (uint32_t*) (pcb_p->start + 20 * BLOCK_SIZE);
 
 	while (counter < pcb_p->len) {
 		*v = *copyIn;
@@ -427,7 +425,7 @@ void __process_init_vas(pcb* pcb_p) {
 	}
 
 	for (int i = 0; i < 40; i++) {
-		uint32_t *v = (uint32_t*)(pcb_p->start + (i * BLOCK_SIZE));
+		uint32_t *v = (uint32_t*) (pcb_p->start + (i * BLOCK_SIZE));
 		retval = vm_free_mapping(KERNEL_VAS, (void*) v);
 		if (retval) {
 			ERROR("__process_init_vas: vm_free_mapping error code: %d\n",
@@ -463,44 +461,40 @@ void __process_init_stack(pcb * pcb_p) {
 
 	// Stick a NULL at STACK_TOP-sizeof(int*)
 	uint32_t *stack_top = (uint32_t*) STACK_TOP;
-	stack_top[-1] = 0;
-	stack_top[-2] = 0;
-	stack_top[-3] = 0;
-	stack_top[-4] = 0;
-	stack_top[-5] = STACK_BASE;
-	stack_top[-6] = 1;
+//	stack_top[-1] = 0;
+//	stack_top[-2] = 0;
+//	stack_top[-3] = 0;
+//	stack_top[-4] = 0;
+//	stack_top[-5] = STACK_BASE;
+//	stack_top[-6] = 1;
 
-//	// set ptr to charc
-//	uint32_t * stack_argc = STACK_BASE;
-//	int index = -5 - pcb_p->argc;
-//
-//	// get ptr to charv **
-//	uint32_t * stack_argv_ptr = STACK_BASE;
-//
-//	for (int i = 0; i < pcb_p->argc; i++) {
-//		// check the length of string
-//		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
-//		// copy in the content
-//		os_strcpy((char*) stack_argv_ptr, pcb_p->argv[i]);
-//		// store address
-//		stack_top[index++] = stack_argv_ptr;
-//		// increment the char array
-//		stack_argv_ptr += arg_len;
-//		// append with 0
-//		*((char*) stack_argv_ptr) = '\0';
-//		// include the 0 in len
-//		stack_argv_ptr += 1;
-//	}
-//
-//	uint32_t argc = *((uint32_t*) STACK_BASE);
-//	char ** argv = (char**)(STACK_BASE + sizeof(uint32_t));
-//
-//	for(int i = 0; i < argc; i++){
-//		LOG("process_init: arg[%d][%s]\n", i, argv[i]);
-//	}
+	int argc_index = -5 - pcb_p->argc;
+	int argv_index = -4 - pcb_p->argc;
+	uint32_t argv_p = (uint32_t) STACK_BASE;
+
+	stack_top[argc_index] = pcb_p->argc;
+
+	for (int i = 0; i < pcb_p->argc; i++) {
+		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
+		os_strcpy((char*) argv_p, pcb_p->argv[i]);
+		stack_top[argv_index++] = argv_p;
+		argv_p += arg_len;
+		*((char*) argv_p) = '\0';
+		argv_p += 2;
+	}
 
 	// We need to set sp (r13) to stack_top - 12
-	pcb_p->R13 = STACK_TOP - 4 * 6;
+	pcb_p->R13 = STACK_TOP + argc_index * sizeof(char*);
+
+#define TEST_ARGS 1
+#ifdef TEST_ARGS
+	uint32_t * args = (uint32_t*) (pcb_p->R13);
+	char ** argv = (char **) (args + 1);
+
+	for (int i = 0; i < *args; i++) {
+		LOG("process_init: arg[%d][%s][0x%X]\n", i, argv[i], &argv[i]);
+	}
+#endif
 
 	for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++) {
 		retval = vm_free_mapping(KERNEL_VAS,

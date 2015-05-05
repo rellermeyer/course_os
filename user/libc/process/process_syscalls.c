@@ -26,7 +26,7 @@ int process_listen(
 	return (int) error;
 }
 
-int process_emit(uint32_t dest_pid, uint32_t event, uint32_t * data, int len) {
+int process_emit(uint32_t dest_pid, uint32_t event, char * data, int len) {
 	long error = __syscall4(SYSCALL_PRCS_EMIT, (uint32_t) dest_pid,
 			(uint32_t) event, (uint32_t) data, (uint32_t) len);
 

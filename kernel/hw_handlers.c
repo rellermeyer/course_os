@@ -280,7 +280,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		// TODO fix address
 		vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
 		VM_PERM_USER_RW);
-		os_printf("[%d] %s", r1, (char*) r0);
+		os_printf("[0x%X] %s", r1, (char*) r0);
 		vm_free_mapping(KERNEL_VAS, (void*) r0);
 		RET = STATUS_OK;
 		break;
