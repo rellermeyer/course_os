@@ -21,4 +21,8 @@ run:
 	@$(MAKE) -C ./kernel run
 .PHONY: run
 
+docs:
+	doxygen doxyfile
+	$(MAKE) -C latex pdf
+	mv ./latex/refman.pdf course_os_docs.pdf
 	 
