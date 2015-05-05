@@ -122,7 +122,7 @@ void start2(uint32_t *p_bootargs) {
 //	run_kthr_tests();
 //	run_arrl_tests();
 //	 run_umode_tests();
-    run_sched_prcs_tests();
+ //   run_sched_prcs_tests();
  // run_prcs_tests();
 //	run_fs_tests();
 
