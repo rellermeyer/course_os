@@ -266,9 +266,9 @@ void get_inode(int inum, struct inode* result_inode){
 
 //gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
 int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
-	int inum = -1;
+	int inum = ERR_404; //if not found, will need to return a 404 error
 	int i;
-	int file_found = 0; // initialize to false (i.e. file not found)
+	int file_found = FALSE; // initialize to false (i.e. file not found)
 	void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 	
 	for(i = 0; i < cur_inode->direct_blocks_in_file; i++){
@@ -278,7 +278,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 		for(j = 0; j < (cur_data_block.num_entries); j++){
 			struct dir_entry file_dir = cur_data_block.dir_entries[j];  
 			if(!os_strcmp(file_dir.name, next_path)){
-				file_found = 1; //we found the file, so break out of loop
+				file_found = TRUE; //we found the file, so break out of loop
 				inum = file_dir.inum;
 				break;
 			}
@@ -297,9 +297,9 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 //gets the inum of netxpath (file or dir) looking at the indirect data blocks of cur_inode
 int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path) {
 	int i;
-	int inum = -1;
+	int inum = ERR_404;
 	int cur_indirect_block_num = -1;
-	int file_found = 0; // initialize to false (i.e. file not found)
+	int file_found = FALSE; // initialize to false (i.e. file not found)
 	struct indirect_block cur_indirect_block;
 	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
@@ -316,7 +316,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 			for(k = 0; k < (cur_data_block.num_entries); k++){
 				struct dir_entry file_dir = cur_data_block.dir_entries[k]; // 
 				if(!os_strcmp(file_dir.name, next_path)){
-					file_found = 1; //we found the file, so break out of loop
+					file_found = TRUE; //we found the file, so break out of loop
 					inum = file_dir.inum;
 					break;
 				}
@@ -339,7 +339,6 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 	int a;
 	for(a = 0; a < dir_levels-1; a++) {
 		int k = 1;
-		// int k = 0;
 		char next_path[MAX_NAME_LENGTH] = {0};
 
 		//get path of next inode
@@ -378,7 +377,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath; //root still level 0, so start from what's next
+	char* iterator = filepath; 
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
@@ -396,17 +395,21 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	}//end while
 	total_chars -= index;
 
-	char* truncated_path = (char*)kmalloc(total_chars+1); // do we need to kmalloc this?
-	char* last = (char*)kmalloc(index+1);
+	char* truncated_path = (char*)kmalloc(total_chars+1); 		
+	char* last = (char*)kmalloc(index+1); 		//I think:  index+2  to add terminating 										!!
 	int i;
-	for(i = 0; i < total_chars; i++){
+	for(i = 0; i < total_chars; i++){  		//I think: for(i = 0; i < total_chars-1; i++) because we dont want to store the / 	!!
 		truncated_path[i] = filepath[i];
 	}
-	truncated_path[i] = 0;
-	for (i=0; i<index; i++) {
+	truncated_path[i] = '\0';  //was : truncated_path[i] = 0;  I think we want to put the terminating char \0 here
+	for (i=0; i<index; i++) {  // I think : for (i=0; i<index+1; i++)  because im pretty sure it is cutting the last char off 	!!
 		last[i] = filepath[i+total_chars];
 	}
-	last[i] = 0;
+	last[i] = '\0'; //was : last[i] = 0; but as before I think we want end \0 char
+
+	os_printf("truncated_path is : %s \n", truncated_path); //for finding out what is going on
+	os_printf("last is : %s \n", last); //for finding out what is going on
+
 	result->dir_levels = dir_levels;
 	result->truncated_path = truncated_path;
 	result->last = last;
@@ -422,7 +425,7 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 // index = index you would put in the bitvector
 // all = 0 for only one index, 1 for all the bitvector
 int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all){
-	int error = 0;
+	int error = ERR_GEN;
 	int num_blocks = (max/(8 * BLOCKSIZE)) + 1;
 	if (t_or_r != TRANSMIT || t_or_r != RECEIVE) {
 		return ERR_INVALID;
@@ -438,7 +441,7 @@ int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int m
 			}
 			if(error < 0){
 				os_printf("ERROR! Failed to transmit or receive\n");
-				return error;
+				return ERR_SD;
 			}
 		}	
 	}else{  //transmit or reveive only the block corresponding to the index
@@ -451,10 +454,10 @@ int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int m
 		}
 		if(error < 0){
 			os_printf("ERROR! Failed to transmit or receive\n");
-			return error;
+			return ERR_SD;
 		}
 	}
-	return error;
+	return SUCCESS;
 }//end transmit_receive_bitmap helper function
 
 
