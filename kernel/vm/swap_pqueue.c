@@ -1,5 +1,6 @@
 #include "swap_pqueue.h"
 #include <stdint.h>
+#include "include/klibc.h"
 
 void pqueue_init(struct *swap_space)
 { 
