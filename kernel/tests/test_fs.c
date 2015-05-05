@@ -17,9 +17,22 @@ int test_fs_1()
 
 	//retval = kcreate("/", 0xFF, 1);
 	//os_printf("%d\n", retval);
-	int fd2 = kcreate("/", 'w', 1);
+	os_printf("\n\n*****************0\n\n");
+	int fd2 = kcreate("/", 'w', 0);
+	os_printf("\n\n*****************1\n\n");
 	int fd = kcreate("/foo", 'w', 1);
+	os_printf("\n\n*****************2\n\n");
 	int fda = kcreate("/foo/bar.txt", 'w', 0);
+	os_printf("\n\n*****************3\n\n");
+
+
+	os_printf("\n\n*****************4\n\n");
+	int fd4 = kcreate("/foo/dog", 'w', 1);
+	os_printf("\n\n*****************5\n\n");
+	int f5 = kcreate("/foo/dog/cat", 'w', 1);
+	os_printf("\n\n*****************6\n\n");
+	int f6 = kcreate("/foo/dog/cat/rat.txt", 'w', 0);
+	os_printf("\n\n*****************7\n\n");
 	// int fdb = kcreate("/foo/bar/jam.txt", 'w', 0);
 	// os_printf("We have two file descriptors, fd2 is: %d fd is: %d\n", fd2, fd);
 	// kclose(fdb);
@@ -99,8 +112,10 @@ int test_fs_2() {
 }
 
 void run_fs_tests() {
-	Test *tests[2];
-	tests[0] = create_test("test_fs_1", &test_fs_1);
+ 	Test *tests[1];
+ 	tests[0] = create_test("test_fs_1", &test_fs_1);
+	//tests[1] = create_test("test_fs_2", &test_fs_2);
+	//run_tests(tests, 2);
 	// tests[1] = create_test("test_fs_2", &test_fs_2);
 	run_tests(tests, 1);
 }
