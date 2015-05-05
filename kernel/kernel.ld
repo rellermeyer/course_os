@@ -9,5 +9,8 @@ SECTIONS
  . = ALIGN(8);
  . = . + 0x1000; 
  stack_top = .;
+ . = ALIGN(8);
+ . = . + 0x1000; 
+ stack_top_2 = .;
 }
 
