@@ -461,12 +461,12 @@ void __process_init_stack(pcb * pcb_p) {
 
 	// Stick a NULL at STACK_TOP-sizeof(int*)
 	uint32_t *stack_top = (uint32_t*) STACK_TOP;
-//	stack_top[-1] = 0;
-//	stack_top[-2] = 0;
-//	stack_top[-3] = 0;
-//	stack_top[-4] = 0;
-//	stack_top[-5] = STACK_BASE;
-//	stack_top[-6] = 1;
+	/*stack_top[-1] = 0;
+	stack_top[-2] = 0;
+	stack_top[-3] = 0;
+	stack_top[-4] = 0;
+	stack_top[-5] = STACK_BASE;
+	stack_top[-6] = 1;*/
 
 	int argc_index = -5 - pcb_p->argc;
 	int argv_index = -4 - pcb_p->argc;

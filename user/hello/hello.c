@@ -12,6 +12,12 @@ int main(int argc, char ** argv) {
 	__asm ("mov r0, #0x15":::);
 	__asm ("msr CPSR, r0":::);
 	__asm ("msr SPSR, r0":::);
+
+	printf(argv[0], 3);
+	printf("\n");
+	//printf(argv[0], 4);
+	//printf(argv[1], 8);
+
 ////
 ////	for (int i = 0; i < argc; i++) {
 ////		printf(argv[i], &argv[i]);

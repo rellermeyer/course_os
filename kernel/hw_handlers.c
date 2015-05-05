@@ -278,10 +278,11 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		break;
 	case SYSCALL_PRINTF:
 		// TODO fix address
-		vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
-		VM_PERM_USER_RW);
-		os_printf("[0x%X] %s", r1, (char*) r0);
-		vm_free_mapping(KERNEL_VAS, (void*) r0);
+#define PRINTF_COPY_ADDR 0x8f000000
+		vm_map_shared_memory(KERNEL_VAS, (void*) PRINTF_COPY_ADDR, prev_vas, (void*) r0, VM_PERM_PRIVILEGED_RW);
+		os_printf("%s", (char*) PRINTF_COPY_ADDR);
+		//q_send("printf", (uint32_t*) PRINTF_COPY_ADDR, r1);
+		vm_free_mapping(KERNEL_VAS, (void*) PRINTF_COPY_ADDR);
 		RET = STATUS_OK;
 		break;
 	default:
