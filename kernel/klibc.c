@@ -584,7 +584,7 @@ unsigned int rand()
 
 void* umalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
+	void* block = (void*) proc_allocate(size, 0 /* unused */, 0 /* unused */);
 	return block;
 }
 
@@ -617,5 +617,5 @@ void* ualligned_alloc(uint32_t size, uint32_t alignment)
 
 void ufree(void* ptr)
 {
-	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
+	proc_deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
 }
