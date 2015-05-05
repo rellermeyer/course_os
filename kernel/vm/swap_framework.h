@@ -55,11 +55,10 @@ void swap_init();
 
 
 /* store_page will store a page to media - not main memory - storage, e.g. HDD
- * from the page* and will change uint32_t *ID -> value to the swap space address
- *	VARIABLES
+ * from the page*
  * void* page -> data to be paged
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
- * uint32_t* ID -> The page ID or address [not yet implemented]
+ * uint32_t* ID -> The page ID or address
  * Returns: The stored page's (24-bit) swap space ID/Address 
  */
 uint32_t *store_page(void*, uint32_t*);
