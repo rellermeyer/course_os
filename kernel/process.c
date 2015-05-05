@@ -1,4 +1,5 @@
 #include "process.h"
+#include "process_jump.h"
 #include "klibc.h"
 #include "file.h"
 #include "global_defs.h"
@@ -20,8 +21,6 @@ pcb * process_create_from_file(char * file, int argc, char ** argv) {
 
 #define START 0x20000
 #define PROC_LOCATION 0x9ff00000
-
-	void * d = kmalloc(15);
 
 	struct stats fstats;
 	int fd = kopen(file, 'r');
@@ -168,22 +167,7 @@ uint32_t process_load_state(uint32_t PID) {
 //	int x = 1;
 //	while(x);
 
-	jmp_goto(&pcb_p->R0, pcb_p->R0);
-	asm volatile("MOV r0, %0"::"r"(pcb_p->R0):);
-	asm volatile("MOV r1, %0"::"r"(pcb_p->R1):);
-	asm volatile("MOV r2, %0"::"r"(pcb_p->R2):);
-	asm volatile("MOV r3, %0"::"r"(pcb_p->R3):);
-	asm volatile("MOV r4, %0"::"r"(pcb_p->R4):);
-	asm volatile("MOV r5, %0"::"r"(pcb_p->R5):);
-	asm volatile("MOV r6, %0"::"r"(pcb_p->R6):);
-	asm volatile("MOV r7, %0"::"r"(pcb_p->R7):);
-	asm volatile("MOV r8, %0"::"r"(pcb_p->R8):);
-	asm volatile("MOV r9, %0"::"r"(pcb_p->R9):);
-	asm volatile("MOV r10, %0"::"r"(pcb_p->R10):);
-	asm volatile("MOV r12, %0"::"r"(pcb_p->R12):);
-	asm volatile("MOV r13, %0"::"r"(pcb_p->R13):);
-	asm volatile("MOV r14, %0"::"r"(pcb_p->R14):);
-	asm volatile("MOV r15, %0"::"r"(pcb_p->R15):);
+	process_jmp_goto(&pcb_p->R0, pcb_p->R0);
 
 	return 1;
 }
@@ -380,6 +364,7 @@ void __process_init_stack(pcb* pcb_p);
 void process_init(pcb * pcb_p) {
 	__process_init_vas(pcb_p);
 	__process_init_stack(pcb_p);
+	LOG("SUP!asdasd!!\n");
 	__process_init_heap(pcb_p);
 }
 
@@ -482,38 +467,38 @@ void __process_init_stack(pcb * pcb_p) {
 	stack_top[-6] = 1;
 
 	// set ptr to charc
-	uint32_t * stack_argc = STACK_BASE;
-	*stack_argc = pcb_p->argc;
-
-	// get ptr to charv **
-	uint32_t * stack_argv_ptr = STACK_BASE + sizeof(uint32_t);
-
-	uint32_t arg_stack = STACK_BASE + sizeof(uint32_t)
-			+ sizeof(char*) * pcb_p->argc;
-
-	for (int i = 0; i < pcb_p->argc; i++) {
-		// check the length of string
-		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
-		// copy in the content
-		os_strcpy((char*) arg_stack, pcb_p->argv[i]);
-		// store address
-		*stack_argv_ptr = arg_stack;
-		// increment the char array
-		arg_stack += arg_len;
-		// append with 0
-		*((char*) arg_stack) = '\0';
-		// include the 0 in len
-		arg_stack += 1;
-		// increment the array
-		stack_argv_ptr += 1;
-	}
-
-	uint32_t argc = *((uint32_t*) STACK_BASE);
-	char ** argv = (char**)(STACK_BASE + sizeof(uint32_t));
-
-	for(int i = 0; i < argc; i++){
-		LOG("process_init: arg[%d][%s]\n", i, argv[i]);
-	}
+//	uint32_t * stack_argc = STACK_BASE;
+//	*stack_argc = pcb_p->argc;
+//
+//	// get ptr to charv **
+//	uint32_t * stack_argv_ptr = STACK_BASE + sizeof(uint32_t);
+//
+//	uint32_t arg_stack = STACK_BASE + sizeof(uint32_t)
+//			+ sizeof(char*) * pcb_p->argc;
+//
+//	for (int i = 0; i < pcb_p->argc; i++) {
+//		// check the length of string
+//		uint32_t arg_len = os_strlen(pcb_p->argv[i]);
+//		// copy in the content
+//		os_strcpy((char*) arg_stack, pcb_p->argv[i]);
+//		// store address
+//		*stack_argv_ptr = arg_stack;
+//		// increment the char array
+//		arg_stack += arg_len;
+//		// append with 0
+//		*((char*) arg_stack) = '\0';
+//		// include the 0 in len
+//		arg_stack += 1;
+//		// increment the array
+//		stack_argv_ptr += 1;
+//	}
+//
+//	uint32_t argc = *((uint32_t*) STACK_BASE);
+//	char ** argv = (char**)(STACK_BASE + sizeof(uint32_t));
+//
+//	for(int i = 0; i < argc; i++){
+//		LOG("process_init: arg[%d][%s]\n", i, argv[i]);
+//	}
 
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP - 4 * 6;

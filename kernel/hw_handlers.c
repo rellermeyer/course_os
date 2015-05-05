@@ -69,7 +69,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
 	// TODO please update the code to store the return value to RET
 	//      may have to manually store into the return register
-	int r0, r1, r2, r3, RET;
+	long r0, r1, r2, r3, RET;
 
 	// the link register currently holds the address of the instruction immediately
 	// after the SVC call
@@ -84,6 +84,8 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
 	struct vas *prev_vas = vm_get_current_vas();
 	vm_use_kernel_vas();
+
+	os_printf("SWI HANDLER\n");
 
 	// System Call Handler
 	switch (callNumber) {
@@ -236,7 +238,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		break;
 	case SYSCALL_PRCS_YIELD:
 		LOG("SYSCALL_PRCS_YIELD\n");
-		error = sched_yield();
+		error = sched_yield(r0);
 		return (long) error;
 		break;
 	case SYSCALL_MALLOC:
@@ -271,7 +273,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	case SYSCALL_SWITCH:
 		os_printf("SYSCALL_SWITCH\n");
 		sched_remove_task(sched_get_active_tid());
-		error = sched_yield();
+		error = sched_yield(0);
 		return error;
 		break;
 	case SYSCALL_PRINTF:

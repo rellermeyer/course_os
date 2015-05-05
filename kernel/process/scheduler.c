@@ -5,8 +5,8 @@
 #include "../include/linked_list.h"
 #include "../include/array_list.h"
 #include "../include/hash_map.h"
-#include "../include/jump.h"
 #include "../include/kthreads.h"
+#include "../include/process_jump.h"
 
 #define MAX_TASKS 100   // in the future, cap will be removed
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
@@ -68,7 +68,7 @@ void __sched_register_timer_irq();
 void __sched_deregister_timer_irq();
 void __sched_pause_timer_irq();
 void __sched_resume_timer_irq();
-void __sched_dispatch();
+void __sched_dispatch(uint32_t arg);
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
 uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, int argc, char ** argv);
@@ -241,7 +241,7 @@ void __sched_print_queues() {
 	DEBUG("]\n");
 }
 
-void __sched_dispatch() {
+void __sched_dispatch(uint32_t arg) {
 	// prevent interrupts while handling another interrupt
 	__sched_pause_timer_irq();
 
@@ -250,13 +250,12 @@ void __sched_dispatch() {
 
 	if (active_task) {
 		LOG("Saving tid: %d\n", active_task->tid);
+		active_task->ret = arg;
 		if (jmp_set(&active_task->jmp_buffer)) {
-			LOG("Loading tid: %d\n", active_task->tid);
+			LOG("Loading tid: %d; Returning to %X\n", active_task->tid, active_task->ret);
 			jmp_print(&active_task->jmp_buffer);
-			if (IS_PROCESS(active_task)) {
-				LOG("Loading VAS of tid: %d\n", active_task->tid);
-				vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-			}
+		//	while(active_task);
+			proces_enter_umode(active_task->ret);
 			return;
 		}
 
@@ -276,10 +275,14 @@ void __sched_dispatch() {
 			// FIXME delay timer irq
 			__sched_resume_timer_irq();
 			// NOTE vm_enable_vas called inside process_execute
+//			asm volatile ("mov r0, #0x10":::);
+//			asm volatile ("msr CPSR, r0":::);
 			process_execute(AS_PROCESS(active_task));
 			return;
 		} else if (ret == TASK_RESUME_PROCESS) {
-			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
+			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer;
+			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
+			jmp_goto(&jmp_buffer_cpy, TASK_RESUME);
 			return;
 		}
 
@@ -597,8 +600,8 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 	return STATUS_OK;
 }
 
-uint32_t sched_yield() {
-	__sched_dispatch();
+uint32_t sched_yield(uint32_t arg) {
+	__sched_dispatch(arg);
 
 	return STATUS_OK;
 }
