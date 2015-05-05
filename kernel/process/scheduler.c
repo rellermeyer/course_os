@@ -25,6 +25,7 @@
 #define PROCESS 0x99
 #define MAX_TASK_MSG_SPACE 2048 // bytes
 #define NO_ARG 0
+#define SHARED_MEMORY_START 0x12000000
 
 #define AS_PROCESS(a) ((pcb*) a->task)
 #define AS_KTHREAD(a) ((kthread_handle*) a->task)
@@ -71,7 +72,8 @@ void __sched_resume_timer_irq();
 void __sched_dispatch(uint32_t arg);
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, int argc, char ** argv);
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
+		int argc, char ** argv);
 void __sched_emit_messages();
 void __sched_register_timer_irq() {
 }
@@ -84,22 +86,22 @@ void __sched_resume_timer_irq() {
 
 // TODO move this out of there
 void jmp_print(jmp_buf * buffer) {
-    DEBUG("r0[0x%X]\n", buffer->R0);
-    DEBUG("r1[0x%X]\n", buffer->R1);
-    DEBUG("r2[0x%X]\n", buffer->R2);
-    DEBUG("r3[0x%X]\n", buffer->R3);
-    DEBUG("r4[0x%X]\n", buffer->R4);
-    DEBUG("r5[0x%X]\n", buffer->R5);
-    DEBUG("r6[0x%X]\n", buffer->R6);
-    DEBUG("r7[0x%X]\n", buffer->R7);
-    DEBUG("r8[0x%X]\n", buffer->R8);
-    DEBUG("r9[0x%X]\n", buffer->R9);
-    DEBUG("r10[0x%X]\n", buffer->R10);
-    DEBUG("r11[0x%X]\n", buffer->R11);
-    DEBUG("r12[0x%X]\n", buffer->R12);
-    DEBUG("r13[0x%X]\n", buffer->R13);
-    DEBUG("r14[0x%X]\n", buffer->R14);
-    DEBUG("r15[0x%X]\n", buffer->R15);
+	DEBUG("r0[0x%X]\n", buffer->R0);
+	DEBUG("r1[0x%X]\n", buffer->R1);
+	DEBUG("r2[0x%X]\n", buffer->R2);
+	DEBUG("r3[0x%X]\n", buffer->R3);
+	DEBUG("r4[0x%X]\n", buffer->R4);
+	DEBUG("r5[0x%X]\n", buffer->R5);
+	DEBUG("r6[0x%X]\n", buffer->R6);
+	DEBUG("r7[0x%X]\n", buffer->R7);
+	DEBUG("r8[0x%X]\n", buffer->R8);
+	DEBUG("r9[0x%X]\n", buffer->R9);
+	DEBUG("r10[0x%X]\n", buffer->R10);
+	DEBUG("r11[0x%X]\n", buffer->R11);
+	DEBUG("r12[0x%X]\n", buffer->R12);
+	DEBUG("r13[0x%X]\n", buffer->R13);
+	DEBUG("r14[0x%X]\n", buffer->R14);
+	DEBUG("r15[0x%X]\n", buffer->R15);
 }
 
 // Initialize the scheduler. Should be called by the kernel ONLY
@@ -153,11 +155,13 @@ uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) 
 }
 
 // defer process create
-uint32_t sched_create_task_from_process(char * file, int niceness, int argc, char ** argv) {
+uint32_t sched_create_task_from_process(char * file, int niceness, int argc,
+		char ** argv) {
 	return __sched_create_task(file, niceness, PROCESS, argc, argv);
 }
 
-uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type, int argc, char ** argv) {
+uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
+		int argc, char ** argv) {
 
 	if (prq_count(inactive_tasks) >= MAX_TASKS) {
 		// last_err = "Too many tasks";
@@ -252,9 +256,10 @@ void __sched_dispatch(uint32_t arg) {
 		LOG("Saving tid: %d\n", active_task->tid);
 		active_task->ret = arg;
 		if (jmp_set(&active_task->jmp_buffer)) {
-			LOG("Loading tid: %d; Returning to %X\n", active_task->tid, active_task->ret);
-			jmp_print(&active_task->jmp_buffer);
-		//	while(active_task);
+			//	LOG("Loading tid: %d; Returning to %X\n", active_task->tid,
+			//			active_task->ret);
+			//	jmp_print(&active_task->jmp_buffer);
+			//	while(active_task);
 			proces_enter_umode(active_task->ret);
 			return;
 		}
@@ -340,8 +345,8 @@ void __sched_dispatch(uint32_t arg) {
 		}
 	} else if (IS_PROCESS(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
+			__sched_emit_messages();
 			jmp_goto(&start_buf, TASK_RESUME_PROCESS);
-			//  __sched_emit_messages();
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
 			jmp_goto(&start_buf, TASK_CREATE_PROCESS);
@@ -362,15 +367,46 @@ void __sched_dispatch(uint32_t arg) {
 void __sched_emit_messages() {
 	if (active_task->cb_handler) {
 		sched_message_chunk * chunk;
+		uint32_t length;
+		uint32_t * source;
 		while ((chunk = llist_dequeue(active_task->message_queue)) != 0) {
-			active_task->cb_handler(chunk->src_tid, chunk->event, chunk->data,
+
+			length = chunk->length;
+
+			if (IS_PROCESS(active_task)) {
+				for (int i = 0; i < (length / BLOCK_SIZE); i++) {
+					vm_map_shared_memory(AS_PROCESS(active_task)->stored_vas,
+							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)), // FIXME char to uint32_t issue
+							KERNEL_VAS,
+							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)),
+							VM_PERM_USER_RW);
+				}
+
+				source = (uint32_t*) SHARED_MEMORY_START;
+
+				os_memcpy(chunk->data, (uint32_t*) SHARED_MEMORY_START,
+						chunk->length);
+			} else if (IS_KTHREAD(active_task)) {
+				source = chunk->data;
+			}
+
+			active_task->cb_handler(chunk->src_tid, chunk->event, source,
 					chunk->length);
+
 			if (chunk) {
 				kfree(chunk->data);
 				kfree(chunk);
 			}
+
 			sched_task * sending_task = hmap_get(all_tasks_map, chunk->src_tid);
-			sending_task->available_space += chunk->length;
+			sending_task->available_space += length;
+
+			if (IS_PROCESS(active_task)) {
+				for (int i = 0; i < (length / BLOCK_SIZE); i++) {
+					vm_free_mapping(KERNEL_VAS,
+							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)));
+				}
+			}
 		}
 	}
 }
@@ -539,7 +575,6 @@ uint32_t sched_get_message_space() {
 }
 
 // contract: callee must delete the data that is being passed
-#define SHARED_MEMORY_START 0x12000000
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 		int len) {
 

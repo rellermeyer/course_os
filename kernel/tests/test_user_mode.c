@@ -9,7 +9,7 @@ int test_umode_1() {
 	int x = 1;
 	while(x);
 	// increment by the next instructions
-	asm volatile("ADD R1, PC, #20":::);
+	asm volatile("ADD R1, PC, #16":::);
 	// load CPSR into R0
 	asm volatile("MOV LR, R1":::);
 	// load CPSR into R0

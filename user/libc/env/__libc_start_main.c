@@ -53,8 +53,6 @@ int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv)
 		(*(void (**)())a)();
 #endif
 
-	//uthread_init();
-
 	/* Pass control to to application */
 	exit(main(argc, argv, envp));
 	return 0;
