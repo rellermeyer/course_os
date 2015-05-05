@@ -7,6 +7,9 @@ extern "C" {
 
 #include <features.h>
 
+#define SYSCALL_PRINTF 16
+
+
 #define __NEED_FILE
 #define __NEED___isoc_va_list
 #define __NEED_size_t

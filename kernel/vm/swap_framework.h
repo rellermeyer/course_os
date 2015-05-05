@@ -30,7 +30,7 @@ struct swap_space {
 	struct swap_entry *e_head;
         uint16_t pages_free;
 	uint8_t lower_bits; // swap space ID [8-bits]
-	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
+	uint16_t flags; // swp_used (1000 or 1), swp_writeok (0010 or 2) or both (0011 or 3)
 	uint8_t priority; // lower is better 
         uint32_t *store_func;
         uint32_t *retrieve_func;

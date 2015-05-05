@@ -276,9 +276,10 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		return VM_ERR_MAPPED;
 	}
 
-	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
+
 	// TODO: replace lvl2_permission with just permission?
 	//Temporary value, need to put in method header or replace:
 	int lvl2_perm = perm_mapping[perm];
@@ -290,6 +291,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
 
 	//cancelling apbit?
+
 	//l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
