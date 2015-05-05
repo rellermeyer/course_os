@@ -6,6 +6,7 @@
 #include "klibc.h"
 #include "hashtable.h"
 #include "drivers/uart.h"
+#include "scheduler.h"
 
 /*only call scheduler stuff(emit, broadcast, wait, sched_yeild), not kthr
  * do x = false whenever data comes in in test_kthread
@@ -22,10 +23,6 @@ void q_create(char q_name[])
     print_uart0("initialized queue\n");
     if (initialized != 0){
         initialized = 0;
-    }
-
-    if (initialized == 0) {
-        initialized = 1;
         q_table = ht_alloc(5000);
         ht_add(q_table, q_name, (void*)q);
     }else{
@@ -43,7 +40,7 @@ void q_create(char q_name[])
 
 uint32_t q_open(char q_name[])
 {
-    if (initialized == 0) {
+    if (initialized != 0) {
         return 0x0;
     }
 
@@ -163,41 +160,82 @@ void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * d
     q_subscribe(qd, &receiver, (void*) userdata);
 }
 
-void sample_receiver(void *userdata, void *data, uint32_t datalength)
+void sample_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
     int i;
     char *s = (char*)data;
-    for (i=0; i<datalength; i++) {
+    for (i=0; i<length; i++) {
         print_char_uart0(s[i]);
     }
+
+    LOG("WHATSUP!!!\n");
+}
+
+
+
+void child_receiver(uint32_t parent_tid, uint32_t tid)
+{
+    char * msg = "sent from child\n";
+    uint32_t msg_len = sizeof(msg);
+    uint32_t event_id = 1;
+    os_printf("In child_receiver. parent_tid is %d tid is %d\n", parent_tid, tid);
+
+    if(sched_get_message_space() >= msg_len){
+        if(sched_post_message(parent_tid, event_id, msg, msg_len)){
+            ERROR("Message fail\n");
+        }else{
+            os_printf("child_receiver. MESSAGE PASSED\n");
+        }
+    }
+}
+
+void parent_reciever(uint32_t parent_tid, uint32_t tid)
+{
+    os_printf("in parent_reciever. parent_tid is %d tid is %d\n", parent_tid, tid);
+    sched_register_callback_handler(&sample_receiver);
+    os_printf("in parent receiver. done scheduling\n");
+    kthr_start(kthr_create(&child_receiver));
+    os_printf("in parent_reciever. started child thread\n");
+    kthr_yield();
+    LOG("BACKSDFSDFSDF!!!\n");
+    os_printf("in parent_reciever. done yielding\n");
 }
 
 void q_test()
 {
     // test client
     print_uart0("in q_test\n");
-    print_uart0("again!\n");
     q_create("printf");
-    print_uart0("before q_open\n");
 	int qd = q_open("printf");
-    print_uart0("before q_subscribe\n");
 	q_subscribe(qd, sample_receiver, 0x0);
-    print_uart0("after q_subscribe\n");
-    q_publish(qd, "first message", 13);
-    struct queue *test_q = q_map[qd];
-    // check client message
-    os_printf("%s\n", (char*) test_q->data);
-    uint32_t number = 0;
-    uint32_t *sample_buffer = &number;
-    q_create("printf_2");
-    int reply_qd = q_open("printf_2");
+    // q_publish(qd, "first message", 13);
+    // struct queue *test_q = q_map[qd];
+    // // check client message
+    // os_printf("%s\n", (char*) test_q->data);
+    // uint32_t number = 0;
+    // uint32_t *sample_buffer = &number;
+    // q_create("printf_2");
+    //int reply_qd = q_open("printf_2");
     //q_block_read(qd, *sample_buffer, 100);
     // test buffer
     //os_printf("%s\n", (char*) sample_buffer);
 
 
-    print_uart0("This is a test.\n");
-    os_printf("This is a 2nd test.\n");
+
+    char* mydata = "yo, dawg\n";
+    q_create("message");
+    qd = q_open("message");
+    q_subscribe(qd, sample_receiver, 0x0);
+    sched_init();
+    kthr_start(kthr_create(&parent_reciever));
+    kthr_yield();
+    LOG("How are ou!!!!\n");
+    q_send(qd, mydata, sizeof(mydata));
+
+
+    // kthr_yield();
+    //char* word = "hello dog";
+   // sched_post_message(1, 2, word, sizeof(word));
     return;
 
     // os_printf_v2("this is a test\n");
