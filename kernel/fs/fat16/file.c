@@ -27,7 +27,7 @@ int INODES_PER_BLOCK = 1;
 // FAKE CONSTANTS:
 /* These should be read in the first time the FS is loaded */
 int sd_card_capacity = 128000000; // 128 MB
-int root_inum = 0;
+int root_inum = 1;
 int max_inodes = 4000; // will eventually be in superblock create
 int inode_size = 512; // inodes will now be a full block size
 int max_data_blocks = 200000;
