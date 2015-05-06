@@ -113,6 +113,23 @@ int32_t bv_firstFree (bit_vector* bit_vec) {
 	return -1; //no free spots
 }
 
+/* returns whether the given index is free; 1 - true, 0 - false, -1 - valid index*/
+int32_t bv_isfree(uint32_t index, bit_vector* bit_vec)
+{
+	uint32_t val;
+	uint32_t word;
+	if (index < bit_vec->length && index >= 0){
+		val = (index >> 5);
+		word = bit_vec->vector[val];
+		word = (word >> (31 - index)) & 0x1;
+		if (!word){
+			return 1;
+		}
+		return 0;	
+	}	
+	return -1;
+}
+
 /* free the bv from memory */
 int32_t bv_free (bit_vector* bit_vec) {
 	
