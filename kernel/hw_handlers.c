@@ -19,15 +19,6 @@ int interrupt_count = 0;
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
-	/* This doesn't seem to work well with virtual memory; reverting
-	 * to old method.
-	 extern uint32_t vector_table_start, vector_table_end;
-	 uint32_t *src = &vector_table_start;
-	 uint32_t *dst = (uint32_t *) HIVECTABLE;
-
-	 while(src < &vector_table_end)
-	 *dst++ = *src++;
-	 */
 
 	/* Primary Vector Table */
 	mmio_write(0x00, BRANCH_INSTRUCTION);

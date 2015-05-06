@@ -425,7 +425,6 @@ void __process_init_stack(pcb * pcb_p) {
 
 void __process_init_heap(pcb* pcb_p) {
 	//Initial page allocation for a process heap in VAS
-	//process_print_state(pcb_p->PID);
 	int retval = vm_allocate_page(pcb_p->stored_vas, (void*) HEAP_BASE,
 	VM_PERM_USER_RW);
 	if (retval) {
