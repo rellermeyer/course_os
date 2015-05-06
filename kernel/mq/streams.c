@@ -64,7 +64,7 @@ uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
     q->data = data;
     q->datalen = datalen;
     //Accessing elements of q throws an error
-    return 0;
+    return &(q->data);
 }
 
 uint32_t q_subscribe(uint32_t qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void *userdata)
@@ -105,10 +105,10 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
 uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
 {
     struct queue *current_queue = q_map[qd];
-    // since NULL is undefined in the kernel, use 0x0 instead
-    // need to use condition variables
-    while (current_queue->data == 0x0)
-        // BLOCK! FIX
+    // // since NULL is undefined in the kernel, use 0x0 instead
+    // // need to use condition variables
+    // while (current_queue->data == 0x0)
+    //     // BLOCK! FIX
     
     // check to see if data length is acceptable
     if (current_queue->datalen <= buflength) {
@@ -211,7 +211,7 @@ void q_test()
     q_create("printf");
 	int qd = q_open("printf");
 	q_subscribe(qd, sample_receiver, 0x0);
-    // q_publish(qd, "first message", 13);
+    os_printf("msg is %d\n", q_publish(qd, "first message", 13));
     // struct queue *test_q = q_map[qd];
     // // check client message
     // os_printf("%s\n", (char*) test_q->data);
