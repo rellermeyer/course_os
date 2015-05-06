@@ -6,66 +6,67 @@ int test_fs_1()
 {
 	os_printf("\n\n\n...........................................\n");
 	// Test kfind_dir real quick...
-	struct dir_helper dh;
-	kfind_dir("/", &dh);
-	kfind_dir("/etc", &dh);
-	kfind_dir("/etc/", &dh);
-	kfind_dir("/etc/fstab/anotherdir/something.ext", &dh);
-	os_printf("Testing dir_helper: dir_levels: %d\n", dh.dir_levels);
-	os_printf("Testing dir_helper: truncated_path: %s\n", dh.truncated_path);
-	os_printf("Testing dir_helper: last: %s\n", dh.last);
+	//struct dir_helper dh;
+	// kfind_dir("/", &dh);
+	// kfind_dir("/etc", &dh);
+	// kfind_dir("/etc/", &dh);
+	// kfind_dir("/etc/fstab/anotherdir/something.ext", &dh);
+	// os_printf("Testing dir_helper: dir_levels: %d\n", dh.dir_levels);
+	// os_printf("Testing dir_helper: truncated_path: %s\n", dh.truncated_path);
+	// os_printf("Testing dir_helper: last: %s\n", dh.last);
 
-	//retval = kcreate("/", 0xFF, 1);
-	//os_printf("%d\n", retval);
-	os_printf("\n\n*****************0\n\n");
-	int fd2 = kcreate("/", 'w', 0);
-	os_printf("\n\n*****************1\n\n");
-	int fd = kcreate("/foo", 'w', 1);
-	os_printf("\n\n*****************2\n\n");
-	int fda = kcreate("/foo/bar.txt", 'w', 0);
-	os_printf("\n\n*****************3\n\n");
+	// //retval = kcreate("/", 0xFF, 1);
+	// //os_printf("%d\n", retval);
+	// os_printf("\n\n*****************0\n\n");
+	// int fd2 = kcreate("/", 'w', 0);
+	 os_printf("\n\n*****************1\n\n");
+	 //int fd1 = kcreate("/", 'w', 1);
+	 int fd = kcreate("/foo", 'w', 1);
+	// os_printf("\n\n*****************2\n\n");
+	// int fda = kcreate("/foo/bar.txt", 'w', 0);
+	// os_printf("\n\n*****************3\n\n");
 
 
-	os_printf("\n\n*****************4\n\n");
-	int fd4 = kcreate("/foo/dog", 'w', 1);
-	os_printf("\n\n*****************5\n\n");
-	int f5 = kcreate("/foo/dog/cat", 'w', 1);
-	os_printf("\n\n*****************6\n\n");
-	int f6 = kcreate("/foo/dog/cat/rat.txt", 'w', 0);
-	os_printf("\n\n*****************7\n\n");
-	// int fdb = kcreate("/foo/bar/jam.txt", 'w', 0);
-	// os_printf("We have two file descriptors, fd2 is: %d fd is: %d\n", fd2, fd);
-	// kclose(fdb);
+	// os_printf("\n\n*****************4\n\n");
+	// int fd4 = kcreate("/foo/dog", 'w', 1);
+	// os_printf("\n\n*****************5\n\n");
+	// int f5 = kcreate("/foo/dog/cat", 'w', 1);
+	// os_printf("\n\n*****************6\n\n");
+	// int f6 = kcreate("/foo/dog/cat/rat.txt", 'w', 0);
+	// os_printf("\n\n*****************7\n\n");
+	// // int fdb = kcreate("/foo/bar/jam.txt", 'w', 0);
+	// // os_printf("We have two file descriptors, fd2 is: %d fd is: %d\n", fd2, fd);
+	// // kclose(fdb);
+	// // kclose(fda);
+	// // kclose(fd);
+	// // kclose(fd2);
 	// kclose(fda);
+
+	// os_printf("\nOpening file...\n");
+	// fd = kopen("/foo/bar.txt", 'w');
+	// os_printf("file descriptor is: %d\n", fd);
+	// os_printf("\nWriting string to file...\n");
+	// char *s = "Hello, world I'm testing right now...!\n";
+	// kwrite(fd, s, os_strlen(s));
 	// kclose(fd);
-	// kclose(fd2);
-	kclose(fda);
+	// //while(1);
 
-	os_printf("\nOpening file...\n");
-	fd = kopen("/foo/bar.txt", 'w');
-	os_printf("file descriptor is: %d\n", fd);
-	os_printf("\nWriting string to file...\n");
-	char *s = "Hello, world I'm testing right now...!\n";
-	kwrite(fd, s, os_strlen(s));
-	kclose(fd);
-	//while(1);
+	// // Okay, now we should be able to open it.
+	// os_printf("\nOpening previous file...\n");
+	// fd = kopen("/foo/bar.txt", 'r');
 
-	// Okay, now we should be able to open it.
-	os_printf("\nOpening previous file...\n");
-	fd = kopen("/foo/bar.txt", 'r');
+	// // And read from it
+	// os_printf("\nReading from file...\n");
+	// char buf[256];
+	// int nbytes = kread(fd, buf, 256);
+	// os_printf("Read %d bytes from file.\n", nbytes);
+	// os_printf("the buffer is: '%s'\n", buf);
 
-	// And read from it
-	os_printf("\nReading from file...\n");
-	char buf[256];
-	int nbytes = kread(fd, buf, 256);
-	os_printf("Read %d bytes from file.\n", nbytes);
-	os_printf("the buffer is: '%s'\n", buf);
+	// kclose(fd);
 
-	kclose(fd);
-
-	// Test kls, just for grins. :)
-	//os_printf("\nRunning kls...\n");
-	//kls("/");
+	// // Test kls, just for grins. :)
+	// //os_printf("\nRunning kls...\n");
+	// //kls("/");
 
 	return 0;
 }
