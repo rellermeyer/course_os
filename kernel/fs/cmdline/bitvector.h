@@ -27,6 +27,9 @@ int32_t bv_lower(uint32_t index, bit_vector* bit_vec);
 /* returns the first free index (first 0 in the vector) */
 int32_t bv_firstFree(bit_vector* bit_vec);
 
+/* returns whether the given index is free - Noel*/
+int32_t bv_isfree(uint32_t index, bit_vector* bit_vec);
+
 /* frees the memory used by the vector */
 int32_t bv_free(bit_vector* bit_vec);
 
