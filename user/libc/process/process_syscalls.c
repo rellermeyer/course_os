@@ -4,18 +4,7 @@
 #include "../arch/arm/syscall_arch.h"
 
 int process_yield() {
-	int ret;
-	__asm("MOV %0, lr":"=r"(ret)::);
-
-	long res = __syscall1(SYSCALL_PRCS_YIELD, ret);
-
-	__asm("MOV lr, %0"::"r"(res):);
-	__asm("pop { r0 }");
-	__asm("pop { r0 }");
-	__asm("push { lr }");
-	__asm("push { r0 }");
-
-	return (int) res;
+	return (int) __syscall0(SYSCALL_PRCS_YIELD);
 }
 
 int process_listen(
@@ -33,3 +22,6 @@ int process_emit(uint32_t dest_pid, uint32_t event, char * data, int len) {
 	return (int) error;
 }
 
+int process_exit(){
+	return (int) __syscall0(SYSCALL_PRCS_EXIT);
+}
