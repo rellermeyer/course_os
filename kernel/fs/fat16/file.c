@@ -258,6 +258,7 @@ void get_inode(int inum, struct inode* result_inode){
 		sd_receive((void*)inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs		
 		os_memcpy((uint32_t*)inode_spaceholder, (uint32_t*)result_inode, (os_size_t)inode_size);
 		os_printf("result_inode: %d\n", result_inode->inum);
+		os_printf("inode_spaceholder: %d\n", inode_spaceholder->inum);
 		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
@@ -1110,6 +1111,7 @@ int kseek(int fd_int, int num_bytes) {
 
 /* create a new file, if we are unsuccessful return -1 */
 int kcreate(char* filepath, char mode, int is_this_a_dir) {
+	os_printf("BEGIN Kcreate\n");
 	if (filepath == NULL) {
 		os_printf("filepath not valid \n");
 		return ERR_INVALID;	
@@ -1119,14 +1121,17 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		return ERR_INVALID;	
 	}
 	int fd;
-	int inum = 0;
+	int inum = 1;///test
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
+	os_printf("BEGIN Kfind_dir\n\n");
 	kfind_dir(filepath, result);
+	os_printf("BEGIN kfind_inode\n\n");
 	kfind_inode(result->truncated_path, inum, result->dir_levels, cur_inode);
-
+os_printf("END kfind_inode\n\n");
 	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
 	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
+	os_printf("T1\n\n");
 	if (free_inode_loc < 0) {
 		os_printf("Disk has reached max number of files allowed. \n");
 		kfree(cur_inode);
@@ -1135,8 +1140,11 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		kfree(result);
 		return ERR_FULL;
 	}
+	os_printf("T2\n\n");
 	bv_set(free_inode_loc, inode_bitmap);
-	struct inode * new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
+	os_printf("T3\n\n");
+	struct inode* new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
+	os_printf("T4\n\n");
 	//initialize all fields of inode:
 	os_printf("free is: %d\n", free_inode_loc);
 	new_inode->inum = free_inode_loc;
