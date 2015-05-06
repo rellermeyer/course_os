@@ -96,7 +96,6 @@ uint32_t init_process_heap(struct vas* vas)
 
 uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
 {
-    os_printf("\n\n\n\n FUCK YOU \n\n\n\n");
     uint32_t amt_added = 0;
     while (amt_added < amt) 
     {
