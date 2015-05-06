@@ -84,7 +84,7 @@ int kfs_format()
 	root_inode.indirect_blocks_in_file = 0;
 	os_memset(block, 0, 512);
 	os_memcpy((uint32_t*)&root_inode, block, sizeof(struct inode));
-	sd_transmit(block, sblock.start_inode_table_loc*BLOCKSIZE);
+	sd_transmit((void*) &root_inode, sblock.start_inode_table_loc*BLOCKSIZE);
 
 	// Lay down the first (empty...) data block for the directory.
 	struct dir_data_block ddb;
@@ -132,13 +132,15 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	sd_receive((void*)FS, (SUPERBLOCK*BLOCKSIZE)); // make all blocks addresses, like here
 	//os_printf("Read in superblock... First 4 bytes: %X\n", *(unsigned int*)FS);
 
-	INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
+	//INODES_PER_BLOCK = (FS->block_size/FS->inode_size);
 
 	//initialize the free list by grabbing it from the SD Card:
 	inode_bitmap = make_vector(FS->max_inodes);
 	data_block_bitmap = make_vector(FS->max_data_blocks);
 	bv_set(0, inode_bitmap); //inum 0 is taken
 	bv_set(0, data_block_bitmap); //databock 0 is taken
+	transmit_receive_bitmap(TRANSMIT, inode_bitmap, FS->inode_bitmap_loc, FS->max_inodes, 0, 1); //transmit inode bitmap
+	transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1); //transmit block bitmap
 
 #if 0 // This will never work because of the nature of the bitmap structure, wherein we don't know inode_bitmap->vector :(
 	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
@@ -257,7 +259,7 @@ void get_inode(int inum, struct inode* result_inode){
 		os_printf("inode_spaceholder->inum: %d\n", inode_spaceholder->inum);
 		//os_memcpy((uint32_t*)inode_spaceholder, (uint32_t*)result_inode, (os_size_t)inode_size);
 		result_inode = inode_spaceholder;
-		os_printf("result_inode->inum: %d\n", result_inode->inum);
+		os_printf("result_inode->inum at the end of get inode is: %d\n", result_inode->inum);
 		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
@@ -373,6 +375,7 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 	}//outer most for loop
 	//current_inum of target inode found, store that inode in result_inode
 	get_inode(current_inum, result_inode);
+	os_printf("result_inode->inum at the end of kfind inode is: %d \n", result_inode->inum);
 	return SUCCESS;
 }//end kfind_inode() helper function
 
