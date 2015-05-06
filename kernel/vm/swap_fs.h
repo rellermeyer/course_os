@@ -4,17 +4,25 @@
 #include "file.h"
 #include "bitvector.h"
 #include "vm.h"
+#include "klibc.h"
+#include "swap_framework.h"
+#include <stdio.h>
 
-static bit_vector *free_bitvector;
+
+bit_vector *bv_arr[SWAP_SPACES];
+//bit_vector *free_bitvector;
+
 
 /* swapfs_init initializes swap file system  framework for 'npages' number of pages
  *
- * Returns: -1 if failure, nbytes (>0) written on success
+ * Returns: -1 if failure, number of bytes written on success
  */
-int swapfs_init(int npages);
+int32_t swapfs_init(int, int);
+
 
 //Returns: -1 if failure, 1 if success
-int swapfs_disable();
+int32_t swapfs_disable(int);
+
 
 /* swapfs_store will store a page to media - not main memory - storage, e.g. HDD
  * from the page*
@@ -22,15 +30,16 @@ int swapfs_disable();
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
  * uint32_t* ID -> The page ID or address
  *
- * Returns: The stored page's swap space ID, index, 0 on failure
+ * Returns: The stored page's swap space ID, index, -1 on failure
  */
-int swapfs_store(void *page, uint32_t *id);
+int32_t swapfs_store(void *, uint32_t *, int);
+
 
 /* swapfs_retrieve will retrieve the page identified the ID pointer and
  * will store it back into main memory (specified by the void *page pointer)
  *
- * Returns: The retrieved page's memory ID/Address, 0 on failure
+ * Returns: The retrieved page's memory ID/Address, -1 on failure
  */
-int swapfs_retrieve(void *page, uint32_t *id);
+int32_t swapfs_retrieve(void *, uint32_t *);
 
 #endif
