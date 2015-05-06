@@ -113,7 +113,7 @@ int32_t bv_firstFree (bit_vector* bit_vec) {
 	return -1; //no free spots
 }
 
-/* returns whether the given index is free; 1 - true, 0 - false, -1 - valid index*/
+/* returns whether the given index is free; 1 - true, 0 - false, -1 - invalid index*/
 int32_t bv_isfree(uint32_t index, bit_vector* bit_vec)
 {
 	uint32_t val;
