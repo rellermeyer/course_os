@@ -1,7 +1,7 @@
 #include "allocator.h"
 #include <global_defs.h>
 #include "klibc.h"
-
+/*NOTICE: DO NOT USE OS_PRINTF IN THIS FILE*/
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 
 /*
@@ -151,7 +151,10 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
     // Allocate some more memory.
     uint32_t new_amt = size + 2 * sizeof(uint32_t);
     uint32_t *header = __alloc_extend_heap(allocator, new_amt);
-    os_printf("Extending? Returned %X\n", header);
+    //print_uart0("Extending? Returned\n");
+    //NOTICE: DO NOT USE OS_PRINTF IN THIS FUNCTION
+    //print_uart0(header);
+    //print_uart0("\n");
 
     if (header == 0) {
         return 0;

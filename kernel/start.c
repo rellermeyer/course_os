@@ -55,15 +55,6 @@ void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
-void init_receiver(void *userdata, void *data, uint32_t datalength)
-{
-	int i;
-	char *s = (char*)data;
-	for (i=0; i<datalength; i++) {
-		print_char_uart0(s[i]);
-	}
-}
-
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
@@ -89,6 +80,7 @@ void start2(uint32_t *p_bootargs) {
 	init_heap();
 	print_uart0("after init_vector_table\n");
 	q_create("printf");
+	print_uart0("created stream\n");
 	int qd = q_open("printf");
 	q_subscribe(qd, printf_receiver, 0x0);
 	sched_init();
