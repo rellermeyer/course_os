@@ -8,8 +8,8 @@
 
 void swap_init()
 {
-	// initialize the first swap space head
-	head = (struct swap_space*) kmalloc(sizeof(struct swap_space));
+	// initialize the first swap space front (head)
+	front = (struct swap_space*) kmalloc(sizeof(struct swap_space));
 	memory_count = 0;
 	if(/*enough memory for LZ*/){
 		vm_register_swap_space(store_page_LZ, retrieve_page_LZ, 0);
@@ -52,7 +52,7 @@ uint32_t *store_page(void *page, uint32_t *ID)
 		temp = temp->next;
 	}
 	// generate new ID
-	uint32_t identify = ((temp->higher_bits)<<8) + current_node->lower_bits;
+	uint32_t identify = ((temp->higher_bits)<<8)  + current_node->lower_bits;
 	ID = identify;
 	current_node->e_flags = 1;
 	current_node->page = page;
@@ -68,7 +68,6 @@ uint32_t *store_page(void *page, uint32_t *ID)
 	memory_count+=4096;
 	return *ID;
 }
-
 
 uint32_t *store_page_LZ(void *page, uint32_t *ID);
 
@@ -90,13 +89,13 @@ uint32_t *retrieve_page(void *page, uint32_t *ID)
 	return addr;
 }
 
-
 os_size_t sum_stored()
 {
 	return memory_count;
 }
 
-uint32_t *vm_swap_page(void *page, uint32_t *ID){
+uint32_t *vm_swap_page(void *page, uint32_t *ID)i
+{
 	if(pqueue_index(0)->flags > 1){  
 		pqueue_index(0)->store_func(page, ID);
 	}
@@ -108,41 +107,47 @@ uint32_t *vm_swap_page(void *page, uint32_t *ID){
 			}
 		}
 	}
+
 }
 
-uint32_t *vm_unswap_page(void *page, uint32_t *ID){
+uint32_t *vm_unswap_page(void *page, uint32_t *ID)
+{
 	return pqueue_index(ID*)->retrieve_func(page, ID);
 }
 
-uint8_t vm_register_swap_space(int (*store_p)(void *page, uint32_t *ID), int (*retrieve_p)
-			   (void *page, uint32_t *ID), int priority)
+uint8_t vm_register_swap_space(func store_p, func retrieve_p, int priority)
 {
 	if (pqeueue_size() != 1){
-		head = (struct swap_space*) kmalloc(sizeof(struct swap_space));
+		front = (struct swap_space*) kmalloc(sizeof(struct swap_space));
 	}		 
-	front->pages_free = PAGE_SIZE;
 	front->lower_bits = pqueue_size();
-	front->flags = 2;
 	front->priority = priority;
-	front->store_func = &store_p;
-	front->retrieve_func = &retrieve_p;
+	front->store_func = store_p;
+	front->retrieve_func = retrieve_p;
+
 //	uint32_t entry_size = sizeof(struct swap_entry) + PAGE_SIZE;
-	// TODO: Will vary allocation strategy based on given swap algorithms
-	front->e_head = (struct swap_entry*) kmalloc_aligned(PAGE_ENTRIES*sizeof(swap_entry), sizeof(swap_entry));
-	struct swap_entry *current_node = front->e_head;
-	for(int x = 0; x<PAGE_ENTRIES; x++){
-		current_node->higher_bits = x;
-		current_node = current_node->next;
+//	TODO: Will vary allocation strategy based on given swap algorithms
+       /* front->e_head = (struct swap_entry*) kmalloc_aligned(PAGE_ENTRIES*sizeof(swap_entry), sizeof(swap_entry));*/
+	/*struct swap_entry *current_node = front->e_head;*/
+	/*for(int x = 0; x<PAGE_ENTRIES; x++){*/
+		/*current_node->higher_bits = x;*/
+		/*current_node = current_node->next;*/
+	/*}*/
+	if(priority == 1){ //If not using compression
+		// parameter currently limited to 16 pages until FS framework gets updated
+		if(swapfs_init(16) < 0){
+       			return 0;
+		}
 	}
-        pqueue_add(head);	
+	pqueue_push(front);	
 }       
 
-uint8_t vm_deregister_swap_space()
+void vm_deregister_swap_space()
 {
-	return pqueue_pop_back();
+	 pqueue_pop_back();
 }
 
 uint32_t vm_page_fault(void *page);
 
-uint32_t vm_scan_pages(void *page, uint32_t *ID);
+//uint32_t* vm_scan_pages(void *page, uint32_t *ID);
 

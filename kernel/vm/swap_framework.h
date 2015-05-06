@@ -15,37 +15,39 @@
  *
  * EXAMPLE OF VIRTUAL MEMORY ID/ADDRESS FROM SWAP SPACE
  *	_____________________________________________________________
- *	|| [24 bit] SWAP SPACE ID | [8 bit] SWAP SPACE SPECIFIC ID ||
+ *	|| [24 bit] SWAP SPACE ENTRY ID | [8 bit] SWAP SPACE    #  ||
  *	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
- *	Total: 32 Bit Address
+ *	*	Total: 32 Bit Address
  *	therefore, there are 256 possible swap spaces possible
  *	w/ 2^12 page entries each (Assuming 4kB pages)
  */
 
 #define SWAP_SPACES (1<<8)
 #define PAGE_ENTRIES (1<<12) // Assuming 4kB Pages right now
-#define PAGE_SIZE (1<<12) // May carry an if statement later...
+#define PAGE_SIZE (1<<12) // May carry an if statement later to account for different page sizes
+
+typedef uint32_t (*func)(void*, uint32_t*);
 
 struct swap_space {
 	struct swap_entry *e_head;
-        uint16_t pages_free;
+//      uint16_t pages_free;
 	uint8_t lower_bits; // swap space ID [8-bits]
-	uint16_t flags; // swp_used (1000 or 1), swp_writeok (0010 or 2) or both (0011 or 3)
+//	uint16_t flags; // swp_used (1000 or 1), swp_writeok (0010 or 2) or both (0011 or 3)
 	uint8_t priority; // lower is better 
-        uint32_t *store_func;
-        uint32_t *retrieve_func;
-}; // Total: 18 bytes
+	func store_func;
+	func retrieve_func;	
+}; // Total: 14 bytes
 
+//MAY OR MAY NOT NEED
+//struct swap_entry {
+	//struct swap_entry *next;
+	//uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
+	//uint16_t e_flags; // ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
+        //uint8_t free; //0 - used, 1 - free
+        //void *page; // virtual address pointer used for resolving page faults
+//}; // Total: 15 bytes 
 
-struct swap_entry {
-	struct swap_entry *next;
-	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
-	uint16_t e_flags; // ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-        uint8_t free; //0 - used, 1 - free
-        void *page; // virtual address pointer used for resolving page faults
-}; // Total: 15 bytes 
-
-struct swap_space *front;
+static struct swap_space *front;
 static os_size_t memory_count;
 
 
@@ -55,7 +57,7 @@ void swap_init();
 
 
 /* store_page will store a page to media - not main memory - storage, e.g. HDD
- * from the page*
+ * from the page*. ID parameter passed will change to appropriate index (i.e. return value)
  * void* page -> data to be paged
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
  * uint32_t* ID -> The page ID or address
@@ -91,9 +93,8 @@ uint32_t *vm_unswap_page(void*, uint32_t);
  * NOTE: deregister_swap_space will always deregister the lowest priority swap space first 
  * Returns: 0 or 1 whether the swap space registeration was a failure or success, respectively
  */
-uint8_t vm_register_swap_space(uint32_t (*)(void*, uint32_t*), uint32_t (*)
-		(void*, uint32_t*), int priority);
-uint8_t vm_deregister_swap_space();
+uint8_t vm_register_swap_space(func, func, int);
+void vm_deregister_swap_space();
 
 
 /* Resolves the page fault and updates the corresponding page table
@@ -106,6 +107,6 @@ uint32_t vm_page_fault(void*);
  * to the given page
  * Returns: The address of matching swapped page 
  */
-uint32_t *vm_scan_pages(void*);
+//uint32_t* vm_scan_pages(void*);
 
 #endif

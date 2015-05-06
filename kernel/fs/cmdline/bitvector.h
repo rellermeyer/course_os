@@ -9,7 +9,7 @@ typedef struct bit_vector {
 	uint32_t actualLength;
 } bit_vector;
 
-/* creates butvector of "size" number of bits */
+/* creates bitvector of "size" number of bits */
 bit_vector *make_vector(uint32_t size);
 
 /* gets the value of bit number "index" */
