@@ -1,11 +1,12 @@
-#include "process.h"
-#include "process_jump.h"
-#include "klibc.h"
-#include "file.h"
-#include "global_defs.h"
-#include "loader.h"
-#include "vm.h"
-#include "elf.h"
+#include "../include/process.h"
+#include "../include/klibc.h"
+#include "../include/file.h"
+#include "../include/loader.h"
+#include "../include/vm.h"
+#include "../include/elf.h"
+
+#include <global_defs.h>
+
 static uint32_t GLOBAL_PID;
 
 uint32_t sample_func(uint32_t);
@@ -48,7 +49,10 @@ pcb * process_create_from_file(char * file, int argc, char ** argv) {
 
 //	kclose(fd);
 
-	return process_create((uint32_t*) start, len, argc, argv);
+	pcb * p = process_create((uint32_t*) start, len, argc, argv);
+	process_init(p);
+
+	return p;
 }
 
 /*Spring 2015 course_os: Sathya Sankaran, Rakan Stanbouly, Jason Sim
@@ -113,98 +117,12 @@ uint32_t* process_next_free_slot_in_pcb_table() {
 	return 0;
 }
 
-//saves all the machine state of the process
-//returns 0 for failure
-//returns 1 for success
-uint32_t process_save_state(uint32_t PID) {
-	uint32_t* process_to_save = process_get_address_of_PCB(PID);
-	pcb* pcb_p = process_get_PCB(PID);
-
-	if (((uint32_t) process_to_save) == -1 || pcb_p == 0) {
-		os_printf("Invalid PID in load_process_state");
-		return 0;
-	}
-
-	asm volatile("MOV %0, r0":"=r"(pcb_p->R0)::);
-	asm volatile("MOV %0, r1":"=r"(pcb_p->R1)::);
-	asm volatile("MOV %0, r2":"=r"(pcb_p->R2)::);
-	asm volatile("MOV %0, r3":"=r"(pcb_p->R3)::);
-	asm volatile("MOV %0, r4":"=r"(pcb_p->R4)::);
-	asm volatile("MOV %0, r5":"=r"(pcb_p->R5)::);
-	asm volatile("MOV %0, r6":"=r"(pcb_p->R6)::);
-	asm volatile("MOV %0, r7":"=r"(pcb_p->R7)::);
-	asm volatile("MOV %0, r8":"=r"(pcb_p->R8)::);
-	asm volatile("MOV %0, r9":"=r"(pcb_p->R9)::);
-	asm volatile("MOV %0, r10":"=r"(pcb_p->R10)::);
-	asm volatile("MOV %0, r11":"=r"(pcb_p->R11)::);
-	asm volatile("MOV %0, r12":"=r"(pcb_p->R12)::);
-	asm volatile("MOV %0, r13":"=r"(pcb_p->R13)::);
-	asm volatile("MOV %0, r14":"=r"(pcb_p->R14)::);
-	asm volatile("MOV %0, r15":"=r"(pcb_p->R15)::);
-
-	return 1;
-
-}
-
-//R15 is the Program Counter
-//R14 is the Link Register
-//The last register to be loaded is the PC
-//return 0 if fail
-//return 14 for success
-uint32_t process_load_state(uint32_t PID) {
-	pcb* pcb_p = process_get_PCB(PID);
-
-	LOG("LOADING STATE\n");
-
-	/*if (process_to_load == 0 || pcb_p == 0) {
-	 os_printf("Invalid PID in load_process_state");
-	 return 0;
-	 }*/
-
-	LOG("%X\n", pcb_p->R14);
-
-//	int x = 1;
-//	while(x);
-
-	process_jmp_goto((jmp_buf*) &pcb_p->R0, pcb_p->R0);
-
-	return 1;
-}
-
-uint32_t process_print_state(uint32_t PID) {
-	pcb* pcb_p = process_get_PCB(PID);
-
-	if (pcb_p == 0) {
-		return 0;
-	}
-
-	os_printf("Process State of PID: %d\n", PID);
-	os_printf("reg 0 = %x\n", pcb_p->R0);
-	os_printf("reg 1 = %x\n", pcb_p->R1);
-	os_printf("reg 2 = %x\n", pcb_p->R2);
-	os_printf("reg 3 = %x\n", pcb_p->R3);
-	os_printf("reg 4 = %x\n", pcb_p->R4);
-	os_printf("reg 5 = %x\n", pcb_p->R5);
-	os_printf("reg 6 = %x\n", pcb_p->R6);
-	os_printf("reg 7 = %x\n", pcb_p->R7);
-	os_printf("reg 8 = %x\n", pcb_p->R8);
-	os_printf("reg 9 = %x\n", pcb_p->R9);
-	os_printf("reg 10 = %x\n", pcb_p->R10);
-	os_printf("reg 11 = %x\n", pcb_p->R11);
-	os_printf("reg 12 = %x\n", pcb_p->R12);
-	os_printf("reg 13 = %x\n", pcb_p->R13);
-	os_printf("reg 14 = %x\n", pcb_p->R14);
-	os_printf("reg 15 = %x\n", pcb_p->R15);
-
-	return 1;
-}
-
 //destroys process with param PID by clearing the pcb struct
 //returns 1 upon success, 0 with failure
 uint32_t process_destroy(int PID) {
-	uint32_t* addressToClear = process_get_address_of_PCB(PID);
-	pcb* pcb_p = process_get_PCB(PID);
-	uint32_t free_success = process_free_PCB(pcb_p);
+	uint32_t* addressToClear = process_get_pcb_address(PID);
+	pcb* pcb_p = process_get_pcb(PID);
+	uint32_t free_success = process_free_pcb(pcb_p);
 	*addressToClear = 0; //clears the pointer to the PCB
 
 	if (free_success) {
@@ -227,7 +145,7 @@ void process_print_pcb_table() {
 }
 
 //Prints all of the PIDs in the pcb table
-void process_print_PID() {
+void process_print_pid() {
 
 	uint32_t* current_address = pcb_table;
 	uint32_t i;
@@ -247,7 +165,7 @@ void process_print_PID() {
 /* Returns a pointer to a pcb of process with @PID,
  or 0 if no process with PID exists.
  */
-pcb* process_get_PCB(uint32_t PID) {
+pcb* process_get_pcb(uint32_t PID) {
 
 	//search for process in pcb table
 	int i;
@@ -269,7 +187,7 @@ pcb* process_get_PCB(uint32_t PID) {
 /* returns a pointer to the address of a pcb in the table
  given the PID or if the PID is invalid
  */
-uint32_t* process_get_address_of_PCB(uint32_t PID) {
+uint32_t* process_get_pcb_address(uint32_t PID) {
 	if (PID <= 0) {
 		os_printf("Invalid PID of: %d, exiting.", PID);
 		return 0;
@@ -295,7 +213,7 @@ uint32_t* process_get_address_of_PCB(uint32_t PID) {
 // this will 0 out everything in a PCB 
 // accepts a pointer to a PCB
 // returns 1 if successfully frees a pcb
-uint32_t process_free_PCB(pcb* pcb_p) {
+uint32_t process_free_pcb(pcb* pcb_p) {
 	if (pcb_p == 0) {
 		os_printf("Can not free. Not a valid PCB.\n");
 		return 0;
@@ -305,8 +223,6 @@ uint32_t process_free_PCB(pcb* pcb_p) {
 
 	return 1;
 }
-
-void process_set_stackpointer(uint32_t sp);
 
 /* executes a process function
  return PID upon success
@@ -345,8 +261,9 @@ uint32_t process_execute(pcb* pcb_p) {
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
-	process_set_stackpointer(p.R13);
-	process_jmp_goto((jmp_buf*)&p.R0, p.R0);
+	process_set_umode_sp(p.R13);
+
+	process_load_state((jmp_buf*) &p.R0);
 
 	while (1)
 		;
@@ -366,7 +283,6 @@ void __process_init_stack(pcb* pcb_p);
 void process_init(pcb * pcb_p) {
 	__process_init_vas(pcb_p);
 	__process_init_stack(pcb_p);
-	LOG("SUP!asdasd!!\n");
 	__process_init_heap(pcb_p);
 }
 
@@ -459,17 +375,17 @@ void __process_init_stack(pcb * pcb_p) {
 		}
 	}
 
-	// Stick a NULL at STACK_TOP-sizeof(int*)
 	uint32_t *stack_top = (uint32_t*) STACK_TOP;
 	/*stack_top[-1] = 0;
-	stack_top[-2] = 0;
-	stack_top[-3] = 0;
-	stack_top[-4] = 0;
-	stack_top[-5] = STACK_BASE;
-	stack_top[-6] = 1;*/
+	 stack_top[-2] = 0;
+	 stack_top[-3] = 0;
+	 stack_top[-4] = 0;
+	 stack_top[-5] = STACK_BASE;
+	 stack_top[-6] = 1;*/
 
+	// Stick a NULL at STACK_TOP-sizeof(int*)
 	int argc_index = -5 - pcb_p->argc;
-	int argv_index = -4 - pcb_p->argc;
+	int argv_index = argc_index + 1;
 	uint32_t argv_p = (uint32_t) STACK_BASE;
 
 	stack_top[argc_index] = pcb_p->argc;
@@ -480,7 +396,7 @@ void __process_init_stack(pcb * pcb_p) {
 		stack_top[argv_index++] = argv_p;
 		argv_p += arg_len;
 		*((char*) argv_p) = '\0';
-		argv_p += 2;
+		argv_p += 1;
 	}
 
 	// We need to set sp (r13) to stack_top - 12

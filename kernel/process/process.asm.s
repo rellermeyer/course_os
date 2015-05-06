@@ -1,23 +1,17 @@
-.global process_set_stackpointer
-.global process_jmp_set
-.global process_jmp_goto
+.global process_set_umode_sp
+.global process_save_state
+.global process_load_state
 
-# Receives a pointer to a buffer in r0
-.global process_jmp_set
-.global process_jmp_goto
-.global proces_enter_umode
-
-process_set_stackpointer:
+process_set_umode_sp:
 	// Switch to system mode (same SP as user mode)
 	mov r0,lr
 	mov r1,sp
 	msr cpsr, #0x1F
 	mov lr,r0
 	mov sp,r1
-	//mov sp,r0
 	bx lr
 
-process_jmp_set:
+process_save_state:
 	str r2, [r0, #8]
 	str r3, [r0, #12]
 	str r4, [r0, #16]
@@ -35,7 +29,8 @@ process_jmp_set:
 	mov r0, #0
 	bx lr
 
-process_jmp_goto:
+process_load_state:
+	ldr r1, [r0, #4]
 	ldr r2, [r0, #8]
 	ldr r3, [r0, #12]
 	ldr r4, [r0, #16]
@@ -49,17 +44,6 @@ process_jmp_goto:
 	ldr r12, [r0, #48]
 	ldr r13, [r0, #52]
 	ldr r14, [r0, #56]
-	mrs r0, cpsr
-	bic r0, r0, #0x1f
-	orr r0, r0, #0x10
-	msr spsr, r0
-	mov r0, r1
-	movs pc, lr
-
-proces_enter_umode:
-	mov lr, r0
-	mrs r0, cpsr
-	bic r0, r0, #0x1f
-	orr r0, r0, #0x10
-	msr spsr, r0
+	ldr r0, [r0, #0]
+	msr cpsr, #0x1F
 	movs pc, lr

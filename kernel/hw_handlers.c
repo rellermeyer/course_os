@@ -64,236 +64,176 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void) {
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
+/*
+ * enters sp mode and transfers the sp and lr registers to r0 and
+ * r1 respectively
+ */
+void hw_get_spmode_sp_lr();
+
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-	int callNumber;
+	jmp_buf pre_swi_state;
 
-	// TODO please update the code to store the return value to RET
-	//      may have to manually store into the return register
-	long r0, r1, r2, r3, RET;
+	// look at assembly - move r3 first
+	asm volatile("MOV %0, r3":"=r"(pre_swi_state.R3)::);
+	asm volatile("MOV %0, r0":"=r"(pre_swi_state.R0)::);
+	asm volatile("MOV %0, r1":"=r"(pre_swi_state.R1)::);
+	asm volatile("MOV %0, r2":"=r"(pre_swi_state.R2)::);
+	asm volatile("MOV %0, r4":"=r"(pre_swi_state.R4)::);
+	asm volatile("MOV %0, r5":"=r"(pre_swi_state.R5)::);
+	asm volatile("MOV %0, r6":"=r"(pre_swi_state.R6)::);
+	asm volatile("MOV %0, r7":"=r"(pre_swi_state.R7)::);
+	asm volatile("MOV %0, r8":"=r"(pre_swi_state.R8)::);
+	asm volatile("MOV %0, r9":"=r"(pre_swi_state.R9)::);
+	asm volatile("MOV %0, r10":"=r"(pre_swi_state.R10)::);
+	asm volatile("MOV %0, r11":"=r"(pre_swi_state.R11)::);
+	asm volatile("MOV %0, r12":"=r"(pre_swi_state.R12)::);
 
-	// the link register currently holds the address of the instruction immediately
-	// after the SVC call
-	// possible that syscall # passed directly in r7, not sure yet though
-	register int address asm("lr");
+	hw_get_spmode_sp_lr();
 
-	asm volatile("MOV %0, r7":"=r"(callNumber)::);
-	asm volatile("MOV %0, r0":"=r"(r0)::);
-	asm volatile("MOV %0, r1":"=r"(r1)::);
-	asm volatile("MOV %0, r2":"=r"(r2)::);
-	asm volatile("MOV %0, r3":"=r"(r3)::);
+	asm volatile("MOV %0, r0":"=r"(pre_swi_state.R13)::);
+	asm volatile("MOV %0, r1":"=r"(pre_swi_state.R14)::);
 
+	long ret = STATUS_FAIL;
+	uint32_t r0 = pre_swi_state.R0;
+	uint32_t r1 = pre_swi_state.R1;
+	uint32_t r2 = pre_swi_state.R2;
+	uint32_t r3 = pre_swi_state.R3;
+	uint32_t call_num = pre_swi_state.R7;
 	struct vas *prev_vas = vm_get_current_vas();
+
 	vm_use_kernel_vas();
 
-	os_printf("SWI HANDLER\n");
+	os_printf("SWI HANDLER [0x%X(%d)]\n", call_num, call_num);
 
-	// System Call Handler
-	switch (callNumber) {
-		char* filepath;
-		int error;
-		char mode;
-		int fd;
-		void* buf;
-		int numBytes;
-		uint32_t byte_size;
-		void* ptr;
-		char* output;
-
-	case SYSCALL_DELETE:
-		os_printf("SYSCALL_DELETE\n");
-		// retrieve the args that delete() put in r1 and pass to kdelete():
-		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
-		// call kdelete(), passing appropriate args:
-		error = kdelete(filepath);
-		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_OPEN:
-		os_printf("SYSCALL_OPEN\n");
-		// retrieve the args that open() put in r1, r2 and pass to kopen():
-		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
-		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
-		// call kopen(), passing appropriate args:
-		fd = kopen(filepath, mode);
-		// move fd that kopen() returns to a r1 to be retrieved by open() and returned to user:
-		return (long) fd;
-		break;
-
-	case SYSCALL_CREATE:
-		os_printf("SYSCALL_CREATE\n");
-		// retrieve the args that create() put in r1, r2, r3 and pass to kcreate():
-		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
-		asm volatile("mov r1, %[mode1]":[mode1]"=r" (mode)::);
-		// call kcreate(), passing appropriate args:
-		error = kcreate(filepath, mode, 0);
-		// move fd that kopen() returns to a r1 to be retrieved by kcreate() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_MKDIR:
-		os_printf("SYSCALL_MKDIR\n");
-		// retrieve the args that mkdir() put in r1 and pass to kcreate():
-		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
-		// call kcreate(), passing appropriate args:
-		error = kcreate(filepath, 'w', 1);
-		// move error that kcreate() returns to a r1 to be retrieved by kcreate() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_READ:
-		os_printf("SYSCALL_READ\n");
-		// retrieve the args that read() put in r1, r2 and pass to kread():
-		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
-		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
-		asm volatile("mov r2, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
-		// call kread(), passing appropriate args:
-		// TODO: macro to translate process's virtual memory into kernel's view of virtual memory
-		int bytesRead = kread(fd, buf, numBytes);
-		// move fd that kread() returns to a r1 to be retrieved by read() and returned to user:
-		return (long) bytesRead;
-		break;
-
-	case SYSCALL_WRITE:
-		os_printf("SYSCALL_WRITE\n");
-		// retrieve the args that write() put in r1, r2 and pass to kwrite():
-		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
-		asm volatile("mov r1, %[buf1]":[buf1]"=r" (buf)::);
-		asm volatile("mov r2, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
-		// call kwrite(), passing appropriate args:
-		int bytesWritten = kwrite(fd, buf, numBytes);
-		// move fd that kwrite() returns to a r1 to be retrieved by write() and returned to user:
-		return (long) bytesWritten;
-		break;
-
-	case SYSCALL_CLOSE:
-		os_printf("SYSCALL_CLOSE\n");
-		// retrieve the args that close() put in r1 and pass to kclose():
-		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
-		// call kclose(), passing appropriate args:
-		error = kclose(fd);
-		// move error that kclose() returns to a r1 to be retrieved by close() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_SEEK:
-		os_printf("SYSCALL_SEEK\n");
-		// retrieve the args that seek() put in r1, r2 and pass to kseek():
-		asm volatile("mov r0, %[fd1]":[fd1]"=r" (fd)::);
-		asm volatile("mov r1, %[numBytes1]":[numBytes1]"=r" (numBytes)::);
-		// call kseek(), passing appropriate args:
-		error = kseek(fd, numBytes);
-		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_COPY:
-		os_printf("SYSCALL_COPY\n");
-		char* source;
-		char* dest;
-		// retrieve the args that seek() put in r1, r2 and pass to kseek():
-		asm volatile("mov r0, %[source1]":[source1]"=r" (source)::);
-		asm volatile("mov r1, %[dest1]":[dest1]"=r" (dest)::);
-		asm volatile("mov r2, %[mode1]":[mode1]"=r" (mode)::);
-		// call kcopy(), passing appropriate args:
-		error = kcopy(source, dest, mode);
-		// move error that kseek() returns to a r1 to be retrieved by seek() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_LS:
-		os_printf("SYSCALL_LS\n");
-		// retrieve the args that mkdir() put in r1 and pass to kcreate():
-		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
-		// call kls(), passing appropriate args:
-		error = kls(filepath);
-		// move error that kls() returns to a r1 to be retrieved by kls() and returned to user:
-		return (long) error;
-		break;
-
-	case SYSCALL_SET_PERM:
-		LOG("SYSCALL_SET_PERM\n");
-		vm_use_kernel_vas();
-		os_printf("Set permission system call called!\n");
-		os_printf("Yet to be implemented\n");
-		return -1;
-		break;
-
-	case SYSCALL_MEM_MAP:
-		LOG("SYSCALL_MEM_MAP\n");
-		os_printf("Memory map system call called!\n");
-		os_printf("Yet to be implemented\n");
-		return -1;
-		break;
-	case SYSCALL_PRCS_LISTEN:
-		LOG("SYSCALL_PRCS_YIELD\n");
-		sched_msg_callback_handler cb_handler = (sched_msg_callback_handler) r0;
-		error = sched_register_callback_handler(cb_handler);
-		return (long) error;
-		break;
-	case SYSCALL_PRCS_EMIT:
-		LOG("SYSCALL_PRCS_YIELD\n");
-		error = sched_post_message(r0, r1, r2, r3);
-		return (long) error;
-		break;
-	case SYSCALL_PRCS_YIELD:
-		LOG("SYSCALL_PRCS_YIELD\n");
-		error = sched_yield(r0);
-		return (long) error;
-		break;
-	case SYSCALL_MALLOC:
-		os_printf("SYSCALL_MALLOC\n");
-		//Assuming that the userlevel syscall wrappers work
-		//retrieve args of malloc, put in r1, pass to malloc
-		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = umalloc(byte_size);
-		//I want to return the pointer to the beggining of allocated block(s);
-		return (long) ptr;
-		break;
-
-	case SYSCALL_CALLOC:
-		os_printf("SYSCALL_CALLOC\n");
-		//Assuming that the userlevel syscall wrappers work
-		uint32_t num;
-		//retrieve args of malloc, put in r1, pass to malloc 
-		asm volatile("mov r0, %[num1]":[num1]"=r" (num)::);
-		asm volatile("mov r1, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = ucalloc(num, byte_size);
-		//I want to return the pointer to the beggining of allocated block(s);
-		return (long) ptr;
-		break;
-
-	case SYSCALL_FREE:
-		os_printf("SYSCALL_FREE\n");
-		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
-		ufree(ptr);
-		return 0;
-		break;
-
-	case SYSCALL_SWITCH:
-		os_printf("SYSCALL_SWITCH\n");
-		sched_remove_task(sched_get_active_tid());
-		error = sched_yield(0);
-		return error;
-		break;
-	case SYSCALL_PRINTF:
-		// TODO fix address
+	switch (call_num) {
+		case SYSCALL_DELETE: {
+			os_printf("SYSCALL_DELETE\n");
+			ret = kdelete((char*) r0);
+			break;
+		}
+		case SYSCALL_OPEN: {
+			os_printf("SYSCALL_OPEN\n");
+			ret = kopen((char*) r0, (char) r1);
+			break;
+		}
+		case SYSCALL_CREATE: {
+			os_printf("SYSCALL_CREATE\n");
+			ret = kcreate((char*) r0, (char) r1, (int) 0);
+			break;
+		}
+		case SYSCALL_MKDIR: {
+			os_printf("SYSCALL_MKDIR\n");
+			ret = kcreate((char*) r0, 'w', 1);
+			break;
+		}
+		case SYSCALL_READ: {
+			os_printf("SYSCALL_READ\n");
+			ret = kread((int) r0, (void*) r1, (int) r2);
+			break;
+		}
+		case SYSCALL_WRITE: {
+			os_printf("SYSCALL_WRITE\n");
+			ret = kwrite(r0, r1, r2);
+			break;
+		}
+		case SYSCALL_CLOSE: {
+			os_printf("SYSCALL_CLOSE\n");
+			ret = kclose(r0);
+			break;
+		}
+		case SYSCALL_SEEK: {
+			os_printf("SYSCALL_SEEK\n");
+			ret = kseek(r0, r1);
+			break;
+		}
+		case SYSCALL_COPY: {
+			os_printf("SYSCALL_COPY\n");
+			ret = kcopy(r0, r1, r2);
+			break;
+		}
+		case SYSCALL_LS: {
+			os_printf("SYSCALL_LS\n");
+			ret = kls(r0);
+			break;
+		}
+		case SYSCALL_SET_PERM: {
+			LOG("SYSCALL_SET_PERM\n");
+			vm_use_kernel_vas();
+			os_printf("Set permission system call called!\n");
+			os_printf("Yet to be implemented\n");
+			ret = STATUS_FAIL;
+			break;
+		}
+		case SYSCALL_MEM_MAP: {
+			LOG("SYSCALL_MEM_MAP\n");
+			os_printf("Memory map system call called!\n");
+			os_printf("Yet to be implemented\n");
+			ret = STATUS_FAIL;
+			break;
+		}
+		case SYSCALL_PRCS_LISTEN: {
+			LOG("SYSCALL_PRCS_LISTEN\n");
+			ret = sched_register_callback_handler(
+					(sched_msg_callback_handler) r0);
+			break;
+		}
+		case SYSCALL_PRCS_EMIT: {
+			LOG("SYSCALL_PRCS_EMIT\n");
+			ret = sched_post_message(r0, r1, r2, r3);
+			break;
+		}
+		case SYSCALL_PRCS_YIELD: {
+			LOG("SYSCALL_PRCS_YIELD\n");
+			LOG("Yield - return to 0x%X\n", pre_swi_state.R14);
+			sched_update_task_state(sched_get_active_tid(), &pre_swi_state);
+			ret = sched_yield();
+			break;
+		}
+		case SYSCALL_MALLOC: {
+			os_printf("SYSCALL_MALLOC\n");
+			ret = umalloc(r0);
+			break;
+		}
+		case SYSCALL_CALLOC: {
+			os_printf("SYSCALL_CALLOC\n");
+			ret = ucalloc(r0, r1);
+			break;
+		}
+		case SYSCALL_FREE: {
+			os_printf("SYSCALL_FREE\n");
+			ufree(r0);
+			ret = STATUS_OK;
+			break;
+		}
+		case SYSCALL_SWITCH: {
+			os_printf("SYSCALL_SWITCH\n");
+			sched_remove_task(sched_get_active_tid());
+			ret = sched_yield();
+			break;
+		}
+		case SYSCALL_PRCS_EXIT: {
+			os_printf("SYSCALL_PRCS_EXIT\n");
+			sched_remove_task(sched_get_active_tid());
+			ret = sched_yield();
+			break;
+		}
+		case SYSCALL_PRINTF: {
 #define PRINTF_COPY_ADDR 0x8f000000
-		vm_map_shared_memory(KERNEL_VAS, (void*) PRINTF_COPY_ADDR, prev_vas, (void*) r0, VM_PERM_PRIVILEGED_RW);
-		os_printf("%s", (char*) PRINTF_COPY_ADDR);
-		//q_send("printf", (uint32_t*) PRINTF_COPY_ADDR, r1);
-		vm_free_mapping(KERNEL_VAS, (void*) PRINTF_COPY_ADDR);
-		RET = STATUS_OK;
-		break;
-	default:
-		os_printf("SYSCALL_UNDEFINED\n");
-		return -1;
-		break;
+			vm_map_shared_memory(KERNEL_VAS, (void*) PRINTF_COPY_ADDR, prev_vas,
+					(void*) r0, VM_PERM_PRIVILEGED_RW);
+			os_printf("[%d] %s", (char*) r1, r0);
+			vm_free_mapping(KERNEL_VAS, (void*) PRINTF_COPY_ADDR);
+			ret = STATUS_OK;
+			break;
+		}
+		default:
+			os_printf("SYSCALL_UNDEFINED\n");
+			break;
 	}
 
 	vm_enable_vas(prev_vas);
 
-	return RET;
+	return ret;
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {
@@ -361,6 +301,10 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void) {
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
+#ifdef ENABLE_MAX_INTERRUPT
+	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
+		return;
+#endif
 	os_printf("FIQ HANDLER\n");
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4

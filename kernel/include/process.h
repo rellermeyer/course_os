@@ -50,8 +50,7 @@
  last run?, total CPU time accumulation
  what are the bare essentials for a PCB
  */
-typedef enum PROCESS_STATE
-{
+typedef enum PROCESS_STATE {
 	PROCESS_NEW, PROCESS_READY, PROCESS_RUNNING, PROCESS_BLOCKED, PROCESS_DYING
 } PROCESS_STATE;
 
@@ -64,9 +63,7 @@ typedef enum PROCESS_STATE
 #define HEAP_BASE		0x9f0f0000	
 #define PROGRAM_BASE	0x003e8000
 
-
-typedef struct pcb
-{
+typedef struct pcb {
 	//ID data
 	char** argv;
 	uint32_t argc;
@@ -141,22 +138,6 @@ typedef struct pcb
 
 } pcb;
 
-/* interface
- processes can
- be made (initialized)
- be terminated
- be duplicated
- be suspended
- be resumed
- */
-
-//input
-//1) address of where the program code is in memory; elf and loader
-//process
-//do we n eed to create the stack and the heap?
-//do we need to know where the data is?
-//output
-//create a corresponding pcb ds
 uint32_t* pcb_table; //Table showing all initialized processes.
 uint32_t* process_next_free_slot_in_pcb_table();
 void process_print_pcb_table();
@@ -164,20 +145,16 @@ int init_pcb_table();
 pcb *process_create_from_file(char * file, int argc, char ** argv);
 pcb* process_create(uint32_t* file_p, uint32_t len, int argc, char ** argv);
 uint32_t process_destroy(int PID);
-void process_print_PID();
-pcb* process_get_PCB(uint32_t PID);
-uint32_t process_free_PCB(pcb* pcb_p);
-uint32_t* process_get_address_of_PCB(uint32_t PID);
+void process_print_pid();
+pcb* process_get_pcb(uint32_t PID);
+uint32_t process_free_pcb(pcb* pcb_p);
+uint32_t* process_get_pcb_address(uint32_t PID);
 uint32_t process_execute(pcb* pcb_p);
-uint32_t execute_process_no_vas(pcb* pcb_p);
-uint32_t process_load_state(uint32_t PID);
-uint32_t process_save_state(uint32_t PID);
 uint32_t process_print_state(uint32_t PID);
+uint32_t process_set_umode_sp(uint32_t sp);
+uint32_t process_save_state(jmp_buf * buffer);
+uint32_t process_load_state(jmp_buf * buffer);
 
 void process_init(pcb* pcb_p);
 
-// static void process_exit(process p); //harder because we have to clean up
-// int fork();
-// int process_suspend(process p);
-// int process_resume(process p);
 #endif

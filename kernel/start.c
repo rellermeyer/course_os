@@ -96,9 +96,9 @@ void start2(uint32_t *p_bootargs) {
 	process_global_init();
 
 
-	 ht_test();
+//	 ht_test();
 	 print_uart0("after ht_test\n");
-	 q_test();
+//	 q_test();
 	 print_uart0("after q_test\n");
 
 	// q_create("printf");
@@ -122,7 +122,7 @@ void start2(uint32_t *p_bootargs) {
 //	run_kthr_tests();
 //	run_arrl_tests();
 //	 run_umode_tests();
- //   run_sched_prcs_tests();
+   run_sched_prcs_tests();
  // run_prcs_tests();
 //	run_fs_tests();
 
