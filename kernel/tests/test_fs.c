@@ -1,46 +1,38 @@
 #include "tests.h"
 #include "klibc.h"
-#include "file.h"
+#include "../include/file.h"
 
 int test_fs_1()
 {
 	os_printf("\n\n\n...........................................\n");
-	// Test kfind_dir real quick...
-	//struct dir_helper dh;
-	// kfind_dir("/", &dh);
-	// kfind_dir("/etc", &dh);
-	// kfind_dir("/etc/", &dh);
-	// kfind_dir("/etc/fstab/anotherdir/something.ext", &dh);
-	// os_printf("Testing dir_helper: dir_levels: %d\n", dh.dir_levels);
-	// os_printf("Testing dir_helper: truncated_path: %s\n", dh.truncated_path);
-	// os_printf("Testing dir_helper: last: %s\n", dh.last);
-
-	// //retval = kcreate("/", 0xFF, 1);
-	// //os_printf("%d\n", retval);
-	// os_printf("\n\n*****************0\n\n");
-	// int fd2 = kcreate("/", 'w', 0);
-	 os_printf("\n\n*****************1\n\n");
-	 //int fd1 = kcreate("/", 'w', 1);
-	 int fd = kcreate("/foo", 'w', 1);
-	// os_printf("\n\n*****************2\n\n");
-	// int fda = kcreate("/foo/bar.txt", 'w', 0);
-	// os_printf("\n\n*****************3\n\n");
 
 
-	// os_printf("\n\n*****************4\n\n");
-	// int fd4 = kcreate("/foo/dog", 'w', 1);
-	// os_printf("\n\n*****************5\n\n");
-	// int f5 = kcreate("/foo/dog/cat", 'w', 1);
-	// os_printf("\n\n*****************6\n\n");
-	// int f6 = kcreate("/foo/dog/cat/rat.txt", 'w', 0);
-	// os_printf("\n\n*****************7\n\n");
-	// // int fdb = kcreate("/foo/bar/jam.txt", 'w', 0);
-	// // os_printf("We have two file descriptors, fd2 is: %d fd is: %d\n", fd2, fd);
-	// // kclose(fdb);
-	// // kclose(fda);
-	// // kclose(fd);
-	// // kclose(fd2);
-	// kclose(fda);
+	os_printf("\ncreating file in root -----------------------------------------\n");
+	int fd2 = kcreate("/file", 'w', 0);
+	os_printf("fd returned by creating file %d -----------------------------------------\n", fd2);
+	kls("/");
+
+	os_printf("closing file -----------------------------------------\n");
+	int error = kclose(fd2);
+	os_printf("error from closing = %d \n", error);
+
+	os_printf("\n\n\n...........................................\n");
+
+	os_printf("\n\nCreating folder -----------------------------------------\n");
+
+	int fd1 = kcreate("/folder", 'w', 1);
+	os_printf("fd returned by creating folder %d -----------------------------------------\n", fd1);
+
+	os_printf("\ncreating file -----------------------------------------\n");
+	int fd3 = kcreate("/folder/file", 'w', 0);
+	os_printf("fd returned by creating file %d -----------------------------------------\n", fd2);
+
+	os_printf("closing file -----------------------------------------\n");
+	kclose(fd3);
+
+
+
+
 
 	// os_printf("\nOpening file...\n");
 	// fd = kopen("/foo/bar.txt", 'w');

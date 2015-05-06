@@ -75,7 +75,7 @@ int kfs_format()
 
 	// Lay down the root inode
 	struct inode root_inode;
-	root_inode.inum = 0; // Isn't this redundant?
+	root_inode.inum = root_inum; 
 	root_inode.fd_refs = 0;
 	root_inode.size = 0;
 	root_inode.is_dir = 1;
@@ -137,8 +137,9 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	//initialize the free list by grabbing it from the SD Card:
 	inode_bitmap = make_vector(FS->max_inodes);
 	data_block_bitmap = make_vector(FS->max_data_blocks);
-	//bv_set(0, inode_bitmap);
-	//bv_set(0, data_block_bitmap);
+	bv_set(0, inode_bitmap); //inum 0 is taken
+	bv_set(0, data_block_bitmap); //databock 0 is taken
+
 #if 0 // This will never work because of the nature of the bitmap structure, wherein we don't know inode_bitmap->vector :(
 	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
 	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
@@ -189,9 +190,6 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 
 	os_printf("Finished initializing table...\n");
 	return SUCCESS;
-	//what was this for? don't think we need it...
-	// data_table = kmalloc(BLOCKSIZE); // pointer to the start of data table
-	// receive(data_table, (FS->start_data_blocks_loc) * BLOCKSIZE); 
 }//end fs_init() function
 
 int kfs_shutdown(){
@@ -255,10 +253,11 @@ void get_inode(int inum, struct inode* result_inode){
 	//}else{ 
 		// inode is not in the cache table, so get it from disk:
 		struct inode* inode_spaceholder = (void*) kmalloc(BLOCKSIZE);
-		sd_receive((void*)inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs		
-		os_memcpy((uint32_t*)inode_spaceholder, (uint32_t*)result_inode, (os_size_t)inode_size);
-		os_printf("result_inode: %d\n", result_inode->inum);
-		os_printf("inode_spaceholder: %d\n", inode_spaceholder->inum);
+		sd_receive((void*)inode_spaceholder, ((inum/INODES_PER_BLOCK)+FS->start_inode_table_loc)*BLOCKSIZE); // the firs	
+		os_printf("inode_spaceholder->inum: %d\n", inode_spaceholder->inum);
+		//os_memcpy((uint32_t*)inode_spaceholder, (uint32_t*)result_inode, (os_size_t)inode_size);
+		result_inode = inode_spaceholder;
+		os_printf("result_inode->inum: %d\n", result_inode->inum);
 		kfree(inode_spaceholder);
 		// need to implement an eviction policy/function to update the inode_table_cache...
 		// this will function w/o it, but should be implemented for optimization
@@ -337,9 +336,9 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 //finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	os_printf("Starting inum is %d\n", starting_inum);
-	int current_inum = starting_inum;
+	int current_inum = starting_inum; //which is 0
 	int a;
-
+	os_printf("loop will be executed %d times\n", (dir_levels-1));
 	for(a = 0; a < dir_levels-1; a++) {
 		int k = 1;
 		char next_path[MAX_NAME_LENGTH] = {0};
@@ -1121,17 +1120,16 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		return ERR_INVALID;	
 	}
 	int fd;
-	int inum = 1;///test
+	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
 	os_printf("BEGIN Kfind_dir\n\n");
 	kfind_dir(filepath, result);
 	os_printf("BEGIN kfind_inode\n\n");
 	kfind_inode(result->truncated_path, inum, result->dir_levels, cur_inode);
-os_printf("END kfind_inode\n\n");
+	os_printf("END kfind_inode\n\n");
 	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
 	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
-	os_printf("T1\n\n");
 	if (free_inode_loc < 0) {
 		os_printf("Disk has reached max number of files allowed. \n");
 		kfree(cur_inode);
@@ -1140,7 +1138,6 @@ os_printf("END kfind_inode\n\n");
 		kfree(result);
 		return ERR_FULL;
 	}
-	os_printf("T2\n\n");
 	bv_set(free_inode_loc, inode_bitmap);
 	os_printf("T3\n\n");
 	struct inode* new_inode = (struct inode*) kmalloc(sizeof(struct inode)); // Create the new inode
@@ -1565,7 +1562,8 @@ int kls(char* filepath) {
 	struct dir_helper* result = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
 	kfind_dir(filepath, result); 
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
-	error = kfind_inode(filepath, inum, (result->dir_levels + 1), cur_inode);
+	error = kfind_inode(filepath, inum, result->dir_levels, cur_inode);
+	os_printf("in kls, cur_inode->inum = %d \n", cur_inode->inum);
 	if (error < 0 || cur_inode->is_dir == 0) {  //kfind_inode unsuccessful or cannot ls
 		if (error < 0) { //kfind
 			os_printf("kfind_inode unsuccessful \n"); 
