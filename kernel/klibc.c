@@ -275,20 +275,22 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 // 	print_uart0(buf);
 // 	return n;
 // }
+//void *userdata, void *data, uint32_t datalength
 
-void printf_receiver(void *userdata, void *data, uint32_t datalength)
+void printf_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
+	//print_uart0("in printf_receiver\n");
 	int i;
 	char *s = (char*)data;
 	//print_uart0(data);
-	for (i=0; i<datalength; i++) {
+	for (i=0; i<length; i++) {
 		print_char_uart0(s[i]);
 	}
 }
 
 int os_printf(const char *str_buf, ...)
 {
-	 // print_uart0("in os_printf\n");
+	 //print_uart0("in os_printf\n");
 	// int i;
 	// char *s = (char*)str_buf;
 	// for (i=0; i<sizeof(str_buf); i++) {

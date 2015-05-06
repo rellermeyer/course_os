@@ -23,6 +23,7 @@ void q_create(char q_name[])
     print_uart0("initialized queue\n");
     if (initialized != 0){
         initialized = 0;
+
         q_table = ht_alloc(5000);
         ht_add(q_table, q_name, (void*)q);
     }else{
@@ -53,7 +54,6 @@ uint32_t q_open(char q_name[])
     q_map[next] = result;
     uint32_t qd = next;
     next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
-    
     return qd;
 }
 // Adding message to queue
@@ -67,7 +67,7 @@ uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
     return 0;
 }
 
-uint32_t q_subscribe(uint32_t qd, void (*receiver)(void *userdata, void *data, uint32_t datalength), void *userdata)
+uint32_t q_subscribe(uint32_t qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void *userdata)
 {
     struct subscriber *user = 0x0;
     user->userdata = userdata;
@@ -82,16 +82,20 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
     //get exact available space
     void *startingPoint = data;
     
-    print_uart0(startingPoint);
+    //print_uart0("in q send\n");
     // uint32_t spaceAvail = spaceAvailable();
     uint32_t spaceAvail = 1028;
     struct queue *q = q_map[qd];
     while (datalength > spaceAvail) {
+        print_uart0("in while loop\n");
+        q->receiver(1, 2, startingPoint, spaceAvail);
         startingPoint = (uint32_t)&startingPoint + spaceAvail;
-        
-        q->receiver(q->subscriber->userdata, startingPoint, spaceAvail);
         datalength = datalength - spaceAvail;
     } 
+    if(datalength > 0){
+        //q->subscriber->userdata
+        q->receiver(1, 2, startingPoint, datalength);
+    }
     //TODO: delete data after sending
     
 }
@@ -136,12 +140,12 @@ void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength)
             buf[buf_index] = ((uint32_t*) reply_q->data)[data_index];
             buf_index++;
         }
-        reply_q->receiver(reply_q->subscriber->userdata, reply_q->data, reply_q->datalen);
+        reply_q->receiver(reply_q->subscriber->userdata, 2, reply_q->data, reply_q->datalen);
     }
 }
 
 // attaches an asynchronous receiver to the reply
-void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, void *data, uint32_t datalength))
+void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length))
 {
    struct queue *reply_q = q_map[reply_qd];
    reply_q->receiver = receiver;
@@ -152,16 +156,17 @@ void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(void *userdata, vo
 //     reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
 // }
 
-void q_init(char q_name[], void* data, void(*receiver)(void * userdata, void * data, uint32_t datalength), void* userdata)
-{
-    q_create(q_name);
-    uint32_t qd = q_open(q_name);
-    q_publish(qd, (uint32_t*) data, sizeof(data));
-    q_subscribe(qd, &receiver, (void*) userdata);
-}
+// void q_init(char q_name[], void* data, void(*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void* userdata)
+// {
+//     q_create(q_name);
+//     uint32_t qd = q_open(q_name);
+//     q_publish(qd, (uint32_t*) data, sizeof(data));
+//     q_subscribe(qd, &receiver, (void*) userdata);
+// }
 
 void sample_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
+    //print_uart0("In Sample receiver. this is registered in scheduler.\n");
     int i;
     char *s = (char*)data;
     for (i=0; i<length; i++) {
@@ -201,6 +206,7 @@ void parent_reciever(uint32_t parent_tid, uint32_t tid)
 void q_test()
 {
     // test client
+    os_printf("this is a test\n");
     print_uart0("in q_test\n");
     q_create("printf");
 	int qd = q_open("printf");
@@ -226,6 +232,8 @@ void q_test()
     sched_init();
     kthr_start(kthr_create(&parent_reciever));
     kthr_yield();
+    q_send(qd, mydata, sizeof(mydata));
+    mydata = "sup g\n";
     q_send(qd, mydata, sizeof(mydata));
 
 
