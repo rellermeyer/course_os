@@ -91,8 +91,8 @@ os_size_t sum_stored();
  * Returns: The ID pointer - bit vector index - of where the swap_space was stored and 
  * changes the ID pointer that value as well. Returns NULL on failure
  */
-uint32_t *vm_swapin_page(void*, uint32_t*);
-uint32_t *vm_swapout_page(void*, uint32_t*);
+uint32_t *vm_swapout_page(void*, uint32_t*); // store the page
+uint32_t *vm_swapin_page(void*, uint32_t*); // retrieve the page
 
 
 /* vm_register/vm_deregister will activate/deactivate a swap space and set a priority
