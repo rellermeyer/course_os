@@ -5,12 +5,12 @@
 
 struct node{
 	struct node *next;
-	struct swap_entry *e_head;
+//	struct swap_entry *e_head;
 	uint8_t lower_bits; // swap space ID [8-bits]
-	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
+//	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
 	uint8_t priority; // lower is better 
-        uint32_t *store_func;
-        uint32_t *retrieve_func;
+        func store_func;
+        func retrieve_func;
 }; // Total: 12 bytes
 
 static struct node *head;
@@ -53,11 +53,11 @@ struct node* pqueue_index(int);
  */
 uint32_t pqueue_peek(int);
 
-/* pqueue_find finds the actual index of the swap space ID 
- * (or lower_bit value)
- * Return: index of found value
+/* pqueue_find finds the actual index of the swap space ID (lower_bit value)
+ *
+ * Return: returns the found node specified or 0 if not found
  */ 
-//int pqueue_find(int);
+struct node* pqueue_find(uint8_t);
 
 
 #endif
