@@ -12,8 +12,6 @@ void swap_init()
 	holder = (struct swap_space*) kmalloc(sizeof(struct swap_space));	
 }
 
-uint32_t *store_page_LZ(void *page, uint32_t *ID);
-
 uint32_t *store_page(void *page, uint32_t *ID)
 {
 	uint8_t lowbits = *((uint32_t*)page) & 0x000000FF;
@@ -24,7 +22,12 @@ uint32_t *store_page(void *page, uint32_t *ID)
 	return ID;
 }
 
-uint32_t *store_page_LZ(void *page, uint32_t *ID);
+uint32_t *store_page_LZ(void *page, uint32_t *ID)
+{
+		
+	memory_count+=4096;
+	return ID;
+}
 
 uint32_t *retrieve_page(void *page, uint32_t *ID)
 {
@@ -36,16 +39,22 @@ uint32_t *retrieve_page(void *page, uint32_t *ID)
 	return ID;
 }
 
+uint32_t *retrieve_page_LZ(void *page, uint32_t *ID)
+{
+
+	memory_count-=4096;
+	return ID;
+}
+
 os_size_t sum_stored()
 {
 	return memory_count;
 }
 
-uint32_t *vm_swapin_page(void *page, uint32_t *ID)
+uint32_t *vm_swapout_page(void *page, uint32_t *ID)
 {
 	struct node *swap_area;
 	uint8_t ssid = *((uint32_t*)page) & 0x000000FF;
-//	uint32_t sse = *((uint32_t*)page) & 0xFFFFFF00; 
 	
 	// check if swap space exists
 	if ((swap_area = pqueue_find(ssid)) == NULL){ 
@@ -62,19 +71,22 @@ uint32_t *vm_swapin_page(void *page, uint32_t *ID)
 	return swap_area->store_func(page, ID);
 }
 
-uint32_t *vm_swapout_page(void *page, uint32_t *ID)
+uint32_t *vm_swapin_page(void *page, uint32_t *ID)
 {
-	
+	uint8_t ssid = *((uint32_t*)page) & 0x000000FF;
+	struct node *swap_area = pqueue_find(ssid);
+	return swap_area->retrieve_func(page, ID);
 }
 
 int8_t vm_register_swap_space(func store_p, func retrieve_p, int priority, uint8_t ssid)
 {	
 	/* waiting on fs team to increase 16 page limit, parameters 
-	   SHOULD be (PAGE_ENTRIES, ssid) or (sse, ssid) */ 
+	   SHOULD be (PAGE_ENTRIES, ssid) or (sse, ssid) but may not work */ 
 
 	if (priority == 1) {
 		swapfs_init(PAGE_ENTRIES, ssid);
 	}
+	
 	holder->lower_bits = ssid;
 	holder->priority = priority;
 	holder->store_func = store_p;
@@ -87,7 +99,24 @@ void vm_deregister_swap_space(uint8_t ssid)
 	 pqueue_pop_at(ssid);
 }
 
-uint32_t vm_page_fault(void *page);
+uint32_t vm_page_fault(void *page){
+	/* TODO:
+	 * check if memory is full and needs to evict a page from RAM
+	 * figure out which page to evict than evict that page
+	 * page in the new page (done.)
+	 */	
+	uint8_t ssid = *((uint32_t*)page) & 0x000000FF;
+	uint32_t ss_entry = *((uint32_t*)page) & 0xFFFFFF00;
+	struct node *swap_area = pqueue_find(ssid);
+	// load memory back into RAM
+	swap_area->retrieve_func(page, &ss_entry);
+	struct vas *vm_current_vas = (struct vas*)V_L1PTBASE;	
 
-//uint32_t* vm_scan_pages(void *page, uint32_t *ID);
+//	lastly, update the page table
+//	uint32_t *pptr = VM_ENTRY_GET_L2(VM_L1_GET_ENTRY(vm_get_current_vas()->l1_pagetable, page));
+	
+
+}
+
+
 
