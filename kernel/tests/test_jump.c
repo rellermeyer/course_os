@@ -9,11 +9,9 @@ int test_jump_1() {
 
 	jmp_buf buf;
 
-	/*int x = 1;
-	while(x);*/
-
 	int retval = jmp_set(&buf);
-	os_printf("retval=%d\n",retval);
+	DEBUG("retval=%d\n",retval);
+
 	if(retval == 5){
 		return TEST_OK;
 	}

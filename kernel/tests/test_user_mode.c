@@ -1,6 +1,6 @@
 #include "../include/tests.h"
 #include "../include/klibc.h"
-#include "../include/tests/test_jump.h"
+#include "../include/tests/test_user_mode.h"
 #include <global_defs.h>
 
 #define NUM_TESTS 1

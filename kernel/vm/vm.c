@@ -314,7 +314,6 @@ struct vas *vm_new_vas() {
 	struct vas *p = (struct vas*)vm_vas_free_list;
 	vm_vas_free_list = vm_vas_free_list->next;
 
-	os_printf("vm_l1pt_free_list=%X\n",vm_l1pt_free_list);
 	p->l1_pagetable = (uint32_t*)vm_l1pt_free_list;
 	vm_l1pt_free_list = vm_l1pt_free_list->next;
 
