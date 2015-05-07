@@ -237,11 +237,7 @@ uint32_t process_execute(pcb* pcb_p) {
 
 	//Copy the current process's program counter to the new process's return register
 	//The new process will use R14 to return to the parent function
-
 	pcb_p->R14 = pcb_p->R15;
-
-	//Should be disabled once scheduler is working to prevent spam
-	DEBUG("PID---->: %d\n", pcb_p->PID);
 
 	//assert(1==2 && "process.c - We're stopping right after loading process state.");
 	//4-15-15: Since execute_process is for new processes only, stored_vas must be empty 
@@ -402,7 +398,7 @@ void __process_init_stack(pcb * pcb_p) {
 	// We need to set sp (r13) to stack_top - 12
 	pcb_p->R13 = STACK_TOP + argc_index * sizeof(char*);
 
-#define TEST_ARGS 1
+// #define TEST_ARGS
 #ifdef TEST_ARGS
 	uint32_t * args = (uint32_t*) (pcb_p->R13);
 	char ** argv = (char **) (args + 1);

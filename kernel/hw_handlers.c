@@ -86,8 +86,6 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
 	vm_use_kernel_vas();
 
-	DEBUG("R0[0x%X]\n", pre_swi_state.R0);
-
 //	DEBUG("SWI HANDLER [0x%X(%d)]\n", call_num, call_num);
 
 	switch (call_num) {
@@ -167,12 +165,6 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 			ret = sched_post_message(r0, r1, r2, r3);
 			break;
 		}
-		case SYSCALL_PRCS_YIELD: {
-			LOG("SYSCALL_PRCS_YIELD\n");
-			sched_update_task_state(sched_get_active_tid(), &pre_swi_state);
-			ret = sched_yield();
-			break;
-		}
 		case SYSCALL_MALLOC: {
 			DEBUG("SYSCALL_MALLOC\n");
 			ret = umalloc(r0);
@@ -210,12 +202,18 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 			DEBUG("SYSCALL_PRCS_FORK\n");
 			break;
 		}
+		case SYSCALL_PRCS_YIELD: {
+			LOG("SYSCALL_PRCS_YIELD\n");
+			sched_update_task_state(sched_get_active_tid(), &pre_swi_state);
+			ret = sched_yield();
+			break;
+		}
 		case SYSCALL_PRINTF: {
 			// TODO Bug if you use PRINTF_COPY_ADDR
 #define PRINTF_COPY_ADDR 0x8f000000
 			vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
 					VM_PERM_PRIVILEGED_RW);
-			DEBUG("[%d] %s", (char* ) r1, r0);
+			DEBUG("[%X] %s", (char* ) r1, r0);
 			vm_free_mapping(KERNEL_VAS, (void*) r0);
 			ret = STATUS_OK;
 			break;

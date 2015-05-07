@@ -12,6 +12,6 @@ int printf(const char *restrict fmt, ...) {
 	va_list vl;
 	va_start(vl, 1);
 	long val = va_arg(vl, long);
-	long error = __syscall2(SYSCALL_PRINTF, fmt, val);
+	long error = __syscall(SYSCALL_PRINTF, fmt, val);
 	return error;
 }

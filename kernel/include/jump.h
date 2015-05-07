@@ -30,7 +30,7 @@ typedef struct jmp_buf {
 } jmp_buf;
 
 uint32_t jmp_set(jmp_buf * buffer);
-uint32_t  jmp_goto(jmp_buf * buffer,
-		uint32_t value);
+uint32_t jmp_goto(jmp_buf * buffer, uint32_t value);
+void jmp_print(jmp_buf * buffer);
 
 #endif /* KERNEL_INCLUDE_JUMP_H_ */

@@ -71,26 +71,6 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
 		int argc, char ** argv);
 void __sched_emit_messages();
 
-// TODO move this out of there
-void jmp_print(jmp_buf * buffer) {
-	DEBUG("r0[0x%X]\n", buffer->R0);
-	DEBUG("r1[0x%X]\n", buffer->R1);
-	DEBUG("r2[0x%X]\n", buffer->R2);
-	DEBUG("r3[0x%X]\n", buffer->R3);
-	DEBUG("r4[0x%X]\n", buffer->R4);
-	DEBUG("r5[0x%X]\n", buffer->R5);
-	DEBUG("r6[0x%X]\n", buffer->R6);
-	DEBUG("r7[0x%X]\n", buffer->R7);
-	DEBUG("r8[0x%X]\n", buffer->R8);
-	DEBUG("r9[0x%X]\n", buffer->R9);
-	DEBUG("r10[0x%X]\n", buffer->R10);
-	DEBUG("r11[0x%X]\n", buffer->R11);
-	DEBUG("r12[0x%X]\n", buffer->R12);
-	DEBUG("r13[0x%X]\n", buffer->R13);
-	DEBUG("r14[0x%X]\n", buffer->R14);
-	DEBUG("r15[0x%X]\n", buffer->R15);
-}
-
 // Initialize the scheduler. Should be called by the kernel ONLY
 uint32_t sched_init() {
 	vm_use_kernel_vas();
@@ -230,10 +210,6 @@ void __sched_dispatch() {
 	if (active_task) {
 		if (IS_KTHREAD(active_task)) {
 			if (jmp_set(&active_task->jmp_buffer)) {
-				//	LOG("Loading tid: %d; Returning to %X\n", active_task->tid,
-				//			active_task->ret);
-				//	jmp_print(&active_task->jmp_buffer);
-				// while(active_task);
 				return;
 			}
 		}
@@ -300,7 +276,6 @@ void __sched_dispatch() {
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
-			//  jmp_print(&active_task->jmp_buffer);
 			jmp_goto(&active_task->jmp_buffer, TASK_RESUME);
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;

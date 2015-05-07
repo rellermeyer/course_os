@@ -10,7 +10,7 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 
-OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process/process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_array_list.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o process/scheduler.o data_structures/array_list.o data_structures/linked_list.o threads/kthreads.o tests/test_kthreads.o jump.o tests/test_process.o  tests/test_sched_process.o data_structures/hashtable.o mq/streams.o tests/test_user_mode.o process/process.asm.o hw_handlers.asm.o
+OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process/process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_array_list.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o process/scheduler.o data_structures/array_list.o data_structures/linked_list.o threads/kthreads.o tests/test_kthreads.o jump.asm.o jump.o tests/test_process.o  tests/test_sched_process.o data_structures/hashtable.o mq/streams.o tests/test_user_mode.o process/process.asm.o hw_handlers.asm.o
 
 all: flash.bin card.sd
 
@@ -67,8 +67,8 @@ course_os.img: kernel.img
 startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
-jump.o: jump.s
-	$(AS) -mcpu=arm1176jzf-s -g jump.s -o jump.o
+jump.asm.o: jump.asm.s
+	$(AS) -mcpu=arm1176jzf-s -g jump.asm.s -o jump.asm.o
 	
 process/process.asm.o: process/process.asm.s
 	$(AS) -mcpu=arm1176jzf-s -g process/process.asm.s -o process/process.asm.o
