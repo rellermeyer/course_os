@@ -83,7 +83,6 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
     void *startingPoint = data;
     
     //print_uart0("in q send\n");
-    // uint32_t spaceAvail = spaceAvailable();
     uint32_t spaceAvail = 1028;
     struct queue *q = q_map[qd];
     while (datalength > spaceAvail) {
@@ -100,15 +99,33 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
     
 }
 
+void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
+    //get exact available space
+    void *startingPoint = data;
+    
+    uint32_t spaceAvail = sched_get_message_space();
+    struct queue *q = q_map[qd];
+    while (datalength > spaceAvail) {
+        print_uart0("in while loop\n");
+        q->receiver(1, 2, startingPoint, spaceAvail);
+        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        datalength = datalength - spaceAvail;
+    } 
+    if(datalength > 0){
+        //q->subscriber->userdata
+        q->receiver(1, 2, startingPoint, datalength);
+    }
+}
+
 // block, waiting for a message from the queue
 // read entire message or no data at all
 uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
 {
     struct queue *current_queue = q_map[qd];
-    // // since NULL is undefined in the kernel, use 0x0 instead
-    // // need to use condition variables
-    // while (current_queue->data == 0x0)
-    //     // BLOCK! FIX
+    // since NULL is undefined in the kernel, use 0x0 instead
+    // need to use condition variables
+    while (current_queue->data == 0x0)
+        // BLOCK! FIX
     
     // check to see if data length is acceptable
     if (current_queue->datalen <= buflength) {
@@ -126,23 +143,50 @@ uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
     return 0;
 }
 
+
 // waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
-void q_wait_for_reply(uint32_t reply_qd, uint32_t *buf, uint32_t buflength)
+void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 {
-    // changed char msg[] to uint32_t reply_qd
-    // block while waiting for reply (condition variable)
     struct queue *reply_q = q_map[reply_qd];
-    // success data fits into buffer
-    if (reply_q->datalen <= buflength) {
-        uint32_t buf_index = *buf;
-        // read to buffer
-        for (uint32_t data_index = 0; data_index < reply_q->datalen; data_index++) {
-            buf[buf_index] = ((uint32_t*) reply_q->data)[data_index];
-            buf_index++;
-        }
-        reply_q->receiver(reply_q->subscriber->userdata, 2, reply_q->data, reply_q->datalen);
+    //get exact available space
+    void *startingPoint = data;
+    
+    //print_uart0("in q send\n");
+    uint32_t spaceAvail = 1028;
+    while (datalength > spaceAvail) {
+        print_uart0("in while loop\n");
+        reply_q->receiver(1, 2, startingPoint, spaceAvail);
+        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        datalength = datalength - spaceAvail;
+    } 
+    if (datalength > 0){
+        //q->subscriber->userdata
+        reply_q->receiver(1, 2, startingPoint, datalength);
     }
 }
+
+
+// waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
+void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
+{
+    struct queue *reply_q = q_map[reply_qd];
+    //get exact available space
+    void *startingPoint = data;
+    
+    //print_uart0("in q send\n");
+    uint32_t spaceAvail = sched_get_message_space();
+    while (datalength > spaceAvail) {
+        print_uart0("in while loop\n");
+        reply_q->receiver(1, 2, startingPoint, spaceAvail);
+        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        datalength = datalength - spaceAvail;
+    } 
+    if (datalength > 0){
+        //q->subscriber->userdata
+        reply_q->receiver(1, 2, startingPoint, datalength);
+    }
+}
+
 
 // attaches an asynchronous receiver to the reply
 void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length))
@@ -151,10 +195,6 @@ void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, 
    reply_q->receiver = receiver;
 }
 
-// void q_reply_send(uint32_t reply_qd, void* data, uint32_t data_length) {
-//     struct queue *reply_qd = q_map[reply_qd];
-//     reply_qd->receiver(reply_qd->subscriber->userdata, data, data_length);
-// }
 
 // void q_init(char q_name[], void* data, void(*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void* userdata)
 // {
@@ -235,6 +275,10 @@ void q_test()
     q_send(qd, mydata, sizeof(mydata));
     mydata = "sup g\n";
     q_send(qd, mydata, sizeof(mydata));
+
+    q_create("reply");
+    int reply_qd = q_open("reply");
+    q_subscribe_to_reply(reply_qd, &child_receiver);
 
 
     // kthr_yield();
