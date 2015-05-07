@@ -60,8 +60,8 @@ typedef enum PROCESS_STATE
 #define PROC_LOCATION	0x9ff00000
 #define STACK_SIZE 		(BLOCK_SIZE)
 #define STACK_TOP 		(STACK_BASE + STACK_SIZE)
-#define HEAP_BASE		0x9f0f0000	
-#define PROGRAM_BASE	0x003e8000
+#define HEAP_BASE		0x90000000	
+
 
 
 typedef struct pcb

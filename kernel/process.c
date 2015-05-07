@@ -4,6 +4,7 @@
 #include "loader.h"
 #include "vm.h"
 #include "elf.h"
+#include "mem_alloc.h"
 static uint32_t GLOBAL_PID;
 
 uint32_t sample_func(uint32_t);
@@ -287,11 +288,13 @@ uint32_t free_PCB(pcb* pcb_p) {
 	return 1;
 }
 
-
-/* executes a process function
-   return PID upon success
-   return 0 upon failure
-*/
+/**
+ * Executes a process
+ *
+ * @param  pointer to a process control blocl
+ * @param  pcb* pcb_p
+ * @return pcb PID
+ */
 uint32_t execute_process(pcb* pcb_p) {
 	
 	if(!pcb_p) {
@@ -331,19 +334,6 @@ uint32_t execute_process(pcb* pcb_p) {
 	while(1);
 	return pcb_p->PID;
 }
-
-//executes a process function
-//return 1 upon success
-//return 0 upon failure
-// uint32_t execute_process_no_vas(pcb* pcb_p) {
-//     if(!pcb_p) {
-//         os_printf("Cannot execute process. Exiting.\n");
-//         return 0;
-//     }
-//     pcb_p->has_executed = 1;
-//     pcb_p->function(pcb_p->PID);
-//     return 1;
-// }
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {
@@ -422,19 +412,7 @@ void init_proc_stack(pcb * pcb_p)
 	}
 }
 void init_proc_heap(pcb* pcb_p){
-	//Initial page allocation for a process heap in VAS
-	print_process_state(pcb_p->PID);
-	os_printf("PCB Vas: %x\n",pcb_p->stored_vas);
-	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
-	os_printf("This Vas: %x\n",vm_get_current_vas());
-    if (retval) {
-        os_printf("vm_allocate_page error code: %d\n", retval);
-    }
-    else{
-    	os_printf("A page have been allocated for process heap at vptr: 0x%x\n",(void*) HEAP_BASE);
-
-    }
-    os_printf("PID---->: %d\n",pcb_p->PID);
-    //assert(0 ==1 && "FUCK");
-    print_process_state(pcb_p->PID);
+	//from mem_alloc.c
+	init_process_heap(pcb_p->stored_vas);
+	os_printf("User Level Heap for Process PID %d initialized\n",pcb_p->PID);  
 }
