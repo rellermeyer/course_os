@@ -4,7 +4,8 @@
 #include "../arch/arm/syscall_arch.h"
 
 int process_yield() {
-	return (int) __syscall(SYSCALL_PRCS_YIELD);
+	__asm volatile("add sp, #8");
+	return (int) __syscall0(SYSCALL_PRCS_YIELD);
 }
 
 int process_listen(
