@@ -1,64 +1,127 @@
 #include "tests.h"
 #include "klibc.h"
-#include "../include/file.h"
+#include "file.h"
 
 int test_fs_1()
 {
-	os_printf("\n\n\n...........................................\n");
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	// Test kfind_dir real quick...
+	//retval = kcreate("/", 0xFF, 1);
+	//os_printf("%d\n", retval);
+	// int fd = kcreate("/", 'w', 1);
+	// return 0;
 
+	// int fd2 = kcreate("/foo", 'w', 1);
+	os_printf("=======================================================================================");
+	os_printf("\n\nCREATING /cat\n");
+	int fd2_b = kcreate("/cat", 'w', 1);
 
-	os_printf("\ncreating file in root -----------------------------------------\n");
-	int fd2 = kcreate("/file", 'w', 0);
-	os_printf("fd returned by creating file %d -----------------------------------------\n", fd2);
-	kls("/");
+	os_printf("=======================================================================================");
+	os_printf("\n\nCREATING /dog\n");
+	int fd2_c = kcreate("/dog", 'w', 1);
+	
+	os_printf("=======================================================================================");
+	os_printf("\n\nCREATING /sham\n");
+	int fd2_e = kcreate("/sham", 'w', 1);
 
-	os_printf("closing file -----------------------------------------\n");
-	int error = kclose(fd2);
-	os_printf("error from closing = %d \n", error);
+	os_printf("=======================================================================================");
+	os_printf("\n\nCREATING /foo\n");
+	int fd2 = kcreate("/foo", 'w', 1);
 
-	os_printf("\n\n\n...........................................\n");
+	os_printf("=======================================================================================");
+	os_printf("\n\nCREATING /hat\n");
+	int fd2_d = kcreate("/hat", 'w', 1);
 
-	os_printf("\n\nCreating folder -----------------------------------------\n");
+	os_printf("=======================================================================================");
+	// int fd2 = kcreate("/smash", 'w', 1);
+	os_printf("\n\nCREATING /foo/bar.txt\n");
+	int fd3 = kcreate("/foo/bar.txt", 'w', 0);
 
-	int fd1 = kcreate("/folder", 'w', 1);
-	os_printf("fd returned by creating folder %d -----------------------------------------\n", fd1);
+	int fd10 = kcreate("/foo/comp", 'w', 1);
+	// int fd11 = kcreate("/foo/comp/sci", 'w', 1);
+	// int fd12 = kcreate("/foo/comp/sci/lem.csv", 'w', 0);
 
-	os_printf("\ncreating file -----------------------------------------\n");
-	int fd3 = kcreate("/folder/file", 'w', 0);
-	os_printf("fd returned by creating file %d -----------------------------------------\n", fd2);
+	os_printf("=======================================================================================");
+	os_printf("\n\n\nCREATING /foo/zabanga.txt\n");
+	int fd4 = kcreate("/foo/zabanga.txt", 'w', 0);
 
-	os_printf("closing file -----------------------------------------\n");
+	// int fd3 = kcreate("/foo/test.txt", 'w', 0);
+
+	// os_printf("END OF CREATE\n");
+	// kclose(fd);
 	kclose(fd3);
+	kclose(fd2);
 
-
-
-
-
-	// os_printf("\nOpening file...\n");
-	// fd = kopen("/foo/bar.txt", 'w');
-	// os_printf("file descriptor is: %d\n", fd);
-	// os_printf("\nWriting string to file...\n");
-	// char *s = "Hello, world I'm testing right now...!\n";
-	// kwrite(fd, s, os_strlen(s));
+	kclose(fd2_b);
+	kclose(fd2_c);
+	kclose(fd2_d);
+	kclose(fd2_e);
+	kclose(fd4);
+	// kclose(fd12);
 	// kclose(fd);
-	// //while(1);
+	/*os_printf("\n\n*****************1\n\n");
+	int fd = kcreate("/foo", 'w', 1);
+	os_printf("\n\n*****************2\n\n");
+	int fda = kcreate("/foo/bar.txt", 'w', 0);
+	os_printf("\n\n*****************3\n\n");
 
-	// // Okay, now we should be able to open it.
-	// os_printf("\nOpening previous file...\n");
-	// fd = kopen("/foo/bar.txt", 'r');
 
-	// // And read from it
-	// os_printf("\nReading from file...\n");
-	// char buf[256];
-	// int nbytes = kread(fd, buf, 256);
-	// os_printf("Read %d bytes from file.\n", nbytes);
-	// os_printf("the buffer is: '%s'\n", buf);
-
+	os_printf("\n\n*****************4\n\n");
+	int fd4 = kcreate("/foo/dog", 'w', 1);
+	os_printf("\n\n*****************5\n\n");
+	int f5 = kcreate("/foo/dog/cat", 'w', 1);
+	os_printf("\n\n*****************6\n\n");
+	int f6 = kcreate("/foo/dog/cat/rat.txt", 'w', 0);
+	os_printf("\n\n*****************7\n\n");
+	// int fdb = kcreate("/foo/bar/jam.txt", 'w', 0);
+	// os_printf("We have two file descriptors, fd2 is: %d fd is: %d\n", fd2, fd);
+	// kclose(fdb);
+	// kclose(fda);
 	// kclose(fd);
+	// kclose(fd2);
+	kclose(fda);
+	*/
 
-	// // Test kls, just for grins. :)
-	// //os_printf("\nRunning kls...\n");
-	// //kls("/");
+//here
+	os_printf("\n\n\n******************************************7\n");
+	os_printf("\n a Opening file...\n");
+	
+	// int fd13 = kopen("/foo/comp/sci/lem.csv", 'w');
+	int fd_new = kopen("/foo/bar.txt", 'w');
+	os_printf("file descriptor is: %d\n", fd_new);
+	os_printf("\nWriting string to file...\n");
+	char *s = "Hello, worloooooooooooood I'm JJJKLKKKKKKKKKUUUUUU testing right now...!";
+	char *t = "HELLO IM TESTING THE lemons.csv file! here is lotttttttttttttttttttttttttttttttttttttssssssssssss ooooooofffffffff tttttttttteeeeeeexxxxxxttttt";
+	kwrite(fd_new, s, os_strlen(s));
+	// kwrite(fd13, t, os_strlen(t));
+	kclose(fd_new);
+	// kclose(fd13);
+	// while(1);
+
+	// Okay, now we should be able to open it.
+	os_printf("\neeeeee Opening previous file...\n");
+	int fd_znew = kopen("/foo/bar.txt", 'r');
+	// int fd_g = kopen("/foo/comp/sci/lem.csv", 'w');
+
+	// And read from it
+	os_printf("\nReading from file...\n");
+	char buf[256];
+	// char buf_two[256];
+
+	int nbytes = kread(fd_znew, buf, 256);
+	// int nbytes_two = kread(fd_g, buf_two, 256);
+	os_printf("Read %d bytes from file.\n", nbytes);
+	os_printf("the buffer is: '%s'\n", buf);
+
+	// os_printf("222222 Read %d bytes from file2.\n", nbytes_two);
+	// os_printf("the buffer is: '%s'\n", buf_two);
+
+	kclose(fd_znew);
+	// kclose(fd_g);
+//here
+	// Test kls, just for grins. :)
+	//os_printf("\nRunning kls...\n");
+	//kls("/"); */
 
 	return 0;
 }
