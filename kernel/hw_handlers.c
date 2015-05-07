@@ -233,21 +233,21 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	case SYSCALL_MALLOC:
 		os_printf("malloc system call called!\n");
 		//Assuming that the userlevel syscall wrappers work		
-		//retrieve args of malloc, put in r1, pass to malloc 
+		//retrieve args of malloc, put in r0, pass to malloc 
 		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
 		ptr = umalloc(byte_size);
 		//I want to return the pointer to the beggining of allocated block(s);
 		return (long) ptr;
 		break;
 
-	case SYSCALL_ALLIGNED_ALLOC:
-		os_printf("alligned_alloc system call called!\n");
+	case SYSCALL_ALIGNED_ALLOC:
+		os_printf("aligned_alloc system call called!\n");
 		//Assuming that the userlevel syscall wrappers work
 		uint32_t allign;
-		//retrieve args of malloc, put in r1, pass to malloc 
+		//retrieve args of malloc, put in r0, pass to malloc 
 		asm volatile("mov r1, %[allign1]":[allign1]"=r" (allign)::);
 		asm volatile("mov r0, %[byte_size1]":[byte_size1]"=r" (byte_size)::);
-		ptr = ualligned_alloc(byte_size,allign);
+		ptr = ualigned_alloc(byte_size,allign);
 		//I want to return the pointer to the beggining of allocated block(s);
 		return (long) ptr;
 		break;
@@ -256,8 +256,6 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		os_printf("Free system call called!\n");
 		asm volatile("mov r0, %[ptr1]":[ptr1]"=r" (ptr)::);
 		ufree(ptr);
-		os_printf("\n\n ptr: %x \n\n",ptr);
-		os_printf("\n\n long ptr: %x \n\n",(long)ptr);
 		return 0;
 		break;	
 

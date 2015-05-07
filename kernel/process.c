@@ -288,11 +288,13 @@ uint32_t free_PCB(pcb* pcb_p) {
 	return 1;
 }
 
-
-/* executes a process function
-   return PID upon success
-   return 0 upon failure
-*/
+/**
+ * Executes a process
+ *
+ * @param  pointer to a process control blocl
+ * @param  pcb* pcb_p
+ * @return pcb PID
+ */
 uint32_t execute_process(pcb* pcb_p) {
 	
 	if(!pcb_p) {
@@ -332,19 +334,6 @@ uint32_t execute_process(pcb* pcb_p) {
 	while(1);
 	return pcb_p->PID;
 }
-
-//executes a process function
-//return 1 upon success
-//return 0 upon failure
-// uint32_t execute_process_no_vas(pcb* pcb_p) {
-//     if(!pcb_p) {
-//         os_printf("Cannot execute process. Exiting.\n");
-//         return 0;
-//     }
-//     pcb_p->has_executed = 1;
-//     pcb_p->function(pcb_p->PID);
-//     return 1;
-// }
 
 //test function to see if execute process works correctly.
 uint32_t sample_func(uint32_t x) {
