@@ -12,31 +12,33 @@ int test_fs_1()
 	// return 0;
 
 	// int fd2 = kcreate("/foo", 'w', 1);
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	os_printf("\n\nCREATING /cat\n");
 	int fd2_b = kcreate("/cat", 'w', 1);
 
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	os_printf("\n\nCREATING /dog\n");
 	int fd2_c = kcreate("/dog", 'w', 1);
 	
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	os_printf("\n\nCREATING /sham\n");
 	int fd2_e = kcreate("/sham", 'w', 1);
 
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	os_printf("\n\nCREATING /foo\n");
 	int fd2 = kcreate("/foo", 'w', 1);
 
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	os_printf("\n\nCREATING /hat\n");
 	int fd2_d = kcreate("/hat", 'w', 1);
 
-	os_printf("=======================================================================================");
+	os_printf("==================================================================================");
 	// int fd2 = kcreate("/smash", 'w', 1);
 	os_printf("\n\nCREATING /foo/bar.txt\n");
 	int fd3 = kcreate("/foo/bar.txt", 'w', 0);
 
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /foo/comp\n");
 	int fd10 = kcreate("/foo/comp", 'w', 1);
 	// int fd11 = kcreate("/foo/comp/sci", 'w', 1);
 	// int fd12 = kcreate("/foo/comp/sci/lem.csv", 'w', 0);
@@ -44,6 +46,14 @@ int test_fs_1()
 	os_printf("=======================================================================================");
 	os_printf("\n\n\nCREATING /foo/zabanga.txt\n");
 	int fd4 = kcreate("/foo/zabanga.txt", 'w', 0);
+
+	os_printf("=======================================================================================");
+	os_printf("\n\n\nCREATING /foo/comp/testington.txt\n");
+	int fd5 = kcreate("/foo/comp/testington.txt", 'w', 0);
+
+
+	os_printf("\nDONE CREATING FILES\n");
+	os_printf("=======================================================================================");
 
 	// int fd3 = kcreate("/foo/test.txt", 'w', 0);
 
@@ -57,6 +67,7 @@ int test_fs_1()
 	kclose(fd2_d);
 	kclose(fd2_e);
 	kclose(fd4);
+	kclose(fd5);
 	// kclose(fd12);
 	// kclose(fd);
 	/*os_printf("\n\n*****************1\n\n");
@@ -88,36 +99,43 @@ int test_fs_1()
 	
 	// int fd13 = kopen("/foo/comp/sci/lem.csv", 'w');
 	int fd_new = kopen("/foo/bar.txt", 'w');
+	int fd_new2 = kopen("/foo/comp/testington.txt", 'w');
 	os_printf("file descriptor is: %d\n", fd_new);
 	os_printf("\nWriting string to file...\n");
 	char *s = "Hello, worloooooooooooood I'm JJJKLKKKKKKKKKUUUUUU testing right now...!";
 	char *t = "HELLO IM TESTING THE lemons.csv file! here is lotttttttttttttttttttttttttttttttttttttssssssssssss ooooooofffffffff tttttttttteeeeeeexxxxxxttttt";
 	kwrite(fd_new, s, os_strlen(s));
+	kwrite(fd_new2, t, os_strlen(t));
 	// kwrite(fd13, t, os_strlen(t));
 	kclose(fd_new);
+	kclose(fd_new2);
 	// kclose(fd13);
 	// while(1);
 
 	// Okay, now we should be able to open it.
 	os_printf("\neeeeee Opening previous file...\n");
 	int fd_znew = kopen("/foo/bar.txt", 'r');
+	int fd_znew2 = kopen("/foo/comp/testington.txt", 'r');
 	// int fd_g = kopen("/foo/comp/sci/lem.csv", 'w');
 
 	// And read from it
 	os_printf("\nReading from file...\n");
 	char buf[256];
-	// char buf_two[256];
-
+	os_memset(&buf, 0, 256);
 	int nbytes = kread(fd_znew, buf, 256);
-	// int nbytes_two = kread(fd_g, buf_two, 256);
 	os_printf("Read %d bytes from file.\n", nbytes);
 	os_printf("the buffer is: '%s'\n", buf);
-
-	// os_printf("222222 Read %d bytes from file2.\n", nbytes_two);
-	// os_printf("the buffer is: '%s'\n", buf_two);
-
 	kclose(fd_znew);
-	// kclose(fd_g);
+	
+	os_printf("\nReading from file2...\n");
+	char buf2[256];
+	os_memset(&buf2, 0, 256);
+	nbytes = kread(fd_znew2, buf2, 256);
+	os_printf("Read %d bytes from file.\n", nbytes);
+	os_printf("the buffer is: '%s'\n", buf2);
+	kclose(fd_znew2);
+
+
 //here
 	// Test kls, just for grins. :)
 	//os_printf("\nRunning kls...\n");
