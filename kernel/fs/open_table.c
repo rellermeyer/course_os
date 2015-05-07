@@ -1,16 +1,7 @@
-/**
- * @file Open File Table
- * @author  Ginevra Gaudioso
- * @version 1.0
- *
- * @section DESCRIPTION
- *
- * This file contains the table of open files, implemented as an array
- * with methods like add_to_opentable and delete_from_opentable to be called in 
- * open and close Since methods are provided, other files should not touch 
- * neither the free LL or the arrray, but just use the premade methods. 
- *
- */
+//This file contains the table of open files, implemented as an array
+// with methods like add_to_opentable and delete_from_opentable to be called in open and close 
+//Since methods are provided, other files should not touch neither the free LL or the arrray, 
+// but just use the premade methods. 
 
 #include "file.h"
 #include "klibc.h"
@@ -18,27 +9,15 @@
 #include "bitvector.h"
 #include <stdint.h>
 
-/**
- * Initialize Open File Table
- *
- * Called by file.c initialization function, initializes free list and table
- */
-//
+
+//called by file.c initialization function, initializes free list and table
 void fs_table_init() {
         open_table_free_list = make_vector(SYSTEM_SIZE); //create bitvector of free indexes
         table = (struct file_descriptor**)kmalloc(SYSTEM_SIZE * (sizeof(struct file_descriptor*))); //malloc the table
 	os_memset(table, 0, SYSTEM_SIZE * (sizeof(struct file_descriptor*)));
 }
 
-/**
- * Shutdown Open Table
- *
- * Clears out all files currently listed in the table (includes files
- * that users never closed) then, upon shutdown, memory with the free 
- * list is freed
- *
- */
-//
+//at shutdown, memory with the free list is freed
 void fs_table_shutdown() {
         bv_free(open_table_free_list);
         int i;
@@ -53,21 +32,9 @@ void fs_table_shutdown() {
         kfree(table);
 }
 
-/**
- * Get file descriptor index from table
- *
- * returns struct of descriptor at index fd
- * if invalid, returns NULL.
- *
- * @param  
- * 
- * int fd - index of file descriptor to get from the table
- *
- * @return 
- * If there is a corresponding file descriptor at the specified index
- * this function returns that descriptor; otherwise returns 0
- *
- */
+
+//returns struct of descriptor at index fd
+//if invalid, returns NULL.
 struct file_descriptor* get_descriptor(int fd){
 	if (file_is_open(fd)) {
 		return table[fd];
@@ -75,25 +42,8 @@ struct file_descriptor* get_descriptor(int fd){
 	return 0x0;
 }
 
-/**
- * Add an entry to the open table
- *
- * this function can be used to insert a file in the table
- * and returns the requested index if successful, else -1 
- *
- * @param  
- *
- * struct inode* f - the file decriptor to add to the open table
- *
- * @param  
- * 
- * char perm - the permissions belonging to the new entry 
- *
- * @return 
- * 
- * Returns the index to the entry in the open table if file was successfully opened
- * otherwise returns -1
- */
+// this function can be used to insert a file in the table
+// and returns the requested index if successful, else -1 
 int add_to_opentable(struct inode * f, char perm) {
         int fd = (int) bv_firstFree(open_table_free_list); //gets free index from bitvector
         if (fd == -1) {
@@ -125,20 +75,9 @@ int add_to_opentable(struct inode * f, char perm) {
         return fd;
 }
 
-/**
- * Delete an entry from the open table
- *
- * this function can be used to delete a file from the list
- *
- * @param 
- * 
- *  int fd - index of the file descriptor to remove
- *
- * @return 
- * 
- * Returns 0 if the file descriptor was succefully removed; otherwise
- * returns -1
- */
+
+//this function can be used to delete a file from the list
+//returns 0 if all ok, -1 if wrong
 int delete_from_opentable(int fd) {
         if (!file_is_open(fd)) {
                 return -1; //invalid entry
@@ -152,18 +91,7 @@ int delete_from_opentable(int fd) {
         return 0;
 }
 
-/**
- * Checks to see whether the file is open or not
- *
- * @param  
- *
- * int fd - index of the file descriptor to check
- *
- * @return 
- * 
- * Returns 1 if the index exists in the open table, otherwise
- * returns 0
- */
+
 //this function checks whether the file is open or not
 int file_is_open(int fd) {
 	if (fd<0 || fd>=SYSTEM_SIZE) { 
