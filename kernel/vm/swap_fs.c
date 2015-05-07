@@ -45,7 +45,7 @@ int64_t swapfs_store(void *page, uint32_t *id, uint8_t ssid)
 {
 	int32_t fd; char *swapfile; int32_t b;
 	// Get the index to store the page into
-	*id = (( *((uint32_t*) page) >> 9) << 9); 
+	*id =  *((uint32_t*) page) & 0xFFFFFF00; 
 		
 	if ((b = bv_isfree(*id, bv_arr[ssid])) <= 0) {
 		if (b == -1) {
