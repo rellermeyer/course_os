@@ -43,12 +43,4 @@ void q_init(char q_name[], void* data, void(*receiver)(uint32_t src_tid, uint32_
 void q_test();
 /*to add other functions below*/
 
-
-
-/*possibly draw some ideas from below functions*/
-//uint32_t create_buffer(Stream *bs, uint32_t lenth);
-//uint32_t remaining_bytes(Stream *bs);
-//void clear(Stream *bs);
-//uint32_t put_element(Stream* bs, uint32_t ele);
-//uint32_t get_element(Stream* bs, uint32_t loc);
 #endif
