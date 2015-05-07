@@ -50,6 +50,7 @@ uint32_t q_open(char q_name[])
         next = 0;
     }
     struct queue *result = ht_get(q_table, q_name);
+    result->isStreaming = 0;
     result->qd = result;
     q_map[next] = result;
     uint32_t qd = next;
@@ -81,9 +82,7 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
     //get exact available space
     void *startingPoint = data;
-    
-    //print_uart0("in q send\n");
-    uint32_t spaceAvail = 1028;
+    uint32_t spaceAvail = 512;
     struct queue *q = q_map[qd];
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
@@ -101,20 +100,24 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
 
 void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
     //get exact available space
-    void *startingPoint = data;
+    struct queue *q = q_map[qd];
+    if(! q->isStreaming){//checks if data is still being transmitted
+        q->startingPoint = data;
+    }
+    q->isStreaming = 1;
     
     uint32_t spaceAvail = sched_get_message_space();
-    struct queue *q = q_map[qd];
+    
     while (datalength > spaceAvail) {
-        print_uart0("in while loop\n");
-        q->receiver(1, 2, startingPoint, spaceAvail);
-        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        q->receiver(1, 2, q->startingPoint, spaceAvail);
+        q->startingPoint = (uint32_t)&(q->startingPoint) + spaceAvail;
         datalength = datalength - spaceAvail;
     } 
     if(datalength > 0){
         //q->subscriber->userdata
-        q->receiver(1, 2, startingPoint, datalength);
+        q->receiver(1, 2, q->startingPoint, datalength);
     }
+    q->isStreaming = 0;
 }
 
 // block, waiting for a message from the queue
@@ -152,7 +155,7 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
     void *startingPoint = data;
     
     //print_uart0("in q send\n");
-    uint32_t spaceAvail = 1028;
+    uint32_t spaceAvail = 512;
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
         reply_q->receiver(1, 2, startingPoint, spaceAvail);
@@ -170,21 +173,24 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 {
     struct queue *reply_q = q_map[reply_qd];
-    //get exact available space
-    void *startingPoint = data;
+    if(! reply_q->isStreaming){//checks if data is still being transmitted
+        reply_q->startingPoint = data;
+    }
+    reply_q->isStreaming = 1;
     
-    //print_uart0("in q send\n");
     uint32_t spaceAvail = sched_get_message_space();
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
-        reply_q->receiver(1, 2, startingPoint, spaceAvail);
-        startingPoint = (uint32_t)&startingPoint + spaceAvail;
+        reply_q->receiver(1, 2, reply_q->startingPoint, spaceAvail);
+        reply_q->startingPoint = (uint32_t)&(reply_q->startingPoint) + spaceAvail;
         datalength = datalength - spaceAvail;
     } 
     if (datalength > 0){
         //q->subscriber->userdata
-        reply_q->receiver(1, 2, startingPoint, datalength);
+        reply_q->receiver(1, 2, reply_q->startingPoint, datalength);
     }
+
+    reply_q->isStreaming = 0;
 }
 
 
@@ -272,9 +278,9 @@ void q_test()
     sched_init();
     kthr_start(kthr_create(&parent_reciever));
     kthr_yield();
-    q_send(qd, mydata, sizeof(mydata));
+    q_send(qd, mydata, os_strlen(mydata));
     mydata = "sup g\n";
-    q_send(qd, mydata, sizeof(mydata));
+    q_send(qd, mydata, os_strlen(mydata));
 
     q_create("reply");
     int reply_qd = q_open("reply");

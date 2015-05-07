@@ -90,7 +90,7 @@ void start2(uint32_t *p_bootargs) {
 
 //	 ht_test();
 	 print_uart0("after ht_test\n");
-//	 q_test();
+	 q_test();
 	 print_uart0("after q_test\n");
 
 	// q_create("printf");

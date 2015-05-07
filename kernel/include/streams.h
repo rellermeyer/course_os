@@ -2,17 +2,13 @@
 #define __streams_h
 #include <stdint.h>
 
-//struct stream
-//{
-//	void *data;
-//	uint32_t length;
-//	uint32_t offset;
-//};
 
 struct queue
 {
 	void *data;
 	uint32_t datalen;
+    uint32_t isStreaming;
+    uint32_t *startingPoint;
 	char *q_name;
     struct queue *qd;
 	char *options;
@@ -29,7 +25,7 @@ struct subscriber
 //    uint32_t *next;//implement later if add multi- subscribers
 };
 
-void q_create(char q_name[]/*, char options[]*/);
+void q_create(char q_name[]);
 uint32_t q_open(char q_name[]);
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen);
 uint32_t receiver(uint32_t src_tid, uint32_t event, char * data, int length);
