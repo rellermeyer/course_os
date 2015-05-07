@@ -25,7 +25,7 @@
  */
 #include <stdint.h>
 #include <stdarg.h>
-#include <global_defs.h>
+#include "global_defs.h"
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;

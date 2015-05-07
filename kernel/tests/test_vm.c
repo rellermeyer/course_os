@@ -1,7 +1,7 @@
-#include "tests.h"
-#include "klibc.h"
-#include "memory.h"
-#include "vm.h"
+#include "../include/tests.h"
+#include "../include/klibc.h"
+#include "../include/memory.h"
+#include "../include/vm.h"
 
 #define NUM_TESTS 1
 
