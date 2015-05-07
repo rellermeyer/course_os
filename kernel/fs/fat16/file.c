@@ -140,8 +140,15 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	//initialize the free list by grabbing it from the SD Card:
 	inode_bitmap = make_vector(FS->max_inodes);
 	data_block_bitmap = make_vector(FS->max_data_blocks);
+
+	int m; //DEBUG
+	for(m = 0; m < FS->max_inodes; m++){ //DEBUG
+		bv_lower(m, inode_bitmap); //DEBUG
+	} //DEBUG
+
 	bv_set(0, inode_bitmap);
 	bv_set(0, data_block_bitmap);
+
 #if 0 // This will never work because of the nature of the bitmap structure, wherein we don't know inode_bitmap->vector :(
 	inode_bitmap = (bit_vector*) kmalloc(BLOCKSIZE); 
 	sd_receive((void*) inode_bitmap, (FS->inode_bitmap_loc) * BLOCKSIZE); // have a pointer 
@@ -526,8 +533,12 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	//if the cur_inode's array of direct data blocks has not reached max capacity, grab the last data block in the array to update:
 	if((cur_inode->direct_blocks_in_file <= MAX_DATABLOCKS_PER_INODE)  && (cur_inode->indirect_blocks_in_file == 0)) {
 		sd_receive((void*) dir_block, (cur_inode->data_blocks[(cur_inode->direct_blocks_in_file)-1] + FS->start_data_blocks_loc)*BLOCKSIZE);
+		os_printf("address for dir_block in sd_receive is: %d\n", ((cur_inode->data_blocks[(cur_inode->direct_blocks_in_file)-1] + FS->start_data_blocks_loc)*BLOCKSIZE)); //DEBUG
+		os_printf("dir_block->block_num: %d\n", dir_block->block_num); //DEBUG
 	}else{
 		//all the direct data blocks are full, so grab the last indirect block in the array of indirect blocks:
+		os_printf("ARE WE IN HERE???"); //DEBUG
+		while(1); //DEBUG
 		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1] + FS->start_data_blocks_loc)*BLOCKSIZE);
@@ -543,6 +554,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	os_strcpy(new_dir_entry.name, result->last);
 	new_dir_entry.name_length = os_strlen(result->last);
 
+	os_printf("______________________________________\n"); //DEBUG
+	os_printf("in add_dir_entry, cur_inode->inum: %d\n", cur_inode->inum); //DEBUG
+	os_printf("--------------------------------------\n"); //DEBUG
 	os_printf("in add_dir_entry, new_dir_entry.inum is: %d\n", new_dir_entry.inum); //DEBUGLINE
 	os_printf("in add_dir_entry, new_dir_entry.name is: %s\n", new_dir_entry.name); //DEBUGLINE
 	os_printf("in add_dir_entry, new_dir_entry.name_length is: %d\n", new_dir_entry.name_length); //DEBUGLINE
@@ -556,6 +570,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 		dir_block->num_entries++;
 		cur_inode->size += sizeof(struct dir_entry);
 		
+		os_printf("dir_block->block_num: %d\n", dir_block->block_num); //DEBUG
 		os_printf("dir_block->num_entries: %d\n", dir_block->num_entries); //DEBUG
 		os_printf("cur_inode->size: %d\n", cur_inode->size); //DEBUG
 
@@ -1209,7 +1224,11 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		new_inode->direct_blocks_in_file = 1;
 		
 		// Lay down the first (empty...) data block for the new directory (NOT root).
+		
+		// transmit_receive_bitmap(RECEIVE, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
 		int new_data_block_loc = bv_firstFree(data_block_bitmap);
+		//WHY ISNT THIS WORKING??? SHOULD NOT ALWAYS BE Block 0!!!!
+		os_printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n\n\nnew_data_block_loc is: %d\n\n\n\n\n\n\n\n\n\n", new_data_block_loc); //DEBUG
 		if(new_data_block_loc < 0){//disk is completley full
 				os_printf("ERROR! disk full\n");
 				return ERR_FULL;
@@ -1217,6 +1236,9 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		int block_address = (new_data_block_loc + FS->start_data_blocks_loc) * BLOCKSIZE;
 		bv_set(new_data_block_loc, data_block_bitmap);
 		
+		//WILL THIS FIX IT??????????		
+		transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
+
 		void *block = kmalloc(512);
 		os_memset(block, 0, 512);
 		struct dir_data_block ddb;
@@ -1225,6 +1247,8 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		os_memset(block, 0, 512);
 		os_memcpy((uint32_t*)&ddb, block, sizeof(struct dir_data_block));
 		sd_transmit((void*)block, block_address);
+		os_printf("block->block_num: %d\n", ((struct dir_data_block*)block)->block_num); //DEBUG
+		new_inode->data_blocks[0] = new_data_block_loc;
 		kfree(block);
 	}else{ 	/*	initialize the fields for new_inode that are different for dirs and leaves */
 		new_inode->is_dir = 0; 
@@ -1270,7 +1294,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	kfree(block);
 	// See above... We can't just do this.
 	//sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
-
+	kfree(new_inode);
 	kfree(cur_inode);
 	if (!is_this_a_dir) {
 		fd = add_to_opentable(new_inode, mode);
