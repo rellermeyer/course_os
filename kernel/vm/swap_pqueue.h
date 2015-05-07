@@ -1,7 +1,12 @@
 #ifndef __VM_SWAP_PQUEUE_H
 #define __VM_SWAP_PQUEUE_H
+
 #include <stdint.h>
 #include "swap_framework.h"
+
+
+/* Last Update: 05/06/15 */
+
 
 struct node{
 	struct node *next;
@@ -17,47 +22,60 @@ static struct node *head;
 static struct node *path; //tail
 static uint8_t s;
 
+
 /* pqueue_init initializes the priority queue with a given
  * swap_space type struct
  */
 void pqueue_init(struct swap_space*);
+
 
 /* pqueue_set does a deep copy of the value of the second
  * struct to the front struct
  */
 void pqueue_set(struct node*, struct swap_space*);
 
+
 /* pqueue_push pushes the swap_space struct onto the proper
  * index based on the priority found in the struct
  */
 void pqueue_push(struct swap_space*);
 
-/* pqueue_pop_front & pqueue_back pops a node from the head/back of 
- * the pqueue_pop_frontriority queue as well as freeing the given memory of the head/back
+
+/* pqueue_pop_front & pqueue_pop_back pops a node from the head/back of the 
+ * pqueue_pop_front priority queue as well as freeing the given memory of the 
+ * head/back
  */
 void pqueue_pop_front();
 void pqueue_pop_back();
+void pqueue_pop_at(uint8_t); // Note: 'at' ssid not index
 
-// pqueue_size returns the current size of the priority queue
+/* pqueue_size returns the current size of the priority queue */
 uint8_t pqueue_size();
 
-/* pqueue_index finds the given index of the priority queue 
- * and returns the struct of it
- */
-struct node* pqueue_index(int);
 
-/* returns the specified value from the head of the list
- * It 'peeks' at the head of the list for a specified value
+/* pqueue_index finds the given index of the priority queue
+ * 
+ * Returns: The struct of the given index in pqueue
+ * NOTE: THIS IS NOT THE SAME AS THE SWAP_SPACE STRUCT
+ */
+struct node *pqueue_index(int);
+
+
+/* It 'peeks' at the head of the list for a specified value
+ *
+ * Returns: The specified value from the head of the list
  * 0 - lower_bits
  * 1 - priority
  */
 uint32_t pqueue_peek(int);
 
+
 /* pqueue_find finds the actual index of the swap space ID (lower_bit value)
  *
- * Return: returns the found node specified or 0 if not found
+ * Returns: The found node specified or NULL if not found
+ * NOTE: THIS IS NOT THE SAME AS THE SWAP_SPACE STRUCT
  */ 
-struct node* pqueue_find(uint8_t);
+struct node *pqueue_find(uint8_t);
 
 
 #endif
