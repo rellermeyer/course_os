@@ -37,13 +37,13 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
-	os_printf("This is the start of allocate_process_memory().\n All it loads the process RORW into Kernel Heap\n We don't want that.\n");	
+	DEBUG("This is the start of allocate_process_memory().\n All it loads the process RORW into Kernel Heap\n We don't want that.\n");
 	os_size_t process_size = det_proc_size(h, ph);
 	void * process_mem = kmalloc_aligned(process_size, 4096);
 	void * current_pointer = process_mem;
 
-	os_printf("process size= %x\n", process_size);
-	os_printf("&process block= %x\n\n", (uint32_t)process_mem);
+	DEBUG("process size= %x\n", process_size);
+	DEBUG("&process block= %x\n\n", (uint32_t)process_mem);
 	//We're gonna copy each segment into memory at a position. Calculate what needs to done to change
 	//the entry_point to account for where we've placed something in memory
 	
@@ -92,7 +92,7 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 				//os_printf("entry addr = %x\n", h->e_entry);
 				//os_printf("prog header addr = %x\n", ph[i].p_vaddr);
 			}
-			os_printf("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
+			DEBUG("copying 0x%x bytes from 0x%x to 0x%x\n", ph[i].p_memsz, file_pointer+ph[i].p_offset, current_pointer);
 			// This copies the info from the elf file to memory
 			os_memcpy((uint32_t*) ((uint32_t)file_pointer + ph[i].p_offset), current_pointer, (os_size_t)ph[i].p_memsz);
 			current_pointer = (void*) ((uint32_t)current_pointer + ph[i].p_memsz);
@@ -115,16 +115,16 @@ void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file
 Elf_Ehdr* load_file(pcb * pcb_p, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *)kmalloc(sizeof(Elf_Ehdr)); // Get elf header
-	os_printf("elf header= %x\n", h);
+	// DEBUG("elf header= %x\n", h);
 	int i = read_elf_header(h, (unsigned char *)file_pointer);
 
 	if(i == -1) {
-		os_printf("File is Not an ELF File. Exiting\n");
+		ERROR("File is Not an ELF File. Exiting\n");
 		return 0;
 	}
 
 	if(h->e_phnum == 0) {
-		os_printf("No Program headers in ELF file. Exiting\n");
+		ERROR("No Program headers in ELF file. Exiting\n");
 		return 0;
 	}
 	

@@ -56,6 +56,8 @@
 #define SYSCALL_PRCS_LISTEN 18
 #define SYSCALL_PRCS_EMIT 19
 #define SYSCALL_PRCS_EXIT 20
+#define SYSCALL_PRCS_PID 21
+#define SYSCALL_PRCS_FORK 22
 
 void init_vector_table(void); 
 

@@ -152,7 +152,6 @@ uint32_t* process_get_pcb_address(uint32_t PID);
 uint32_t process_execute(pcb* pcb_p);
 uint32_t process_print_state(uint32_t PID);
 uint32_t process_set_umode_sp(uint32_t sp);
-uint32_t process_save_state(jmp_buf * buffer);
 uint32_t process_load_state(jmp_buf * buffer);
 
 void process_init(pcb* pcb_p);

@@ -241,7 +241,7 @@ void __sched_dispatch() {
 		prq_enqueue(active_tasks, active_task->node);
 	}
 
-	__sched_print_queues();
+	// __sched_print_queues();
 
 	if (!running) {
 		int ret = jmp_set(&start_buf);
@@ -295,7 +295,7 @@ void __sched_dispatch() {
 		active_task = (sched_task*) prq_dequeue(active_tasks)->data;
 	}
 
-	LOG("\n\nactive_task %d\n", active_task->tid);
+	LOG("active_task %d\n", active_task->tid);
 
 	if (IS_KTHREAD(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {

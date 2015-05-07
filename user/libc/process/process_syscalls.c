@@ -4,6 +4,7 @@
 #include "../arch/arm/syscall_arch.h"
 
 int process_yield() {
+	__asm volatile("pop { r0, r0 }");
 	return (int) __syscall0(SYSCALL_PRCS_YIELD);
 }
 
@@ -22,6 +23,14 @@ int process_emit(uint32_t dest_pid, uint32_t event, char * data, int len) {
 	return (int) error;
 }
 
-int process_exit(){
+int process_exit() {
 	return (int) __syscall0(SYSCALL_PRCS_EXIT);
+}
+
+int process_pid(){
+	return (int) __syscall0(SYSCALL_PRCS_PID);
+}
+
+int process_fork(){
+	return (int) __syscall0(SYSCALL_PRCS_FORK);
 }

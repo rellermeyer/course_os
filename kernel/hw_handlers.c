@@ -43,7 +43,7 @@ void init_vector_table(void) {
 
 /* handlers */
 void reset_handler(void) {
-	os_printf("RESET HANDLER\n");
+	DEBUG("RESET HANDLER\n");
 	_Reset();
 }
 
@@ -52,14 +52,14 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void) {
 	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
 		return;
 #endif
-	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
+	DEBUG("UNDEFINED INSTRUCTION HANDLER\n");
 }
 
 /*
  * enters sp mode and transfers the sp and lr registers to r0 and
  * r1 respectively
  */
-void hw_get_spmode_sp_lr();
+void hw_save_umode_banked_regs(jmp_buf *);
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	jmp_buf pre_swi_state;
@@ -73,18 +73,10 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	asm volatile("MOV %0, r5":"=r"(pre_swi_state.R5)::);
 	asm volatile("MOV %0, r6":"=r"(pre_swi_state.R6)::);
 	asm volatile("MOV %0, r7":"=r"(pre_swi_state.R7)::);
-	asm volatile("MOV %0, r8":"=r"(pre_swi_state.R8)::);
-	asm volatile("MOV %0, r9":"=r"(pre_swi_state.R9)::);
-	asm volatile("MOV %0, r10":"=r"(pre_swi_state.R10)::);
-	asm volatile("MOV %0, r11":"=r"(pre_swi_state.R11)::);
-	asm volatile("MOV %0, r12":"=r"(pre_swi_state.R12)::);
 
-	hw_get_spmode_sp_lr();
+	hw_save_umode_banked_regs(&pre_swi_state);
 
-	asm volatile("MOV %0, r0":"=r"(pre_swi_state.R13)::);
-	asm volatile("MOV %0, r1":"=r"(pre_swi_state.R14)::);
-
-	long ret = STATUS_FAIL;
+	int ret = STATUS_FAIL;
 	uint32_t r0 = pre_swi_state.R0;
 	uint32_t r1 = pre_swi_state.R1;
 	uint32_t r2 = pre_swi_state.R2;
@@ -94,71 +86,73 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
 	vm_use_kernel_vas();
 
-	os_printf("SWI HANDLER [0x%X(%d)]\n", call_num, call_num);
+	DEBUG("R0[0x%X]\n", pre_swi_state.R0);
+
+//	DEBUG("SWI HANDLER [0x%X(%d)]\n", call_num, call_num);
 
 	switch (call_num) {
 		case SYSCALL_DELETE: {
-			os_printf("SYSCALL_DELETE\n");
+			DEBUG("SYSCALL_DELETE\n");
 			ret = kdelete((char*) r0);
 			break;
 		}
 		case SYSCALL_OPEN: {
-			os_printf("SYSCALL_OPEN\n");
+			DEBUG("SYSCALL_OPEN\n");
 			ret = kopen((char*) r0, (char) r1);
 			break;
 		}
 		case SYSCALL_CREATE: {
-			os_printf("SYSCALL_CREATE\n");
+			DEBUG("SYSCALL_CREATE\n");
 			ret = kcreate((char*) r0, (char) r1, (int) 0);
 			break;
 		}
 		case SYSCALL_MKDIR: {
-			os_printf("SYSCALL_MKDIR\n");
+			DEBUG("SYSCALL_MKDIR\n");
 			ret = kcreate((char*) r0, 'w', 1);
 			break;
 		}
 		case SYSCALL_READ: {
-			os_printf("SYSCALL_READ\n");
+			DEBUG("SYSCALL_READ\n");
 			ret = kread((int) r0, (void*) r1, (int) r2);
 			break;
 		}
 		case SYSCALL_WRITE: {
-			os_printf("SYSCALL_WRITE\n");
+			DEBUG("SYSCALL_WRITE\n");
 			ret = kwrite(r0, r1, r2);
 			break;
 		}
 		case SYSCALL_CLOSE: {
-			os_printf("SYSCALL_CLOSE\n");
+			DEBUG("SYSCALL_CLOSE\n");
 			ret = kclose(r0);
 			break;
 		}
 		case SYSCALL_SEEK: {
-			os_printf("SYSCALL_SEEK\n");
+			DEBUG("SYSCALL_SEEK\n");
 			ret = kseek(r0, r1);
 			break;
 		}
 		case SYSCALL_COPY: {
-			os_printf("SYSCALL_COPY\n");
+			DEBUG("SYSCALL_COPY\n");
 			ret = kcopy(r0, r1, r2);
 			break;
 		}
 		case SYSCALL_LS: {
-			os_printf("SYSCALL_LS\n");
+			DEBUG("SYSCALL_LS\n");
 			ret = kls(r0);
 			break;
 		}
 		case SYSCALL_SET_PERM: {
 			LOG("SYSCALL_SET_PERM\n");
 			vm_use_kernel_vas();
-			os_printf("Set permission system call called!\n");
-			os_printf("Yet to be implemented\n");
+			DEBUG("Set permission system call called!\n");
+			DEBUG("Yet to be implemented\n");
 			ret = STATUS_FAIL;
 			break;
 		}
 		case SYSCALL_MEM_MAP: {
 			LOG("SYSCALL_MEM_MAP\n");
-			os_printf("Memory map system call called!\n");
-			os_printf("Yet to be implemented\n");
+			DEBUG("Memory map system call called!\n");
+			DEBUG("Yet to be implemented\n");
 			ret = STATUS_FAIL;
 			break;
 		}
@@ -175,50 +169,59 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		}
 		case SYSCALL_PRCS_YIELD: {
 			LOG("SYSCALL_PRCS_YIELD\n");
-			LOG("Yield - return to 0x%X\n", pre_swi_state.R14);
 			sched_update_task_state(sched_get_active_tid(), &pre_swi_state);
 			ret = sched_yield();
 			break;
 		}
 		case SYSCALL_MALLOC: {
-			os_printf("SYSCALL_MALLOC\n");
+			DEBUG("SYSCALL_MALLOC\n");
 			ret = umalloc(r0);
 			break;
 		}
 		case SYSCALL_CALLOC: {
-			os_printf("SYSCALL_CALLOC\n");
+			DEBUG("SYSCALL_CALLOC\n");
 			ret = ucalloc(r0, r1);
 			break;
 		}
 		case SYSCALL_FREE: {
-			os_printf("SYSCALL_FREE\n");
+			DEBUG("SYSCALL_FREE\n");
 			ufree(r0);
 			ret = STATUS_OK;
 			break;
 		}
 		case SYSCALL_SWITCH: {
-			os_printf("SYSCALL_SWITCH\n");
+			DEBUG("SYSCALL_SWITCH\n");
 			sched_remove_task(sched_get_active_tid());
 			ret = sched_yield();
 			break;
 		}
 		case SYSCALL_PRCS_EXIT: {
-			os_printf("SYSCALL_PRCS_EXIT\n");
+			DEBUG("SYSCALL_PRCS_EXIT\n");
 			sched_remove_task(sched_get_active_tid());
 			ret = sched_yield();
 			break;
 		}
+		case SYSCALL_PRCS_PID: {
+			DEBUG("SYSCALL_PRCS_PID\n");
+			ret = sched_get_active_tid();
+			break;
+		}
+		case SYSCALL_PRCS_FORK: {
+			DEBUG("SYSCALL_PRCS_FORK\n");
+			break;
+		}
 		case SYSCALL_PRINTF: {
+			// TODO Bug if you use PRINTF_COPY_ADDR
 #define PRINTF_COPY_ADDR 0x8f000000
-			vm_map_shared_memory(KERNEL_VAS, (void*) PRINTF_COPY_ADDR, prev_vas,
-					(void*) r0, VM_PERM_PRIVILEGED_RW);
-			os_printf("[%d] %s", (char*) r1, r0);
-			vm_free_mapping(KERNEL_VAS, (void*) PRINTF_COPY_ADDR);
+			vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
+					VM_PERM_PRIVILEGED_RW);
+			DEBUG("[%d] %s", (char* ) r1, r0);
+			vm_free_mapping(KERNEL_VAS, (void*) r0);
 			ret = STATUS_OK;
 			break;
 		}
 		default:
-			os_printf("SYSCALL_UNDEFINED\n");
+			DEBUG("SYSCALL_UNDEFINED\n");
 			break;
 	}
 
@@ -232,7 +235,7 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {
 	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
 		return;
 #endif
-	os_printf("PREFETCH ABORT HANDLER\n");
+	DEBUG("PREFETCH ABORT HANDLER\n");
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
@@ -240,19 +243,19 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
 		return;
 #endif
-	os_printf("DATA ABORT HANDLER\n");
+	DEBUG("DATA ABORT HANDLER\n");
 	int pc, lr, sp, fp;
 	// not sure this is correct syntax, did we [Spring 2015 do this?]
 	asm volatile("mov %0, pc" : "=r" (pc));
 	asm volatile("mov %0, lr" : "=r" (lr));
 	asm volatile("mov %0, sp" : "=r" (sp));
 	asm volatile("mov %0, fp" : "=r" (fp));
-	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
+	DEBUG("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
 
 	// Get the DSFR
 	int dsfr;
 	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
-	os_printf("DSFR: 0x%X\n", dsfr);
+	DEBUG("DSFR: 0x%X\n", dsfr);
 
 	switch (dsfr) {
 		case 6: // Access bit.
@@ -266,13 +269,13 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 }
 
 void reserved_handler(void) {
-	os_printf("RESERVED HANDLER\n");
+	DEBUG("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void) {
 
-	os_printf("IRQ HANDLER\n");
+	DEBUG("IRQ HANDLER\n");
 	disable_interrupts()
 	;
 
@@ -296,7 +299,7 @@ void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
 	if (++interrupt_count > ENABLE_MAX_INTERRUPT_COUNT)
 		return;
 #endif
-	os_printf("FIQ HANDLER\n");
+	DEBUG("FIQ HANDLER\n");
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4
 }
