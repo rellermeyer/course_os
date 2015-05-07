@@ -1,7 +1,4 @@
 #include "streams.h"
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <string.h>
 #include <stdint.h>
 #include "klibc.h"
 #include "hashtable.h"
@@ -64,7 +61,6 @@ uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
     struct queue *q = q_map[qd];
     q->data = data;
     q->datalen = datalen;
-    //Accessing elements of q throws an error
     return &(q->data);
 }
 
@@ -91,7 +87,6 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
         datalength = datalength - spaceAvail;
     } 
     if(datalength > 0){
-        //q->subscriber->userdata
         q->receiver(1, 2, startingPoint, datalength);
     }
     //TODO: delete data after sending
@@ -114,7 +109,6 @@ void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
         datalength = datalength - spaceAvail;
     } 
     if(datalength > 0){
-        //q->subscriber->userdata
         q->receiver(1, 2, q->startingPoint, datalength);
     }
     q->isStreaming = 0;
@@ -154,7 +148,6 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
     //get exact available space
     void *startingPoint = data;
     
-    //print_uart0("in q send\n");
     uint32_t spaceAvail = 512;
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
@@ -163,7 +156,6 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
         datalength = datalength - spaceAvail;
     } 
     if (datalength > 0){
-        //q->subscriber->userdata
         reply_q->receiver(1, 2, startingPoint, datalength);
     }
 }
@@ -186,7 +178,6 @@ void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t 
         datalength = datalength - spaceAvail;
     } 
     if (datalength > 0){
-        //q->subscriber->userdata
         reply_q->receiver(1, 2, reply_q->startingPoint, datalength);
     }
 
@@ -197,22 +188,16 @@ void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t 
 // attaches an asynchronous receiver to the reply
 void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length))
 {
+    print_uart0("entering subscr to reply\n");
    struct queue *reply_q = q_map[reply_qd];
    reply_q->receiver = receiver;
+   print_uart0("exiting subscr to reply\n");
 }
 
 
-// void q_init(char q_name[], void* data, void(*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void* userdata)
-// {
-//     q_create(q_name);
-//     uint32_t qd = q_open(q_name);
-//     q_publish(qd, (uint32_t*) data, sizeof(data));
-//     q_subscribe(qd, &receiver, (void*) userdata);
-// }
-
 void sample_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
-    //print_uart0("In Sample receiver. this is registered in scheduler.\n");
+    //print_uart0("In Sample receiver. \n");
     int i;
     char *s = (char*)data;
     for (i=0; i<length; i++) {
@@ -282,10 +267,16 @@ void q_test()
     mydata = "sup g\n";
     q_send(qd, mydata, os_strlen(mydata));
 
-    q_create("reply");
-    int reply_qd = q_open("reply");
-    q_subscribe_to_reply(reply_qd, &child_receiver);
 
+    q_subscribe(qd, printf_receiver, 0x0);
+    os_printf("about to create reply\n");
+    q_create("reply");
+    os_printf("successfully created reply\n");
+    int reply_qd = q_open("reply");
+    os_printf("successfully opened reply\n");
+    q_subscribe_to_reply(reply_qd, &child_receiver);
+    print_uart0("successfully subscribed to reply\n");
+    q_subscribe(qd, printf_receiver, 0x0);
 
     // kthr_yield();
     //char* word = "hello dog";

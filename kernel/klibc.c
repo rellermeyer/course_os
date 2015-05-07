@@ -279,6 +279,7 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 
 void printf_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
+	//print_uart0("in printf_receiver\n");
 	int i;
 	char *s = (char*)data;
 	for (i=0; i<length; i++) {
