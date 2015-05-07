@@ -99,7 +99,7 @@ uint32_t km_size();
 uint32_t kmcheck();
 
 void* umalloc(uint32_t size); //does user level malloc work
-void* ucalloc(uint32_t num, uint32_t size); //does user level calloc work
+void* ualligned_alloc(uint32_t size, uint32_t alignment); //does user level alligned_alloc work
 void  ufree(void*); //does user level free work
 
 int32_t abs(int32_t);
