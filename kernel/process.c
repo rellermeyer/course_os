@@ -293,7 +293,7 @@ uint32_t free_PCB(pcb* pcb_p) {
    return 0 upon failure
 */
 uint32_t execute_process(pcb* pcb_p) {
-	
+	assert(1==21);
 	if(!pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;

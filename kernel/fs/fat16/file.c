@@ -644,7 +644,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 
 		// note, this updates the buf_offset pointer as it transfer the data
 		// os_memcpy takes uint32_t* as arguments
-		os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 	
+		os_memcpy(transfer_space, buf_offset, (os_size_t) bytes_left); 
+		os_printf("RETURN 1 RIGHT HERE \n");	
 		return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left >= (BLOCKSIZE - local_offset))) {
@@ -659,6 +660,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 		 																// os_memcpy takes uint32_t* as arguments
 		 // reset transferSpace pointer
 		// transfer_space -= BLOCKSIZE;
+		 		os_printf("RETURN 2 RIGHT HERE BLOCKSIZE: %d\n", BLOCKSIZE -local_offset);	
+
 		 return (BLOCKSIZE - local_offset); // note, we are returning the number of bytes that were successfully transferred
 
 	} else if((local_offset > 0) && (bytes_left < (BLOCKSIZE - local_offset))){
@@ -673,6 +676,8 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 		 																// os_memcpy takes uint32_t* as arguments
 		 // reset transferSpace pointer
 		 transfer_space -= (local_offset + bytes_left);
+		 		os_printf("RETURN 3 RIGHT HERE \n");	
+
 		 return bytes_left; // note, we are returning the number of bytes that were successfully transferred
 
 	}
@@ -719,8 +724,12 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 	// start of higher-level algo:
 	if(num_bytes < BLOCKSIZE) {
 		while(bytes_read < num_bytes) {
-			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
+			int x = read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
+			bytes_read += x;
+			os_printf("RUNNING: %d HADLYRJKSDHF: %d\n", x, bytes_read);
 		}
+							os_printf("HELP ME\n");
+
 	} else if(num_bytes >= BLOCKSIZE) {
 		//Read in remainder of current block
 		bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
@@ -733,6 +742,7 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 			bytes_read += read_partial_block(c_inode, offset + bytes_read, buf, (num_bytes-bytes_read),transfer_space);
 		}
 	}//end else if
+
 	kfree(transfer_space);
 	return bytes_read;
 }
@@ -830,8 +840,8 @@ int kread(int fd_int, void* buf, int num_bytes) {
 		os_printf("no permission\n");
 		return ERR_PERM;
 	}
-
 	bytes_read = read_inode(fd->linked_file, fd->offset, buf_offset, num_bytes);
+
 	fd->offset += bytes_read;
 	return bytes_read;
 } // end kread();
