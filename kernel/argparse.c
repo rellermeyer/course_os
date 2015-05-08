@@ -51,6 +51,18 @@ void atag_print(struct atag *t)
 	}
 }
 
+/*
+	Pulls name, start location, and size of file from command line
+	Opens file for process, then moves the process from
+	file to a location in memory.
+	Creates a process using the start location of process,
+	enables the VAS for the process, sets up the stack and heap,
+	then executes it.
+	@param Character pointer to command line
+	@param char* cmdline
+
+*/
+
 static void argparse_parse(char *cmdline)
 {
 
