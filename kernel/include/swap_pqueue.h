@@ -10,13 +10,13 @@
 
 struct node{
 	struct node *next;
-//	struct swap_entry *e_head;
+	struct swap_entry *e_head;
 	uint8_t lower_bits; // swap space ID [8-bits]
 //	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) 
 	uint8_t priority; // lower is better 
         func store_func;
         func retrieve_func;
-}; // Total: 12 bytes
+}; // Total: 16 bytes
 
 static struct node *head;
 static struct node *path; //tail
