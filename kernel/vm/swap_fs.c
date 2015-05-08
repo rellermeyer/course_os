@@ -15,7 +15,7 @@ int32_t swapfs_init(int npages, uint8_t ssid)
 	
 	// making new files instead of a tree b/c the FS can't do it
 	char* swapfile;
-	sprintf(swapfile, "/swap%d", ssid); 
+	s,printf(swapfile, "/swap%d", ssid); 
 	
 	// The permissions parameter doesn't quite work right now (BUG?)
 	if (kcreate(swapfile, 'w', 1) < 0) {
