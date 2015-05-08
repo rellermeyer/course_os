@@ -12,7 +12,7 @@ struct node{
 	struct node *next;
 //	struct swap_entry *e_head;
 	uint8_t lower_bits; // swap space ID [8-bits]
-//	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) OR BOTH (0011 or 3)
+//	uint16_t flags; // SWP_USED (1000 or 1), SWP_WRITEOK (0010 or 2) 
 	uint8_t priority; // lower is better 
         func store_func;
         func retrieve_func;

@@ -25,6 +25,7 @@
 #define SWAP_SPACES (1<<8)
 #define PAGE_ENTRIES (1<<12) // Assuming 4kB Pages right now
 #define PAGE_SIZE (1<<12) // May carry an if statement later to account for different page sizes
+#define COMPRESSED_SIZE 10 // The size of compressing 16MiB of data
 
 typedef uint32_t *(*func)(void*, uint32_t*);
 
@@ -107,10 +108,10 @@ void vm_deregister_swap_space(uint8_t);
 
 /* Resolves the page fault and updates the corresponding page table
  *
- * Returns: The new resolved physical address of the page fault
- * NOTE: May return a 0 if the page_fault could not be resolved
+ * Returns: 0 if the page_fault could not be resolved
+ * 	    returns the new physical address of the loaded memory
  */
-uint32_t vm_page_fault(void*);
+uint32_t vm_page_fault_handler(void*);
 
 
 /* vm_scan_pages will scan through all pages for the corresponding page
