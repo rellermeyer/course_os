@@ -9,9 +9,16 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
+#<<<<<<< HEAD
+#OBJS= start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o
+PIOBJS = start_pi.o pi_light.o startup.o drivers/uart_pi.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
+#=======
 OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o
+#>>>>>>> febc0123f432391cb09b52c6b2a125a1f64a8680
 
 all: flash.bin card.sd
+
+make_Pi: kernelPi.img
 
 CFLAGS += -pipe
 CFLAGS += -std=gnu99 
@@ -19,7 +26,15 @@ CFLAGS += -ffreestanding
 CFLAGS += -nostdinc
 CFLAGS += -Wall
 #CFLAGS += -Werror
+#<<<<<<< HEAD
+PFLAGS += -mfpu=vfp
+#PFLAGS += -mfloat-abi=hard
+PFLAGS += -march=armv6zk
+PFLAGS += -mtune=arm1176jzf-s
+PFLAGS += -nostartfiles
+#=======
 CFLAGS += -g
+#>>>>>>> febc0123f432391cb09b52c6b2a125a1f64a8680
 
 run: flash.bin card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
@@ -39,7 +54,7 @@ flash.bin: kernel.img script.img
 
 # 32678*4096 = 128MiB
 card.sd: fs-cmdline userhello
-	dd if=/dev/zero of=card.sd conv=notrunc bs=512 count=250000
+	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
 	fs/cmdline/buildfs ../user/hello/
 
 userhello:
@@ -56,6 +71,15 @@ kernel.bin: kernel.elf
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
+
+# Begin Pi Make
+kernelPi.elf: $(PIOBJS)
+	$(CC) -T kernelPi.ld -O2 $(PFLAGS) $(PIOBJS) -o kernelPi.elf
+
+kernelPi.img: kernelPi.elf
+	$(OBJCOPY) kernelPi.elf -O binary kernelPi.img
+
+# End Pi Make
 
 script.img: uboot-commands.ubt
 	$(MKIMAGE) -A arm -C none -T script -d uboot-commands.ubt -a 0x10000 -e 0x10000 script.img
@@ -82,4 +106,4 @@ clean:
 	rm -f data_structures/*.o
 	rm -f mq/*.o
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
-	@echo "('rm card.sd')"
+	@echo "('rm sd.card')"
