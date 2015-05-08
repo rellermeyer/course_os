@@ -35,10 +35,11 @@
 // #include "scheduler.h"
 
 // Tests
-#include "tests/test_priority_queue.h"
-#include "tests/test_hash_map.h"
-#include "tests/test_mem_alloc.h"
-#include "tests/test_vm.h"
+#include "tests/test_klibc.h"
+#include "include/tests/test_hash_map.h"
+#include "include/tests/test_mem_alloc.h"
+#include "include/tests/test_vm.h"
+#include "include/tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -105,9 +106,9 @@ void start2(uint32_t *p_bootargs)
 	run_hmap_tests();
 
 	int retval;
-	kfs_init(0,0,0);
+	kfs_init(0,0,1);
 
-	//run_fs_tests();
+	run_fs_tests();
 
 	// int fd = kopen("/hello", 'r');
 	// os_printf("fd: %d\n", fd);
@@ -128,7 +129,7 @@ void start2(uint32_t *p_bootargs)
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
-	argparse_process(p_bootargs);
+	//argparse_process(p_bootargs);
 	
 
 	print_uart0("done parsing atag list\n");

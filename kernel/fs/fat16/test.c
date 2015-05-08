@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
 	buf +=4;
 
 	// 12 512000 512 2 100 900 11 12 333 444
+	fprintf("TESTING***************\n")
 	int fd = open("superblock_1.data", 'O_RDWR');
 	write(fd, original_buf, 512);
 	close(fd);	

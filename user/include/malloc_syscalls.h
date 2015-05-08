@@ -6,28 +6,40 @@
 *	    SYSCALLS for Malloc        *
 ************************************/
 
-#define SYSCALL_SET_PERM 7 
-#define SYSCALL_MEM_MAP 8
 #define SYSCALL_MALLOC 13
-#define SYSCALL_ALLIGNED_ALLOC 14
+#define SYSCALL_ALIGNED_ALLOC 14
 #define SYSCALL_FREE 15
 
 
-/***********************************
-*	   Functions for Malloc        *
-************************************/
 
-
-/*Malloc: Allocates a block of size bytesof memory. 
-Returns a pointer to the beggining of the block */  
+/**
+ * malloc does a system call to allocate memory on the user heap
+ *
+ * @param  size of the block of memory allocated
+ * @param  uint32_t size
+ * @return returns a pointer to the allocated block of memory
+ 		   returns 0 if size is less than 1;
+ */ 
 void* malloc(uint32_t size);
 
-/*alligned_alloc: Allocates a block of memory for an array of 
-num elements, each of them size bytes long. All bits
-are initalized to zero. Returns a pointer of the block*/
-void* alligned_alloc(uint32_t size, uint32_t alignment);
+/**
+ * aligned alloc does a system call to allocate memory on the user heap
+ * according to a specified alignemnt
+ *
+ * @param  size of the block of memory allocated, and alignment desired
+ * @param  uint32_t size >= 0, uint32_t alignment >=0
+ * @return returns a pointer to the allocated block of memory
+ * 		   that is a multiple of the specified allignement
+ *		   returns 0 if size or alignment are less than 1
+ */
+void* aligned_alloc(uint32_t size, uint32_t alignment);
 
-/*Free: Deallocates a block of memory previously
-allocated by Malloc, alligned_alloc, etc.. */
+/**
+ * free does a system call to free an allocated block of memory on the heap
+ *
+ * @param  pointer to a block of memeory on the heap
+ * @param  void* ptr
+ * @return nothing returned
+ */
 void free(void* ptr);
 

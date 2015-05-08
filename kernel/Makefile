@@ -54,7 +54,7 @@ flash.bin: kernel.img script.img
 
 # 32678*4096 = 128MiB
 card.sd: fs-cmdline userhello
-	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+	dd if=/dev/zero of=card.sd conv=notrunc bs=512 count=250000
 	fs/cmdline/buildfs ../user/hello/
 
 userhello:
@@ -106,4 +106,4 @@ clean:
 	rm -f data_structures/*.o
 	rm -f mq/*.o
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
-	@echo "('rm sd.card')"
+	@echo "('rm card.sd')"

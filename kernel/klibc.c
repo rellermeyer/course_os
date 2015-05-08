@@ -581,14 +581,30 @@ unsigned int rand()
     return (z1 ^ z2 ^ z3 ^ z4);
 }
 
-
+/**
+ * umalloc allocates memory on the user heap
+ *
+ * @param  size of the block of memory allocated
+ * @param  uint32_t size
+ * @return returns a pointer to the allocated block of memory
+ */
 void* umalloc(uint32_t size)
 {
-	void* block = (void*) proc_allocate(size, 0 /* unused */, 0 /* unused */);
+	void* block = (void*) proc_allocate(size);
 	return block;
 }
 
-void* ualligned_alloc(uint32_t size, uint32_t alignment)
+/**
+ * ualigned alloc allocates memory on the user heap
+ * according to a specified alignemnt
+ *
+ * @param  size of the block of memory allocated, and alignment desired
+ * @param  uint32_t size, uint32_alignment
+ * @return returns a pointer to the allocated block of memory
+ * 		   that is a multiple of the specified allignement 
+ */
+
+void* ualigned_alloc(uint32_t size, uint32_t alignment)
 {
 	void* block;
     void* ptr;
@@ -615,7 +631,14 @@ void* ualligned_alloc(uint32_t size, uint32_t alignment)
     }
 }
 
+/**
+ * free's an allocated block of memory on the heap
+ *
+ * @param  pointer to a block of memeory on the heap
+ * @param  void* ptr
+ * @return nothing returned
+ */
 void ufree(void* ptr)
 {
-	proc_deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
+	proc_deallocate((uint32_t*) ptr);
 }

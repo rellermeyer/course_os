@@ -21,4 +21,4 @@ void add_test(TEST test, TEST_SUITE *tests);
 void run_tests(TEST_SUITE tests);
 
 #endif
-*/
+

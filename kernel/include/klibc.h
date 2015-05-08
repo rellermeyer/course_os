@@ -25,7 +25,7 @@
  */
 #include <stdint.h>
 #include <stdarg.h>
-#include <global_defs.h>
+#include "global_defs.h"
 #ifndef __klibc_h
 #define __klibc_h
 typedef unsigned int os_size_t;
@@ -98,8 +98,33 @@ void kfree(void*);
 uint32_t km_size();
 uint32_t kmcheck();
 
+/**
+ * umalloc allocates memory on the user heap
+ *
+ * @param  size of the block of memory allocated
+ * @param  uint32_t size
+ * @return returns a pointer to the allocated block of memory
+ */
 void* umalloc(uint32_t size); //does user level malloc work
-void* ualligned_alloc(uint32_t size, uint32_t alignment); //does user level alligned_alloc work
+
+/**
+ * ualigned alloc allocates memory on the user heap
+ * according to a specified alignemnt
+ *
+ * @param  size of the block of memory allocated, and alignment desired
+ * @param  uint32_t size, uint32_alignment
+ * @return returns a pointer to the allocated block of memory
+ * 		   that is a multiple of the specified allignement 
+ */
+void* ualigned_alloc(uint32_t size, uint32_t alignment); //does user level aligned_alloc work
+
+/**
+ * free's an allocated block of memory on the heap
+ *
+ * @param  pointer to a block of memeory on the heap
+ * @param  void* ptr
+ * @return nothing returned
+ */
 void  ufree(void*); //does user level free work
 
 int32_t abs(int32_t);

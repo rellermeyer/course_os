@@ -116,6 +116,15 @@ uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
     return amt_added;
 }
 
+void* proc_allocate(uint32_t size)
+{
+    return alloc_allocate(proc_allocator, size);
+}
+
+void proc_deallocate(void* ptr)
+{
+    return alloc_deallocate(proc_allocator, ptr);
+}
 
 void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 {
@@ -126,17 +135,6 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 {
     return alloc_deallocate(allocator, ptr);
 }
-
-void* proc_allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
-{
-    return alloc_allocate(proc_allocator, size);
-}
-
-void proc_deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
-{
-    return alloc_deallocate(proc_allocator, ptr);
-}
-
 
 alloc_handle * mem_get_allocator(){
     return allocator;

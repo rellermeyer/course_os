@@ -4,7 +4,6 @@
 #include "loader.h"
 #include "vm.h"
 #include "elf.h"
-#include "mem_alloc.h"
 static uint32_t GLOBAL_PID;
 
 uint32_t sample_func(uint32_t);
@@ -352,6 +351,15 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
+/*
+Allocates memory in the process VAS, and 
+copies over the process to that location in memory
+
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
+
 void setup_process_vas(pcb* pcb_p){
 	
 	//		assert(1==15);
@@ -381,9 +389,16 @@ void setup_process_vas(pcb* pcb_p){
 
 
 }
+/*
+Allocated memory for the process stack
+Moves arguments for argc, argv, envp, and auxp
+into stack_top
 
-//Initial page allocation for process stack in VAS
-//Allows for a variety of stack limits
+Points stack pointer to location where stack_top would begin
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
 void init_proc_stack(pcb * pcb_p)
 {
 	int retval = 0;
