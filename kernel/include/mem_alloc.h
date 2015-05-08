@@ -12,6 +12,7 @@ Log
 #include <global_defs.h>
 
 #define MEM_START 0x500000
+<<<<<<< HEAD
 #define PROC_START 0x90000000	
 
 /**
@@ -22,11 +23,13 @@ Log
  * @param  struct vas* vas
  * @return returns status code (for error or for ok)
  */
+=======
+>>>>>>> master
 
 uint32_t init_heap();
-uint32_t init_process_heap();
 void *allocate(uint32_t, uint32_t* /*unused*/, int32_t/*unused*/);
 void deallocate(void*, uint32_t*/*unused*/, int32_t/*unused*/);
+<<<<<<< HEAD
 
 /**
  * Allocates memory on the heap for a process
@@ -45,6 +48,8 @@ void *proc_allocate(uint32_t);
  * @return nothing
  */
 void proc_deallocate(void*);
+=======
+>>>>>>> master
 alloc_handle* mem_get_allocator();
 int mem_check();
 uint32_t mem_get_heap_size();

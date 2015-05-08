@@ -1,9 +1,13 @@
-#include "tests.h"
-#include "tests/test_mem_alloc.h"
-#include "klibc.h"
-#include "vm.h"
+#include "../include/tests.h"
+#include "../include/tests/test_mem_alloc.h"
+#include "../include/klibc.h"
+#include "../include/vm.h"
 
 #define NUM_TESTS 1
+
+/*
+objects += .o files of testthen make blah blah blah of build targetof upper make file, will make kernel with tests
+*/
 
 int vm_count_free_frames();
 
