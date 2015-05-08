@@ -30,8 +30,8 @@ int32_t swapfs_disable(uint8_t);
  * uint32_t* ID -> The page ID or address
  *
  * Returns: The stored page's swap space ID, index OR -1 on failure
- * NOTE: Relying on the changed id pointer is safer than using the output (unless for error checking)
- * due to the int64_t type output
+ * NOTE: Relying on the changed id pointer is safer than using the output (unless 
+ * for error checking) due to the int64_t type output
  */
 int64_t swapfs_store(void*, uint32_t*, uint8_t);
 
