@@ -8,6 +8,10 @@ uint32_t buffer_size;
 alloc_handle * allocator;
 uint32_t __mem_extend_heap(uint32_t amt);
 
+alloc_handle * proc_allocator;
+uint32_t proc_buffer_size;
+uint32_t __mem_extend_proc_heap(uint32_t amt,struct vas* pvas);
+
 //bump pointer allocation
 void *mem_alloc(uint32_t size)
 {
@@ -72,6 +76,62 @@ uint32_t init_heap()
     return STATUS_OK;
 }
 
+/**
+ * Initializes a processes heap, in the same manner that the 
+ * kernel heap is initialized
+ *
+ * @param  pointer to virtual address space (the process's VAS)
+ * @param  struct vas* vas
+ * @return returns status code (for error or for ok)
+ */
+uint32_t init_process_heap(struct vas* vas)
+{
+    int retval = vm_allocate_page(vas, (void*) PROC_START, VM_PERM_USER_RW);
+    vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, vas, (void*)PROC_START, VM_PERM_USER_RW);
+    if (retval) {
+        os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+        return STATUS_FAIL;
+    }
+    else{
+        os_printf("Page allocated for process heap at %x:\n",PROC_START);
+    }
+
+    proc_buffer_size = BLOCK_SIZE;
+    proc_allocator = alloc_create((uint32_t*) PROC_START, proc_buffer_size, &__mem_extend_proc_heap);
+    vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
+    return STATUS_OK;
+}
+
+/**
+ * Extends the process heap
+ *
+ * @param  amount to extend the heap, process vas
+ * @param  uint32_t amt, struct vas* pvas
+ * @return returns amount added to heap
+ */
+uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
+{
+    uint32_t amt_added = 0;
+    while (amt_added < amt) 
+    {
+        int retval = vm_allocate_page(pvas, (void*) PROC_START, VM_PERM_USER_RW);
+        vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, pvas, (void*)PROC_START, VM_PERM_USER_RW);
+        if (retval) {
+            os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+            return STATUS_FAIL;
+        }
+        else{
+            os_printf("Page allocated for process heap at %x:\n",PROC_START);
+        }
+        amt_added += BLOCK_SIZE;
+        proc_buffer_size += BLOCK_SIZE;
+    }
+    
+    vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
+    return amt_added;
+}
+
+
 void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
 {
 	return alloc_allocate(allocator, size);
@@ -81,6 +141,30 @@ void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
 {
     return alloc_deallocate(allocator, ptr);
 }
+/**
+ * Allocates memory on the heap for a process
+ *
+ * @param  size of allocated memory
+ * @param  uint32_t size
+ * @return a pointer to allocated memory
+ */
+void* proc_allocate(uint32_t size)
+{
+    return alloc_allocate(proc_allocator, size);
+}
+
+/**
+ * Deallocates memory on the heap for a process
+ *
+ * @param  pointer to allocated memory
+ * @param  void* ptr
+ * @return nothing
+ */
+void proc_deallocate(void* ptr)
+{
+    return alloc_deallocate(proc_allocator, ptr);
+}
+
 
 alloc_handle * mem_get_allocator(){
     return allocator;
