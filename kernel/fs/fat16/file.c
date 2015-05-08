@@ -1308,15 +1308,14 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	kfree(block);
 	// See above... We can't just do this.
 	//sd_transmit((void*)inode_bitmap, FS->inode_bitmap_loc);
-	kfree(new_inode);
 	kfree(cur_inode);
 	if (!is_this_a_dir) {
 		fd = add_to_opentable(new_inode, mode);
 		return fd;
-	}
-	else { //directories are not added to open table
+	}else { //directories are not added to open table
 		os_printf("Directory Successfully added\n");
 		os_printf("but dirs are not added to open file table, so retunring SUCCESS, not an fd\n");
+		kfree(new_inode);
 		return SUCCESS;
 	}
 

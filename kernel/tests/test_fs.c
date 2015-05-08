@@ -2,6 +2,655 @@
 #include "klibc.h"
 #include "file.h"
 
+
+
+int test_fs_1()
+{
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	
+	int i, fd1;
+	for(i = 0; i < 800; i++){
+		os_printf("==================================================================================");
+		os_printf("\n\nCREATING /cat1\n");
+		fd1 = kcreate("/cat1", 'w', 1);
+	}//end for
+
+	os_printf("\n\nCREATING /cat1\n");
+	int fd2 = kcreate("/cat2.txt", 'w', 0);
+	
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	int error = kclose(fd2);
+	os_printf("kclose(fd for cat2.txt\n");
+
+	os_printf("\nDONE CREATING FILES\n");
+	os_printf("=======================================================================================");
+
+
+	os_printf("\nnow opening file: /cat2.txt\n");
+	int fd_new = kopen("/cat2.txt", 'w');
+	os_printf("file descriptor is: %d\n", fd_new);
+
+
+	// os_printf("\nWriting string to file...\n");
+	// char *s = "Hellooooooooooooooooooooooolllllllllllll";
+	// kwrite(fd_new, s, os_strlen(s));
+	kclose(fd_new);
+
+	// // Okay, now we should be able to open it.
+	// os_printf("\nOpening previous file...\n");
+	// int fd_znew = kopen("/cat12.txt", 'r');
+
+	// // And read from it
+	// os_printf("\nnow Reading from file...\n");
+	// char buf[256];
+	// os_memset(&buf, 0, 256);
+	// int nbytes = kread(fd_znew, buf, 256);
+	// os_printf("Read %d bytes from file.\n", nbytes);
+	// os_printf("the buffer is: '%s'\n", buf);
+	// kclose(fd_znew);
+
+	return 0;
+}//end test_fs_1()
+
+int test_fs_1_old()
+{
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	int fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	int fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	int fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	int fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	int fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	int fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	int fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	int fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	int fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	int fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	int fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	int fd11 = kcreate("/cat11", 'w', 1);
+	kclose(fd11);
+
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat11", 'w', 1);
+
+	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat0\n");
+	fd0 = kcreate("/cat0", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat1\n");
+	fd1 = kcreate("/cat1", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat2\n");
+	fd2 = kcreate("/cat2", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat3\n");
+	fd3 = kcreate("/cat3", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat4\n");
+	fd4 = kcreate("/cat4", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat5\n");
+	fd5 = kcreate("/cat5", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat6\n");
+	fd6 = kcreate("/cat6", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat7\n");
+	fd7 = kcreate("/cat7", 'w', 1);
+	
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat8\n");
+	fd8 = kcreate("/cat8", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\n\nCREATING /cat9\n");
+	fd9 = kcreate("/cat9", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be in the second direct block:\n");
+	os_printf("\n\nCREATING /cat10\n");
+	fd10 = kcreate("/cat10", 'w', 1);
+
+	os_printf("==================================================================================");
+	os_printf("\nThis should now be the second direct block also:\n");
+	os_printf("\n\nCREATING /cat11\n");
+	fd11 = kcreate("/cat12.txt", 'w', 0);
+	kclose(fd11);
+
+
+
+
+	os_printf("\nDONE CREATING FILES\n");
+	os_printf("=======================================================================================");
+
+	int fd_new = kopen("/cat12.txt", 'w');
+	os_printf("file descriptor is: %d\n", fd_new);
+	os_printf("\nWriting string to file...\n");
+	char *s = "Hellooooooooooooooooooooooolllllllllllll";
+	kwrite(fd_new, s, os_strlen(s));
+	kclose(fd_new);
+
+	// Okay, now we should be able to open it.
+	os_printf("\nOpening previous file...\n");
+	int fd_znew = kopen("/cat12.txt", 'r');
+
+	// And read from it
+	os_printf("\nnow Reading from file...\n");
+	char buf[256];
+	os_memset(&buf, 0, 256);
+	int nbytes = kread(fd_znew, buf, 256);
+	os_printf("Read %d bytes from file.\n", nbytes);
+	os_printf("the buffer is: '%s'\n", buf);
+	kclose(fd_znew);	
+
+	return 0;
+}//end test_fs1()
+
+
+/*
 int test_fs_1()
 {
 	os_printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n...........................................\n");
@@ -92,6 +741,7 @@ int test_fs_1()
 	// kclose(fd2);
 	kclose(fda);
 	*/
+	/*
 
 //here
 	os_printf("\n\n\n******************************************7\n");
@@ -140,9 +790,11 @@ int test_fs_1()
 	// Test kls, just for grins. :)
 	//os_printf("\nRunning kls...\n");
 	//kls("/"); */
-
+/*
 	return 0;
 }
+*/
+
 
 int test_fs_2() {
 	LOG("\nWriting a lot of data to /foobar2...\n");
