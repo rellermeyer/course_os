@@ -13,6 +13,7 @@
 // Function Prototypes
 void run_mmci(uint32_t cmd, uint32_t args);
 uint32_t read_mmci(uint32_t target);
+int status();
 int push_bytes(void* buffer);
 int pull_bytes(void* buffer);
 int init_sd();
