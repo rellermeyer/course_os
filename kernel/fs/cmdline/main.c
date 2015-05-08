@@ -4,7 +4,7 @@
 #include<string.h>
 
 void addFile(char *filename, char *dst_filename)
-{/*
+{
 	FILE *f = fopen(filename, "r");
 	kclose(kcreate(dst_filename, 'r', 0));
 	int fd = kopen(dst_filename, 'w');
@@ -15,18 +15,19 @@ void addFile(char *filename, char *dst_filename)
 	}
 	kclose(fd);
 	fclose(f);
-	*/
 }
 
 int main(int argc, char **argv)
-{/*
+{
+	int fd;
+
 	kfs_init(0,0,1);
 
 	// Create a file, I guess?
 	kclose(kcreate("/foobar", 'r', 0));
 
 	// Write to the file
-	int fd = kopen("/foobar", 'w');
+	fd = kopen("/foobar", 'w');
 	char *s = "Hello, world!";
 	kwrite(fd, s, strlen(s));
 	kclose(fd);
@@ -60,8 +61,5 @@ int main(int argc, char **argv)
 	fd = kopen("/hello", 'r');
 	printf("fd: %d\n", fd);
 	kclose(fd);
-*/
 	return 0;
-
-	
 }

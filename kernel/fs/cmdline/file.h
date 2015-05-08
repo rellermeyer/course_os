@@ -8,14 +8,15 @@
 
 #define BLOCKSIZE 512
 #define MAX_NAME_LENGTH 32
-#define MAX_DATABLOCKS_PER_INODE 68
+#define MAX_DATABLOCKS_PER_INODE 70
 #define DIR_ENTRY_SIZE 40
 #define MAX_NUM_INDIRECT_BLOCKS 50
 #define MAX_DATABLOCKS_PER_INDIRECT_BLOCK ((BLOCKSIZE/4)-2)
 #define MAX_DIR_ENTRIES_PER_DATA_BLOCK ((int)((BLOCKSIZE-4)/DIR_ENTRY_SIZE)-2)
 
+
 //error codes used in return:
-#define NULL 0x0 //null
+#define NULL ((void*)0) //null
 #define TRUE 1 //for a boolean like function
 #define FALSE 0 //for a boolean like function
 #define ERR_GEN -1 //general error
@@ -25,6 +26,7 @@
 #define ERR_SD -5 //sd card error
 #define ERR_PERM -6 //permission error
 #define SUCCESS 0 //no error
+
 
 //IMPORTANT!! ---------------------------------------------------------------------------------------------------
 //all constants are in units of block NUMBER																	|
@@ -62,10 +64,10 @@ struct inode {
 	int is_dir; // 1 if this is a directory, 0 if this is a file (4 bytes)
 	int usr_id; // id of the user who created the file (4 bytes)     ...not yet used!
 	int direct_blocks_in_file; // how many direct block are being used  (4 bytes)
-	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // array of data (now long 68)
+	int data_blocks[MAX_DATABLOCKS_PER_INODE]; // array of data (now long 70)
 	int indirect_blocks_in_file; // how many indirect block are being used  (4 bytes)
 	int indirect_blocks[MAX_NUM_INDIRECT_BLOCKS]; // 50*4 = 200 bytes ....50 indirect blocks right now 
-	bit_vector* perms; // permissions of the file (12 bytes)
+	bit_vector* perms; // permissions of the file (4 bytes)
 };
 
 struct indirect_block // total size is 1 block
@@ -122,7 +124,7 @@ int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // /* HELPER FUNCTIONS */
-
+int get_stats(char * filepath, struct stats * result);
 
 int kdelete_single_helper(struct inode * cur_inode);
 
@@ -176,4 +178,3 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes);
 
 
 #endif 
-
