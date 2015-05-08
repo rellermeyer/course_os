@@ -113,7 +113,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// retrieve the args that delete() put in r1 and pass to kdelete():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kdelete(), passing appropriate args:
-		error = kdelete(filepath);
+		error = kdelete(filepath,1);
 		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
 		return (long)error;
 		break;
