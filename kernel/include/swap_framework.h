@@ -30,7 +30,7 @@
 typedef uint32_t *(*func)(void*, uint32_t*);
 
 struct swap_space {
-//	struct swap_entry *e_head;
+	struct swap_entry *e_head; // currently only used for LZ swap
 //      uint16_t pages_free;
 	uint8_t lower_bits; // swap space ID [8-bits]
 //	uint16_t flags; // swp_used (1000 or 1), swp_writeok (0010 or 2) or both (0011 or 3)
@@ -39,14 +39,15 @@ struct swap_space {
 	func retrieve_func;
 }; // Total: 10 bytes
 
-//MAY OR MAY NOT NEED
-//struct swap_entry {
-	//struct swap_entry *next;
-	//uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
-	//uint16_t e_flags; // ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-        //uint8_t free; //0 - used, 1 - free
-        //void *page; // virtual address pointer used for resolving page faults
-//}; // Total: 15 bytes
+//MAY OR MAY NOT NEED; currently need for swap_lz, but leaves pointless swap_entry struct pointer in swap_space for FS swap, so needs slight redesign.
+struct swap_entry {
+	struct swap_entry *next; // TODO Also no longer needed, just iterate by size
+	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages] - TODO: No longer needed, just needs quick redesign
+	uint16_t e_flags; // PRIVILEGED_RO = 1, USER_RO = 2, PRIVILEGED_RW 4, USER_RW - TODO: Not currently utilized in code. Can simply iterate by swap entry size instead
+        uint8_t free; //0 - used, 1 - free
+        uint32_t cmp_size; // size of compressed page for decompression purposes
+	void *cmp_page; // virtual address pointer used for resolving page faults
+}; // Total: 17 bytes
 
 static struct swap_space *holder;
 static os_size_t memory_count;
