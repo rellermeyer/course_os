@@ -1,0 +1,2 @@
+Raspberry Pi reference 2012-07-15 (armhf)
+Generated using spindle, http://asbradbury.org/projects/spindle/, d2c1253, stage4-lxde-edu.qed
