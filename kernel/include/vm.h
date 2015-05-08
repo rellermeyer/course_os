@@ -105,6 +105,14 @@ int vm_unpin(struct vas *vas, void *vptr);
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission);
 int vm_free_mapping(struct vas *vas, void *vptr);
 
+/* vm_swap_free_mapping is the spapping frameworks flavor on vm's vm_free_mapping
+ * It takes in an extra paramter that will be set to the L2 page entry (instead of 0)
+ * - Noel Negusse
+ *
+ * Returns: Same as vm_free_mapping 
+ */
+int vm_swap_free_mapping(struct vas*, void*, uint32_t*);
+
 int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission);
 
 /**
