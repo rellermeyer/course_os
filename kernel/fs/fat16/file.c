@@ -20,7 +20,7 @@
  * directory is stored with an inode which contains metadata about the file as well as the
  * list of addresses on disk where the data the file holds is stored. Directories are indicated
  * with the is_dir flag and data blocks for directories are dir_entry structs;
- * Each file has 70 direct blocks and 50 indirect blocks; no methods are
+ * Each file has 100 direct blocks and 20 indirect blocks; no methods are
  * currently implemented to keep data contiguous.
  *
  * CURRENTLY WORKING
@@ -36,9 +36,8 @@
  * TO FIX
  * - Max number of files per directory currently limited to 700 due to error finding
  *   and opening files; you can technically create more, but open will not find them
- * - File size might be limited to 64K, there are some errors here; exact cause unkown
- *   > Max file size SHOULD be 3.2MB
- * - ls, delele, and copy are untested; could work, but might not; TEST BEFORE USING!
+ * - indirect blocks do not seem to work
+ * - ls, delete, and copy are untested; could work, but might not; TEST BEFORE USING!
  * - Currently work
  */
 #include <stdint.h>
