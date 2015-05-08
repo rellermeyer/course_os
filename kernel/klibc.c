@@ -581,20 +581,41 @@ unsigned int rand()
     return (z1 ^ z2 ^ z3 ^ z4);
 }
 
+
 void* umalloc(uint32_t size)
 {
-	os_printf("Umalloc: Need to set up user level heap\n");
-	//need to setup a userlevel heap.
+	void* block = (void*) proc_allocate(size, 0 /* unused */, 0 /* unused */);
+	return block;
 }
 
-void* ucalloc(uint32_t num, uint32_t size)
+void* ualligned_alloc(uint32_t size, uint32_t alignment)
 {
-	os_printf("Umalloc:Need to set up user level heap\n");
-	//need to setup a userlevel heap
+	void* block;
+    void* ptr;
+
+    switch (alignment) {
+        case 4:
+            block = umalloc(size + 4);
+            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+            return ptr;
+        case 1024:
+            block = umalloc(size + 1024);
+            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+            return ptr;
+        case 4096:
+            block = umalloc(size + 4096);
+            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+            return ptr;
+        case 16 * 1024:
+            block = umalloc(size + 16 * 1024);
+            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+            return ptr;
+        default:
+            return umalloc(size);
+    }
 }
 
 void ufree(void* ptr)
 {
-	os_printf("Need to set up user level heap\n");
-	//need to setup a userlevel heap.
+	proc_deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
 }
