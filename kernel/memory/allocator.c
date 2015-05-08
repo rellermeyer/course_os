@@ -93,14 +93,11 @@ uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
 
 void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
     int32_t i, ret_ptr;
-
     for (i = 0; i < allocator->heap_size;) {
         uint32_t* header_addr = (uint32_t*) ((void*) allocator->heap + i);
         int32_t header = *header_addr;
-
         uint32_t* footer_addr = (uint32_t*) ((void*) allocator->heap + i
-                + sizeof(int32_t) + size);
-
+                + sizeof(int32_t) + size);    
         //free and >= request
 	if (header > 0 && header >= size) {
             //cannot split this block

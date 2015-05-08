@@ -76,14 +76,6 @@ uint32_t init_heap()
     return STATUS_OK;
 }
 
-/**
- * Initializes a processes heap, in the same manner that the 
- * kernel heap is initialized
- *
- * @param  pointer to virtual address space (the process's VAS)
- * @param  struct vas* vas
- * @return returns status code (for error or for ok)
- */
 uint32_t init_process_heap(struct vas* vas)
 {
     int retval = vm_allocate_page(vas, (void*) PROC_START, VM_PERM_USER_RW);
@@ -102,13 +94,6 @@ uint32_t init_process_heap(struct vas* vas)
     return STATUS_OK;
 }
 
-/**
- * Extends the process heap
- *
- * @param  amount to extend the heap, process vas
- * @param  uint32_t amt, struct vas* pvas
- * @return returns amount added to heap
- */
 uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
 {
     uint32_t amt_added = 0;
@@ -131,35 +116,11 @@ uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
     return amt_added;
 }
 
-
-void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
-{
-	return alloc_allocate(allocator, size);
-}
-
-void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
-{
-    return alloc_deallocate(allocator, ptr);
-}
-/**
- * Allocates memory on the heap for a process
- *
- * @param  size of allocated memory
- * @param  uint32_t size
- * @return a pointer to allocated memory
- */
 void* proc_allocate(uint32_t size)
 {
     return alloc_allocate(proc_allocator, size);
 }
 
-/**
- * Deallocates memory on the heap for a process
- *
- * @param  pointer to allocated memory
- * @param  void* ptr
- * @return nothing
- */
 void proc_deallocate(void* ptr)
 {
     return alloc_deallocate(proc_allocator, ptr);
@@ -168,6 +129,16 @@ void proc_deallocate(void* ptr)
 
 alloc_handle * mem_get_allocator(){
     return allocator;
+}
+
+void* allocate(uint32_t size, uint32_t* heap, int32_t heap_size)
+{
+    return alloc_allocate(allocator, size);
+}
+
+void deallocate(void* ptr, uint32_t* heap, int32_t heap_size)
+{
+    return alloc_deallocate(allocator, ptr);
 }
 
 int mem_check(){

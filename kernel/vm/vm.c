@@ -6,14 +6,6 @@
 #define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
 #define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
-
-/**
- * These permissions are mapped to from vm.h and grant read write permissions
- * 
- * The 4 permissions in vm.h (VM_PERM_PRIVILEGED_RO, VM_PERM_USER_RO, 
- * VM_PERM_PRIVILEGED_RW, VM_PERM_USER_RW) are or'd together in and are then mapped 
- * to this perm mapping array.
- */
 static const int perm_mapping[16] = {
 	0,  // 0000 Nothing
 	5,  // 0001 Privileged RO, nothing otherwise
@@ -196,17 +188,6 @@ int vm_unpin(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-/**
- * How the permissions work
- * 
- * A permission or combination of permissions are passed in from the 4 preset permissions 
- * defined in vm.h. The passed in permission is then mapped to the correct bit representation
- * of the permission from perm_mapping. The require Apx bit and ap bits are grabbed from the 
- * bit representation of the permission and set into their proper position. The apx bit is set
- * at position 9 and the ap bits are set at position 4 and 5 in the l2_page table.The hardware
- * performs all page walks for the page table for you. 
- *  
- */ 
 int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	CHECK_VPTR;
 	CHECK_PPTR;
@@ -229,16 +210,11 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 		return VM_ERR_MAPPED;
 	}
 
-	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
+	perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
-	int lvl2_perm = perm;//perm_mapping[perm];
-	int apx_bit = (lvl2_perm & 4) >> 2;
-	int ap_bits = lvl2_perm & 3;
-	l2_pagetable[l2_idx] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4) | 2;
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
-	//os_printf("permission=%d lvl2_perm=%X apx=%X ap=%X\n", permission, lvl2_perm, apx_bit, ap_bits);
-	//l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
 
@@ -247,9 +223,9 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	// TODO: If this is a paged frame, then we need to throw an error
 	if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
 		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
-	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 1) {
+	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
 		// We have to free the mapping in the L2 page table
-		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(vas->l1_pagetable[(unsigned int)vptr>>20]));
+		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_FRAME(vas->l1_pagetable[(unsigned int)vptr>>20]));
 		VM_L2_ENTRY(l2pt, vptr) = 0;
 	}
 	return 0;

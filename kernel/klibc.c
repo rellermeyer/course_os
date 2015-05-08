@@ -591,6 +591,7 @@ unsigned int rand()
 void* umalloc(uint32_t size)
 {
 	void* block = (void*) proc_allocate(size);
+	os_printf("ptr: %x\n",block);
 	return block;
 }
 

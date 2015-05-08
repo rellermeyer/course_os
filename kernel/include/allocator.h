@@ -11,6 +11,7 @@
 #include <global_defs.h>
 
 #define MEM_START 0x500000
+#define PROC_START 0x90000000	
 
 typedef uint32_t (*heap_extend_handler)(uint32_t amount);
 
