@@ -232,9 +232,24 @@ while(1){
 	return 0;
 }
 
-void simple_timer_handler() {
-	os_printf("Simple timer handler called!\n");
-	while(1);
+static void (*function)(void *args);
+void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
+{
+        function=callback_function;
+        start_timer_interrupts(0,time);
+}
+
+void timer_interrupt_handler(){
+	os_printf("hello I'm interrupting");
+	return;
+}
+
+// Create the handler
+void _schedule_register_timer_irq(){
+        interrupt_handler_t *timer=kmalloc(sizeof(interrupt_handler_t));
+        timer->handler=&timer_interrupt_handler;
+        register_interrupt_handler(4,timer);
+        initialize_timers();
 }
 
 void timer_test(){

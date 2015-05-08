@@ -159,9 +159,9 @@ void restore_proc_status(int cpsr) {
 }
 
 
-static void (*function)(void *args);
+//static void (*function)(void *args);
 
-void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
+/*void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
 {
         function=callback_function;
         start_timer_interrupts(0,time);
@@ -179,4 +179,4 @@ void _schedule_register_timer_irq(){
         timer->handler=&timer_interrupt_handler;
         register_interrupt_handler(4,timer);
         initialize_timers();
-}
+}*/
