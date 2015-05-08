@@ -55,7 +55,6 @@ int add_to_opentable(struct inode * f, char perm) {
     int i;
     for (i=0; i<SYSTEM_SIZE; i++) {  //checks if file is already open in the table. If so, the linked file is the same. 
         if (table[i] && table[i]->linked_file->inum == inum) {
-		    os_printf("%d\n",i);
         	to_add->linked_file->fd_refs++; //increment the number of references
         	to_add->linked_file =  table[i]->linked_file;  //point to same file
         	to_add->permission = perm; //assign new permission
