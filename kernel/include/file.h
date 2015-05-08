@@ -135,7 +135,7 @@ int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode);
 int kremove_dir_entry (struct inode* cur_inode, int tgt_inum);
 
 //from the index, gets the corresponding indirect block, either from cache or from disk
-void get_indirect_block(int index, struct indirect_block* cur_indirect_block);
+void get_indirect_block(struct inode* cur_inode, int index, struct indirect_block* cur_indirect_block);
 
 //from the inum, gets corresponding inode, either from cache or disk
 void get_inode(int inum, struct inode* result_inode);
