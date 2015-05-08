@@ -67,7 +67,15 @@ void swap_init();
  * OR returns a NULL/0 on failure 
  */
 uint32_t *store_page(void*, uint32_t*);
-uint32_t *store_page_LZ(void*, uint32_t*);
+
+/* store_page_LZ will store a page to a certain location (TBD) in physical memory from the page*. 
+ * ID parameter passed will change to appropriate index of swap entry that is utilized for swap,
+ * and is also returned.
+ * void* page -> data to be paged
+ * uint32_t ID = index to entry that is utilized for swap
+ * NOTE: ID is currently simply int index to entry list, NOT pointer to bit vector as in FS store_page 
+ */
+uint32_t store_page_LZ(void*, uint32_t);
 // uint32_t *store_page(void*, os_size_t, uint32_t*); To be implemented... (will replace)
 // uint32_t *store_pageLZ(void*, os_size_t, uint32_t*); diddo
 
@@ -79,7 +87,15 @@ uint32_t *store_page_LZ(void*, uint32_t*);
  * NOTE: Page size was set by store_page
  */
 uint32_t *retrieve_page(void*, uint32_t*);
-uint32_t *retrieve_page_LZ(void*, uint32_t*);
+
+/* retrieve_page_LZ will retrieve the page identified by the ID index and will store it back into main 
+ * memory (specified by the void *page pointer) 
+ *
+ * Returns: NULL on failure (due to corrupted data) or simply passes back ID on success
+ * NOTE: Page size was set by store_page
+ */
+
+uint32_t retrieve_page_LZ(void*, uint32_t);
 
 
 /* Returns: The total stored memory in bytes by function store_page(void*, uint32_t*) */
