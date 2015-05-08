@@ -1,3 +1,46 @@
+/**
+ * @file
+ *
+ * Course OS FS
+ *
+ * @author
+ *
+ * Joel Iventosh, Ginevra Gaudioso, Weston Sellek, Charlie Cox
+ * Matt Davidson, Joseph Bourque
+ *
+ * @version 1.0
+ *
+ * @section DESCRIPTION
+ *
+ * Course OS FS is a custom file system (started out as FAT 16 but changed into this).
+ * The file system uses a superblock to initialize the file system as well as the SD card
+ * on boot. Data blocks are stored as array of integers that indexes into the corresponding
+ * block number on the SD card (note: some blocks are reserved, data blocks use an offset to
+ * access blocks on the SD card) DO NOT FORGET TO ADD OFFSET TO BLOCK NUMBERS!; Each file or
+ * directory is stored with an inode which contains metadata about the file as well as the
+ * list of addresses on disk where the data the file holds is stored. Directories are indicated
+ * with the is_dir flag and data blocks for directories are dir_entry structs;
+ * Each file has 70 direct blocks and 50 indirect blocks; no methods are
+ * currently implemented to keep data contiguous.
+ *
+ * CURRENTLY WORKING
+ * - Have working directories and directory hierarchy
+ * - Standardized error codes; defined in header file
+ * - Open file table working
+ * - Create working
+ * - Open working
+ * - Close working
+ * - Read working
+ * - Write working
+ *
+ * TO FIX
+ * - Max number of files per directory currently limited to 700 due to error finding
+ *   and opening files; you can technically create more, but open will not find them
+ * - File size might be limited to 64K, there are some errors here; exact cause unkown
+ *   > Max file size SHOULD be 3.2MB
+ * - ls, delele, and copy are untested; could work, but might not; TEST BEFORE USING!
+ * - Currently work
+ */
 #include <stdint.h>
 #include "klibc.h"
 //#include "linked_list.h"
@@ -35,6 +78,14 @@ struct inode** inode_table_temp;
 struct data_block** data_block_table_cache;
 // void* data_table; not sure what this is or why we had/needed/wanted it...
 
+/**
+ * Format the SD card for Course OS FS
+ *
+ * Creates the super block & metadata for the file system, creates the
+ * root directory of the file system and writes the first block on the
+ * SD card as empty.
+ *
+ */
 int kfs_format()
 {
 	os_printf("In kfs_format\n");
@@ -90,8 +141,32 @@ int kfs_format()
 	return SUCCESS;
 }
 
-/* make the global varrible */
-// initialize the filesystem:
+/**
+ * Load file system into memory and initialize the SD card
+ *
+ * Initializes the SD card to set it up for data transfer, once the SD card
+ * is initialized metadata for the file system is loaded into memory and used
+ * to obtain the free list table and data block table.
+ *
+ * @param
+ *
+ * int inode_table_cache_size - no longer needed; should be removed
+ *
+ * @param
+ *
+ * int data_block_table_cache_size - no longer needed; should be removed
+ *
+ * @param
+ *
+ * int reformat - if this is set to a non-zero value; this formats the file
+ * system before initialization; if set to 0; initialization occurs with no
+ * format
+ *
+ * @return
+ *
+ * Returns 0 if initialization was successful; does not do any error checking
+ * or reporting at current; will need to be added in at some point in the future
+ */
 int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat){
 
 	INODE_TABLE_CACHE_SIZE = inode_table_cache_size;
@@ -170,6 +245,19 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	return SUCCESS;
 }//end fs_init() function
 
+/**
+ * Removes the file system from memory
+ *
+ * Writes the filesystem metadata, the free block table and the data block table to disk
+ * for persistant storage and then frees all memory which was being used to allocate those
+ * resources
+ *
+ * @return
+ *
+ * Returns 0 if shutdown successfully loaded everything out of memory; no error handling or
+ * recording is currently implemented; this needs to be implemented in the future so that
+ * shutdown does not occur if this is called in the middle of a read or write
+ */
 int kfs_shutdown(){
 	int i;
 	//TODO: write inodes pointed to by inode_table_cache back to disk to ensure it's up to date:
@@ -208,7 +296,27 @@ int kfs_shutdown(){
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 /* HELPER FUNCTIONS */
 
-//from the index, gets the corresponding indirect block, either from cache or from disk
+/**
+ * Retrieves an indirect data block from the SD card
+ *
+ * Retrieves the specified indirect data block from the SD card using the passed index
+ * and then sets it as the current indirect block
+ *
+ * @param
+ *
+ * struct inode* cur_inode - points to the file which we want to read the indirect block
+ * index from
+ *
+ * @param
+ *
+ * int index - holds an index which corresponds to a location in the data block table
+ *
+ * @param
+ *
+ * struct indirect_block* cur_indirect_block - Holds the address of the current indirect
+ * block
+ *
+ */
 void get_indirect_block(struct inode* cur_inode, int index, struct indirect_block* cur_indirect_block) {
 	// indirect_block is not in the cache table, so get it from disk:
 	if(cur_inode->indirect_blocks_in_file <= 0){
@@ -226,6 +334,23 @@ void get_indirect_block(struct inode* cur_inode, int index, struct indirect_bloc
 	sd_receive((void*) cur_indirect_block, (index + FS->start_data_blocks_loc)*BLOCKSIZE); // the firs
 }//end get_indirect_block
 
+/**
+ * gets corresponding inode, from the SD card
+ *
+ * Retrieves an inode from the SD card using specified inum storing
+ * it into a specified address.
+ *
+ * @param
+ *
+ * int inum - corresponds to a location in the inode table i.e. it is an
+ * index to a location in the inode table
+ *
+ * @param
+ *
+ * inode* result_inode - holds a specified address to store the retrieved
+ * inode at
+ *
+ */
 //from the inum, gets corresponding inode, either from cache or disk
 void get_inode(int inum, struct inode* result_inode){
 	// if(inode_table_cache[inum] != NULL){
@@ -244,8 +369,25 @@ void get_inode(int inum, struct inode* result_inode){
 	sd_receive(result_inode, (inum + FS->start_inode_table_loc)*BLOCKSIZE);
 }//end get_inode() helper function
 
-
-//gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
+/**
+ * gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
+ *
+ * Uses the current file's  inode in order to retrieve the nested directory's inode
+ * and then return it
+ *
+ * @param
+ *
+ * struct inode* cur_inode - holds the inode for the current data block
+ *
+ * @param
+ *
+ * char * next_path - the path you are searching
+ *
+ * @return
+ *
+ * Returns the inode of a specific nested directory; at this time there is no error checking
+ * or reporting on this function; needs to be added in at a later data
+ */
 int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	int inum = -1;
 	int i;
@@ -275,7 +417,25 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
 	return inum;
 }//end get_inum_from_direct_data_block() helper helper function
 
-//gets the inum of netxpath (file or dir) looking at the indirect data blocks of cur_inode
+/**
+ * Returns the index to an inode by searching through an indirect block
+ *
+ * gets the inum of netxpath (file or dir) looking at the indirect
+ * data blocks of cur_inode
+ *
+ * @param
+ *
+ * struct inode* cur_inode - holds the inode for the current data block
+ *
+ * @param
+ *
+ * char * next_path - the path you are searching
+ *
+ * @return
+ *
+ * Returns the inode of a specific nested directory; at this time there is no error checking
+ * or reporting on this function; needs to be added in at a later data
+*/
 int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path) {
 	int i;
 	int inum = -1;
@@ -314,7 +474,31 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 	return inum;
 }//end of get_inum_from_indirect_data_block
 
-//finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
+/**
+ * locates an inode using the file path and store it in the result_inode
+ *
+ * finds the inode (will be result_inode) following filepath, going
+ * dir_levels down the path, starting from starting_inum
+ *
+ * @param
+ *
+ * char* filepath - holds the filepath leading to the inode
+ *
+ * @param
+ *
+ * int dir_levels - holds the number of directories the inode is nested
+ * under
+ *
+ * @param
+ *
+ * struct inode* result_inode - Used to hold the inode once it has been
+ * located
+ *
+ * @return
+ *
+ * Returns 0 if inode was successfully located and stored; otherwise
+ * returns -1
+ */
 int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	int current_inum = starting_inum;
 
@@ -356,8 +540,18 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 	return SUCCESS;
 }//end kfind_inode() helper function
 
-//finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
-//result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
+/**
+ * Uses the file path to obtain information about a directory and stores it in result
+ *
+ * finds the name of the directory path (result->truncated_path) and the name of the
+ * ending part (result->last) and the number of levels (result->levels) result has to
+ * be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free
+ * last and truncated_path.
+ *
+ * @param  Description of method's or function's input parameter
+ * @param  ...
+ * @return Description of the return value
+ */
 void kfind_dir(char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
@@ -396,14 +590,38 @@ void kfind_dir(char* filepath, struct dir_helper* result){
 	return; //caller of function is responsible for freeing memory for truncated_path and filepath
 }//end kfind_dir() function
 
-
-//transmits or receives the data block bitvector or the inode bitvecotr to and from disk
-// First parameter: TRANSMIT or RECEIVE (defined)
-// Second paramter: put pointer to bitvector (example: data_block_bitmap for data, inode_bitmap for inodes)
-// Third parameter: put where that bitvecotr starts in memory (example: FS->data_bitmap_loc for data, FS->inode_bitmap_loc for inode)
-// Fourth parameter: how many there are (example: FS->max_data_blocks for data, FS->max_inodes for inodes)
-// index = index you would put in the bitvector
-// all = 0 for only one index, 1 for all the bitvector
+/**
+ * Used to transmit a block to disk or recieve a block from disk
+ *
+ * transmits or receives the data block bitvector or the inode bitvecotr to and from disk
+ *
+ * @param
+ *
+ * int t_or_r - Determines whether operation is a TRANSMIT (0) to disk or a RECIEVE (1)
+ * from disk
+ *
+ * @param
+ *
+ * bit_vector* vec - Pointer to a bitvector (either a data_block_bitmap for data or an
+ * inode_bitmap for inodes)
+ *
+ * @param
+ *
+ * int starting_loc - holds the location where the bit vector starts in memory
+ *
+ * @param
+ *
+ * int max - holds the number of blocks to write to disk
+ *
+ * @param
+ *
+ * int all - Determines whether to only write 1 index (0) or whether to write the entire
+ * bit vector (1) to disk
+ *
+ * @return
+ *
+ * Return 0 if the transmission/recieval was successful; otherwise returns an error code
+ */
 int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int max, int bit_index, int all){
 	int error = 0;
 	int num_blocks = (max/(8 * BLOCKSIZE)) + 1;
@@ -441,8 +659,31 @@ int transmit_receive_bitmap(int t_or_r, bit_vector* vec, int starting_loc, int m
 }//end transmit_receive_bitmap helper function
 
 
-/* 	Helper function to add a new dir_entry to a directory file and optinally write it out to disk.
-	Updates the last data block of the cur_inode (directory) to add a dir_entry that stores the mapping of the new inode to its inum */
+/**
+ * Adds a new file to an existing directory
+ *
+ * Helper function to add a new dir_entry to a directory file and
+ * optinally write it out to disk. Updates the last data block of
+ * the cur_inode (directory) to add a dir_entry that stores the
+ * mapping of the new inode to its inum
+ *
+ * @param
+ *
+ * struct inode* cur_inode - holds the inode for the current data block
+ *
+ * @param
+ *
+ * int free_inode_loc - points to a location in the free inode table
+ *
+ * @param
+ *
+ * struct dir_helper* result - holds information about the directory you
+ * are trying to add to
+ *
+ * @return
+ *
+ * Returns 0 if the file was added successfully; otherwise returns an error
+ */
 int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper* result){
 
 	int flag_free_cur_indirect_block = 0;
@@ -585,6 +826,26 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	return SUCCESS;
 }//end add_dir_entry() helper function
 
+/**
+ * Obtains address on disk  of a specific data block within a file
+ *
+ * Uses the passed block number to search through the file's metadata and
+ * obtain a block address to read off the SD card
+ *
+ * @param
+ *
+ * inode *file_inode - points to the specific file in which the data block
+ * resides
+ *
+ * @param
+ *
+ * int file_block_num - holds the specific data block of the file to
+ * obtain the address from
+ *
+ * @return
+ *
+ * Returns 0 if address was successfully retrieved; otherwise returns -1
+ */
 int get_block_address(struct inode *file_inode, int file_block_num){
 	if(file_block_num < 0){
 		os_printf("Invalid block number");
@@ -617,7 +878,40 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	return block_address;
 }
 
-// Helper function for kread():
+/**
+ * Reads a partial portion of a block using the specified buffer size
+ *
+ * Reads a specified portion of a block from the passed file's inode
+ * starting at the offset point and then store the results of that in
+ * buf_offset
+ *
+ * @param
+ *
+ * struct inode *c_inode - The inode of the file we want to read
+ *
+ * @param
+ *
+ * int offset - starting point in the file to read from
+ *
+ * @param
+ *
+ * void* buf_offset - Holds the information read from the file
+ *
+ * @param
+ *
+ * int bytes_left - Holds the number of bytes to read from the file
+ *
+ * @param
+ *
+ * void* transfer_space - Used to hold data gotten from SD card block
+ * however I don't think we need this
+ * TODO: (maybe) replace transfer_space with buff_offset
+ *
+ * @return
+ *
+ * Returns the number of bytes which were transferred if successful;
+ * otherwise returns an error code
+ */
 int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int bytes_left, void* transfer_space) {
 	int local_offset = offset % BLOCKSIZE; // local_offset is the leftmost point in the block
 
@@ -685,7 +979,40 @@ int read_partial_block(struct inode *c_inode, int offset, void* buf_offset, int 
 }//end of read_partial_block() helper function
 
 
-// Helper function for kread():
+/**
+ * Reads a full block using the specified buffer size
+ *
+ * Reads a specified  block from the passed file's inode
+ * starting at the offset point and then store the results of that in
+ * buf_offset
+ *
+ * @param
+ *
+ * struct inode *c_inode - The inode of the file we want to read
+ *
+ * @param
+ *
+ * int offset - starting point in the file to read from
+ *
+ * @param
+ *
+ * void* buf_offset - Holds the information read from the file
+ *
+ * @param
+ *
+ * int bytes_left - Holds the number of bytes to read from the file
+ *
+ * @param
+ *
+ * void* transfer_space - Used to hold data gotten from SD card block
+ * however I don't think we need this
+ * TODO: (maybe) replace transfer_space with buff_offset
+ *
+ * @return
+ *
+ * Returns the number of bytes which were transferred if successful;
+ * otherwise returns an error code
+ */
 int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int bytesLeft, void* transfer_space) {
 	// read BLOCKSIZE
 	// Actually get the data for 1 block (the SD Driver will put it in transfer_space for us)
@@ -712,6 +1039,17 @@ int read_full_block(struct inode *c_inode, int offset, void* buf_offset, int byt
 	 return BLOCKSIZE; // note, we are returning the number of bytes that were successfully transferred
 }//end read_full_block() helper function
 
+/**
+ *  Reads the number of bytes specified from the target inode
+ *
+ * Calls either read_partial_block or read_full_block based on the number
+ * of bytes to read; will continue to call these functions until number of bytes
+ * specified has been met
+ *
+ * @param  Description of method's or function's input parameter
+ * @param  ...
+ * @return Description of the return value
+ */
 int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 	// Allocate space for and create a bitvector to be used repeatedly to transfer the data:
 	uint32_t *transfer_space = kmalloc(BLOCKSIZE);
@@ -751,7 +1089,27 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
 //end of helper functions
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+/**
+ * Kernel level open file; adds a new entry to the open file table
+ *
+ * Opens a file using the specified file path and sets it in either
+ * read or write mode.
+ *
+ * @param
+ *
+ * char* filepath - holds the pathname to the file to be opened
+ *
+ * @param
+ *
+ * char mode - holds either r or w indicating whether the file
+ * is to be opened in read or write mode
+ *
+ * @return
+ *
+ * Returns 0 if the file was opened correctly; otherwise returns
+ * -1
+ *
+ */
 int kopen(char* filepath, char mode){
 	if (filepath == NULL) {
 		os_printf("no directory specified \n");
@@ -816,8 +1174,28 @@ int kopen(char* filepath, char mode){
 	return fd;
 }//end kopen()
 
-
-/* read from fd, put it in buf, then return the number of bytes read in numBytes */
+/**
+ * Reads a specified number of bytes from the SD card
+ *
+ * read from fd, put it in buf, then return the number of bytes read
+ * in numBytes
+ *
+ * @param
+ *
+ * int fd_int - index to a file descriptor in the open file table
+ * @param
+ *
+ * void* buf - buffer to hold the data read from the SD card
+ *
+ * @param
+ *
+ * int num_bytes - holds the number of bytes to store in the buffer
+ *
+ * @return
+ *
+ * Returns the number of bytes read from the SD card if successful,
+ * otherwise returns an error code
+ */
 int kread(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
@@ -847,8 +1225,28 @@ int kread(int fd_int, void* buf, int num_bytes) {
 } // end kread();
 
 
-
-/* write from fd, put it in buf, then return the number of bytes written in numBytes */
+/**
+ * Write a specified number of bytes to the SD card
+ *
+ * write from fd, put it in buf, then return the number of bytes written in
+ * numBytes
+ *
+ * @param
+ *
+ * int fd_int - holds the index of a file descriptor in the open file table
+ *
+ * @param
+ *
+ * void* buf - holds the data to be written out to disk
+ *
+ * @param
+ *
+ * int num_bytes - holds the number of bytes to write to disk
+ *
+ * @return
+ * Returns the number of bytes written to disk if successful, otherwise
+ * returns an error code
+ */
 int kwrite(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
@@ -1019,8 +1417,19 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 	return bytes_written;
 } // end kwrite();
 
-
-// close the file fd, return 1 if the close was successful 
+/**
+ * Close the file
+ *
+ * Remove the file from the open file table and free the file's inode
+ *
+ * @param
+ *
+ * int fd - holds an index of a file descriptor in the open file table
+ *
+ * @return
+ *
+ * Returns 1 if the file was successfully closed, otherwise returns an error
+ */
 int kclose(int fd) {
 	if (fd < 0 || fd >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
@@ -1035,8 +1444,25 @@ int kclose(int fd) {
 	return error;
 } // end kclose();
 
-
-// seek within the file, return an error if you are outside the boundaries 
+/**
+ * Increment  seek position within a file
+ *
+ * Increments the seek pointer of a specific file by a number of
+ * specified bytes
+ *
+ * @param
+ *
+ * int fd_int - holds the index of a file descriptor in the open file table
+ *
+ * @param
+ *
+ * int num_bytes - holds the number of bytes to move the seek pointer by
+ *
+ * @return
+ *
+ * Returns 0 if the seek pointer was successfully moved; otherwise returns
+ * an error code
+ */
 int kseek(int fd_int, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
 		os_printf("fd not valid \n");
@@ -1062,8 +1488,34 @@ int kseek(int fd_int, int num_bytes) {
 } // end kseek();
 
 
-
-/* create a new file, if we are unsuccessful return -1 */
+/**
+ * Creates a new file or directory in the file system
+ *
+ * Creates a new file or directory and all metadata attached to that
+ * file or directory and adds it to the open file table
+ *
+ * NOTE: File/Directory is not persistenly stored at this point!
+ *
+ * @param
+ *
+ * char* filepath - holds the path to the directory in which the
+ * new file/directory is to be added
+ *
+ * @param
+ *
+ * char mode - not used at present, will eventually be used to
+ * set file permissions
+ *
+ * @param
+ *
+ * int is_this_a_dir - set to 0 if the object to be created is
+ * a file; set to 1 if the object to be created is a directory
+ *
+ * @return
+ *
+ * Returns 0 if the file/directory was created successfully
+ * otherwise returns -1
+ */
 int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	if (filepath == NULL) {
 		os_printf("filepath not valid \n");
@@ -1179,7 +1631,22 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 
 }//end of kcreate() function
 
-//returns 1 if empty 0 if not empty
+/**
+ * Determines whether a directory is empty or not
+ *
+ * Determines whether a directory is empty, can also be used to
+ * determine whether the object is a file instead of a directory as
+ * well as if the file is not a valid Course OS FS file
+ *
+ * @param
+ *
+ * struct inode* cur_inode - holds the file/directory to check
+ *
+ * @return
+ *
+ * Return 1 if it is a directory, return 0 if it not a directory,
+ * return an error code if something went wrong
+ */
 int dir_empty(struct inode* cur_inode){
 	if(!cur_inode->is_dir){
 		os_printf("This file is not a directory\n");
@@ -1200,6 +1667,20 @@ int dir_empty(struct inode* cur_inode){
 	}
 }
 
+/**
+ * Helper function for kremove_dir_entry actually deletes file/directory
+ *
+ * Runs after entry for the file/directory has been removed from the parent
+ * directory and physically deletes the file/directory
+ *
+ * @param
+ *
+ * struct inode* cur_inode - inode of the file to check
+ *
+ * @return
+ *
+ * Returns 0 if the file is OK to remove, otherwise returns an error code
+ */
 int kdelete_single_helper(struct inode * cur_inode){
     if (cur_inode->is_dir){
         //we know it's a directory
@@ -1240,8 +1721,28 @@ int kdelete_single_helper(struct inode * cur_inode){
     return SUCCESS;
 } // end kdelete_single_helper();
 
-
-/* deletes a single dir_entry */
+/**
+ * Deletes a single entry in a directory
+ *
+ * Deletes a file or directory's entry from a specified directory's inode list
+ * NOTE: May/May not use recursive delete; this is untested so proceed
+ * with caution and test whether a recursive delete is done before
+ * using this function for deleting sub-directories.
+ *
+ * @param
+ *
+ * struct inode* cur_inode - holds a pointer to the folder which contains the file
+ * reference to remove
+ *
+ * @param
+ *
+ * int tgt_inum - Used to hold the index of the inode to be removed
+ *
+ * @return
+ *
+ * Returns 0 if the entry was successfully removed from the directory; otherwise
+ * it returns an error code.
+ */
 int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc = tgt_inum
 	//first get the appropriate data block, either from the array of direct data blocks from an indirect block:
 	struct dir_data_block* dir_block = (struct dir_data_block*) kmalloc(BLOCKSIZE);
@@ -1318,7 +1819,26 @@ int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc 
 }//end kremove_dir_entry() function
 
 
-//delete the file or directory at filepath. Return -1 if the file does not exist 
+/**
+ * Deletes a single file or from a directory
+ *
+ * call delete_single_helper, deletes the lowest level (ie target) file and
+ * updates all bitmaps, but DOES NOT remove the dir_entry in levelup dir
+ *
+ * @param
+ *
+ * struct inode* cur_inode - Points to a specific file/directory to remove
+ *
+ * @param
+ *
+ * struct inode* level_up_inode - points to the directory in which the specifiied
+ * file/directory resides
+ *
+ * @return
+ *
+ * Returns 0 if the the file was successfully deleted; returns -1 if the file
+ * doesn't exist
+ */
 int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode) {
     /* call delete_single_helper, deletes the lowest level (ie target) file and
         updates all bitmaps, but DOES NOT remove the dir_entry in levelup dir */
@@ -1342,10 +1862,32 @@ int kdelete_single(struct inode* cur_inode, struct inode* level_up_inode) {
 } // end kdelete_single()
 
 
-
-/*	The logic on this should be good, but still need to...
-	TODO: on each sd_recieve() check cache first AND figure out kmalloc situation...will this cause heap overflow???
-	should we limit the depth of filepaths to avoid this??? */
+/**
+ * Recursively deletes an entire directory
+ *
+ * Deletes a directory and any sub-directories and files contained within
+ * freeing all blocks and metadata for each entry and then updates the
+ * metadata for the directory which contained it
+ *
+ * The logic on this should be good, but still need to...
+ * TODO: on each sd_recieve() check cache first AND figure out kmalloc
+ * situation...will this cause heap overflow??? should we limit the
+ * depth of filepaths to avoid this???
+ *
+ * @param
+ *
+ * struct inode* cur_inode - Points to a specific file/directory to remove
+ *
+ * @param
+ *
+ * struct inode* level_up_inode - points to the directory in which the specifiied
+ * file/directory resides
+ *
+ * @return
+ *
+ * Returns 0 if the the directory was successfully deleted, otherwise returns
+ * an error code
+ */
 int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
 	//base case
 	int error;
@@ -1408,6 +1950,29 @@ int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
 
 //---------------------------------------------------
 
+/**
+ * Deletes a file or directory at the specified filepath
+ *
+ * Can be used to delete a single file or directory; can delete
+ * directories recursively
+ *
+ * NOTE: Recursive delete is untested; please test this function
+ * to ensure it is working properly before using it
+ *
+ * @param
+ *
+ * char* filepath - Holds the path to the specified file/directory to delete
+ *
+ * @param
+ *
+ * int recursive - Holds 0 if the target is a single file or empty directory
+ * holds 1 if the target is a full directory which needs to be deleted recursively
+ *
+ * @return
+ *
+ * Returns 0 if the file/directory was deleted successfully; otherwise returns an
+ * error code
+ */
 //delete the file or directory at filepath. Return -1 if the file does not exist 
 int kdelete(char* filepath, int recursive) {
     int error;
@@ -1471,7 +2036,30 @@ int kdelete(char* filepath, int recursive) {
 
 //---------------------------------------------------
 
-//copies contents of file
+/**
+ * Copies contents of a file into a new file
+ *
+ * Creates a new file at the destination path and then copies
+ * all data from the file pointed to by the source path
+ *
+ * @param
+ *
+ * char* source - holds the file path of the file to copy
+ *
+ * @param
+ *
+ * char* dest - holds the destination file path to copy to
+ *
+ * @param
+ *
+ * char mode - Mainly used for permissions; not implemented right
+ * now however
+ *
+ * @return
+ *
+ * Retun 0 if the file was copied successfully; otherwise return
+ * an error code
+ */
 int kcopy(char* source, char* dest, char mode) {
 	int error = 0;
 	int inum = 0; //start from root
@@ -1531,7 +2119,18 @@ int kcopy(char* source, char* dest, char mode) {
 }//end kcopy function
 
 
-//prints the contents of a directory
+/**
+ * Prints the contents of a directory to the screen
+ *
+ * @param
+ *
+ * char* filepath - holds the filepath to the directory to display
+ * the contents of
+ *
+ * @return
+ * Returns 0 if the function was executed correctly, otherwise returns
+ * an error code
+ */
 int kls(char* filepath) {
 	int error = 0;
 	int inum = 0; //starting from root
@@ -1592,7 +2191,26 @@ int kls(char* filepath) {
 	return SUCCESS;
 }
 
-//gets the stats of a file
+/**
+ * Used to obtain information about a specified file or directory
+ *
+ * Obtains various information about the file at the specified file
+ * path including: size of the file, how many open copies of the
+ * file there are, and whether the file is a directory
+ *
+ * @param
+ *
+ * char* filepath - The path to the file to obtain information from
+ *
+ * @param
+ *
+ * struct stats* result - Pointer to a location to store information
+ * about the specified file
+ *
+ * @return
+ * Returns 0 if information was successfully retrieved; otherwise
+ * returns an error code
+ */
 int get_stats(char * filepath, struct stats * result) {
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
