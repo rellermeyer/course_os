@@ -141,10 +141,11 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 	inode_bitmap = make_vector(FS->max_inodes);
 	data_block_bitmap = make_vector(FS->max_data_blocks);
 
-	int m; //DEBUG
-	for(m = 0; m < FS->max_inodes; m++){ //DEBUG
-		bv_lower(m, inode_bitmap); //DEBUG
-	} //DEBUG
+	//HACK...shouldn't need to do this, but do, so leave for now
+	int m; 
+	for(m = 0; m < FS->max_inodes; m++){
+		bv_lower(m, inode_bitmap);
+	} //end HACK...shouldn't need to do this, but do, so leave for now
 
 	bv_set(0, inode_bitmap);
 	bv_set(0, data_block_bitmap);
@@ -243,19 +244,22 @@ int kfs_shutdown(){
 /* HELPER FUNCTIONS */
 
 //from the index, gets the corresponding indirect block, either from cache or from disk
-void get_indirect_block(int index, struct indirect_block* cur_indirect_block) {
-	if(data_block_table_cache[index] != NULL){
-		// the indirect_block is in the data_block_table_cache, so get it:
-		*cur_indirect_block = *((struct indirect_block*)(data_block_table_cache[index]));
-	}else{ //RIGHT HERE
-		// indirect_block is not in the cache table, so get it from disk:
-		struct indirect_block* indirect_block_spaceholder = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		sd_receive((void*) indirect_block_spaceholder, (index + FS->start_data_blocks_loc)*BLOCKSIZE); // the firs
-		*cur_indirect_block = *(indirect_block_spaceholder);
-		kfree(indirect_block_spaceholder);
-		// need to implement an eviction policy/function to update the data_block_table_cache...
-	}//end if else
-}//end get_indirect_block helper
+void get_indirect_block(struct inode* cur_inode, int index, struct indirect_block* cur_indirect_block) {
+	// indirect_block is not in the cache table, so get it from disk:
+	if(cur_inode->indirect_blocks_in_file <= 0){
+		transmit_receive_bitmap(RECEIVE, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
+		int new_indirect_block_loc = bv_firstFree(data_block_bitmap);
+		bv_set(new_indirect_block_loc, data_block_bitmap);
+		cur_inode->indirect_blocks[0] = new_indirect_block_loc;
+		cur_inode->indirect_blocks_in_file++;
+		transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_indirect_block_loc, 0);
+		sd_transmit((void*) cur_inode, (cur_inode->inum + FS->start_inode_table_loc) * BLOCKSIZE);
+		os_memset(cur_indirect_block, 0, BLOCKSIZE);
+		cur_indirect_block->block_num = new_indirect_block_loc;
+		cur_indirect_block->blocks_in_file = 0;
+	}//end if
+	sd_receive((void*) cur_indirect_block, (index + FS->start_data_blocks_loc)*BLOCKSIZE); // the firs
+}//end get_indirect_block
 
 //from the inum, gets corresponding inode, either from cache or disk
 void get_inode(int inum, struct inode* result_inode){
@@ -330,7 +334,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
 	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
 
-		get_indirect_block(cur_indirect_block_num, &cur_indirect_block);
+		get_indirect_block(cur_inode, cur_indirect_block_num, &cur_indirect_block);
 
 		void* dir_spaceholder = (void*) kmalloc(BLOCKSIZE);
 		int j;
@@ -401,9 +405,15 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
 
 		//DEBUG_HERE_0
 		//Set new current_inum to the next_path's current_inum
+
+		os_printf("current_inum: %d\n", current_inum);
+		os_printf("calling: get_inum_from_direct_data_block()\n");
 		current_inum = get_inum_from_direct_data_block(result_inode, next_path);
 
 		if(current_inum < 0){
+			os_printf("current_inum: %d\n", current_inum);
+			os_printf("calling: get_inum_from_indirect_data_block()\n");
+			while(1);
 			//current_inum not found in any direct blocks of result_inode
 			//look for it in the indirect blocks now
 			current_inum = get_inum_from_indirect_data_block(result_inode, next_path);
@@ -538,9 +548,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 	}else{
 		//all the direct data blocks are full, so grab the last indirect block in the array of indirect blocks:
 		os_printf("ARE WE IN HERE???"); //DEBUG
-		while(1); //DEBUG
+		// while(1); //DEBUG
 		cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
-		get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
+		get_indirect_block(cur_inode, (cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 		sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1] + FS->start_data_blocks_loc)*BLOCKSIZE);
 		flag_free_cur_indirect_block = 1;
 		// kfree(cur_indirect_block);
@@ -583,8 +593,9 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 									(3) add a new indirect block then add a new data block to that */
 		//first kmalloc space for a new_dir_block:
 		os_printf("ERROR: This code is untested. I don't allow you to go further. Halting. ~ Lane\n");
-		while (1);
+		// while (1);
 		int new_data_block_loc = bv_firstFree(data_block_bitmap); //Consult the data_block_bitmap to find a free block to add the new data block at
+		os_printf("new direct data block is: %d\n", new_data_block_loc);
 		if(new_data_block_loc < 0){//disk is full
 			os_printf("ERROR! Disk full\n");
 			kfree(dir_block);
@@ -601,6 +612,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 		if(cur_inode->direct_blocks_in_file < MAX_DATABLOCKS_PER_INODE){
 			//Case (1): add a direct data block to cur_inode:
+			os_printf("Case (1): add a direct data block to cur_inode:\n");
 			cur_inode->data_blocks[cur_inode->direct_blocks_in_file] = new_dir_block->block_num;
 			cur_inode->direct_blocks_in_file++;
 
@@ -611,16 +623,19 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 			transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
 		}else{
 			//get the current indirect block and check to see if it has room to add another data block:
+			os_printf("HERE???");
 			if(!flag_free_cur_indirect_block){
 				//if we don't have the indirect block, we need to get it from disk:
 				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 				flag_free_cur_indirect_block = 1;
-				get_indirect_block((cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
+				get_indirect_block(cur_inode, (cur_inode->indirect_blocks_in_file - 1), cur_indirect_block);
 				sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[(cur_indirect_block->blocks_in_file)-1] + FS->start_data_blocks_loc)*BLOCKSIZE);
 				// kfree(cur_indirect_block);
 			}	
 			if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK){
 				//Case (2): add a new data block to to the current indirect block, then add the new_dir entry to the new data block:
+				os_printf("Case (2): add a new data block to to the current indirect block, then add the new_dir entry to the new data block:\n");
+				//TODO: It is not going to have any indirect blocks allocated yet
 				cur_indirect_block->data_blocks[cur_indirect_block->blocks_in_file] = new_dir_block->block_num;
 				cur_indirect_block->blocks_in_file++;
 
@@ -628,12 +643,6 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 				new_dir_block->num_entries++;
 				cur_inode->size += sizeof(struct dir_entry);
 
-				if(indirect_block_table_cache[cur_indirect_block->block_num] == NULL){
-					//TODO: implement eviction policy...add the cur_inode to the cache:
-				}else{
-					// data block
-					*(indirect_block_table_cache[cur_indirect_block->block_num]) = *(cur_indirect_block);
-				}
 				sd_transmit((void*) cur_indirect_block, (cur_indirect_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				sd_transmit((void*) new_dir_block, (new_dir_block->block_num + FS->start_data_blocks_loc) * BLOCKSIZE);
 				transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, new_dir_block->block_num, 0);
@@ -657,6 +666,7 @@ int add_dir_entry(struct inode* cur_inode, int free_inode_loc, struct dir_helper
 
 					new_indirect_block->data_blocks[new_indirect_block->blocks_in_file] = new_dir_block->block_num;
 					new_indirect_block->blocks_in_file++;
+					cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file] = new_indirect_block->block_num;
 					cur_inode->indirect_blocks_in_file++;
 
 					new_dir_block->dir_entries[new_dir_block->num_entries] = new_dir_entry;
@@ -711,7 +721,7 @@ int get_block_address(struct inode *file_inode, int file_block_num){
 	}
 
 	struct indirect_block* cur_indirect_block = (struct indirect_block*) kmalloc(sizeof(struct indirect_block));
-	get_indirect_block(file_inode->indirect_blocks[indirect_block_num], (struct indirect_block*) cur_indirect_block);
+	get_indirect_block(file_inode, file_inode->indirect_blocks[indirect_block_num], (struct indirect_block*) cur_indirect_block);
 
 	int indirect_block_direct_block_num = (file_block_num - MAX_DATABLOCKS_PER_INODE) % MAX_DATABLOCKS_PER_INDIRECT_BLOCK;
 	if (cur_indirect_block->blocks_in_file <= indirect_block_direct_block_num) {
@@ -919,9 +929,12 @@ int kopen(char* filepath, char mode){
 		default:
 			os_printf("Please specify permission as r to read, w to write and a to append\n");
 			}*/
+	os_printf("just above add_to_opentable() in kopen\n");
 	fd = add_to_opentable(cur_inode, mode);
+	os_printf("just below add_to_opentable() in kopen\n");
 	kfree(result->truncated_path);
 	kfree(result->last);
+	os_printf("just below kfree(result->last) add_to_opentable() in kopen\n");
 	kfree(result);
 	return fd;
 }//end kopen()
@@ -1018,7 +1031,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
 				//get the current indirect block and check to see if it has room to add another data block:
 				cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 				flag_free_cur_indirect_block = 1;
-				get_indirect_block(cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file-1], cur_indirect_block);
+				get_indirect_block(cur_inode, cur_inode->indirect_blocks[cur_inode->indirect_blocks_in_file-1], cur_indirect_block);
 
 				if(cur_indirect_block->blocks_in_file < MAX_DATABLOCKS_PER_INDIRECT_BLOCK && cur_inode->indirect_blocks_in_file != 0){
 					//Case (2): add a new data block to to the current indirect block:
@@ -1142,6 +1155,7 @@ int kclose(int fd) {
 		os_printf("file not open"); 
 		return ERR_GEN; 
 	}
+	os_printf("right before delete_from_opentable()\n");
 	error = delete_from_opentable(fd); //this also frees inode
 	return error;
 } // end kclose();
@@ -1194,10 +1208,10 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	// at this point, the name of the file or dir to be created is “result->last” and it has to be added to cur_inode
 	int free_inode_loc = bv_firstFree(inode_bitmap); //Consult the inode_bitmap to find a free space in the inode_table to add the new inode
 
-	os_printf("inode_bitmap[0]: %d\n", bv_get(0, inode_bitmap));
-	os_printf("inode_bitmap[1]: %d\n", bv_get(1, inode_bitmap));
-	os_printf("inode_bitmap[2]: %d\n", bv_get(2, inode_bitmap));
-	os_printf("inode_bitmap[3]: %d\n", bv_get(3, inode_bitmap));
+	// os_printf("inode_bitmap[0]: %d\n", bv_get(0, inode_bitmap));
+	// os_printf("inode_bitmap[1]: %d\n", bv_get(1, inode_bitmap));
+	// os_printf("inode_bitmap[2]: %d\n", bv_get(2, inode_bitmap));
+	// os_printf("inode_bitmap[3]: %d\n", bv_get(3, inode_bitmap));
 	os_printf("free_inode_loc: %d\n", free_inode_loc);
 	if (free_inode_loc < 0) {
 		os_printf("Disk has reached max number of files allowed. \n");
@@ -1225,10 +1239,10 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		
 		// Lay down the first (empty...) data block for the new directory (NOT root).
 		
-		// transmit_receive_bitmap(RECEIVE, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
+		transmit_receive_bitmap(RECEIVE, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
 		int new_data_block_loc = bv_firstFree(data_block_bitmap);
 		//WHY ISNT THIS WORKING??? SHOULD NOT ALWAYS BE Block 0!!!!
-		os_printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n\n\nnew_data_block_loc is: %d\n\n\n\n\n\n\n\n\n\n", new_data_block_loc); //DEBUG
+		os_printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\new_data_block_loc is: %d\n", new_data_block_loc); //DEBUG
 		if(new_data_block_loc < 0){//disk is completley full
 				os_printf("ERROR! disk full\n");
 				return ERR_FULL;
@@ -1421,7 +1435,7 @@ int kremove_dir_entry (struct inode* cur_inode, int tgt_inum) {//free_inode_loc 
 	//search through indirect data blocks:
 	cur_indirect_block = (struct indirect_block*) kmalloc(BLOCKSIZE);
 	for(k = 0; k < cur_inode->indirect_blocks_in_file; k++){
-		get_indirect_block(k, cur_indirect_block);
+		get_indirect_block(cur_inode, k, cur_indirect_block);
 		for(i = 0; i < cur_indirect_block->blocks_in_file; i++){
 			sd_receive((void*) dir_block, (cur_indirect_block->data_blocks[i] + FS->start_data_blocks_loc)*BLOCKSIZE);
 			for(j = 0; j < dir_block->num_entries; j++){
@@ -1716,7 +1730,7 @@ int kls(char* filepath) {
 	int cur_indirect_block_num;
 	for(i = 0; i < cur_inode->indirect_blocks_in_file; i++){
 		cur_indirect_block_num = cur_inode->indirect_blocks[i];
-		get_indirect_block(cur_indirect_block_num, cur_indirect_block);
+		get_indirect_block(cur_inode, cur_indirect_block_num, cur_indirect_block);
 		int j;
 		for(j = 0; j < cur_indirect_block->blocks_in_file; j++){
 			sd_receive(dir_spaceholder, (cur_indirect_block->data_blocks[j])*BLOCKSIZE);
