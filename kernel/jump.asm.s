@@ -1,3 +1,17 @@
+/*
+ *
+ * Jump (ASM)
+ *
+ * Complimentary assembly functions for jumping between lines of code
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *	        Lane Kolbly <lane@rscheme.org>
+ * TODO
+ * - change BX to MOV so as to not mess with the link register and
+ *  status register information
+ * - store the cpsr perhaps?
+ */
+
 .global jmp_set
 .global jmp_goto
 
@@ -17,7 +31,7 @@ jmp_set:
 	str r13, [r0, #52]
 	str r14, [r0, #56]
 	str r15, [r0, #60]
-	mov r0, #0
+	mov r0, #0	// set the r0 to zero for the first time return
 	bx lr
 
 jmp_goto:
@@ -34,5 +48,5 @@ jmp_goto:
 	ldr r12, [r0, #48]
 	ldr r13, [r0, #52]
 	ldr r14, [r0, #56]
-	mov r0, r1
-	bx lr
+	mov r0, r1	// set r1 from argument
+	bx lr  // jump back to the link register address

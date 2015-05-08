@@ -1,6 +1,18 @@
+/*
+ *
+ * Allocator
+ *
+ * Dynamic memory allocator used by mem_alloc
+ *
+ * contact: Lane Kolbly <lane@rscheme>
+ *			Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "allocator.h"
 #include <global_defs.h>
 #include "klibc.h"
+
 /*NOTICE: DO NOT USE OS_PRINTF IN THIS FILE*/
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 

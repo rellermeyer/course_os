@@ -1,8 +1,11 @@
 /*
  *
- * Harware Handler Interface  
+ * Hardware Handler Interface
  *
+ * contact: Lane Kolbly <lane@rscheme>
+ * 			Mathew Kurian <bluejamesbond@gmail.com> (process/printf/swi)
  */
+
 #include "hw_handlers.h"
 #include "mmap.h"
 #include "memory.h"
@@ -56,13 +59,25 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void) {
 }
 
 /*
- * enters sp mode and transfers the sp and lr registers to r0 and
- * r1 respectively
+ * enters system mode and transfers the banked registers into the jump buffer
  */
-void hw_save_umode_banked_regs(jmp_buf *);
+void hw_save_system_mode_banked_regs(jmp_buf *);
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
+
+	/////////////////////////// ORDER OF OPERATION CRITICAL  ///////////////////////////
+
 	jmp_buf pre_swi_state;
+
+	/*
+	 * if a user process, triggers this interrupt i.e. in process yield,
+	 * we need to immediately store the registers so there is a point to which
+	 * we can resume the user-process. in order to do this, we first store the first
+	 * 7 registers into a jmp_buf and then we have to switch to system mode
+	 * to read the user-process registers r8 - r15. Remember that these registers
+	 * are banked so you have to change the running mode before accessing them
+	 *
+	 */
 
 	// look at assembly - move r3 first
 	asm volatile("MOV %0, r3":"=r"(pre_swi_state.R3)::);
@@ -74,7 +89,23 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	asm volatile("MOV %0, r6":"=r"(pre_swi_state.R6)::);
 	asm volatile("MOV %0, r7":"=r"(pre_swi_state.R7)::);
 
-	hw_save_umode_banked_regs(&pre_swi_state);
+	/*
+	 * ideally, we are supposed to store the swi's link registers (referred to as lr or r14);
+	 * however, the team has faced a lot of problems restoring the virtual memory. instead,
+	 * the team has currently selected the return address to be directly into the user process
+	 * and increment the stack by 16 (4 registers).
+	 *
+	 * refer to assembly instructions of hello which can be accessed by the following command:
+	 * $ toolchain/arm-none-eabi/bin/arm-none-eabi-objdump -D -x user/hello/hello | less
+	 *
+	 * to store the lr of the swi, the following instruction has to be issued:
+	 * asm volatile("MOV %0, r14":"=r"(pre_swi_state.R14)::);
+	 */
+
+	hw_save_system_mode_banked_regs(&pre_swi_state);
+
+	// increment the stack as explained before
+	pre_swi_state.R13 += 16;
 
 	int ret = STATUS_FAIL;
 	uint32_t r0 = pre_swi_state.R0;
@@ -86,9 +117,13 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
 	vm_use_kernel_vas();
 
-//	DEBUG("SWI HANDLER [0x%X(%d)]\n", call_num, call_num);
+	/////////////////////////// ORDER OF OPERATION CRITICAL ///////////////////////////
 
 	switch (call_num) {
+		default: {
+			DEBUG("SYSCALL_UNDEFINED\n");
+			break;
+		}
 		case SYSCALL_DELETE: {
 			DEBUG("SYSCALL_DELETE\n");
 			ret = kdelete((char*) r0);
@@ -116,7 +151,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		}
 		case SYSCALL_WRITE: {
 			DEBUG("SYSCALL_WRITE\n");
-			ret = kwrite(r0, r1, r2);
+			ret = kwrite((int) r0, (void*) r1, (int) r2);
 			break;
 		}
 		case SYSCALL_CLOSE: {
@@ -131,12 +166,12 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		}
 		case SYSCALL_COPY: {
 			DEBUG("SYSCALL_COPY\n");
-			ret = kcopy(r0, r1, r2);
+			ret = kcopy((char*) r0, (char*) r1, (char) r2);
 			break;
 		}
 		case SYSCALL_LS: {
 			DEBUG("SYSCALL_LS\n");
-			ret = kls(r0);
+			ret = kls((char*) r0);
 			break;
 		}
 		case SYSCALL_SET_PERM: {
@@ -154,76 +189,113 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 			ret = STATUS_FAIL;
 			break;
 		}
+		case SYSCALL_MALLOC: {
+			DEBUG("SYSCALL_MALLOC\n");
+			ret = (uint32_t) umalloc((uint32_t) r0);
+			break;
+		}
+		case SYSCALL_CALLOC: {
+			DEBUG("SYSCALL_CALLOC\n");
+			ret = (uint32_t) ucalloc((uint32_t) r0, (uint32_t) r1);
+			break;
+		}
+		case SYSCALL_FREE: {
+			DEBUG("SYSCALL_FREE\n");
+			ufree((void*) r0);
+			ret = STATUS_OK;
+			break;
+		}
+		case SYSCALL_SWITCH: {
+			DEBUG("SYSCALL_SWITCH\n");
+			break;
+		}
 		case SYSCALL_PRCS_LISTEN: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
 			LOG("SYSCALL_PRCS_LISTEN\n");
 			ret = sched_register_callback_handler(
 					(sched_msg_callback_handler) r0);
 			break;
 		}
 		case SYSCALL_PRCS_EMIT: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
+
 			LOG("SYSCALL_PRCS_EMIT\n");
-			ret = sched_post_message(r0, r1, r2, r3);
-			break;
-		}
-		case SYSCALL_MALLOC: {
-			DEBUG("SYSCALL_MALLOC\n");
-			ret = umalloc(r0);
-			break;
-		}
-		case SYSCALL_CALLOC: {
-			DEBUG("SYSCALL_CALLOC\n");
-			ret = ucalloc(r0, r1);
-			break;
-		}
-		case SYSCALL_FREE: {
-			DEBUG("SYSCALL_FREE\n");
-			ufree(r0);
-			ret = STATUS_OK;
-			break;
-		}
-		case SYSCALL_SWITCH: {
-			DEBUG("SYSCALL_SWITCH\n");
-			sched_remove_task(sched_get_active_tid());
-			ret = sched_yield();
+			ret = sched_post_message((uint32_t) r0, (uint32_t) r1,
+					(uint32_t*) r2, (int) r3);
 			break;
 		}
 		case SYSCALL_PRCS_EXIT: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
+
 			DEBUG("SYSCALL_PRCS_EXIT\n");
 			sched_remove_task(sched_get_active_tid());
 			ret = sched_yield();
 			break;
 		}
 		case SYSCALL_PRCS_PID: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
+
+			// FIX Does not work because the registers get reset when exiting the SWI
 			DEBUG("SYSCALL_PRCS_PID\n");
 			ret = sched_get_active_tid();
 			break;
 		}
 		case SYSCALL_PRCS_FORK: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
+
+			// NOTE Not implemented yet. Duplicate an entire scheduler task and place it
+			// back into the scheduler with a different task id
 			DEBUG("SYSCALL_PRCS_FORK\n");
 			break;
 		}
 		case SYSCALL_PRCS_YIELD: {
+			/**
+			 * refer to user/libc/process/process_syscalls.c to find the matching
+			 * system calls from the user process
+			 */
+
 			LOG("SYSCALL_PRCS_YIELD\n");
 			sched_update_task_state(sched_get_active_tid(), &pre_swi_state);
 			ret = sched_yield();
 			break;
 		}
 		case SYSCALL_PRINTF: {
-			// TODO Bug if you use PRINTF_COPY_ADDR
+			/*
+			 * TODO at this point, we are using the address of r0 to create a mapping
+			 * between kernel and user process. what if there is something important at
+			 * address r0 inside the kernel? so you should map it to a specific address
+			 * which is designated for printf. doing that causes a bug, so good luck!
+			 */
 #define PRINTF_COPY_ADDR 0x8f000000
 			vm_map_shared_memory(KERNEL_VAS, (void*) r0, prev_vas, (void*) r0,
-					VM_PERM_PRIVILEGED_RW);
+			VM_PERM_PRIVILEGED_RW);
 			DEBUG("[%X] %s", (char* ) r1, r0);
 			vm_free_mapping(KERNEL_VAS, (void*) r0);
 			ret = STATUS_OK;
 			break;
 		}
-		default:
-			DEBUG("SYSCALL_UNDEFINED\n");
-			break;
 	}
 
+	/////////////////////////// ORDER OF OPERATION CRITICAL ///////////////////////////
+
 	vm_enable_vas(prev_vas);
+
+	/////////////////////////// ORDER OF OPERATION CRITICAL ///////////////////////////
 
 	return ret;
 }

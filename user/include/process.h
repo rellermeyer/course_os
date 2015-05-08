@@ -1,5 +1,13 @@
-#ifndef _FLOAT_H
-#define _FLOAT_H
+/*
+ *
+ * Process System Calls
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
+#ifndef _PROCESS_H
+#define _PROCESS_H
 
 #define SYSCALL_PRCS_YIELD 17
 #define SYSCALL_PRCS_LISTEN 18

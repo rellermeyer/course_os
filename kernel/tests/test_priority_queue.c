@@ -1,3 +1,11 @@
+/*
+ *
+ * Test Priority Queue
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/tests.h"
 #include "../include/tests/test_priority_queue.h"
 #include "../include/priority_queue.h"

@@ -1,7 +1,19 @@
-.global process_set_umode_sp
+/*
+ *
+ * Process (ASM)
+ *
+ * Complimentary functions to the process.c. Refer to the use cases
+ * of these functions to learn move about them
+ *
+ * contact: Lane Kolbly <lane@rscheme> (process_set_umode_sp)
+ *			Mathew Kurian <bluejamesbond@gmail.com> (process_load_state)
+ *
+ */
+
+.global process_set_sysetm_mode_sp
 .global process_load_state
 
-process_set_umode_sp:
+process_set_sysetm_mode_sp:
 	// Switch to system mode (same SP as user mode)
 	mov r0,lr
 	mov r1,sp

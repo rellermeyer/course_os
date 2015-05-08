@@ -1,7 +1,8 @@
 /********************************************************************
  *      linked_list.c
  *
- *      Author: Brandon Olivier // any collaborators, please add name
+ *      Author: Brandon Olivier
+ *      		Mathew Kurian <bluejamesbond@gmail.com>
  *
  *      Date: 14 April 2014
  *

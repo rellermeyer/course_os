@@ -1,8 +1,11 @@
 /*
- * kthreads.c
  *
- *  Created on: Apr 23, 2015
- *      Author: mwkurian
+ * KThreads
+ *
+ * Kernel level threads (not to be confused with kthreads from user space)
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
  */
 
 #include "../include/kthreads.h"

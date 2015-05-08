@@ -1,3 +1,11 @@
+/*
+ *
+ * Test Scheduled Process
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/tests/test_sched_process.h"
 #include "../include/tests.h"
 #include "../include/scheduler.h"

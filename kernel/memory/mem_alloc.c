@@ -1,3 +1,11 @@
+/*
+ *
+ * Memory Allocator
+ *
+ * contact: Lane Kolbly <lane@rscheme>
+ *
+ */
+
 #include "mem_alloc.h"
 #include "vm.h"
 #include "allocator.h"

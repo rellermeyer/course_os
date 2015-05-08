@@ -1,3 +1,13 @@
+/*
+ *
+ * Jump
+ *
+ * Jump between areas in code similar to setjmp/longjmp
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "include/jump.h"
 #include "include/klibc.h"
 
