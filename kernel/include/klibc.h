@@ -85,6 +85,7 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
 int os_printf(const char *str_buf, ...);
 void printf_receiver(uint32_t src_tid, uint32_t event, char * data, int length);
+int os_printf_v2(const char *str_buf, ...);
 
 void *os_memset(void *dest, char c, os_size_t n);
 char *__strchrnul(const char *s, char c);

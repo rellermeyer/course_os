@@ -20,11 +20,13 @@ struct ht *ht_alloc(int nentries) {
 
 struct ht_entry *ht_get_entry(struct ht *table, const char *key)
 {
+	os_printf_v2("KEY IS %s\n", key);
 	uint32_t hash = hash_string(key);
 	struct ht_entry *entry = &table->entries[hash%table->size];
 	while (entry && entry->key.key && os_strcmp(entry->key.key, key)) {
 		entry = entry->next_entry;
 	}
+	os_printf_v2("ENTRY IS %d\n", entry);
 	return entry;
 }
 
@@ -82,7 +84,10 @@ int ht_remove(struct ht *table, const char *key) {
 
 void *ht_get(struct ht *table, const char *key) {
 	struct ht_entry *entry = ht_get_entry(table, key);
+	os_printf_v2("ENTRY IS %d\n", entry);
+	os_printf_v2("ENTRY VALUE IS %d\n", entry->value);
 	if ((!entry) || !entry->key.key) {
+		os_printf_v2("There was a problem\n");
 		return 0x0;
 	}
 	return entry->value;
@@ -115,7 +120,23 @@ void ht_test() {
 
 	// Retrieve some stuff...
 	if ((int)ht_get(table, "abcdeh") == 7) {
+		os_printf_v2("----is valid for abcdeh.\n");
 	} else {
+		os_printf_v2("----is not valid for abcdeh.\n");
+	}
+
+	ht_add(table, "lols", (void*)10);
+
+	if ((int)ht_get(table, "lols") == 10) {
+		os_printf_v2("----is valid for lols.\n");
+	} else {
+		os_printf_v2("----is not valid for lols.\n");
+	}
+
+	if ((int)ht_get(table, "abcdeh") == 7) {
+		os_printf_v2("----is valid for abcdeh.\n");
+	} else {
+		os_printf_v2("----is not valid for abcdeh.\n");
 	}
 
 	// Remove some stuff...

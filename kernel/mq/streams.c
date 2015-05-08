@@ -17,14 +17,17 @@ uint32_t next;
 void q_create(char q_name[])
 {
     struct queue *q = 0x0;
+    //q = ht_alloc(sizeof(struct queue));
+    q->qd = 0x0;
+    q->q_name = q_name;
     print_uart0("initialized queue\n");
     if (initialized != 0){
         initialized = 0;
-
+        os_printf_v2("******UNINITIALIZED*******\n");
         q_table = ht_alloc(5000);
-        ht_add(q_table, q_name, (void*)q);
+        ht_add(q_table, q_name, q);
     }else{
-        ht_add(q_table, q_name, (void*)q);
+        ht_add(q_table, q_name, q);
     }
 
     //implement the below if we increase # of subscribers
@@ -46,9 +49,17 @@ uint32_t q_open(char q_name[])
     if (next < 0 || next > 5000){
         next = 0;
     }
+    os_printf_v2("q_name before ht_get is %s\n", q_name);
     struct queue *result = ht_get(q_table, q_name);
+    os_printf_v2("ENTRY IS %d (in open)\n", *result);
+    os_printf_v2("q_name after ht_get is %s\n", result->q_name);
     result->isStreaming = 0;
-    result->qd = result;
+    if(result->qd != 0x0){
+        print_uart0("has queue already\n");
+        os_printf_v2("result->qd is %d\n", result->qd);
+        return result->qd;
+    }
+    result->qd = next;
     q_map[next] = result;
     uint32_t qd = next;
     next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
@@ -76,6 +87,7 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(uint32_t src_tid, uint32_t ev
 
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
+    os_printf_v2("in q_send\n");
     //get exact available space
     void *startingPoint = data;
     uint32_t spaceAvail = 512;
@@ -241,6 +253,7 @@ void q_test()
     print_uart0("in q_test\n");
     q_create("printf");
 	int qd = q_open("printf");
+    os_printf_v2("qd for print is %d\n", qd);
 	q_subscribe(qd, sample_receiver, 0x0);
     os_printf("msg is %d\n", q_publish(qd, "first message", 13));
     // struct queue *test_q = q_map[qd];
@@ -259,6 +272,11 @@ void q_test()
     char* mydata = "yo, dawg\n";
     q_create("message");
     qd = q_open("message");
+    os_printf_v2("qd for message is %d\n", qd);
+    qd = q_open("printf");
+    os_printf_v2("qd for printf is %d\n", qd);
+    qd = q_open("message");
+    os_printf_v2("qd for message is %d\n", qd);
     q_subscribe(qd, sample_receiver, 0x0);
     sched_init();
     kthr_start(kthr_create(&parent_reciever));

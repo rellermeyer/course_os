@@ -75,7 +75,7 @@ void __sched_emit_messages();
 uint32_t sched_init() {
 	vm_use_kernel_vas();
 
-	os_printf("Initializing scheduler\n");
+	//os_printf("Initializing scheduler\n");
 	// last_err = "No error";
 	inactive_tasks = prq_create_fixed(MAX_TASKS);
 	active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);

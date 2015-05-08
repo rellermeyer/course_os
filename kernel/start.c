@@ -79,16 +79,21 @@ void start2(uint32_t *p_bootargs) {
 	init_vector_table();
 	init_heap();
 	print_uart0("after init_vector_table\n");
+	
+	sched_init();
 	q_create("printf");
 	print_uart0("created stream\n");
 	int qd = q_open("printf");
+	print_uart0("successfully opened\n");
 	q_subscribe(qd, printf_receiver, 0x0);
-	sched_init();
+	print_uart0("successfully subscribed\n");
+	print_uart0("after schedinit\n");
 	kfs_init(0, 0, 0);
+	print_uart0("after kfs_init\n");
 	process_global_init();
 
 
-//	 ht_test();
+	// ht_test();
 	 print_uart0("after ht_test\n");
 	 q_test();
 	 print_uart0("after q_test\n");
