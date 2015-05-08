@@ -5,6 +5,7 @@
 #include "swap_framework.h"
 #include "swap_pqueue.h"
 #include "swap_fs.h"
+#include "fastlz/fastlz.h"
 
 void swap_init()
 {
@@ -12,7 +13,37 @@ void swap_init()
 	holder = (struct swap_space*) kmalloc(sizeof(struct swap_space));	
 }
 
-uint32_t *store_page_LZ(void *page, uint32_t *ID);
+uint32_t *store_page_LZ(void *page, uint32_t *ID){
+	struct* swap_space LZ_swap = pqueue_find(0);
+	void* cmp_page = malloc(4096*1.05) // output buffer needs to be at least 5% bigger than input;
+	int cmp_size;
+	cmp_size = fastlz_compress(page, 4096, cmp_page);
+
+	// if compressed size is greater than uncompressed size, input may not be compressible; return error
+	if (cmp_size > 4096){
+		return NULL;
+	}
+	struct swap_entry *curr_ent = LZ_swap->e_head;
+	int i = 0;
+	while(curr_ent->free = 0){
+		curr_ent = curr_ent->next;
+		i++;
+	}
+	ID = i;
+	curr_ent->higher_bits = ID;
+	curr_ent->free = 0;
+	curr_ent->cmp_size = cmp_size;
+	// curr_ent->e_flags = wherever it comes from
+	// TODO: need to copy the compressed bits into memory. Use kernel's VAS to access physical memory and put it pretty much wherever
+
+	// memcpy(*dest whatever it may be, *cmp_page, cmp_size)
+	curr_ent->cmp_page = *dest // after deciding dest, store location of compressed page in entry; may need to remember old page ID for some reason?
+	free(cmp_page); // after copying over relevant bits of cmp data in this oversized buffer
+	memory_count += 4096;
+	return ID;
+}
+
+
 
 uint32_t *store_page(void *page, uint32_t *ID)
 {
@@ -24,7 +55,29 @@ uint32_t *store_page(void *page, uint32_t *ID)
 	return ID;
 }
 
-uint32_t *store_page_LZ(void *page, uint32_t *ID);
+uint32_t *retrieve_page_LZ(void *page, uint32_t *ID){
+	struct swap_space *lz_swap = pqueue_find(0);
+	struct swap_entry *curr_ent = lz_swap->e_head;
+	while(curr_ent->higher_bits != ID){
+		curr_ent = curr_ent->next;
+	}
+	void* uncomp_page = malloc(4096); // output buffer must be 5% larger than compressed input buffer
+	int uncomp_size = fastlz_decompress(curr_ent->cmp_page, curr_ent->cmp_size, uncomp_page, 4096);
+
+	// if uncompressed size is not the size of a page or is 0 (indicating corrupted data or a too small output buffer (the latter of 
+	// which should never happen)), returns error
+	if(uncomp_size != 4096 || uncomp_size == 0){
+		return NULL;	
+	}
+	// TODO: need to place the decompressed page back into memory. where and how?
+
+	curr_ent->e_flags = 0; reset flags to null
+	curr_ent->free = 1;
+	// curr_ent->cmp_size = 0; likely not necessary 
+	// curr_ent->cmp_page = 0; likely not necessary
+	memory_count -= 4096;
+	return ID;
+}	
 
 uint32_t *retrieve_page(void *page, uint32_t *ID)
 {
@@ -52,7 +105,15 @@ uint32_t *vm_swapin_page(void *page, uint32_t *ID)
 		///check if there's enough memory for LZ compression
 		if(0){ // always false until store/retrieve_page_LZ works
 			vm_register_swap_space(store_page_LZ, retrieve_page_LZ, 0, ssid);
-			swap_area = pqueue_find(ssid);		
+			swap_area = pqueue_find(ssid);
+			void* lz_e_head = kmalloc_aligned(sizeof(swap_entry)*PAGE_ENTRIES, sizeof(swap_entry));
+			int* curr_add = lz_e_head;
+			for (int i = 0; i < PAGE_ENTRIES; i++){
+				struct swap_entry *temp = (swap_entry*)curr_add;
+				curr_add += sizeof(swap_entry);
+			}
+			swap_area->*e_head = lz_e_head;
+				
 		} else {
 			vm_register_swap_space(store_page, retrieve_page, 1, ssid);
 			swap_area = pqueue_find(ssid);
