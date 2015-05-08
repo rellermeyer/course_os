@@ -1,6 +1,7 @@
-#include "tests.h"
-#include "klibc.h"
-#include "file.h"
+#include "../include/tests.h"
+#include "../include/klibc.h"
+#include "../include/file.h"
+#include "../fs/cmdline/file.h"
 
 int test_fs_1()
 {
