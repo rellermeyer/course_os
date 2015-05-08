@@ -351,6 +351,15 @@ uint32_t sample_func(uint32_t x) {
 	return 0;
 }
 
+/*
+Allocates memory in the process VAS, and 
+copies over the process to that location in memory
+
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
+
 void setup_process_vas(pcb* pcb_p){
 	
 	//		assert(1==15);
@@ -380,9 +389,16 @@ void setup_process_vas(pcb* pcb_p){
 
 
 }
+/*
+Allocated memory for the process stack
+Moves arguments for argc, argv, envp, and auxp
+into stack_top
 
-//Initial page allocation for process stack in VAS
-//Allows for a variety of stack limits
+Points stack pointer to location where stack_top would begin
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
 void init_proc_stack(pcb * pcb_p)
 {
 	int retval = 0;
@@ -422,19 +438,7 @@ void init_proc_stack(pcb * pcb_p)
 	}
 }
 void init_proc_heap(pcb* pcb_p){
-	//Initial page allocation for a process heap in VAS
-	print_process_state(pcb_p->PID);
-	os_printf("PCB Vas: %x\n",pcb_p->stored_vas);
-	int retval = vm_allocate_page(pcb_p->stored_vas, (void*)HEAP_BASE, VM_PERM_USER_RW);
-	os_printf("This Vas: %x\n",vm_get_current_vas());
-    if (retval) {
-        os_printf("vm_allocate_page error code: %d\n", retval);
-    }
-    else{
-    	os_printf("A page have been allocated for process heap at vptr: 0x%x\n",(void*) HEAP_BASE);
-
-    }
-    os_printf("PID---->: %d\n",pcb_p->PID);
-    //assert(0 ==1 && "FUCK");
-    print_process_state(pcb_p->PID);
+	//from mem_alloc.c
+	init_process_heap(pcb_p->stored_vas);
+	os_printf("User Level Heap for Process PID %d initialized\n",pcb_p->PID);  
 }

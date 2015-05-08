@@ -60,7 +60,7 @@ typedef enum PROCESS_STATE
 #define PROC_LOCATION	0x9ff00000
 #define STACK_SIZE 		(BLOCK_SIZE)
 #define STACK_TOP 		(STACK_BASE + STACK_SIZE)
-#define HEAP_BASE		0x80000000	
+#define HEAP_BASE		0x90000000	
 
 
 

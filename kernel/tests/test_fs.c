@@ -3,48 +3,57 @@
 #include "../include/file.h"
 #include "../fs/cmdline/file.h"
 
+
+
 int test_fs_1()
 {
-	// Test kfind_dir real quick...
-	struct dir_helper dh;
-	kfind_dir("/", &dh);
-	kfind_dir("/etc", &dh);
-	kfind_dir("/etc/", &dh);
-	kfind_dir("/etc/fstab", &dh);
 
-	//retval = kcreate("/", 0xFF, 1);
-	//os_printf("%d\n", retval);
-	int fd = kcreate("/foobar", 'w', 0);
-	os_printf("%d\n", fd);
-	kclose(fd);
 
-	os_printf("\nOpening file...\n");
-	fd = kopen("/foobar", 'w');
-	os_printf("\nWriting string to file...\n");
-	char *s = "Hello, world!\n";
-	kwrite(fd, s, os_strlen(s));
-	kclose(fd);
-	//while(1);
+	os_printf("\nCREATING /foo\n");
+	int fd1 = kcreate("/foo", 'w', 1);
 
-	// Okay, now we should be able to open it.
-	os_printf("\nOpening previous file...\n");
-	fd = kopen("/foobar", 'r');
+	os_printf("\nCREATING /bar\n");
+	int fd2 = kcreate("/bar", 'w', 1);
 
-	// And read from it
-	os_printf("\nReading from file...\n");
+	os_printf("\nCREATING /foo/baz.txt\n");
+	int fd3 = kcreate("/foo/baz.txt", 'w', 0);
+
+	os_printf("closing /foo/baz.txt \n");
+	kclose(fd3);
+	
+	os_printf("\nnow opening file: /foo/baz.txt\n");
+	int fd_new = kopen("/foo/baz.txt", 'w');
+	os_printf("file descriptor is: %d\n", fd_new);
+	os_printf("closing /foo/baz.txt \n");
+	kclose(fd_new);
+
+	os_printf("\nnow opening file: /foo/baz.txt again to write to it\n");
+	fd_new = kopen("/foo/baz.txt", 'w');
+	char *s = "Hellooooooooooooooooooooooolllllllllllll world!!!";
+	kwrite(fd_new, s, os_strlen(s));
+	kclose(fd_new);
+	os_printf("closing /foo/baz.txt \n");
+
+	os_printf("\nnow opening file: /foo/baz.txt to read from it\n");
+	fd_new = kopen("/foo/baz.txt", 'r');
 	char buf[256];
-	int nbytes = kread(fd, buf, 256);
+	os_memset(&buf, 0, 256);
+	int nbytes = kread(fd_new, buf, 256);
 	os_printf("Read %d bytes from file.\n", nbytes);
-	os_printf("'%s'\n", buf);
-
-	kclose(fd);
-
-	// Test kls, just for grins. :)
-	os_printf("\nRunning kls...\n");
-	kls("/");
+	os_printf("the buffer is: '%s'\n", buf);
+	kclose(fd_new);
 
 	return 0;
-}
+}//end test_fs_1()
+
+int test_fs_1_old()
+{	
+
+	return 0;
+}//end test_fs1()
+
+
+
 
 int test_fs_2() {
 	LOG("\nWriting a lot of data to /foobar2...\n");
@@ -82,13 +91,16 @@ int test_fs_2() {
 		//os_printf("%d is valid.\n", i);
 	}
 	kclose(fd);
-
+	struct stats * result;
+	get_stats("/foobar2", result);
 	return 0;
 }
 
 void run_fs_tests() {
-	Test *tests[2];
-	tests[0] = create_test("test_fs_1", &test_fs_1);
-	tests[1] = create_test("test_fs_2", &test_fs_2);
-	run_tests(tests, 2);
+ 	Test *tests[1];
+ 	tests[0] = create_test("test_fs_1", &test_fs_1);
+	//tests[1] = create_test("test_fs_2", &test_fs_2);
+	//run_tests(tests, 2);
+	// tests[1] = create_test("test_fs_2", &test_fs_2);
+	run_tests(tests, 1);
 }
