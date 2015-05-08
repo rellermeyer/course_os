@@ -335,22 +335,6 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	return 0;
 }
 
-int vm_swap_free_mapping(struct vas *vas, void *vptr, uint32_t *ID)
-{
-	CHECK_VPTR;
-	// TODO: If this is a paged frame, then we need to throw an error
-	if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 2) {
-		vas->l1_pagetable[(unsigned int)vptr>>20] = 0;
-	} else if ((vas->l1_pagetable[(unsigned int)vptr>>20]&3) == 1) {
-		// We have to free the mapping in the L2 page table
-		uint32_t *l2pt = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2
-				(vas->l1_pagetable[(unsigned int)vptr>>20]));
-		VM_L2_ENTRY(l2pt, vptr) = ID;
-	}
-	return 0;
-}
-
-
 int vm_free_mapping(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 	// TODO: If this is a paged frame, then we need to throw an error
