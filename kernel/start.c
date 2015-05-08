@@ -106,9 +106,9 @@ void start2(uint32_t *p_bootargs)
 	run_hmap_tests();
 
 	int retval;
-	kfs_init(0,0,0);
+	kfs_init(0,0,1);
 
-	//run_fs_tests();
+	run_fs_tests();
 
 	// int fd = kopen("/hello", 'r');
 	// os_printf("fd: %d\n", fd);
@@ -129,7 +129,7 @@ void start2(uint32_t *p_bootargs)
 	//assert(1==2 && "Test assert please ignore");
 
 	init_all_processes();
-	argparse_process(p_bootargs);
+	//argparse_process(p_bootargs);
 	
 
 	print_uart0("done parsing atag list\n");
