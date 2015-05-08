@@ -35,10 +35,11 @@
 // #include "scheduler.h"
 
 // Tests
-#include "tests/test_priority_queue.h"
-#include "tests/test_hash_map.h"
-#include "tests/test_mem_alloc.h"
-#include "tests/test_vm.h"
+#include "tests/test_klibc.h"
+#include "include/tests/test_hash_map.h"
+#include "include/tests/test_mem_alloc.h"
+#include "include/tests/test_vm.h"
+#include "include/tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
