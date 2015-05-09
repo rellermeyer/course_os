@@ -1,3 +1,19 @@
+/*
+ *
+ * Task Scheduler
+ *
+ * A round-robin timer-enabled scheduler that runs tasks in descending priority
+ * with the help of a heap-based priority queue. Tasks include kthreads and processes
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ * TODO
+ * - optimize
+ * - add error messages
+ * - remove a task (and children)
+ *
+ */
+
 #include "../include/scheduler.h"
 #include "../include/vm.h"
 #include "../include/klibc.h"
@@ -39,31 +55,6 @@ hmap_handle * all_tasks_map;
 jmp_buf start_buf;
 uint32_t running;
 
-// NOTE
-// scheduler logic only. not tested
-
-// FIXME
-// - add comments
-// - register interrupt
-// - deregister interrupts instead of flag
-// - optimize
-// - add error messages
-// - remove a task (and children)
-// - emitting and receiving messages!
-
-// scheduler
-// ---------
-// round-robin timer-enabled scheduler that runs tasks in descending priority
-// with the help of a heap-based priority queue
-
-// supported syscalls
-// ---------
-// create: create a process (not execute)
-// exec: start a process which you created before
-// waitpid: wait for a process (i.e. child) to finish
-// kill: kill a process and its children processes
-//
-
 void __sched_dispatch();
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
 uint32_t __sched_remove_task(sched_task * task);
@@ -71,11 +62,14 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
 		int argc, char ** argv);
 void __sched_emit_messages();
 
-// Initialize the scheduler. Should be called by the kernel ONLY
+/*
+ * Initialize the scheduler. Should be called by the kernel ONLY
+ */
 uint32_t sched_init() {
 	vm_use_kernel_vas();
 
-	os_printf("Initializing scheduler\n");
+	LOG("Initializing scheduler\n");
+
 	// last_err = "No error";
 	inactive_tasks = prq_create_fixed(MAX_TASKS);
 	active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
@@ -233,7 +227,7 @@ void __sched_dispatch() {
 		} else if (ret == TASK_RESUME_PROCESS) {
 			jmp_buf jmp_buffer_cpy = active_task->jmp_buffer;
 			vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-			process_set_umode_sp(jmp_buffer_cpy.R13);
+			process_set_sysetm_mode_sp(jmp_buffer_cpy.R13);
 			process_load_state(&jmp_buffer_cpy);
 			return;
 		}

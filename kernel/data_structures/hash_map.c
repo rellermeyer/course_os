@@ -1,3 +1,11 @@
+/*
+ *
+ * Hash Map (source found online)
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/hash_map.h"
 #include "klibc.h"
 

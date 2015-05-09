@@ -1,3 +1,11 @@
+/*
+ *
+ * User Mode Tests
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/tests.h"
 #include "../include/klibc.h"
 #include "../include/tests/test_user_mode.h"
@@ -7,7 +15,7 @@
 
 int test_umode_1() {
 	// increment by the next instructions
-	asm volatile("ADD R1, PC, #16":::);
+	asm volatile("ADD R1, PC, #16":::); // ghetto move
 	// load CPSR into R0
 	asm volatile("MOV LR, R1":::);
 	// load CPSR into R0

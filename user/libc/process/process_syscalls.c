@@ -1,11 +1,18 @@
+/*
+ *
+ * Process System Calls
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include <stdint.h>
 
 #include "../../include/process.h"
 #include "../arch/arm/syscall_arch.h"
 
 int process_yield() {
-	__asm volatile("add sp, #8");
-	return (int) __syscall0(SYSCALL_PRCS_YIELD);
+	return (int) __syscall(SYSCALL_PRCS_YIELD);
 }
 
 int process_listen(

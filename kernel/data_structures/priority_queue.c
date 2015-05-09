@@ -1,3 +1,11 @@
+/*
+ *
+ * Priority Queue (heavily modified from source found online)
+ *
+ * contact: Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/priority_queue.h"
 #include "klibc.h"
 

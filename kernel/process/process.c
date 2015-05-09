@@ -1,3 +1,14 @@
+/*
+ *
+ * Process
+ *
+ * contact: Prakash
+ * 			Rakan
+ * 			Lane Kolbly <lane@rscheme.org>
+ * 			Mathew Kurian <bluejamesbond@gmail.com>
+ *
+ */
+
 #include "../include/process.h"
 #include "../include/klibc.h"
 #include "../include/file.h"
@@ -257,12 +268,12 @@ uint32_t process_execute(pcb* pcb_p) {
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
 
-	process_set_umode_sp(p.R13);
+	process_set_sysetm_mode_sp(p.R13);
 
 	process_load_state((jmp_buf*) &p.R0);
 
-	while (1)
-		;
+	// NOTE function will never return
+
 	return pcb_p->PID;
 }
 
@@ -379,7 +390,13 @@ void __process_init_stack(pcb * pcb_p) {
 	 stack_top[-5] = STACK_BASE;
 	 stack_top[-6] = 1;*/
 
-	// Stick a NULL at STACK_TOP-sizeof(int*)
+	// NOTE You must stick a NULL at STACK_TOP-sizeof(int*)
+
+	/*
+	 * TODO
+	 * Arguments not being passed into the process correctly
+	 */
+
 	int argc_index = -5 - pcb_p->argc;
 	int argv_index = argc_index + 1;
 	uint32_t argv_p = (uint32_t) STACK_BASE;
