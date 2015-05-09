@@ -104,16 +104,8 @@ static void argparse_parse(char *cmdline)
 
 			int counter =0;
 			while(counter < len){
-				os_printf("1 in a box \n");
 				kread(fd, location, 4);
-				os_printf("2 in a box \n");
 				location +=1;
-				os_printf("%d \n", len-counter);
-
-				if(counter +50 > len){
-					os_printf("HELLO ME\n");
-					while(1);
-				}
 				counter +=4;
 				
 			}

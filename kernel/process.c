@@ -18,9 +18,9 @@ int init_all_processes() {
 /*Spring 2015 course_os: Sathya Sankaran, Rakan Stanbouly, Jason Sim
   
   creates a process and initializes the PCB
-  returns pcb pointer upon success
-  returns 0 if there is no more room in pcb table
-  file_p is a file pointer that we will create the process with */
+  @param file pointer to location in memory of file
+  @return pcb pointer upon success
+  @return 0 if there is no more room in pcb table */
 pcb* process_create(uint32_t* file_p) {
 
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
@@ -113,11 +113,13 @@ uint32_t save_process_state(uint32_t PID){
 
 }
 
-//R15 is the Program Counter
-//R14 is the Link Register
-//The last register to be loaded is the PC
-//return 0 if fail
-//return 1 for success
+/*
+	Loads registers using values in pcb
+	@param Process ID
+	@param PID
+	@return Returns 0 if successful
+
+*/
 uint32_t load_process_state(uint32_t PID) {
 	uint32_t* process_to_load = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
@@ -288,12 +290,16 @@ uint32_t free_PCB(pcb* pcb_p) {
 }
 
 
-/* executes a process function
-   return PID upon success
-   return 0 upon failure
+/* 
+	Moves the return location of current process into R14
+	Sets the current state then loads the process registers
+	
+	@param Pointer to process control block
+	@param pcb* pcb_p
+	@return Process ID 
+
 */
 uint32_t execute_process(pcb* pcb_p) {
-	assert(1==21);
 	if(!pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
