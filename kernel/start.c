@@ -61,10 +61,7 @@ void start(uint32_t *p_bootargs) {
 	/*NOTICE: Do not use os_printf in start*/
 
 	// Initialize the virtual memory
-	print_uart0("Enabling MMU...\n");
-	print_uart0("This is working so far...\n");
 	vm_init();
-	print_uart0("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
@@ -75,60 +72,38 @@ void start2(uint32_t *p_bootargs) {
 	// Initialize
 	// ----------
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
-	print_uart0("before init_vector_table\n");
+
 	init_vector_table();
 	init_heap();
-	print_uart0("after init_vector_table\n");
 	q_create("printf");
-	print_uart0("created stream\n");
 	int qd = q_open("printf");
 	q_subscribe(qd, printf_receiver, 0x0);
 	sched_init();
 	kfs_init(0, 0, 0);
 	process_global_init();
 
-
-//	 ht_test();
-	 print_uart0("after ht_test\n");
-	 q_test();
-	 print_uart0("after q_test\n");
-
-	// q_create("printf");
-	// int qd = q_open("printf");
-	// q_subscribe(qd, printf_receiver, 0x0);
-	os_printf("this is printing\n");
-	
+	//Test: Streams tesing
+	ht_test();
+	q_test();
 
 	//Test: UART0 mapped to the correct virtual address
-	print_uart0("MMU enabled\n");
-	print_uart0("\nCourseOS!\n");
 
-	INFO("Bootargs: %X\n", *p_bootargs);
+	print_uart0("\nCourseOS!\n");
 
 	// Test cases
 	// ----------
-	//run_vm_tests();
-//	run_mem_alloc_tests();
-//	run_prq_tests();
-//	run_hmap_tests();
-//	run_kthr_tests();
-//	run_arrl_tests();
-//	 run_umode_tests();
-   run_sched_prcs_tests();
- // run_prcs_tests();
-//	run_fs_tests();
+	// run_vm_tests();
+	// run_mem_alloc_tests();
+	run_prq_tests();
+	run_hmap_tests();
+	run_kthr_tests();
+	// run_arrl_tests();
+	run_sched_prcs_tests();
+	// run_prcs_tests();
+	// run_fs_tests();
+	// run_umode_tests();
 
-
-	/*
-	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
-	 Let's make argparse_process() do its thing
-
-	 Note: As of 4-15-15 this fails horribly with hello.o not being
-	 recognized as an ELF file and DATA ABORT HANDLER being syscalled
-	 */
-
-//	argparse_process(p_bootargs);
-	print_uart0("done parsing atag list\n");
+	INFO("System ready!");
 
 	while (1) {
 		// wait

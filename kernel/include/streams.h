@@ -29,7 +29,7 @@ void q_create(char q_name[]);
 uint32_t q_open(char q_name[]);
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen);
 uint32_t receiver(uint32_t src_tid, uint32_t event, char * data, int length);
-uint32_t q_subscribe(uint32_t q, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void *userdata);
+void q_subscribe(uint32_t q, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void *userdata);
 void q_send(uint32_t qd, void *data, uint32_t datalength);
 void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength);
 uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength);
