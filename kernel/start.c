@@ -87,48 +87,34 @@ void start2(uint32_t *p_bootargs) {
 	kfs_init(0, 0, 0);
 	process_global_init();
 
-
 //	 ht_test();
-	 print_uart0("after ht_test\n");
+	print_uart0("after ht_test\n");
 //	 q_test();
-	 print_uart0("after q_test\n");
+	print_uart0("after q_test\n");
 
 	// q_create("printf");
 	// int qd = q_open("printf");
 	// q_subscribe(qd, printf_receiver, 0x0);
 	os_printf("this is printing\n");
-	
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 	print_uart0("\nCourseOS!\n");
 
-	INFO("Bootargs: %X\n", *p_bootargs);
-
 	// Test cases
 	// ----------
-	//run_vm_tests();
-//	run_mem_alloc_tests();
-//	run_prq_tests();
-//	run_hmap_tests();
-//	run_kthr_tests();
-//	run_arrl_tests();
-//	 run_umode_tests();
-   run_sched_prcs_tests();
- // run_prcs_tests();
-//	run_fs_tests();
+	// run_vm_tests();
+	// run_mem_alloc_tests();
+	run_prq_tests();
+	run_hmap_tests();
+	run_kthr_tests();
+	// run_arrl_tests();
+	run_sched_prcs_tests();
+	// run_prcs_tests();
+	// run_fs_tests();
+	// run_umode_tests();
 
-
-	/*
-	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
-	 Let's make argparse_process() do its thing
-
-	 Note: As of 4-15-15 this fails horribly with hello.o not being
-	 recognized as an ELF file and DATA ABORT HANDLER being syscalled
-	 */
-
-//	argparse_process(p_bootargs);
-	print_uart0("done parsing atag list\n");
+	INFO("System ready!");
 
 	while (1) {
 		// wait
