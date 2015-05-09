@@ -28,17 +28,18 @@
 #include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
+#include "include/open_table.h" //to initialize fs opentable
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
 // #include "scheduler.h"
 
 // Tests
-#include "tests/test_priority_queue.h"
-#include "tests/test_hash_map.h"
-#include "tests/test_mem_alloc.h"
-#include "tests/test_vm.h"
-
+#include "tests/test_klibc.h"
+#include "include/tests/test_hash_map.h"
+#include "include/tests/test_mem_alloc.h"
+#include "include/tests/test_vm.h"
+#include "include/tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -75,13 +76,12 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
-
+	
 	//vm_test_early();
-
+	//timer_test()
 	// Setup kmalloc...
 	init_heap();
-	_schedule_register_timer_irq();
-        timer_test();
+
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
 	//asm volatile("swi 1");
@@ -97,15 +97,25 @@ void start2(uint32_t *p_bootargs)
 	/*int *p = (int*)0xFFFFFFF0;
 	p[0] = 1;
 	os_printf("0x%x == 1?\n", p[0]);*/
-	//_schedule_register_timer_irq();
-	///timer_test();
-/*	run_vm_tests();
+
+	run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
-	run_mem_alloc_tests();
+	//run_mem_alloc_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
 	run_prq_tests();
 	run_hmap_tests();
-*/
+
+	int retval;
+	kfs_init(0,0,0);
+
+	//run_fs_tests();
+
+	int fd = kopen("/hello", 'r');
+	os_printf("fd: %d\n", fd);
+	kclose(fd);
+
+	//while(1);
+
 	//asm volatile("swi 1");
 
 	/*
@@ -116,13 +126,13 @@ void start2(uint32_t *p_bootargs)
 				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	*/
 
-	//test assert
 	//assert(1==2 && "Test assert please ignore");
 
-//	init_all_processes();
-//	argparse_process(p_bootargs);
-//
-//	print_uart0("done parsing atag list\n");
+	init_all_processes();
+	argparse_process(p_bootargs);
+	
+
+	print_uart0("done parsing atag list\n");
 
 	//init_kheap(31 * 0x100000);
 	//init_uheap(0x100000);

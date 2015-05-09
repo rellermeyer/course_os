@@ -27,6 +27,6 @@ void* alloc_allocate(alloc_handle * allocator, uint32_t size);
 void alloc_deallocate(alloc_handle* allocator, void* ptr);
 uint32_t* alloc_get_heap(alloc_handle* allocator);
 uint32_t alloc_get_heap_size(alloc_handle* allocator);
-uint32_t alloc_check(alloc_handle* allocator);
+int alloc_check(alloc_handle* allocator);
 
 #endif
