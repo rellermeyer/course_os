@@ -1,0 +1,122 @@
+make -C fs/cmdline
+make[1]: Entering directory `/v/filer4b/v20q001/joeliven/Documents/2015sp/CS439_OS/Projects/Project_3/course_os_2/course_os/kernel/fs/cmdline'
+gcc -g -c main.c
+gcc -g -c fakelibs.c
+gcc -g -c -I. ../fat16/file.c -o file.o
+gcc -g -c -I. ../open_table.c -o open_table.o
+gcc -g -c -I. ../../data_structures/bitvector.c -o bv.o
+gcc -g main.o fakelibs.o file.o open_table.o bv.o -o buildfs
+make[1]: Leaving directory `/v/filer4b/v20q001/joeliven/Documents/2015sp/CS439_OS/Projects/Project_3/course_os_2/course_os/kernel/fs/cmdline'
+make -C ../user/hello
+make[1]: Entering directory `/v/filer4b/v20q001/joeliven/Documents/2015sp/CS439_OS/Projects/Project_3/course_os_2/course_os/user/hello'
+make[1]: `hello' is up to date.
+make[1]: Leaving directory `/v/filer4b/v20q001/joeliven/Documents/2015sp/CS439_OS/Projects/Project_3/course_os_2/course_os/user/hello'
+dd if=/dev/zero of=card.sd conv=notrunc bs=512 count=250000
+fs/cmdline/buildfs ../user/hello/
+SD Card initiallized successfully!!!
+Finished initializing table...
+Read: 'Hello, world!+'
+Adding Makefile...
+Adding hello.c...
+Adding hello.o...
+Adding hello...
+0
+fd: 0
+qemu-system-arm -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+
+
+U-Boot 2014.10 (May 03 2015 - 17:00:52)
+
+DRAM:  128 MiB
+WARNING: Caches not enabled
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Net:   SMC91111-0
+Warning: SMC91111-0 using MAC address from net device
+
+Warning: Your board does not use generic board. Please read
+doc/README.generic-board and take action. Boards not
+upgraded by the late 2014 may break or be removed.
+Hit any key to stop autoboot:  2  1  0 
+## Executing script at 0024f000
+## Booting kernel from Legacy Image at 00210000 ...
+   Image Name:   
+   Image Type:   ARM Linux Kernel Image (uncompressed)
+   Data Size:    67476 Bytes = 65.9 KiB
+   Load Address: 00010000
+   Entry Point:  00010000
+   Loading Kernel Image ... OK
+
+Starting kernel ...
+
+Enabling MMU...
+5
+Initialized VM datastructures.
+100
+first_level_pt=204000
+0x300402
+control reg: 0x2089107f
+Got here
+MMU enabled
+
+CourseOS!
+Bootargs: 5
+test_vm_1 ... asdf
+vm_l1pt_free_list=F0210000
+Got new vas at 0xF020000C
+Stack addr: 0xFFF00000
+Created page table w/ 0xFFF00000's entry = 0x7F00402
+Hey, I'm printing!
+F0200000 (FFFFBFA0)
+F0204000
+F0204000
+Entry: 200402
+402
+(deref: entry at 0x200000: 0x0)
+vm_l1pt_free_list=F0214000
+F020000C and F0200000 and F0200018
+ffffbf9c 24000000
+Testing shared memory...
+301012
+map_shared_memory returned 0
+You should see a data abort...
+DATA ABORT HANDLER
+HANDLER: pc=12b60, lr=12b58, sp=ffffafc0, fp=ffffaffc
+DSFR: 0x5
+603979776
+Freeing page at 24000000
+F0301000 F0302000
+PASSES
+There are 31742 free frames.
+There are 31742 free frames.
+test_prq_1 ... PASSES
+test_prq_2 ... PASSES
+test_prq_3 ... PASSES
+test_prq_4 ... PASSES
+test_prq_5 ... PASSES
+test_prq_6 ... PASSES
+
+SD card ready for transfer
+SD Card initiallized successfully!!!
+Finished initializing table...
+test_fs_1 ... file descriptor is: 1
+
+Opening file...
+file descriptor is: 0
+
+Writing string to file...
+
+Opening previous file...
+0
+
+Reading from file...
+Read 39 bytes from file.
+the buffer is: 'Hello, world I'm testing right now...!
+'
+PASSES
+done parsing atag list
+QEMU: Terminated
+

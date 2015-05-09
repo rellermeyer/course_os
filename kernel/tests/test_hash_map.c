@@ -1,7 +1,7 @@
 #include "../include/tests.h"
 #include "../include/tests/test_hash_map.h"
 #include "../include/hash_map.h"
-#include "klibc.h"
+#include "../include/klibc.h"
 
 #define NUM_TESTS 4
 

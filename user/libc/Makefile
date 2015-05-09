@@ -31,6 +31,7 @@ OBJS=stdio/printf.o \
      dummy/dummy.o \
      env/__libc_start_main.o \
      env/__environ.o \
+     malloc/malloc_syscalls.o \
      exit/exit.o \
      exit/_Exit.o
 
