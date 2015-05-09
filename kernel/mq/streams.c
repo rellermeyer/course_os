@@ -1,17 +1,10 @@
 #include "streams.h"
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <string.h>
 #include <stdint.h>
 #include "klibc.h"
 #include "hashtable.h"
 #include "drivers/uart.h"
 #include "scheduler.h"
 
-/*only call scheduler stuff(emit, broadcast, wait, sched_yeild), not kthr
- * do x = false whenever data comes in in test_kthread
- * use sched_yield in while loop instead of interupt which gives other threads chance to run
- * */
 static int initialized;
 struct ht *q_table;
 struct queue *q_map[5000];
@@ -42,14 +35,6 @@ void q_create(char q_name[])
     }else{
         ht_add(q_table, q_name, (void*)q);
     }
-//
-    //implement the below if we increase # of subscribers
-//  if (!os_strcmp(options,"rr")) {
-//      q->options = options;
-//  } else if(!os_strcmp(options,"broadcast")) {
-//      q->options = options;
-//  } else {
-//  }
 }
 
 /**
@@ -71,7 +56,6 @@ uint32_t q_open(char q_name[])
         return 0x0;
     }
 
-    //change this hack. Why isn't it initialized to 0 already?
     if (next < 0 || next > 5000){
         next = 0;
     }
@@ -79,7 +63,7 @@ uint32_t q_open(char q_name[])
     result->qd = result;
     q_map[next] = result;
     uint32_t qd = next;
-    next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
+    next++; 
     return qd;
 }
 
@@ -98,11 +82,9 @@ uint32_t q_open(char q_name[])
 
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
 {
-    // TODO: Copy the data? Don't copy the data? Copy-on-write the data?
     struct queue *q = q_map[qd];
     q->data = data;
     q->datalen = datalen;
-    //Accessing elements of q throws an error
     return &(q->data);
 }
 
@@ -153,7 +135,6 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
     //get exact available space
     void *startingPoint = data;
     
-    //print_uart0("in q send\n");
     uint32_t spaceAvail = 1028;
     struct queue *q = q_map[qd];
     while (datalength > spaceAvail) {
@@ -163,11 +144,8 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
         datalength = datalength - spaceAvail;
     } 
     if(datalength > 0){
-        //q->subscriber->userdata
         q->receiver(1, 2, startingPoint, datalength);
     }
-    //TODO: delete data after sending
-    
 }
 
 /**
@@ -199,7 +177,6 @@ void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
         datalength = datalength - spaceAvail;
     } 
     if(datalength > 0){
-        //q->subscriber->userdata
         q->receiver(1, 2, startingPoint, datalength);
     }
 }
@@ -261,7 +238,6 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
     //get exact available space
     void *startingPoint = data;
     
-    //print_uart0("in q send\n");
     uint32_t spaceAvail = 1028;
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
@@ -270,7 +246,6 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
         datalength = datalength - spaceAvail;
     } 
     if (datalength > 0){
-        //q->subscriber->userdata
         reply_q->receiver(1, 2, startingPoint, datalength);
     }
 }
@@ -297,7 +272,6 @@ void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t 
     //get exact available space
     void *startingPoint = data;
     
-    //print_uart0("in q send\n");
     uint32_t spaceAvail = sched_get_message_space();
     while (datalength > spaceAvail) {
         print_uart0("in while loop\n");
@@ -306,7 +280,6 @@ void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t 
         datalength = datalength - spaceAvail;
     } 
     if (datalength > 0){
-        //q->subscriber->userdata
         reply_q->receiver(1, 2, startingPoint, datalength);
     }
 }
@@ -330,18 +303,8 @@ void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, 
    reply_q->receiver = receiver;
 }
 
-
-// void q_init(char q_name[], void* data, void(*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void* userdata)
-// {
-//     q_create(q_name);
-//     uint32_t qd = q_open(q_name);
-//     q_publish(qd, (uint32_t*) data, sizeof(data));
-//     q_subscribe(qd, &receiver, (void*) userdata);
-// }
-
 void sample_receiver(uint32_t src_tid, uint32_t event, char * data, int length)
 {
-    //print_uart0("In Sample receiver. this is registered in scheduler.\n");
     int i;
     char *s = (char*)data;
     for (i=0; i<length; i++) {
@@ -387,20 +350,10 @@ void q_test()
 	int qd = q_open("printf");
 	q_subscribe(qd, sample_receiver, 0x0);
     os_printf("msg is %d\n", q_publish(qd, "first message", 13));
-    // struct queue *test_q = q_map[qd];
-    // // check client message
-    // os_printf("%s\n", (char*) test_q->data);
-    // uint32_t number = 0;
-    // uint32_t *sample_buffer = &number;
-    // q_create("printf_2");
-    //int reply_qd = q_open("printf_2");
-    //q_block_read(qd, *sample_buffer, 100);
-    // test buffer
-    //os_printf("%s\n", (char*) sample_buffer);
 
 
 
-    char* mydata = "yo, dawg\n";
+    char* mydata = "PASSED message 1\n";
     q_create("message");
     qd = q_open("message");
     q_subscribe(qd, sample_receiver, 0x0);
@@ -408,19 +361,16 @@ void q_test()
     kthr_start(kthr_create(&parent_reciever));
     kthr_yield();
     q_send(qd, mydata, sizeof(mydata));
-    mydata = "sup g\n";
+    mydata = "PASSED message 2\n";
     q_send(qd, mydata, sizeof(mydata));
 
     q_create("reply");
     int reply_qd = q_open("reply");
     q_subscribe_to_reply(reply_qd, &child_receiver);
 
-
-    // kthr_yield();
-    //char* word = "hello dog";
-   // sched_post_message(1, 2, word, sizeof(word));
     return;
 
+    //Additional tests
     // os_printf_v2("this is a test\n");
     // q_create("my_q");
     // os_printf_v2("Calling q_open...\n");
