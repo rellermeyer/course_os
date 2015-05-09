@@ -126,7 +126,7 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 		}
 		case SYSCALL_DELETE: {
 			DEBUG("SYSCALL_DELETE\n");
-			ret = kdelete((char*) r0);
+			ret = kdelete((char*) r0, r1);
 			break;
 		}
 		case SYSCALL_OPEN: {

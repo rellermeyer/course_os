@@ -11,10 +11,19 @@
 
 #define SYSTEM_SIZE 512 //how many files can be open at the same time
 
+//error codes used in return:
+#define TRUE 1 //for a boolean like function
+#define FALSE 0 //for a boolean like function
+#define ERR_GEN -1 //general error
+#define ERR_FULL -2 //error signaling end of resources
+#define ERR_INVALID -3 //invalid parameter
+#define SUCCESS 0 //no error
+#define NULL 0x0 //null
+
 // Each cell of the array is a struct with infos about the file.
 // More fields can be added if necessary.
 struct file_descriptor {
-	char permission;
+    char permission;
     struct inode* linked_file; //pointer to inode struct 
     int offset; //keeps track of where we are reading
 };
@@ -35,6 +44,8 @@ int delete_from_opentable(int fd); //deletes a file from the opentable, returns 
 
 int file_is_open(int fd); //checks if there is an entry corrensponding to that fd
 
+int inode_is_open(struct inode* cur_inode);
+
 struct file_descriptor* get_descriptor(int fd); //returns the filedescriptor struct linked to fd 
 
-#endif 
+#endif
