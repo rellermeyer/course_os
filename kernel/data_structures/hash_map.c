@@ -69,10 +69,22 @@ static void __hmap_rehash(hmap_handle* hmap) {
     kfree(table);
 }
 
+/**
+ * Creates a hash map with default size
+ * Params:
+ * 		None
+ * Return: hmap_handle*
+ */
 hmap_handle* hmap_create(){
     return hmap_create_fixed(TABLE_STARTSIZE);
 };
 
+/**
+ * Creates a hash map with desired size
+ * Params:
+ * 		size of the hash map to be created
+ * Return: hmap_handle*
+ */
 hmap_handle* hmap_create_fixed(int startsize) {
     hmap_handle* hmap = (hmap_handle*) kmalloc(sizeof(hmap_handle));
 
@@ -92,6 +104,15 @@ hmap_handle* hmap_create_fixed(int startsize) {
     return hmap;
 }
 
+/**
+ * insert data to hash map
+ * Params:
+ * 		hmap_handle*: hash map to which element will be added to
+ * 		key: the key by which data will be searched
+ * 		void*: pointer to element to be added
+ * Return: void
+ *
+ */
 void hmap_put(hmap_handle* hmap, unsigned long key, const void* data) {
     long index, i, step;
 
@@ -125,6 +146,14 @@ void hmap_put(hmap_handle* hmap, unsigned long key, const void* data) {
     } while (1);
 }
 
+/**
+ * removes the given element from hash map
+ * Params:
+ * 		hmap_handle*: hash map from which element will be removed
+ * 		unsigned long: key of the element to be removed
+ * Return: pointer to element to be removed
+ *
+ */
 void* hmap_remove(hmap_handle* hmap, unsigned long key) {
     long index, i, step;
 
@@ -154,6 +183,14 @@ void* hmap_remove(hmap_handle* hmap, unsigned long key) {
     return 0;
 }
 
+/**
+ * returns an element from hash map by key
+ * Params:
+ * 		hmap_handle*: hash map from which element will be returned
+ * 		unsigned long: key of the element to be returned
+ * Return: pointer to element to be returned
+ *
+ */
 void* hmap_get(hmap_handle* hmap, unsigned long key) {
     if (hmap->count) {
         long index, i, step;
@@ -177,10 +214,24 @@ void* hmap_get(hmap_handle* hmap, unsigned long key) {
     return 0;
 }
 
+/**
+ * returns the number of elements in hash map
+ * Params:
+ * 		hmap_handle*: hash map whose element count needs to be returned
+ * Return: the number of elements in hash map
+ *
+ */
 long hmap_count(hmap_handle* hash) {
     return hash->count;
 }
 
+/**
+ * frees given hash map
+ * Params:
+ * 		hmap_handle*: hash map to be freed
+ * Return: void
+ *
+ */
 void hmap_free(hmap_handle* hash) {
     kfree(hash->table);
     kfree(hash);

@@ -27,9 +27,10 @@ typedef struct {
     int count;
 } llist_handle;
 
+
 /* prepend (because of speed) to the list. */
 llist_handle* llist_create();
-llist_node* create_node(void *data);
+llist_node* llist_create_node(void *data);
 void llist_free(llist_handle *l);
 void llist_free_node(llist_node *node);
 void llist_insert(llist_handle *l, void *data, int index);
@@ -40,5 +41,10 @@ void* llist_get_by_index(llist_handle *l, int index);
 llist_node* llist_get_node(llist_handle *l, int index);
 void llist_set_data(llist_node *l, void *data);
 int llist_count(llist_handle *l);
+//Intialization of user thread
+void t_man_init();//thread manager
+void t_launch(int count,void(*proc)(init), int param);
+void t_man_start();//returns when all user threads are blocked
+
 
 #endif

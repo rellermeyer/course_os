@@ -1,8 +1,7 @@
 /********************************************************************
  *      linked_list.c
  *
- *      Author: Brandon Olivier
- *      		Mathew Kurian <bluejamesbond@gmail.com>
+ *      Author: Brandon Olivier // any collaborators, please add name
  *
  *      Date: 14 April 2014
  *
@@ -21,6 +20,7 @@
 #include "../include/linked_list.h"
 #include "../include/klibc.h"
 
+
 llist_handle* llist_create() { /* create more space than needed -- less resizing */
 	llist_handle *result = (llist_handle *) kmalloc(sizeof(llist_node));
 	result->count = 0;
@@ -31,7 +31,7 @@ int llist_count(llist_handle *l) {
 	return l->count;
 }
 
-void* llist_get_data(llist_handle *l, int index) {
+void* llist_get_by_index(llist_handle *l, int index) {
 	return llist_get_node(l, index)->data;
 }
 
@@ -68,7 +68,7 @@ void llist_remove_at(llist_handle *l, int index) {
 
 void* llist_dequeue(llist_handle * list) {
 	if (llist_count(list) > 0) {
-		void * data = llist_get_data(list, 0);
+		void * data = llist_get_by_index(list, 0);
 		llist_remove_at(list, 0);
 		return data;
 	}
@@ -88,7 +88,6 @@ void llist_free(llist_handle *l) { /* since free isn't really implemented, it's 
 }
 
 void llist_free_node(llist_node *node) {
-	kfree(node->data);
 	kfree(node);
 }
 
