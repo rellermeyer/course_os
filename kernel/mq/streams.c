@@ -17,6 +17,19 @@ struct ht *q_table;
 struct queue *q_map[5000];
 uint32_t next;
 
+
+/**
+ *Creates a queue
+ *
+ * Q_create creates allows a client to create a queue using a character
+ * description as q_name. This function uses a hashtable to map the q_name to
+ * the physical address of the queue.
+ *
+ * @param q_name represents a new queue by name
+ *
+ * @return does not return a value;
+ */
+ 
 void q_create(char q_name[])
 {
     struct queue *q = 0x0;
@@ -39,6 +52,19 @@ void q_create(char q_name[])
 //  }
 }
 
+/**
+ * Opens a queue
+ *
+ * Given a q_name, q_create uses q_map to fetch a queue from memory
+ * and proceed to map that queue to a q descriptor using an array of pointers.
+ * This provides greater efficiency and usability. This function also returns 
+ * a queue descriptor that can be used to identify the queue when subscribing and sending.
+ * 
+ * @param q_name represents a new queue by name
+ *
+ * @return returns a queue descriptor
+ */
+
 uint32_t q_open(char q_name[])
 {
     if (initialized != 0) {
@@ -56,7 +82,20 @@ uint32_t q_open(char q_name[])
     next++;//how should we deal with deleted streams? or should there just be a queue of x streams where we just delete the old ones?
     return qd;
 }
-// Adding message to queue
+
+/**
+ * Publishes to a queue
+ *
+ * Adds data to a queue to be used at a later point for the
+ * passing of data. Can be used in a more lazy fashion than q_send.
+ *
+ * @param qd represents a q descriptor
+ * @param data represents the actual data being transferred
+ * @param datalen represents the length of the data
+ *
+ * @return returns the address of the data
+ */
+
 uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
 {
     // TODO: Copy the data? Don't copy the data? Copy-on-write the data?
@@ -67,6 +106,23 @@ uint32_t q_publish(uint32_t qd, void *data, uint32_t datalen)
     return &(q->data);
 }
 
+
+/**
+ * Subscribes to a queue
+ *
+ * Allows users to subscribe to a particular queue by using the q_descriptor 
+ * received from q-open. This allows the client to send the the subscribers
+ * by sending to the registred callback function. Note that in future implmentations,
+ * there could be multiple subscribers to a particular queue, but for efficiency,
+ * we limited this to one subscriber for now.
+ *
+ * @param qd represents a q descriptor
+ * @param receiver represents a callback handler function pointer that performs the given operation of the stream.
+ * @param userdata is some arbitrary identifier given to the client or user. 
+ *
+ * @return this function does not return data
+ */
+
 uint32_t q_subscribe(uint32_t qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length), void *userdata)
 {
     struct subscriber *user = 0x0;
@@ -76,6 +132,21 @@ uint32_t q_subscribe(uint32_t qd, void (*receiver)(uint32_t src_tid, uint32_t ev
     q->receiver = receiver; 
     return 0;
 }
+
+/**
+ * Sends data using a given queue
+ *
+ * This function allows a user to send data that is transmitted by 
+ * the callback handler registered in q_subscribe. This function can be
+ * called within the client code (e.g. printf) in order to perform the desired message passing.
+ * This function breaks data into chunks of size 512 bytes in order to prevent hanging on too large of data.
+ *
+ * @param qd represents a q descriptor
+ * @param data represents the actual data being passed
+ * @param datalen represents the length of the data. 
+ *
+ * @return this function does not return data
+ */
 
 void q_send(uint32_t qd, void *data, uint32_t datalength)
 {
@@ -99,6 +170,22 @@ void q_send(uint32_t qd, void *data, uint32_t datalength)
     
 }
 
+/**
+ * Sends data using a given queue using the scheduler
+ *
+ * This function allows a user to send data that is transmitted by 
+ * the callback handler registered in q_subscribe. This function can be
+ * called within the client code (e.g. printf) in order to perform the desired message passing.
+ * This function breaks data into chunks based on the size specified by the scheduler
+ * in order to prevent hanging on too large of data for the scheduler.
+ *
+ * @param qd represents a q descriptor
+ * @param data represents the actual data being passed
+ * @param datalen represents the length of the data. 
+ *
+ * @return this function does not return data
+ */
+
 void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
     //get exact available space
     void *startingPoint = data;
@@ -117,15 +204,26 @@ void q_send_through_scheduler(uint32_t qd, void *data, uint32_t datalength) {
     }
 }
 
-// block, waiting for a message from the queue
-// read entire message or no data at all
+/**
+ * block while waiting for the message from the queue
+ * either succeed or fail, reading entire message with buffer or no data at all
+ *
+ * This function is incomplete. We want to block while waiting for the mssage from the queue.
+ * When the message is successfully added onto the queue, read the data using the buffer.
+ *
+ * @param qd represents a queue descriptor
+ * @param buf represents the buffer that will be used to read the data
+ * @param buflength represents the length of the buffer
+ *
+ * @return the data in the queue or NULL if the data is too big for the ubffer
+ */
+
 uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
 {
     struct queue *current_queue = q_map[qd];
-    // since NULL is undefined in the kernel, use 0x0 instead
-    // need to use condition variables
-    while (current_queue->data == 0x0)
-        // BLOCK! FIX
+    // // since NULL is undefined in the kernel, use 0x0 instead
+    // while (current_queue->data == 0x0)
+
     
     // check to see if data length is acceptable
     if (current_queue->datalen <= buflength) {
@@ -144,7 +242,19 @@ uint32_t q_block_read(uint32_t qd, uint32_t *buf, uint32_t buflength)
 }
 
 
-// waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
+/**
+ * Reply with the data using the given queue
+ *
+ * This function enables the recipient to reply and send the data.
+ * This function breaks data into chunks of size 512 bytes in order to prevent hanging on too large of data.
+ *
+ * @param reply_qd represents the queue descriptor for the reply queue
+ * @param data represents the actual data being passed
+ * @param datalen represents the length of the data. 
+ *
+ * @return this function does not return data
+ */
+
 void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 {
     struct queue *reply_q = q_map[reply_qd];
@@ -166,7 +276,21 @@ void q_send_reply(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 }
 
 
-// waits for reply, and when the reply comes, fills the buffer with it. Fails if buffer length too small
+
+/**
+ * Reply with the data using the given queue with the scheduler
+ *
+ * This function enables the recipient to reply and send the data.
+ * Allows to check how much message space is left.
+ * This function breaks data into chunks of size 512 bytes in order to prevent hanging on too large of data.
+ *
+ * @param reply_qd represents the queue descriptor for the reply queue
+ * @param data represents the actual data being passed
+ * @param datalen represents the length of the data. 
+ *
+ * @return this function does not return data
+ */
+
 void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t datalength)
 {
     struct queue *reply_q = q_map[reply_qd];
@@ -188,7 +312,18 @@ void q_send_reply_through_scheduler(uint32_t reply_qd, uint32_t *data, uint32_t 
 }
 
 
-// attaches an asynchronous receiver to the reply
+/**
+ * Subscribes to the reply queue
+ *
+ * Given the reply queue descriptor, allow user to subscribe to the reply queue.
+ * This allow the recipient to send the subscribers by sending to the receiver (the callback handler).
+ *
+ * @param reply_qd represents a reply queue descriptor
+ * @param receiver represents a callback handler function pointer that performs the given operation of the stream.
+ *
+ * @return this function does not return data
+ */
+
 void q_subscribe_to_reply(uint32_t reply_qd, void (*receiver)(uint32_t src_tid, uint32_t event, char * data, int length))
 {
    struct queue *reply_q = q_map[reply_qd];
