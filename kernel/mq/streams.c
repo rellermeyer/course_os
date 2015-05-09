@@ -42,7 +42,7 @@ void q_create(char q_name[])
     }else{
         ht_add(q_table, q_name, (void*)q);
     }
-
+//
     //implement the below if we increase # of subscribers
 //  if (!os_strcmp(options,"rr")) {
 //      q->options = options;
