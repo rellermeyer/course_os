@@ -11,11 +11,6 @@
 #include "vm.h"
 #include "drivers/timer.h"
 
-void timer_handler_foobar(void) {
-	os_printf("Hello?\n");
-	while(1);
-}
-
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void) {
     /* This doesn't seem to work well with virtual memory; reverting
@@ -165,9 +160,7 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
 	os_printf("IRQ HANDLER\n");
-//	hw_interrupt_disable(4);
-	disable_timer(0);
-//	int cpsr=disable_interrupt_save(IRQ);	
+	int cpsr=disable_interrupt_save(IRQ);	
 //	os_printf("disabled CSPR:%X\n",cpsr);
 	// Discover source of interrupt
 	int i = 0;
@@ -181,14 +174,10 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 		}
 	}
 	// we've gone through the VIC and handled all active interrupts
-	//restore_proc_status(cpsr);
-	//mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
-//	enable_interrupt(IRQ_MASK);
-	os_printf("enabled CSPR:%X\n",get_proc_status());
-	enable_timer(0);
-	//int cpsr=disable_interrupt_save(IRQ);
+	restore_proc_status(cpsr);
 
-	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
+	enable_interrupt(IRQ_MASK);
+
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){

@@ -29,6 +29,17 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // (2) the VIC (interrupt controller)
 // (3) (sometimes) in the device (this should be done in the device driver)
 
+// CLear Interrupts
+// Do not disable the VIC and the CSPR is disable in the hw_hanlders
+// you have to clear the inerrupt from the register handler
+// Look At timer.c it has a great example of it.
+// Here's the Website to the VIC we are using http://infocenter.arm.com/help/topic/com.arm.doc.ddi0181e/DDI0181.pdf
+
+//They are three handlers you must use First is the (IRQ)interrupt handler its in hw_handlers.c (with attribute Irq)
+// second is the ISR routine handler which is the one in interrupt.c
+// third is the specific handler you created a great example is in the timer.c it is called timer_interrupt_handler.
+// If youre having an error it must be in the third handler not the first two.
+
 // Setup FIQ interrupts
 void init_fiqs(){
 	check_if_fiq[11] = 1; // synchronous serial port
@@ -73,24 +84,13 @@ void handle_irq_interrupt(int interrupt_vector){
 	// go to handler routine
 	os_printf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
 	handlers[interrupt_vector]->handler((void *) interrupt_vector);
-	// ok interrupt handled, clear it
-	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
-	// yea this needs to be changed
-	// we actually should probably just go ahead and disable interrupts on the VIC and in the core (and possibly on the device as well) since we don't have a nested handler
+
 }
 
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
 	int cpsr = get_proc_status();
-	os_printf("cpsr=%X\n", cpsr);
-	//restore_proc_status(cpsr);
-
-	/*int x = mmio_read(VIC_INT_ENABLE);
-	os_printf("VIC INT ENABLE = %X\n", x);
-	x |= (1<<4);
-	mmio_write(VIC_INT_ENABLE, x);*/
-	//hw_interrupt_enable(4);
 
 	// enable interrupt on the core
 	switch(mask) {
@@ -104,7 +104,6 @@ void enable_interrupt(interrupt_t mask) {
 			asm volatile("cpsie if");
 			break;
 	}
-	os_printf("hii:%x\n",get_proc_status());
 }
 
 
@@ -159,24 +158,4 @@ void restore_proc_status(int cpsr) {
 }
 
 
-//static void (*function)(void *args);
 
-/*void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
-{
-        function=callback_function;
-        start_timer_interrupts(0,time);
-}
-
-void timer_interrupt_handler(){
-	os_printf("hello I'm interrupting");
-//	mmio_write(VIC_INT_ENABLE, mmio_read(VIC_INT_ENABLE) | 1<<4);
-	return;
-}
-
-// Create the handler
-void _schedule_register_timer_irq(){
-        interrupt_handler_t *timer=kmalloc(sizeof(interrupt_handler_t));
-        timer->handler=&timer_interrupt_handler;
-        register_interrupt_handler(4,timer);
-        initialize_timers();
-}*/
