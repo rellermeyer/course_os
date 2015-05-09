@@ -33,6 +33,8 @@
 #include "tests.h"
 #include "drivers/timer.h"
 #include "scheduler.h"
+#include "hashtable.h"
+#include "streams.h"
 
 // Tests
 #include "tests/test_priority_queue.h"
@@ -43,9 +45,6 @@
 #include "tests/test_process.h"
 #include "tests/test_sched_process.h"
 #include "tests/test_user_mode.h"
-
-#include "hashtable.h"
-#include "streams.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -114,15 +113,23 @@ void start2(uint32_t *p_bootargs) {
 //	run_kthr_tests();
 //	run_arrl_tests();
 //	 run_umode_tests();
-   run_sched_prcs_tests();
+//   run_sched_prcs_tests();
  // run_prcs_tests();
 //	run_fs_tests();
 
+	int fd = kopen("/hello", 'r');
+	os_printf("fd: %d\n", fd);
+	kclose(fd);
+
+	//while(1);
+
+	//asm volatile("swi 1");
 
 	/*
 	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
 	 Let's make argparse_process() do its thing
 
+<<<<<<< HEAD
 	 Note: As of 4-15-15 this fails horribly with hello.o not being
 	 recognized as an ELF file and DATA ABORT HANDLER being syscalled
 	 */

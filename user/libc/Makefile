@@ -32,6 +32,7 @@ OBJS=stdio/printf.o \
      process/process_syscalls.o \
      env/__libc_start_main.o \
      env/__environ.o \
+     malloc/malloc_syscalls.o \
      exit/exit.o \
      exit/_Exit.o
 

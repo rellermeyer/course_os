@@ -639,17 +639,65 @@ uint32_t kthr_register_message_callback(sched_msg_callback_handler cb_handler){
 uint32_t kthr_deregister_message_callback(){
 	return sched_deregister_callback_handler();
 }
-void* umalloc(uint32_t size) {
-	os_printf("Umalloc: Need to set up user level heap\n");
-	//need to setup a userlevel heap.
+
+/**
+ * umalloc allocates memory on the user heap
+ *
+ * @param  size of the block of memory allocated
+ * @param  uint32_t size
+ * @return returns a pointer to the allocated block of memory
+ */
+void* umalloc(uint32_t size)
+{
+	void* block = (void*) proc_allocate(size);
+	return block;
 }
 
-void* ucalloc(uint32_t num, uint32_t size) {
-	os_printf("Umalloc:Need to set up user level heap\n");
-	//need to setup a userlevel heap
+/**
+ * ualigned alloc allocates memory on the user heap
+ * according to a specified alignemnt
+ *
+ * @param  size of the block of memory allocated, and alignment desired
+ * @param  uint32_t size, uint32_alignment
+ * @return returns a pointer to the allocated block of memory
+ * 		   that is a multiple of the specified allignement 
+ */
+
+void* ualigned_alloc(uint32_t size, uint32_t alignment)
+{
+	void* block;
+    void* ptr;
+
+    switch (alignment) {
+        case 4:
+            block = umalloc(size + 4);
+            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+            return ptr;
+        case 1024:
+            block = umalloc(size + 1024);
+            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+            return ptr;
+        case 4096:
+            block = umalloc(size + 4096);
+            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+            return ptr;
+        case 16 * 1024:
+            block = umalloc(size + 16 * 1024);
+            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+            return ptr;
+        default:
+            return umalloc(size);
+    }
 }
 
-void ufree(void* ptr) {
-	os_printf("Need to set up user level heap\n");
-	//need to setup a userlevel heap.
+/**
+ * free's an allocated block of memory on the heap
+ *
+ * @param  pointer to a block of memeory on the heap
+ * @param  void* ptr
+ * @return nothing returned
+ */
+void ufree(void* ptr)
+{
+	proc_deallocate((uint32_t*) ptr);
 }

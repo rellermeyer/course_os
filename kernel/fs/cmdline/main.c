@@ -19,13 +19,15 @@ void addFile(char *filename, char *dst_filename)
 
 int main(int argc, char **argv)
 {
+	int fd;
+
 	kfs_init(0,0,1);
 
 	// Create a file, I guess?
 	kclose(kcreate("/foobar", 'r', 0));
 
 	// Write to the file
-	int fd = kopen("/foobar", 'w');
+	fd = kopen("/foobar", 'w');
 	char *s = "Hello, world!";
 	kwrite(fd, s, strlen(s));
 	kclose(fd);
@@ -59,6 +61,5 @@ int main(int argc, char **argv)
 	fd = kopen("/hello", 'r');
 	printf("fd: %d\n", fd);
 	kclose(fd);
-
 	return 0;
 }
