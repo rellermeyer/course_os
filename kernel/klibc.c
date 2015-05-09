@@ -96,6 +96,8 @@ void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
     for (; i < size; i++) {
         *(d++) = *(s++);
     }
+    source -= size;
+    dest -= size;
 }
 
 // base is between 2 and 16, inclusive
@@ -577,4 +579,22 @@ unsigned int rand()
     b = ((z4 << 3) ^ z4) >> 12;
     z4 = ((z4 & 4294967168U) << 13) ^ b;
     return (z1 ^ z2 ^ z3 ^ z4);
+}
+
+void* umalloc(uint32_t size)
+{
+	os_printf("Umalloc: Need to set up user level heap\n");
+	//need to setup a userlevel heap.
+}
+
+void* ucalloc(uint32_t num, uint32_t size)
+{
+	os_printf("Umalloc:Need to set up user level heap\n");
+	//need to setup a userlevel heap
+}
+
+void ufree(void* ptr)
+{
+	os_printf("Need to set up user level heap\n");
+	//need to setup a userlevel heap.
 }

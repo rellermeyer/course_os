@@ -1,5 +1,6 @@
 #include <stdio.h>
 
 int main() {
-   printf("hello from your process\n");
+    printf("Hello world... from hello.c\n");
+    while(1);
 }

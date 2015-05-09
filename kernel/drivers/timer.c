@@ -90,7 +90,7 @@ int set_periodic_mode(int timer_index){
 
 //converts ms into ticks
 //assumes modes are valid, if not, should return 0
-long int conversion(int timer_index, int milliseconds){
+int conversion(int timer_index, int milliseconds){
 	int mode = timer_pointers[timer_index]->control & 0xC;
 	int ticks = 0;
 	if(mode == 0){
@@ -127,7 +127,7 @@ int set_prescale(int timer_index, int mode){
 
 //enables timer interrupt of the given timer index
 int enable_timer_interrupt(int timer_index){
-	//hw_interrupt_enable(4);
+
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x20;
     return 0;
@@ -156,7 +156,6 @@ int set_free_running_mode(int timer_index){
 int enable_timer(int timer_index){
   if(timer_index < 4 && timer_index >= 0){
     timer_pointers[timer_index]->control |= 0x80;
-    timer_pointers[timer_index]->interrupt_clear = 1;
     return 0;
   }
   return -1;
@@ -200,12 +199,8 @@ void timer_start(int timer_index) {
 int start_timer_interrupts(int timer_index,int milliseconds){
 //	conversion(timer_index, milliseconds);
 	if(timer_index < 4 && timer_index >= 0){
-		//initialize_timers();
-		// One-shot
-		/*timer_pointers[timer_index]->timer_load_value = milliseconds;
-		timer_pointers[timer_index]->control = 0x21;
-		timer_pointers[timer_index]->control |= 1<<7;*/
-		set_background_load_value(timer_index, milliseconds);
+		int clicks=conversion(timer_index, milliseconds);
+		set_background_load_value(timer_index, clicks);
 		set_periodic_mode(timer_index);
 		enable_timer_interrupt(timer_index);     
 		timer_start(timer_index);
@@ -239,27 +234,30 @@ void timer_interrupt_handler_q( void (*callback_function)(void *args),int time)
         start_timer_interrupts(0,time);
 }
 
-void timer_interrupt_handler(){
+//Timer interrupt handler that works for timer 0 and 1
+// If you want to use the timer_hanlder for 2 and 3 you have
+// to create it and register it into 2 and 3
+// Make sure you clear the interrupt here in order for it
+// to work and not get continous interrupts or only once.
+
+void timer_interrupt_handler_1(){
+	//function(args);
 	os_printf("hello I'm interrupting");
-	enable_timer(0);
+	clear_interrupt(0);
 	return;
 }
 
 // Create the handler
+// register the handler the first handler of timer
 void _schedule_register_timer_irq(){
         interrupt_handler_t *timer=kmalloc(sizeof(interrupt_handler_t));
-        timer->handler=&timer_interrupt_handler;
+        timer->handler=&timer_interrupt_handler_1;
         register_interrupt_handler(4,timer);
         initialize_timers();
 }
 
 void timer_test(){
-	//asm volatile("cpsie if");
-	//mmio_write(PIC_ADDRESS+0x10, 1<<4);
-
-	//mmio_write(VIC_INT_ENCLEAR, 0xFFFFFFFF);
-	//mmio_write(VIC_INT_ENCLEAR, 0x0);
-	os_printf("int enclear: %X %X\n", VIC_INT_ENCLEAR, PIC_ADDRESS);
+	
 
 //	enable_interrupt(ALL_INTERRUPT_MASK);
 
