@@ -1,57 +1,57 @@
+#include "uthreads.h"
+#include "klibc.h"
 
+struct node {
+    struct thread* data;
+    struct node* next;
+};
 
+struct queue {
+    size_t elements;
+    struct node* head;
+    struct node* tail;
+};
 
+size_t size(struct queue* q) {
+    return q->elements;
+}
 
+struct thread* back(struct queue* q) {
+    return q->tail->data;
+}
 
+struct thread* front(struct queue* q) {
+    return q->head->data;
+}
 
+void push(struct queue* q, struct thread* data) {
+    struct node* newNode = (struct node*) kmalloc(sizeof(struct node));
+    newNode->data = data;
+    newNode->next = 0;
 
+    if (q->head == 0) {
+        q->head = newNode;
+    } else {
+        q->tail->next = newNode;
+    }
+    q->tail = newNode;
+    ++(q->elements);
+}
 
+void pop(struct queue* q) {
+    struct node* remove = q->head;
+    q->head = q->head->next;
+    free(remove);
+    --(q->elements);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+struct thread {
+    Boolean stackIsSet;
+    void* arg;
+    void* stack;
+    void (*f)(void* arg);
+    jmp_buf env;
+};
 
 static struct thread* current_thread;
 static struct queue scheduled;
