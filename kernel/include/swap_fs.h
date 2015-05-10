@@ -43,5 +43,8 @@ int64_t swapfs_store(void*, uint32_t*, uint8_t);
  */
 int32_t swapfs_retrieve(void*, uint32_t*, uint8_t);
 
+//helper function
+char *generate_filename(uint8_t);
+
 
 #endif

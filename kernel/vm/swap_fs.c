@@ -3,8 +3,25 @@
 #include "vm.h"
 #include "klibc.h"
 #include "swap_fs.h"
-#include <stdio.h>
 
+char *generate_filename(uint8_t ssid)
+{
+	char *output;	
+	if (ssid < 10) { // single digit
+		char swapfile[9] = { '/', 's', 'w', 'a', 'p', '0', '0', ssid+48, 0 };
+		output = swapfile;
+	} else if (ssid < 100) { // double digit
+		int tmp = ssid / 10;
+		char swapfile[9] = { '/', 's', 'w', 'a', 'p', '0', tmp+48, (ssid%10)+48, 0 };
+		output = swapfile;
+	} else { // triple digit
+		int tmp = ssid / 10;
+		int tmp2 = ssid / 100;
+		char swapfile[9] = { '/', 's', 'w', 'a', 'p', tmp2+48, tmp+48, ssid+48, 0 };
+		output = swapfile;
+	}
+	return output;
+}
 
 int32_t swapfs_init(int npages, uint8_t ssid)
 {
@@ -14,8 +31,7 @@ int32_t swapfs_init(int npages, uint8_t ssid)
 	bv_arr[ssid] = make_vector(npages);
 	
 	// making new files instead of a tree b/c the FS can't do it
-	char* swapfile;
-	s,printf(swapfile, "/swap%d", ssid); 
+	char *swapfile = generate_filename(ssid);
 	
 	// The permissions parameter doesn't quite work right now (BUG?)
 	if (kcreate(swapfile, 'w', 1) < 0) {
@@ -56,13 +72,13 @@ int64_t swapfs_store(void *page, uint32_t *id, uint8_t ssid)
 		
 		return -1;
 	}
-
+	
 	// Error if invalid index
 	if (bv_set(*id, bv_arr[ssid]) < 0) {
 		return -1;
 	}
 	
-	sprintf(swapfile, "/swap%d", ssid); 
+	swapfile = generate_filename(ssid);
 	// Error if failed to open
 	if ((fd = kopen(swapfile, 'w')) < 0) {
 		return -1;
@@ -89,7 +105,7 @@ int32_t swapfs_retreive(void *page, uint32_t *id, uint8_t ssid)
 		return -1;
 	}
 	
-	sprintf(swapfile, "/swap%d", ssid); 
+	swapfile = generate_filename(ssid);
 
 	// not sure if I should make the index free here...
 	bv_lower(*id, bv_arr[ssid]);
@@ -108,9 +124,9 @@ int32_t swapfs_retreive(void *page, uint32_t *id, uint8_t ssid)
 int32_t swapfs_disable(uint8_t ssid)
 {
 	char *swapfile;
-	bv_free(bv_arr[ssid]);
-	sprintf(swapfile, "/swap%d", ssid); 
-	if (kdelete(swapfile) < 0) {
+	bv_free(bv_arr[ssid]);	
+	swapfile = generate_filename(ssid);
+	if (kdelete(swapfile, 0) < 0) {
 		return -1;
 	}
 
