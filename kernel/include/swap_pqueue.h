@@ -5,7 +5,7 @@
 #include "swap_framework.h"
 
 
-/* Last Update: 05/07/15 */
+/* Last Update: 05/10/15 */
 
 
 struct node{
@@ -66,8 +66,9 @@ struct node *pqueue_index(int);
  * Returns: The specified value from the head of the list
  * 0 - lower_bits
  * 1 - priority
+ * 2 - e_head
  */
-uint32_t pqueue_peek(int);
+void *pqueue_peek(int);
 
 
 /* pqueue_find finds the actual index of the swap space ID (lower_bit value)
