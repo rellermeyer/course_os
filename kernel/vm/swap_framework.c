@@ -26,11 +26,10 @@ uint32_t store_page_LZ(void *page, uint32_t ID){
 	struct swap_entry *curr_ent = LZ_swap->e_head;
 	int i = 0;
 	while(curr_ent->free = 0){
-		curr_ent = curr_ent->next;
+		curr_ent += sizeof(struct swap_entry);
 		i++;
 	}
-	ID = i;
-	curr_ent->higher_bits = ID;
+	ID = i; 
 	curr_ent->free = 0;
 	curr_ent->cmp_size = cmp_size;
 	// curr_ent->e_flags = wherever it comes from
@@ -58,8 +57,8 @@ uint32_t *store_page(void *page, uint32_t *ID)
 uint32_t retrieve_page_LZ(void *page, uint32_t ID){
 	struct node *lz_swap = pqueue_find(0);
 	struct swap_entry *curr_ent = lz_swap->e_head;
-	while(curr_ent->higher_bits != ID){
-		curr_ent = curr_ent->next;
+	for(int i = 0; i < ID; i++){
+		curr_ent += sizeof(struct swap_entry);
 	}
 	void* uncomp_page = malloc(PAGE_SIZE);
 	int uncomp_size = fastlz_decompress(curr_ent->cmp_page, curr_ent->cmp_size, uncomp_page, PAGE_SIZE);
