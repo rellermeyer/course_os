@@ -40,13 +40,13 @@ struct swap_space {
 
 //MAY OR MAY NOT NEED; currently need for swap_lz, but leaves pointless swap_entry struct pointer in swap_space for FS swap, so needs slight redesign.
 struct swap_entry {
-	struct swap_entry *next; // TODO Also no longer needed, just iterate by size
-	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages] - TODO: No longer needed, just needs quick redesign
-	uint16_t e_flags; // PRIVILEGED_RO = 1, USER_RO = 2, PRIVILEGED_RW 4, USER_RW - TODO: Not currently utilized in code. Can simply iterate by swap entry size instead
+	//struct swap_entry *next; // Also no longer needed, just iterate by size
+	//uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages] - No longer needed, just needs quick redesign
+	uint16_t e_flags; // PRIVILEGED_RO = 1, USER_RO = 2, PRIVILEGED_RW 4, USER_RW - TODO: Not currently utilized in code. Need to be passed page permissions information
         uint8_t free; //0 - used, 1 - free
         uint32_t cmp_size; // size of compressed page for decompression purposes
 	void *cmp_page; // virtual address pointer used for resolving page faults
-}; // Total: 17 bytes
+}; // Total: 9 bytes
 
 static struct swap_space *holder;
 static os_size_t memory_count;
