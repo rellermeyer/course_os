@@ -15,7 +15,7 @@
  *
  * EXAMPLE OF VIRTUAL MEMORY ID/ADDRESS FROM SWAP SPACE
  *	_____________________________________________________________
- *	|| [24 bit] SWAP SPACE ENTRY ID | [8 bit] SWAP SPACE    #  ||
+ *	|| [24 bit] SWAP SPACE OFFSET    |[8 bit] SWAP SPACE #     ||
  *	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
  *	*	Total: 32 Bit Address
  *	therefore, there are 256 possible swap spaces possible
@@ -30,23 +30,21 @@
 typedef uint32_t *(*func)(void*, uint32_t*);
 
 struct swap_space {
-//	struct swap_entry *e_head;
+	struct swap_entry *e_head; // currently only used for LZ swap 
 //      uint16_t pages_free;
 	uint8_t lower_bits; // swap space ID [8-bits]
 //	uint16_t flags; // swp_used (1000 or 1), swp_writeok (0010 or 2) or both (0011 or 3)
 	uint8_t priority; // lower is better
 	func store_func;
 	func retrieve_func;
-}; // Total: 10 bytes
+}; // Total: 14 bytes
 
-//MAY OR MAY NOT NEED
-//struct swap_entry {
-	//struct swap_entry *next;
-	//uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
-	//uint16_t e_flags; // ENT_USED (1000 or 1), ENT_WRITEOK (0100 or 2) OR BOTH (1100 or 3)
-        //uint8_t free; //0 - used, 1 - free
-        //void *page; // virtual address pointer used for resolving page faults
-//}; // Total: 15 bytes
+struct swap_entry {
+//	struct swap_entry *next; // Not needed since aligned
+//	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
+	uint16_t e_flags; // PRIVILEGED_RO = 1, USER_RO = 2, PRIVILEGED_RW = 4, USER_RW = 
+	void *page; // virtual address pointer used for resolving page faults
+}; // Total: 15 bytes
 
 static struct swap_space *holder;
 static os_size_t memory_count;

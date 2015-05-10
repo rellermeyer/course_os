@@ -33,7 +33,8 @@ uint32_t store_page_LZ(void *page, uint32_t ID){
 	curr_ent->free = 0;
 	curr_ent->cmp_size = cmp_size;
 	// curr_ent->e_flags = wherever it comes from
-	// TODO: need to copy the compressed bits into memory. Use kernel's VAS to access physical memory and put it pretty much wherever
+	// TODO: need to copy the compressed bits into memory. Use kernel's VAS to 
+	// access physical memory and put it pretty much wherever
 
 	// memcpy(*dest whatever it may be, *cmp_page, cmp_size)
 	// curr_ent->cmp_page = *dest  after deciding dest, store location of compressed page in entry; may need to remember old page ID for some reason?
