@@ -4,9 +4,9 @@
 #include "klibc.h"
 #include <stdint.h>
 
-
+// NOTE: SWAPPING CANNOT WORK UNTIL FILESYSTEMS CAN ALLOCATE MORE THAN 16 PAGES AT A TIME
 /* Contributors: Noel Negusse and Jesse Thaden
- * Last Update: 05/07/15
+ * Last Update: 05/10/15
  */
 
 /* Function: swap_framework
@@ -24,7 +24,7 @@
 
 #define SWAP_SPACES (1<<8)
 #define PAGE_ENTRIES (1<<12) // Assuming 4kB Pages right now
-#define PAGE_SIZE (1<<12) // May carry an if statement later to account for different page sizes
+#define PAGE_SIZE (1<<12) // May carry an if statement later to account for different page sis
 #define COMPRESSED_SIZE 10 // The size of compressing 16MiB of data
 
 typedef uint32_t *(*func)(void*, uint32_t*);
@@ -40,11 +40,11 @@ struct swap_space {
 }; // Total: 14 bytes
 
 struct swap_entry {
-//	struct swap_entry *next; // Not needed since aligned
+	struct swap_entry *next;
 //	uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages]
 	uint16_t e_flags; // PRIVILEGED_RO = 1, USER_RO = 2, PRIVILEGED_RW = 4, USER_RW = 
-	void *page; // virtual address pointer used for resolving page faults
-}; // Total: 15 bytes
+	void *cmp_page; // virtual address pointer used for resolving page faults
+}; // Total: 10 bytes
 
 static struct swap_space *holder;
 static os_size_t memory_count;
@@ -64,8 +64,8 @@ void swap_init();
  * Returns: A pointer to a index value (from a bit vector) in memory 
  * OR returns a NULL/0 on failure 
  */
-uint32_t *store_page(void*, uint32_t*);
-uint32_t *store_page_LZ(void*, uint32_t*);
+uint32_t store_page(void*, uint32_t*);
+uint32_t store_page_LZ(void*, uint32_t*); // All LZ functions not yet working...
 // uint32_t *store_page(void*, os_size_t, uint32_t*); To be implemented... (will replace)
 // uint32_t *store_pageLZ(void*, os_size_t, uint32_t*); diddo
 
@@ -76,8 +76,8 @@ uint32_t *store_page_LZ(void*, uint32_t*);
  * Returns: NULL on failure or simply passes back ID on success
  * NOTE: Page size was set by store_page
  */
-uint32_t *retrieve_page(void*, uint32_t*);
-uint32_t *retrieve_page_LZ(void*, uint32_t*);
+uint32_t retrieve_page(void*, uint32_t*);
+uint32_t retrieve_page_LZ(void*, uint32_t*);
 
 
 /* Returns: The total stored memory in bytes by function store_page(void*, uint32_t*) */
@@ -90,8 +90,8 @@ os_size_t sum_stored();
  * Returns: The ID pointer - bit vector index - of where the swap_space was stored and 
  * changes the ID pointer that value as well. Returns NULL on failure
  */
-uint32_t *vm_swapout_page(void*, uint32_t*); // store the page
-uint32_t *vm_swapin_page(void*, uint32_t*); // retrieve the page
+uint32_t vm_swapout_page(void*, uint32_t*); // store the page
+uint32_t vm_swapin_page(void*, uint32_t*); // retrieve the page
 
 
 /* vm_register/vm_deregister will activate/deactivate a swap space and set a priority
@@ -100,7 +100,7 @@ uint32_t *vm_swapin_page(void*, uint32_t*); // retrieve the page
  *
  * Returns: -1 or 1 whether the swap space registeration was a failure or success, respectively
  */
-int8_t vm_register_swap_space(func, func, int, uint8_t);
+int vm_register_swap_space(func, func, int, int16_t);
 void vm_deregister_swap_space(uint8_t);
 
 
