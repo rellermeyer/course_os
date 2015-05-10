@@ -1,7 +1,7 @@
-#include "global_defs.h"
-#include "tests.h"
-#include "klibc.h"
-#include "mem_alloc.h"
+#include "include/global_defs.h"
+#include "include/tests.h"
+#include "include/klibc.h"
+#include "include/mem_alloc.h"
 
 //This function executes and displays results of test set given to it.
 void run_tests(Test *tests[], int num_tests)
@@ -9,16 +9,16 @@ void run_tests(Test *tests[], int num_tests)
   int i;
   for(i = 0; i < num_tests; i++)
   {
-    os_printf("%s",tests[i]->test_name);
-    os_printf(" ... ");
+    os_printf("Running test: %s",tests[i]->test_name);
+    os_printf(" ... \n");
     //evaluates test here, if it passes prints PASSES else FAILS
     if(!(tests[i]->testptr)())
     {
-      os_printf("PASSES\n");
+      os_printf(":-D\n\n");
     }
     else
     {
-      os_printf("FAILS\n");
+      os_printf("=(\n\n");
     }
   }
 }

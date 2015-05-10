@@ -1,7 +1,7 @@
 #include "../include/tests.h"
 #include "../include/tests/test_priority_queue.h"
 #include "../include/priority_queue.h"
-#include "klibc.h"
+#include "../include/klibc.h"
 
 // cd ~/Desktop/workspace/course_os
 // git add .
