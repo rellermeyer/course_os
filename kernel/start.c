@@ -35,10 +35,11 @@
 // #include "scheduler.h"
 
 // Tests
-#include "tests/test_priority_queue.h"
-#include "tests/test_hash_map.h"
-#include "tests/test_mem_alloc.h"
-#include "tests/test_vm.h"
+#include "tests/test_klibc.h"
+#include "include/tests/test_hash_map.h"
+#include "include/tests/test_mem_alloc.h"
+#include "include/tests/test_vm.h"
+#include "include/tests/test_priority_queue.h"
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
@@ -75,9 +76,9 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
-
+	
 	//vm_test_early();
-
+	//timer_test()
 	// Setup kmalloc...
 	init_heap();
 
@@ -109,9 +110,9 @@ void start2(uint32_t *p_bootargs)
 
 	//run_fs_tests();
 
-	// int fd = kopen("/hello", 'r');
-	// os_printf("fd: %d\n", fd);
-	// kclose(fd);
+	int fd = kopen("/hello", 'r');
+	os_printf("fd: %d\n", fd);
+	kclose(fd);
 
 	//while(1);
 

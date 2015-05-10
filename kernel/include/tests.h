@@ -1,7 +1,7 @@
 #ifndef _TESTS_H_
 #define _TESTS_H_
 
-#include <global_defs.h>
+#include "global_defs.h"
 
 // Each test consists of a descriptor and function pointer to the test function.
 typedef struct Test {

@@ -10,9 +10,13 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 
+PIOBJS = start.o pi_light.o startup.o drivers/uart_pi.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o vm/swap_fs.o data_structures/swap_pqueue.o vm/swap_framework.o
+
 OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o vm/swap_fs.o data_structures/swap_pqueue.o vm/swap_framework.o
 
 all: flash.bin card.sd
+
+make_Pi: kernelPi.img
 
 CFLAGS += -pipe
 CFLAGS += -std=gnu99 
@@ -20,6 +24,11 @@ CFLAGS += -ffreestanding
 CFLAGS += -nostdinc
 CFLAGS += -Wall
 #CFLAGS += -Werror
+PFLAGS += -mfpu=vfp
+#PFLAGS += -mfloat-abi=hard
+PFLAGS += -march=armv6zk
+PFLAGS += -mtune=arm1176jzf-s
+PFLAGS += -nostartfiles
 CFLAGS += -g
 
 run: flash.bin card.sd
@@ -57,6 +66,15 @@ kernel.bin: kernel.elf
 
 kernel.img: kernel.bin
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
+
+# Begin Pi Make
+kernelPi.elf: $(PIOBJS)
+	$(CC) -T kernelPi.ld -O2 $(PFLAGS) $(PIOBJS) -o kernelPi.elf
+
+kernelPi.img: kernelPi.elf
+	$(OBJCOPY) kernelPi.elf -O binary kernelPi.img
+
+# End Pi Make
 
 script.img: uboot-commands.ubt
 	$(MKIMAGE) -A arm -C none -T script -d uboot-commands.ubt -a 0x10000 -e 0x10000 script.img
