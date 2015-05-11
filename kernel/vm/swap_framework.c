@@ -33,10 +33,16 @@ uint32_t store_page_LZ(void *page, uint32_t ID){
 	curr_ent->free = 0;
 	curr_ent->cmp_size = cmp_size;
 	// curr_ent->e_flags = wherever it comes from
-	// TODO: need to copy the compressed bits into memory. Use kernel's VAS to access physical memory and put it pretty much wherever
+	struct vas* kvas = KERNEL_VAS;
+	int curr_add = 0x200000;
 
-	// memcpy(*dest whatever it may be, *cmp_page, cmp_size)
-	// curr_ent->cmp_page = *dest  after deciding dest, store location of compressed page in entry; may need to remember old page ID for some reason?
+	// loop until free physical memory frame is found
+	while(vm_allocate_page(kvas, curr_add, 4) == 0){
+	       curr_add += PAGE_SIZE;
+	}
+	
+	// after deciding physical memory location, store physical memory location in cmp_page	
+	curr_ent->cmp_page = curr_add;
 	free(cmp_page); // after copying over relevant bits of cmp data in this oversized buffer
 	memory_count += 4096;
 	return ID;
@@ -63,14 +69,16 @@ uint32_t retrieve_page_LZ(void *page, uint32_t ID){
 	void* uncomp_page = malloc(PAGE_SIZE);
 	int uncomp_size = fastlz_decompress(curr_ent->cmp_page, curr_ent->cmp_size, uncomp_page, PAGE_SIZE);
 
-	// if uncompressed size is not the size of a page or is 0 (indicating corrupted data or a too small output buffer (the latter of 
-	// which should never happen)), returns error
+	/* if uncompressed size is not the size of a page or is 0 (indicating corrupted data or a too small 
+	 * output buffer (the latter of  which should never happen)), returns error */
 	if(uncomp_size != PAGE_SIZE || uncomp_size == 0){
 		return NULL;	
 	}
 	// place the decompressed page back into memory. 
 	memcpy(page, uncomp_page, PAGE_SIZE);
 	free(uncomp_page);
+	struct vas* kvas = KERNEL_VAS;
+	vm_free_page(kvas, curr_ent->cmp_page);
 	curr_ent->e_flags = 0; 
 	curr_ent->free = 1;
 	// curr_ent->cmp_size = 0; likely not necessary 
