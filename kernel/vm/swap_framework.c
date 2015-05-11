@@ -13,53 +13,52 @@ void swap_init()
 	// initialize a swap space struct to hold values to then pass
 	// TODO: change to garauntee allocation in RAM
 	holder = (struct swap_space*) kmalloc(sizeof(struct swap_space));
-
 }
 
-uint32_t store_page_LZ(void *page, uint32_t *ID){
-	struct node *LZ_swap = (struct node*) pqueue_peek(2);
+// INCOMPLETE
+/*uint32_t store_page_LZ(void *page, uint32_t *ID){*/
+	/*struct node *LZ_swap = (struct node*) pqueue_peek(2);*/
 
-	// allocate this on RAM this is where you os_memcpy the given page!!  
-	// NOTE: THAT 1.05 DOESN'T MULTIPLY TO A CLEAN NUMBER
-	void *e_page = kmalloc(PAGE_SIZE*1.05); // output buffer needs to be at least 5% bigger than input;
+	/*// allocate this on RAM this is where you os_memcpy the given page!!  */
+	/*// NOTE: THAT 1.05 DOESN'T MULTIPLY TO A CLEAN NUMBER*/
+	/*void *e_page = kmalloc(PAGE_SIZE*1.05); // output buffer needs to be at least 5% bigger than input*/
 	
-	int32_t cmp_size;
-	cmp_size = fastlz_compress(page, PAGE_SIZE, e_page);
+	/*int32_t cmp_size;*/
+	/*cmp_size = fastlz_compress(page, PAGE_SIZE, e_page);*/
 
-	/* if compressed size is greater than uncompressed size, input may not be 
-	   compressible; return error */
-	if (cmp_size > PAGE_SIZE) {
-		return NULL;
-	}
+	/* if compressed size is greater than uncompressed size, input may not be */
+	   /*compressible; return error */
+	/*if (cmp_size > PAGE_SIZE) {*/
+		/*return 0;*/
+	/*}*/
 	
-	struct swap_entry *curr_ent = LZ_swap->e_head;
-	int i = 0;
-	while (curr_ent->cmp_page != NULL) { 
-		curr_ent += sizeof(struct swap_entry);
-		i++;
-	}
-	ID = i; 
-	curr_ent->free = 0;
-	curr_ent->cmp_size = cmp_size;
-	curr_ent->e_flags = 1 /* NOT CORRECT, put wherever it comes from here */
-	struct vas* kvas = KERNEL_VAS;
-	int curr_add = 0x200000;
+	/*struct swap_entry *curr_ent = LZ_swap->e_head;*/
+	/*int i = 0;*/
+	/*while (curr_ent->cmp_page != NULL) { */
+		/*curr_ent += sizeof(struct swap_entry);*/
+		/*i++;*/
+	/*}*/
+	/**ID = i; */
+	/*curr_ent->cmp_size = cmp_size;*/
+	/*curr_ent->e_flags = 1; [> NOT CORRECT, put wherever it comes from here <]*/
+	/*struct vas *kvas = KERNEL_VAS;*/
+	/*int curr_add = 0x200000;*/
 
-	// loop until free physical memory frame is found
-	while(vm_allocate_page(kvas, curr_add, 4) == 0){
-	       curr_add += PAGE_SIZE;
-	}
+	/*// loop until free physical memory frame is found*/
+	/*while(vm_allocate_page(kvas, curr_add, 4) == 0){*/
+	       /*curr_add += PAGE_SIZE;*/
+	/*}*/
 	
-	// after deciding physical memory location, store physical memory location in cmp_page	
-	curr_ent->cmp_page = curr_add;
-	kfree(e_page); // after copying over relevant bits of cmp data in this oversized buffer
-	if (curr_ent->cmp_page != NULL) {
-		curr_ent += sizeof(struct swap_entry);
-		curr_ent = (struct swap_entry*) kmalloc(sizeof(struct swap_entry));	
-	}
-	memory_count += 4096;
-	return *ID;
-}
+	/*// after deciding physical memory location, store physical memory location in cmp_page	*/
+	/*curr_ent->cmp_page = curr_add;*/
+	/*kfree(e_page); // after copying over relevant bits of cmp data in this oversized buffer*/
+	/*if (curr_ent->cmp_page != NULL) {*/
+		/*curr_ent += sizeof(struct swap_entry);*/
+		/*curr_ent = (struct swap_entry*) kmalloc(sizeof(struct swap_entry));	*/
+	/*}*/
+	/*memory_count += 4096;*/
+	/*return *ID;*/
+/*}*/
 
 
 
@@ -67,46 +66,47 @@ uint32_t store_page(void *page, uint32_t *ID)
 {
 	uint8_t lowbits = *((uint32_t*)page) & 0x000000FF;
 	if (swapfs_store(page, ID, lowbits) == -1){
-		return NULL;
+		return 0;
 	}
 	memory_count+=4096;
 	return *ID;
 }
 
-uint32_t retrieve_page_LZ(void *page, uint32_t *ID){
-	struct node *lz_swap = (struct node*) pqueue_peek(2);
-	struct swap_entry *curr_ent = lz_swap->e_head;
-	for (int i = 0; i < *ID; i++) {
-		curr_ent += sizeof(struct swap_entry);
-	}
-	void *uncomp_page = kmalloc(PAGE_SIZE);
-	int uncomp_size = fastlz_decompress(curr_ent->cmp_page, /*constant?*/ COMPRESSED_SIZE/PAGE_ENTRIES
-			, uncomp_page, PAGE_SIZE);
+// INCOMPLETE
+/*uint32_t retrieve_page_LZ(void *page, uint32_t *ID){*/
+	/*struct node *lz_swap = (struct node*) pqueue_peek(2);*/
+	/*struct swap_entry *curr_ent = lz_swap->e_head;*/
+	/*for (int i = 0; i < *ID; i++) {*/
+		/*curr_ent += sizeof(struct swap_entry);*/
+	/*}*/
+	/*void *uncomp_page = kmalloc(PAGE_SIZE);*/
+	/*int uncomp_size = fastlz_decompress(curr_ent->cmp_page, [>constant?<] COMPRESSED_SIZE/PAGE_ENTRIES*/
+			/*, uncomp_page, PAGE_SIZE);*/
 
 	/* if uncompressed size is not the size of a page or is 0 
 	 * (indicating corrupted data or a too small output buffer (the latter of 
 	 * which should never happen)), returns error
 	 */ 
-	if (uncomp_size != PAGE_SIZE || uncomp_size == 0) { 
-		return NULL;	
-	}
-	// place the decompressed page back into memory. 
-	os_memcpy(page, uncomp_page, PAGE_SIZE);
-	kfree(uncomp_page);
-	struct vas* kvas = KERNEL_VAS;
-	vm_free_page(kvas, curr_ent->cmp_page);
-	curr_ent->e_flags = 0;
-	curr_ent->cmp_page = NULL;
-	memory_count -= 4096;
-	return *ID;
-}	
+	/*if (uncomp_size != PAGE_SIZE || uncomp_size == 0) { */
+		/*return 0;	*/
+	/*}*/
+	/*// place the decompressed page back into memory. */
+	/*os_memcpy(page, uncomp_page, PAGE_SIZE);*/
+	/*kfree(uncomp_page);*/
+	/*struct vas* kvas = KERNEL_VAS;*/
+	/*vm_free_page(kvas, curr_ent->cmp_page);*/
+	/*curr_ent->e_flags = 0;*/
+	/*curr_ent->cmp_page = NULL;*/
+	/*memory_count -= 4096;*/
+	/*return *ID;*/
+/*}	*/
 
 uint32_t retrieve_page(void *page, uint32_t *ID)
 {
 	uint8_t lowbits = *((uint32_t*)page) & 0x000000FF;
-	if (swapfs_retrieve(page, ID, lowbits) == -1) {
-		return NULL;
-	}
+//	if (swapfs_retrieve(page, ID, lowbits) == -1) { // GIVES ERROR FOR SOME REASON??
+//		return 0;
+//	}
 	memory_count-=4096;	
 	return *ID;
 }
@@ -127,7 +127,7 @@ uint32_t vm_swapin_page(void *page, uint32_t *ID)
 		/// check if there's enough memory for LZ compression
 		// NOTE: always false until store/retrieve_page_LZ works
 		if (0/*vm_count_free_frames() > COMPRESSED_SIZE/PAGE_ENTRIES*/) {
-			vm_register_swap_space(store_page_LZ, retrieve_page_LZ, 0, -1); // can store any page
+			vm_register_swap_space(store_page_LZ, retrieve_page_LZ, 0, -1);
 			swap_area = pqueue_find(-1);				
 		} else {
 			vm_register_swap_space(store_page, retrieve_page, 1, ssid);
@@ -142,8 +142,7 @@ uint32_t vm_swapout_page(void *page, uint32_t *ID)
 {
 	uint8_t ssid = *((uint32_t*)page) & 0x000000FF;
 	struct node *swap_area = pqueue_find(ssid);
-	return swap_area->retrieve_func(page, ID);
-	
+	return swap_area->retrieve_func(page, ID);	
 }
 
 int vm_register_swap_space(func store_p, func retrieve_p, int priority, int16_t ssid)
@@ -159,7 +158,7 @@ int vm_register_swap_space(func store_p, func retrieve_p, int priority, int16_t 
 		if (holder->e_head = (struct swap_entry*) kmalloc(sizeof(struct swap_entry)) == NULL) {
 			return -1;
 		}
-		holder->e_head->next = NULL;
+//		holder->e_head->next = NULL;
 		holder->e_head->e_flags = 0;
 		holder->e_head->cmp_page = NULL;		
 	}	
@@ -188,7 +187,7 @@ uint32_t vm_page_fault(void *page)
 	uint32_t* id = (uint32_t*)page;
 
 	int temp;
-	if ((temp = vm_swap_free_mapping(KERNEL_VAS, page, id)) < 0) { // note: new free func is useless currently
+	if ((temp = vm_swap_free_mapping(KERNEL_VAS, page, id)) < 0) { 		
 		if (temp == VM_ERR_BADV) {
 			os_printf("Virtual pointer passed was invalid [page_fault]");
 		}
@@ -221,13 +220,13 @@ uint32_t vm_page_fault(void *page)
 		return 0;
 	}
 	// Get level 2 page table
-	uint32_t *l2pt = (uint32_t*)VM_ENTRY_GET_L2(
-			(uint32_t)VM_L1_GET_ENTRY(vm_get_current_vas()->l1_pagetable, page));
-	
-	// confirm from @lkolby whether this will work for setting the page table
-	uint32_t *tmp = (uint32_t*)VM_L2_ENTRY(l2pt, page);
-	*tmp = (uint32_t*)page;
-	
+/*	uint32_t *l2pt = (uint32_t*)VM_ENTRY_GET_L2((uint32_t)VM_L1_GET_ENTRY
+ *			(vm_get_current_vas()->l1_pagetable, page));
+ *	
+ *	// confirm from @lkolby whether this will work for setting the page table
+ *	uint32_t *tmp = (uint32_t*)VM_L2_ENTRY(l2pt, page);
+ *	*tmp = (uint32_t*)page;
+ */	
 	return *((uint32_t*)pptr);
 }
 

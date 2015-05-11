@@ -97,7 +97,7 @@ int64_t swapfs_store(void *page, uint32_t *id, uint8_t ssid)
 	return *id; // success
 } 
 
-int32_t swapfs_retreive(void *page, uint32_t *id, uint8_t ssid)
+int64_t swapfs_retreive(void *page, uint32_t *id, uint8_t ssid)
 {
 	int fd; char *swapfile;
 	//checks if index is free
@@ -110,7 +110,7 @@ int32_t swapfs_retreive(void *page, uint32_t *id, uint8_t ssid)
 	// not sure if I should make the index free here...
 	bv_lower(*id, bv_arr[ssid]);
 
-	if ((fd = kopen("/swap", 'r')) < 0) {
+	if ((fd = kopen(swapfile, 'r')) < 0) {
 		return -1;
 	}
 	

@@ -5,11 +5,15 @@
 #include "swap_framework.h"
 
 
-/* Last Update: 05/10/15 */
+/* Last Update: 05/11/15 */
 
 
 bit_vector *bv_arr[SWAP_SPACES];
 // bit_vector *free_bitvector;
+
+
+//helper function
+char *generate_filename(uint8_t);
 
 
 /* swapfs_init initializes swap file system  framework for 'npages' number of pages
@@ -17,10 +21,6 @@ bit_vector *bv_arr[SWAP_SPACES];
  * Returns: -1 if failure, number of bytes written on success
  */
 int32_t swapfs_init(int, uint8_t);
-
-
-/* Returns: -1 if failure, 1 if success */
-int32_t swapfs_disable(uint8_t);
 
 
 /* swapfs_store will store a page to media - not main memory - storage, e.g. HDD
@@ -41,10 +41,11 @@ int64_t swapfs_store(void*, uint32_t*, uint8_t);
  *
  * Returns: -1 on failure and 1 on success
  */
-int32_t swapfs_retrieve(void*, uint32_t*, uint8_t);
+int64_t swapfs_retrieve(void*, uint32_t*, uint8_t);
 
-//helper function
-char *generate_filename(uint8_t);
+
+/* Returns: -1 if failure, 1 if success */
+int32_t swapfs_disable(uint8_t);
 
 
 #endif
