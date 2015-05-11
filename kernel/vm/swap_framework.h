@@ -38,7 +38,6 @@ struct swap_space {
 	func retrieve_func;
 }; // Total: 10 bytes
 
-//MAY OR MAY NOT NEED; currently need for swap_lz, but leaves pointless swap_entry struct pointer in swap_space for FS swap, so needs slight redesign.
 struct swap_entry {
 	//struct swap_entry *next; // Also no longer needed, just iterate by size
 	//uint32_t higher_bits; // swap entry ID [24-bit assuming 4kB pages] - No longer needed, just needs quick redesign
