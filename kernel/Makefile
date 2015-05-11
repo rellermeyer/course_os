@@ -31,6 +31,7 @@ PFLAGS += -mtune=arm1176jzf-s
 PFLAGS += -nostartfiles
 CFLAGS += -g
 
+
 run: flash.bin card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
