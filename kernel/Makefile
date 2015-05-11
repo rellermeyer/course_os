@@ -24,15 +24,13 @@ CFLAGS += -ffreestanding
 CFLAGS += -nostdinc
 CFLAGS += -Wall
 #CFLAGS += -Werror
-#<<<<<<< HEAD
 PFLAGS += -mfpu=vfp
 #PFLAGS += -mfloat-abi=hard
 PFLAGS += -march=armv6zk
 PFLAGS += -mtune=arm1176jzf-s
 PFLAGS += -nostartfiles
-#=======
 CFLAGS += -g
-#>>>>>>> febc0123f432391cb09b52c6b2a125a1f64a8680
+
 
 run: flash.bin card.sd
 	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
