@@ -21,5 +21,6 @@ uint32_t sd_capacity();
 int sd_transmit(void* buffer, uint32_t address);
 int sd_receive(void* buffer, uint32_t address);
 int clear();
+int status();
 
 #endif

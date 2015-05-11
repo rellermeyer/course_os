@@ -5,7 +5,7 @@
  */
 #include "interrupt.h"
 #include "klibc.h"
-
+#include "drivers/timer.h"
 
 // there are 32 kinds of interrupts on the VIC
 // this structure may need to be expanded if the secondary controller is incorporated
@@ -29,6 +29,17 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 // (2) the VIC (interrupt controller)
 // (3) (sometimes) in the device (this should be done in the device driver)
 
+// CLear Interrupts
+// Do not disable the VIC and the CSPR is disable in the hw_hanlders
+// you have to clear the inerrupt from the register handler
+// Look At timer.c it has a great example of it.
+// Here's the Website to the VIC we are using http://infocenter.arm.com/help/topic/com.arm.doc.ddi0181e/DDI0181.pdf
+
+//They are three handlers you must use First is the (IRQ)interrupt handler its in hw_handlers.c (with attribute Irq)
+// second is the ISR routine handler which is the one in interrupt.c
+// third is the specific handler you created a great example is in the timer.c it is called timer_interrupt_handler.
+// If youre having an error it must be in the third handler not the first two.
+
 // Setup FIQ interrupts
 void init_fiqs(){
 	check_if_fiq[11] = 1; // synchronous serial port
@@ -44,8 +55,10 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 
 	if(num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
 		return -1;
-	else if(handlers[num] != 0) // something has already been registered there
+	else if(handlers[num] != 0){ // something has already been registered there
+		os_printf("Already registered\n");
 		return -1;
+	}
 	else if(handler == 0) // we need a NULL macro
 		return -1;
 	
@@ -69,16 +82,16 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler){
 void handle_irq_interrupt(int interrupt_vector){
 	os_printf("handling interrupt %d\n", interrupt_vector);
 	// go to handler routine
-	handlers[interrupt_vector]->handler((void*) interrupt_vector);
-	// ok interrupt handled, clear it
-	hw_interrupt_disable(interrupt_vector); // this doesn't seem right b/c we need to then re-enable
-	// yea this needs to be changed
-	// we actually should probably just go ahead and disable interrupts on the VIC and in the core (and possibly on the device as well) since we don't have a nested handler
+	os_printf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
+	handlers[interrupt_vector]->handler((void *) interrupt_vector);
+
 }
 
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
+	int cpsr = get_proc_status();
+
 	// enable interrupt on the core
 	switch(mask) {
 		case IRQ_MASK:
@@ -143,5 +156,6 @@ int get_proc_status(void) {
 void restore_proc_status(int cpsr) {
 	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }
+
 
 

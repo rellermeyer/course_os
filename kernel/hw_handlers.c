@@ -43,6 +43,8 @@ void init_vector_table(void) {
     mmio_write( 0x34, &reserved_handler ); 
     mmio_write( 0x38, &irq_handler ); 
     mmio_write( 0x3C, &fiq_handler ); 
+
+    
 }
 
 
@@ -67,7 +69,15 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 	// load the SVC call and mask to get the number
 	callNumber = *((uint32_t *)(address-4)) & 0x00FFFFFF;
 
+
+
+
+
 	asm("MOV %0, r7":"=r"(callNumber)::);
+
+
+
+
 
 	// We have to switch VASs to the kernel's VAS if we want to do anything
 	struct vas *prev_vas = vm_get_current_vas();
@@ -105,7 +115,7 @@ long  __attribute__((interrupt("SWI"))) software_interrupt_handler(void){
 		// retrieve the args that delete() put in r1 and pass to kdelete():
 		asm volatile("mov r0, %[filepath1]":[filepath1]"=r" (filepath)::);
 		// call kdelete(), passing appropriate args:
-		error = kdelete(filepath);
+		error = kdelete(filepath,1);
 		// move error that kdelete() returns to a r1 to be retrieved by delete() and returned to user:
 		return (long)error;
 		break;
@@ -313,8 +323,8 @@ void reserved_handler(void){
 void __attribute__((interrupt("IRQ"))) irq_handler(void){
 
 	os_printf("IRQ HANDLER\n");
-	disable_interrupts();	
-
+	int cpsr=disable_interrupt_save(IRQ);	
+//	os_printf("disabled CSPR:%X\n",cpsr);
 	// Discover source of interrupt
 	int i = 0;
 	// do a straight run through the VIC_INT_STATUS to determine
@@ -327,7 +337,10 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void){
 		}
 	}
 	// we've gone through the VIC and handled all active interrupts
-	enable_interrupts();
+	restore_proc_status(cpsr);
+
+	enable_interrupt(IRQ_MASK);
+
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void){

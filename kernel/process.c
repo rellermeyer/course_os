@@ -4,7 +4,6 @@
 #include "loader.h"
 #include "vm.h"
 #include "elf.h"
-#include "mem_alloc.h"
 static uint32_t GLOBAL_PID;
 
 uint32_t sample_func(uint32_t);
@@ -19,9 +18,9 @@ int init_all_processes() {
 /*Spring 2015 course_os: Sathya Sankaran, Rakan Stanbouly, Jason Sim
   
   creates a process and initializes the PCB
-  returns pcb pointer upon success
-  returns 0 if there is no more room in pcb table
-  file_p is a file pointer that we will create the process with */
+  @param file pointer to location in memory of file
+  @return pcb pointer upon success
+  @return 0 if there is no more room in pcb table */
 pcb* process_create(uint32_t* file_p) {
 
 	uint32_t* free_space_in_pcb_table = next_free_slot_in_pcb_table();
@@ -66,9 +65,11 @@ pcb* process_create(uint32_t* file_p) {
 	}
 }
 
-//Cycles through pcb table and returns next free space
-//If there is space, returns a pointer to the space
-//returns 0 if no free space is available
+/*
+	Goes through PCB Table and returns next free space
+	@return 0 if no free space
+	@return pointer to space in memory for PCB
+*/
 uint32_t* next_free_slot_in_pcb_table() {
 	uint32_t* current_address = pcb_table;
 	uint32_t i;
@@ -81,9 +82,12 @@ uint32_t* next_free_slot_in_pcb_table() {
 	return 0;
 }
 
-//saves all the machine state of the process
-//returns 0 for failure
-//returns 1 for success
+/*
+	Saves all of the Registers on the machine to the PCB
+	@param Process ID
+	@return 0 if failed
+	@return 1 for success
+*/
 uint32_t save_process_state(uint32_t PID){
 	uint32_t* process_to_save = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
@@ -114,11 +118,13 @@ uint32_t save_process_state(uint32_t PID){
 
 }
 
-//R15 is the Program Counter
-//R14 is the Link Register
-//The last register to be loaded is the PC
-//return 0 if fail
-//return 1 for success
+/*
+	Loads registers using values in pcb
+	@param Process ID
+	@param PID
+	@return Returns 0 if successful
+
+*/
 uint32_t load_process_state(uint32_t PID) {
 	uint32_t* process_to_load = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
@@ -151,6 +157,12 @@ uint32_t load_process_state(uint32_t PID) {
 
 	return 1;
 }
+/*
+	Prints the register variables that a PCB contains
+	@param Process ID
+	@return 0 if PCB doesn't exist
+	@return 1 if PCB exists
+*/
 
 uint32_t print_process_state(uint32_t PID) {
 	pcb* pcb_p = get_PCB(PID);
@@ -179,9 +191,12 @@ uint32_t print_process_state(uint32_t PID) {
 
 	return 1;
 }
-
-//destroys process with param PID by clearing the pcb struct
-//returns 1 upon success, 0 with failure
+/*
+	Destroys Process with Process ID by clearing the struct
+	Calls free_PCB to do this
+	@return 1 if freed properly
+	@return 0 if failed
+*/
 uint32_t process_destroy(int PID) {
 	uint32_t* addressToClear = get_address_of_PCB(PID);
 	pcb* pcb_p = get_PCB(PID);
@@ -195,8 +210,9 @@ uint32_t process_destroy(int PID) {
 	}
 
 }
-
-//prints the addresses of the pcbs stored in the table
+/*
+	Prints all the PCBs in the table
+*/
 void print_pcb_table() {
 	os_printf("printing pcb table\n");
 	uint32_t* current_address = (uint32_t*) pcb_table;
@@ -207,7 +223,9 @@ void print_pcb_table() {
 	}
 }
 
-//Prints all of the PIDs in the pcb table
+/*
+	Prints all the Process IDs
+*/
 void print_PID() {
 	
 	uint32_t* current_address = pcb_table;
@@ -226,8 +244,11 @@ void print_PID() {
 }
 
 
-/* Returns a pointer to a pcb of process with @PID,
-   or 0 if no process with PID exists.
+/* 
+	Finds the PCB that corresponds the Process ID
+	@param Process ID
+	@return Process Control Block on success
+	@return 0 if failed
 */
 pcb* get_PCB(uint32_t PID) {
 	
@@ -248,8 +269,13 @@ pcb* get_PCB(uint32_t PID) {
 	return 0;
 }
 
-/* returns a pointer to the address of a pcb in the table
-   given the PID or if the PID is invalid
+/* 
+	Returns pointer to PCB for corresponding Process ID
+	@param Process ID
+	@return Address of PCB
+	@return 0 if PID isn't valid
+
+
    */
 uint32_t* get_address_of_PCB(uint32_t PID) {
 	if(PID <= 0) {
@@ -274,9 +300,13 @@ uint32_t* get_address_of_PCB(uint32_t PID) {
 	return 0;
 }
 
-// this will 0 out everything in a PCB 
-// accepts a pointer to a PCB
-// returns 1 if successfully frees a pcb
+/*
+	Zeroes out Name and Process ID of corresponding PCB
+	@param Process Control Block
+	@return 0 if PCB isn't valid
+	@return 1 if successfully wiped
+
+*/
 uint32_t free_PCB(pcb* pcb_p) {
 	if(pcb_p == 0) {
 		os_printf("Can not free. Not a valid PCB.\n");
@@ -288,15 +318,17 @@ uint32_t free_PCB(pcb* pcb_p) {
 	return 1;
 }
 
-/**
- * Executes a process
- *
- * @param  pointer to a process control blocl
- * @param  pcb* pcb_p
- * @return pcb PID
- */
-uint32_t execute_process(pcb* pcb_p) {
+
+/* 
+	Moves the return location of current process into R14
+	Sets the current state then loads the process registers
 	
+	@param Pointer to process control block
+	@param pcb* pcb_p
+	@return Process ID 
+
+*/
+uint32_t execute_process(pcb* pcb_p) {
 	if(!pcb_p) {
 		os_printf("Cannot execute process. Exiting.\n");
 		return 0;
@@ -335,11 +367,14 @@ uint32_t execute_process(pcb* pcb_p) {
 	return pcb_p->PID;
 }
 
-//test function to see if execute process works correctly.
-uint32_t sample_func(uint32_t x) {
-	os_printf("Sample function!! From process with PID: %d\n", x);
-	return 0;
-}
+/*
+Allocates memory in the process VAS, and 
+copies over the process to that location in memory
+
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
 
 void setup_process_vas(pcb* pcb_p){
 	
@@ -370,9 +405,16 @@ void setup_process_vas(pcb* pcb_p){
 
 
 }
+/*
+Allocated memory for the process stack
+Moves arguments for argc, argv, envp, and auxp
+into stack_top
 
-//Initial page allocation for process stack in VAS
-//Allows for a variety of stack limits
+Points stack pointer to location where stack_top would begin
+@param pointer to process control block
+@param pcb* pcb_p
+
+*/
 void init_proc_stack(pcb * pcb_p)
 {
 	int retval = 0;
