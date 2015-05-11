@@ -30,6 +30,9 @@ int32_t bv_firstFree(bit_vector* bit_vec);
 /* frees the memory used by the vector */
 int32_t bv_free(bit_vector* bit_vec);
 
+/* returns whether the given index is free - Noel*/
+int32_t bv_isfree(uint32_t index, bit_vector* bit_vec);
+
 /* transfer a bit_vector to disk */
 int32_t bv_serialize(bit_vector* bit_vec, uint32_t start_block, uint32_t end_block);
 
