@@ -1,8 +1,47 @@
+/**
+ * @file
+ *
+ * Build FS (Bootstraps the File System)
+ *
+ * @author  Lane Kolbly, Ginevra Gaudioso
+ * @version 1.0
+ *
+ * @section NOTE ON CMDLINE FOLDER
+ * SD card gets run automatically in the makefile, however
+ * the .h files in the cmdline folder need to be manually updated and
+ * are independent of the files in the include folder
+ * > e.g. if someone changes include/file.h then fs/cmdline/file.h 
+ *   needs to be updated
+ *
+ * POSSIBLE TODO: Somehow consolodate include files into one directory
+ * 
+ * @section DESCRIPTION
+ * 
+ * Takes a directory and creates an SD card image from
+ * it
+ *
+ */
 #include "file.h"
 #include<stdio.h>
 #include<dirent.h>
 #include<string.h>
 
+/**
+ * Adds a specific file to the card.sd image
+ *
+ * Adds the file at the path specified by filename to the SD card
+ * image indicated by dst_filename
+ *
+ * @param 
+ *
+ * char *filename - holds the path to the file to add to the SD
+ * card image
+ *
+ * @param
+ *
+ * char *dst_filename - holds the path to the SD card image to
+ * add the file to
+ */
 void addFile(char *filename, char *dst_filename)
 {
 	FILE *f = fopen(filename, "r");
@@ -19,13 +58,15 @@ void addFile(char *filename, char *dst_filename)
 
 int main(int argc, char **argv)
 {
+	int fd;
+
 	kfs_init(0,0,1);
 
 	// Create a file, I guess?
 	kclose(kcreate("/foobar", 'r', 0));
 
 	// Write to the file
-	int fd = kopen("/foobar", 'w');
+	fd = kopen("/foobar", 'w');
 	char *s = "Hello, world!";
 	kwrite(fd, s, strlen(s));
 	kclose(fd);
@@ -59,6 +100,5 @@ int main(int argc, char **argv)
 	fd = kopen("/hello", 'r');
 	printf("fd: %d\n", fd);
 	kclose(fd);
-
 	return 0;
 }

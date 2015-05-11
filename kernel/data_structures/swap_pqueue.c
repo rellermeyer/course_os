@@ -7,6 +7,7 @@ void pqueue_init(struct swap_space *ss)
 { 
 	head = (struct node*) kmalloc(sizeof(struct node));
 	head->next = NULL;
+	head->e_head = ss->e_head;
 	head->lower_bits = ss->lower_bits;
 	head->priority = ss->priority;
 	head->store_func = ss->store_func;
@@ -98,7 +99,8 @@ void pqueue_set(struct node *h, struct swap_space *ss){
 	h->lower_bits = ss->lower_bits;
 	h->priority = ss->priority;
 	h->store_func = ss->store_func;
-	h->retrieve_func = ss->retrieve_func;	
+	h->retrieve_func = ss->retrieve_func;
+	h->e_head = ss->e_head;	
 }
 
 struct node *pqueue_index(int i)
@@ -125,14 +127,18 @@ uint8_t pqueue_size()
 }
 
 // returns specified value from the head of list
-uint32_t pqueue_peek(int type)
+void *pqueue_peek(int type)
 {
+	void *foo;
 	switch (type) {
 		case 0:
-		       	return head->lower_bits;
+		       	foo = &(head->lower_bits);
 		case 1: 
-			return head->priority;
+			foo = &(head->priority);
+		case 2: 
+			foo = head->e_head;
 	}
+	return foo;
 }
 
 struct node *pqueue_find(uint8_t ssid)

@@ -34,7 +34,7 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 	
 }
 
-//THIS FUNCTION IS NOT USED SINCE WE NOW HAVE USER VM
+
 void allocate_process_memory(pcb *pcb_p, Elf_Ehdr *h, Elf_Phdr ph[], void * file_pointer)
 {
 	os_printf("This is the start of allocate_process_memory().\n All it loads the process RORW into Kernel Heap\n We don't want that.\n");	

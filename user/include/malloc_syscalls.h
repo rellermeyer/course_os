@@ -6,16 +6,10 @@
 *	    SYSCALLS for Malloc        *
 ************************************/
 
-#define SYSCALL_SET_PERM 7 
-#define SYSCALL_MEM_MAP 8
 #define SYSCALL_MALLOC 13
 #define SYSCALL_ALIGNED_ALLOC 14
 #define SYSCALL_FREE 15
 
-
-/***********************************
-*	   Functions for Malloc        *
-************************************/
 
 
 /**

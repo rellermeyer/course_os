@@ -5,7 +5,7 @@
 #include "swap_framework.h"
 
 
-/* Last Update: 05/07/15 */
+/* Last Update: 05/10/15 */
 
 
 bit_vector *bv_arr[SWAP_SPACES];
@@ -42,6 +42,9 @@ int64_t swapfs_store(void*, uint32_t*, uint8_t);
  * Returns: -1 on failure and 1 on success
  */
 int32_t swapfs_retrieve(void*, uint32_t*, uint8_t);
+
+//helper function
+char *generate_filename(uint8_t);
 
 
 #endif
