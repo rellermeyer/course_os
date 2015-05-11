@@ -1,5 +1,5 @@
 #include "vm.h"
-#include "frame.h"
+//#include "frame.h"
 #include "klibc.h"
 
 struct vm_free_frame {

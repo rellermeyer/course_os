@@ -25,8 +25,6 @@ static const int perm_mapping[16] = {
 	-1, // 1111 ???
 };
 
-
-
 static struct vas *vm_current_vas = (struct vas*)V_L1PTBASE;
 
 struct vm_free_list {
@@ -92,56 +90,12 @@ uint32_t *vm_alloc_coarse_page_table()
 	return vptr;
 }
 
-
-/**
- *vm_vtop: Virtual to Physical Address Translation
- *  
- *  @Param vas Current virtual address space
- *  @Param vptr Virtual Address pointer to be translated
- *
- */
 uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
 	}
-    uint32_t vptr_addr = (uint32_t) vptr;
-    //Index in to the L1_ptable
-    uint32_t l1_descriptor;
-    uint32_t l2_descriptor;
-    uint32_t l2_entry;
-    //if it is zero
-    l1_descriptor = *((uint32_t*)((vptr_addr&0xFFF00000) + (uint32_t)vas->l1_pagetable));
-    if((l1_descriptor&0x3) == 0){
-        //invalid
-    }else if(l1_descriptor&0x3 == 1){
-        //Dereferencing l1 descriptor to get Coarse base address and to 
-        //index into coarse page table
-        l2_descriptor = *(uint32_t*)((l1_descriptor&0xFFFFFC00) + (vptr_addr&0xFF000));
-        if((l2_descriptor & 3) == 0){
-            //invalid what error? 
-        }else if((l2_descriptor & 3) == 1){
-            //64KB Pages NOT Implemented
-        }else if((l2_descriptor & 3) == 2){
-            //4KB Small pages
-            l2_entry = *(uint32_t*)((l2_descriptor&0xFFFFF000) + (vptr_addr&0x00000FFF));
-        }
-     
-    }else{
-        //Bit set for supersections
-        if(0x40000&l1_descriptor){
-            //Supersections Not Implemented 
-        }else{
-            //Sections
-            uint32_t *section_entry = *((uint32_t*)((l1_descriptor&0xFF000000) + (vptr_addr&0x00FFFFFF)));
-            return section_entry;
-        }
-
-    }
-    
-    //TODO: TEST!
-    //return l2_entry;
 	return (uint32_t*)((void*)vptr - V_L1PTBASE + P_L1PTBASE);
 }
 
@@ -151,7 +105,6 @@ uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
 		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1);
 	}
-    
 	return (uint32_t*)((void*)vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
@@ -163,15 +116,6 @@ void vm_use_kernel_vas() {
 	vm_enable_vas((struct vas*)V_L1PTBASE);
 }
 
-/**
- * vm_allocate_page allocates a page of size BLOCK_SIZE and allows the VAS
- * to access the page at address vptr.
- *
- * @param vas Virtual Address Space which we allocate the page in.
- * @param vptr Virtual pointer which we map the newly allocated page to.
- * @param permission The permissions which we should put on the new mapping.
- * @return 0 or an error code in VM_ERR_* (see vm.h).
- */
 int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	CHECK_VPTR;
 
@@ -198,18 +142,6 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	return 0;
 }
 
-/**
- * vm_allocate_pages allocates enough pages, starting at vptr, to cover the
- * following nbytes of memory. This function essentially calls
- * vm_allocate_page repeatedly until enough pages have been allocated.
- *
- * @param vas VAS which we allocate the pages in.
- * @param vptr Virtual pointer to start allocating pages at.
- * @param nbytes The number of bytes to allocate starting at vptr.
- * @param permission The permissions to apply to the allocated memory.
- * @return A pointer to the end of the allocated space. Note that the amount
- *         of memory allocated may be more than nbytes.
- */
 void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
 	unsigned char *p = (unsigned char*)vptr;
 	while (p-(unsigned char*)vptr < nbytes) {
@@ -219,12 +151,6 @@ void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permis
 	return p;
 }
 
-/**
- * Gets the entry corresponding to vptr from the L1 table table.
- *
- * @param table A L1 page table.
- * @param vptr The virtual pointer to get the entry for.
- */
 #define VM_L1_GET_ENTRY(table,vptr) table[((unsigned int)vptr)>>20]
 #define VM_L1_SET_ENTRY(table,vptr,ent) (table[((unsigned int)vptr)>>20]=ent)
 #define VM_ENTRY_GET_FRAME(x) ((x)&~((PAGE_TABLE_SIZE<<1) - 1))
@@ -254,20 +180,10 @@ int vm_free_page(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-/**
- * Marks a page as "pinned". Actually is a no-op until the swapping framework
- * is done.
- *
- * @param vas
- * @param vptr Virtual address to pin.
- */
 int vm_pin(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-/**
- * Marks a page as "unpinned". Actually is a no-op.
- */
 int vm_unpin(struct vas *vas, void *vptr) {
 	return 0;
 }
@@ -289,29 +205,20 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	}
 
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS, (uint32_t*)VM_ENTRY_GET_L2(cur_entry));
-	//TODO: FIX?
 	int l2_idx = ((unsigned int)vptr&0x000FF000)>>12;
 	if (l2_pagetable[l2_idx]) {
-		//TODO: this is where the error is being thrown
 		return VM_ERR_MAPPED;
 	}
 
 	//perm &= ~(1<<10); // Clear AP[0] so we get an access exception.
 	//vas->l1_pagetable[(unsigned int)vptr>>20] = (unsigned int)pptr | (perm<<10) | 2;
 	// TODO: Permissions!
-
-	// TODO: replace lvl2_permission with just permission?
-	//Temporary value, need to put in method header or replace:
-	int lvl2_perm = perm_mapping[perm];
-	int apx_bit = lvl2_perm & 4;
+	int lvl2_perm = perm;//perm_mapping[perm];
+	int apx_bit = (lvl2_perm & 4) >> 2;
 	int ap_bits = lvl2_perm & 3;
-	//TODO: Lane please make sure correct!
-	//TODO: add l2_pagetable to vas?
-	l2_pagetable[l2_idx] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4);
+	l2_pagetable[l2_idx] = (unsigned int)pptr | (apx_bit << 9) | (ap_bits << 4) | 2;
 	//os_printf("pptr: %X, idx=%d, l2pt=%X\n", pptr, l2_idx, l2_pagetable);
-
-	//cancelling apbit?
-
+	//os_printf("permission=%d lvl2_perm=%X apx=%X ap=%X\n", permission, lvl2_perm, apx_bit, ap_bits);
 	//l2_pagetable[l2_idx] = (unsigned int)pptr | (1<<4) | 2;
 	return 0;
 }
@@ -344,38 +251,7 @@ int vm_free_mapping(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-/**
- * Will make the memory that accessible to other_vas at other_ptr
- * accessible to vas at this_ptr.
- * It can then be unmapped from either using a typical vm_free_mapping
- * or vm_free_page. The behavior of vm_free_mapping and vm_free_page
- * will be made equivalent.
- * For both, the behavior will be to free the frame if a frame was
- * allocated (via vm_allocate_page) and the page is not shared. If the
- * page is shared, then both will behave like vm_free_mapping.
- *
- * It is an error for other_ptr to point to an area not mapped in other_vas.
- *
- * For example, given vas1 and vas2:
- *
- * vm_allocate_page(vas2,0x10)
- * vm_map_shared_memory(vas1, 0x20, vas2, 0x10)
- * // Now vas1's 0x20 points to the same memory as vas2's 0x10
- * vm_free_page(vas2, 0x10)
- * // Now vas1 is the sole owner of the memory at vas1's 0x20
- * vm_free_mapping(vas1, 0x20)
- * // Now that frame has been freed
- *
- * All the pointers have to be a multiple of BLOCK_SIZE.
- *
- * Return values:
- * 0                 - success
- * VM_ERR_BADV       - this_ptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_BADP       - other_ptr was not a multiple of BLOCK_SIZE.
- * VM_ERR_NOT_MAPPED - other_ptr is not mapped in other_vas.
- * VM_ERR_MAPPED     - this_ptr is already mapped in vas.
- * VM_ERR_BADPERM    - permission is bad.
- */
+// We're going to have to switch to the kernel's VAS, then copy it over.
 int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas, void *other_ptr, int permission) {
 	if ((unsigned int)this_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
 	if ((unsigned int)other_ptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
