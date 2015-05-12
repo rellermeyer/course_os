@@ -40,7 +40,7 @@
 #define PROCESS 0x99
 #define MAX_TASK_MSG_SPACE 2048 // bytes
 #define NO_ARG 0
-#define SHARED_MEMORY_START 0x12000000
+#define SHARED_MSG_MEMORY_START 0x12000000
 
 #define AS_PROCESS(a) ((pcb*) a->task)
 #define AS_KTHREAD(a) ((kthread_handle*) a->task)
@@ -80,12 +80,28 @@ uint32_t sched_init() {
 	return STATUS_OK;
 }
 
+/**
+ * Registers a message listener (abstracted through streams.c)
+ *
+ * Allows a task to register a function which will be used to
+ *
+ * @param cb_handler callback handler
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 uint32_t sched_register_callback_handler(sched_msg_callback_handler cb_handler) {
 	sched_task * task = hmap_get(all_tasks_map, sched_get_active_tid());
 	task->cb_handler = cb_handler;
 	return STATUS_OK;
 }
 
+/**
+ * Deregister a message listener (abstracted through streams.c)
+ *
+ * @param cb_handler callback handler
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 uint32_t sched_deregister_callback_handler() {
 	sched_task * task = hmap_get(all_tasks_map, sched_get_active_tid());
 	task->cb_handler = 0;
@@ -93,7 +109,9 @@ uint32_t sched_deregister_callback_handler() {
 	return STATUS_OK;
 }
 
-// Free the resources used the scheduler
+/*
+ * Free the resources used the scheduler
+ */
 uint32_t sched_free() {
 	vm_use_kernel_vas();
 
@@ -106,9 +124,26 @@ uint32_t sched_free() {
 
 static uint32_t sched_tid = 10;
 
+/**
+ *
+ * Creates a kthread task (refer to kthread.c)
+ *
+ * @param cb_handler callback handler
+ *
+ * @returns task id (tid)
+ */
 uint32_t sched_create_task_from_kthread(kthread_handle * kthread, int niceness) {
 	return __sched_create_task(kthread, niceness, KTHREAD, NO_ARG, NO_ARG);
 }
+
+/**
+ *
+ * Creates a process task (refer to process.c)
+ *
+ * @param cb_handler callback handler
+ *
+ * @returns task id (tid)
+ */
 
 // defer process create
 uint32_t sched_create_task_from_process(char * file, int niceness, int argc,
@@ -116,6 +151,9 @@ uint32_t sched_create_task_from_process(char * file, int niceness, int argc,
 	return __sched_create_task(file, niceness, PROCESS, argc, argv);
 }
 
+/*
+ * Internal helper function to create a task
+ */
 uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
 		int argc, char ** argv) {
 
@@ -153,8 +191,10 @@ uint32_t __sched_create_task(void * task_data, int niceness, uint32_t type,
 
 }
 
-// Helper function used by the scheduler internally. It will traverse the parent/child
-// list to find a subtask.
+/*
+ * Helper function used by the scheduler internally. It will traverse the parent/child
+ * list to find a subtask.
+ */
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 	if (parent_task && parent_task->tid == tid) {
 		return parent_task;
@@ -172,19 +212,36 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 	return 0;
 }
 
-//
-// NOTE expecting access to kernel global vars
+/**
+ * Waits until a child task has terminated
+ *
+ * @param tid of child task
+ *
+ * @return does not return a value;
+ */
 void sched_waittid(uint32_t tid) {
+	// TODO check if child or children or otherwise, return out of this
 	while (1) {
 		sched_task * task = (sched_task*) hmap_get(all_tasks_map, tid);
 		if (task == 0 || task->state == TASK_STATE_FINISHED) {
 			break;
 		}
 
+		// priority donation
+		if (active_task->niceness < task->niceness) {
+			sched_set_niceness(task->tid, active_task->niceness);
+		}
+
+		// dirty solution
+		sched_yield();
+
 		// sleep(500);
 	}
 }
 
+/**
+ * Internal helper function to print priority queues
+ */
 void __sched_print_queues() {
 	int i;
 	DEBUG("active_tasks: [ ");
@@ -197,6 +254,9 @@ void __sched_print_queues() {
 	DEBUG("]\n");
 }
 
+/**
+ * Internal helper function to be used switch to the next task
+ */
 void __sched_dispatch() {
 	// use the kernel memory
 	vm_use_kernel_vas();
@@ -210,6 +270,10 @@ void __sched_dispatch() {
 
 		prq_enqueue(active_tasks, active_task->node);
 	}
+
+	// Uncomment this line to print out the inactive/active task queues
+	// inactive_tasks: tasks that are waiting in line
+	// active_tasks: tasks that are being interleaved
 
 	// __sched_print_queues();
 
@@ -283,10 +347,10 @@ void __sched_dispatch() {
 	} else if (IS_PROCESS(active_task)) {
 		if (active_task->state == TASK_STATE_ACTIVE) {
 			__sched_emit_messages();
-			jmp_goto(&start_buf, TASK_RESUME_PROCESS);
+			jmp_goto(&start_buf, TASK_RESUME_PROCESS); // jump to kernel context and start the process
 		} else if (active_task->state == TASK_STATE_INACTIVE) {
 			active_task->state = TASK_STATE_ACTIVE;
-			jmp_goto(&start_buf, TASK_CREATE_PROCESS);
+			jmp_goto(&start_buf, TASK_CREATE_PROCESS); // jump to kernel context and start the process
 		} else {
 			WARN("Task %d has unexpected state %d", active_task->tid,
 					active_task->state);
@@ -297,6 +361,10 @@ void __sched_dispatch() {
 	__sched_remove_task(active_task);
 	__sched_dispatch();
 }
+
+/**
+ * Internal helper function to emit messages into a task
+ */
 
 // FIXME stack will be that of the kernel; protect it
 // issue messages for the active task
@@ -310,17 +378,20 @@ void __sched_emit_messages() {
 			length = chunk->length;
 
 			if (IS_PROCESS(active_task)) {
+				// FIXME this code is wrong!!!!
+				// You must allocate memory at SHARED_MSG_MEMORY_START in user process before that process
+				// is executed. Also, no need a for loop, just make shared memory at SHARED_MSG_MEMORY_START
 				for (int i = 0; i < (length / BLOCK_SIZE); i++) {
-					vm_map_shared_memory(AS_PROCESS(active_task)->stored_vas,
-							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)), // FIXME char to uint32_t issue
-							KERNEL_VAS,
-							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)),
+					vm_map_shared_memory(KERNEL_VAS,
+							(void*) (SHARED_MSG_MEMORY_START + (i * BLOCK_SIZE)),
+							AS_PROCESS(active_task)->stored_vas,
+							(void*) (SHARED_MSG_MEMORY_START + (i * BLOCK_SIZE)),
 							VM_PERM_USER_RW);
 				}
 
-				source = (uint32_t*) SHARED_MEMORY_START;
+				source = (uint32_t*) SHARED_MSG_MEMORY_START;
 
-				os_memcpy(chunk->data, (uint32_t*) SHARED_MEMORY_START,
+				os_memcpy(chunk->data, (uint32_t*) SHARED_MSG_MEMORY_START,
 						chunk->length);
 			} else if (IS_KTHREAD(active_task)) {
 				source = (uint32_t*) chunk->data;
@@ -340,12 +411,20 @@ void __sched_emit_messages() {
 			if (IS_PROCESS(active_task)) {
 				for (int i = 0; i < (length / BLOCK_SIZE); i++) {
 					vm_free_mapping(KERNEL_VAS,
-							(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)));
+							(void*) (SHARED_MSG_MEMORY_START + (i * BLOCK_SIZE)));
 				}
 			}
 		}
 	}
 }
+
+/**
+ * Start a task from a task id (tid)
+ *
+ * @param uint32_t task id (tid)
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 
 // start process
 uint32_t sched_start_task(uint32_t tid) {
@@ -382,7 +461,16 @@ uint32_t sched_start_task(uint32_t tid) {
 	return STATUS_FAIL;
 }
 
-// essentially a kill process
+/**
+ * Kill/remove a task
+ *
+ * @param uint32_t task id (tid)
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
+
+// TODO check if child or sub child of active_process before allowing this operation
+// NOTE access children through active_task->children_tids, possibly leverage __sched_find_subtask
 uint32_t sched_remove_task(uint32_t tid) {
 	sched_task * task = (sched_task*) hmap_get(all_tasks_map, tid);
 	if (task) {
@@ -393,9 +481,9 @@ uint32_t sched_remove_task(uint32_t tid) {
 	return STATUS_FAIL;
 }
 
-// contract
-// --------
-// must disable timer_interruptU
+/**
+ * Internal helper function to remove a task
+ */
 uint32_t __sched_remove_task(sched_task * task) {
 	if (task == NULL) {
 		return STATUS_FAIL;
@@ -451,7 +539,11 @@ uint32_t __sched_remove_task(sched_task * task) {
 	return state;
 }
 
-// get the current process id
+/**
+ * Get the active task id
+ *
+ * @return uint32_t active_task->tid
+ */
 uint32_t sched_get_active_tid() {
 	if (active_task) {
 		return active_task->tid;
@@ -460,10 +552,25 @@ uint32_t sched_get_active_tid() {
 	return STATUS_FAIL;
 }
 
+/**
+ * Returns the scheduler's last error (needs a lot of work)
+ *
+ * @return const char* error message
+ */
 const char * sched_last_err() {
 	return last_err;
 }
+/**
+ * Set the priority of a task (-20 to 20)
+ *
+ * @param uint32_t pid
+ * @param uint32_t niceness (the new niceness)
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 
+// TODO check if child or sub child of active_process before allowing this operation
+// access children through active_task->children_tids, possibly leverage __sched_find_subtask
 uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 
 	sched_task * task;
@@ -494,6 +601,11 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 	return STATUS_OK;
 }
 
+/**
+ * Gets the active tasks's available space for messaging (refer to streams.c)
+ *
+ * @return # of bytes available
+ */
 uint32_t sched_get_message_space() {
 	if (active_task) {
 		return active_task->available_space;
@@ -502,7 +614,17 @@ uint32_t sched_get_message_space() {
 	return 0;
 }
 
-// contract: callee must delete the data that is being passed
+/**
+ * Post/emit a message to another task  (refer to streams.c).
+ * CONTRACT: callee must delete the data that is being passed
+ *
+ * @param uint32_t dest_pid
+ * @param uint32_t event
+ * @param uint32_t* data
+ * @param int len data length in bytes
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 		int len) {
 
@@ -525,11 +647,11 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 			vm_map_shared_memory(AS_PROCESS(active_task)->stored_vas,
 					(void*) (data + (i * BLOCK_SIZE)), // FIXME char to uint32_t issue
 					KERNEL_VAS,
-					(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)),
+					(void*) (SHARED_MSG_MEMORY_START + (i * BLOCK_SIZE)),
 					VM_PERM_USER_RW);
 		}
 
-		source = (uint32_t*) SHARED_MEMORY_START;
+		source = (uint32_t*) SHARED_MSG_MEMORY_START;
 	} else if (IS_KTHREAD(active_task)) {
 		source = data;
 	}
@@ -550,7 +672,7 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 	if (IS_PROCESS(active_task)) {
 		for (int i = 0; i < (len / BLOCK_SIZE); i++) {
 			vm_free_mapping(KERNEL_VAS,
-					(void*) (SHARED_MEMORY_START + (i * BLOCK_SIZE)));
+					(void*) (SHARED_MSG_MEMORY_START + (i * BLOCK_SIZE)));
 		}
 
 		vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
@@ -558,11 +680,27 @@ uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, uint32_t * data,
 
 	return STATUS_OK;
 }
+/**
+ * Yields a task so another task can run
+ *
+ * @return STATUS_OK or STATUS_FAIL
+ */
 
+// TODO shouldn't return anything; it makes no sense to do so
 uint32_t sched_yield() {
 	__sched_dispatch();
 	return STATUS_OK;
 }
+
+/**
+ * Force set the a task state so that when a task is resumed, it will
+ * resume in set state. Invoked/referenced in hw_handlers.c.
+ *
+ * @param cb_handler tid
+ * @param cb_handler jmp_buffer
+ *
+ * @return does not return a value;
+ */
 
 void sched_update_task_state(uint32_t tid, jmp_buf * jmp_buffer) {
 	if (active_task) {
