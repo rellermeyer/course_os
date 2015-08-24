@@ -5,7 +5,7 @@
  *      Author: kittenRainbow
  */
 
-#include "../include/array_list.h"
+#include "array_list.h"
 
 arrl_handle* arrl_create() {
     return arrl_create_fixed(DEFAULT_BUCKET_SIZE);

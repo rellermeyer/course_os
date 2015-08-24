@@ -2,8 +2,8 @@
  Spring 2015 pcb_exec subteam: Sathya Sankaran, Jason Sim, Rakan Stanbouly
  */
 
-#include "include/priorityQueue.h"
-#include "include/global_defs.h"
+#include "priorityQueue.h"
+#include "global_defs.h"
 #include "vm.h"
 
 /* Global Variables */

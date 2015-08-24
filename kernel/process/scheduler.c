@@ -1,8 +1,8 @@
-#include "../include/scheduler.h"
-#include "../include/vm.h"
-#include "../include/klibc.h"
-#include "../include/process.h"
-#include "../include/linked_list.h"
+#include "scheduler.h"
+#include "vm.h"
+#include "klibc.h"
+#include "process.h"
+#include "linked_list.h"
 
 #define MAX_TASKS 100   // in the future, cap will be removed
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load

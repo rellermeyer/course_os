@@ -1,7 +1,7 @@
+#include "klibc.h"
 #include "mem_alloc.h"
 #include "vm.h"
 #include "allocator.h"
-#include "klibc.h"
 
 uint32_t *nextBlock = (uint32_t*) MEM_START;
 uint32_t buffer_size;

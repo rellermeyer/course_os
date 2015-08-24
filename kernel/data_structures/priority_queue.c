@@ -1,4 +1,4 @@
-#include "../include/priority_queue.h"
+#include "priority_queue.h"
 #include "klibc.h"
 
 #define AMORITIZED_CONSTANT 2
