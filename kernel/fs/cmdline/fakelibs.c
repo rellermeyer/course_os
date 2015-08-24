@@ -57,6 +57,7 @@ int sd_transmit(void *data, uint32_t addr)
 	fseek(f, addr, SEEK_SET);
 	fwrite(data, 1, 512, f);
 	fclose(f);
+	return 0;
 }
 
 int sd_receive(void *data, uint32_t addr)
@@ -65,4 +66,5 @@ int sd_receive(void *data, uint32_t addr)
 	fseek(f, addr, SEEK_SET);
 	fread(data, 1, 512, f);
 	fclose(f);
+	return 0;
 }

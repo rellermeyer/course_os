@@ -1110,7 +1110,7 @@ int kopen(char* filepath, char mode){
 		os_printf("no directory specified \n");
 		return ERR_INVALID;
 	}
-	if (mode == NULL) {
+	if (mode == 0) {
 		os_printf("no mode specified \n");
 		return ERR_INVALID;
 	}
@@ -1516,7 +1516,7 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		os_printf("filepath not valid \n");
 		return ERR_INVALID;	
 	}
-	if (mode == NULL) {
+	if (mode == 0) {
 		os_printf("filepath not valid \n");
 		return ERR_INVALID;	
 	}
@@ -1603,6 +1603,9 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 	//UPDATE DISK by writing memory data structures to disk
 
 	int error = add_dir_entry(cur_inode, new_inode->inum, result);
+	if (error != 0) {
+		return error;
+	}
 	void *block = kmalloc(BLOCKSIZE);
 	os_memset(block, 0, BLOCKSIZE);
 	os_memcpy((uint32_t*)cur_inode, block, sizeof(struct inode));
@@ -1893,6 +1896,11 @@ int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
 	}else if(status < 0){ //WTF?
 		return ERR_GEN; 
 	}
+
+	if (error) {
+		return error;
+	}
+
 	//recursive step
 	else{ //status == 0, meaning is not empty
 		int i;

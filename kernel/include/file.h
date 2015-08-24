@@ -1,7 +1,7 @@
 #ifndef __FILE_H__
 #define __FILE_H__
 
-
+#include "global_defs.h"
 #include "bitvector.h"
 #include "linked_list.h"
 #include <stdint.h>
@@ -16,9 +16,6 @@
 
 
 //error codes used in return:
-#define NULL ((void*)0) //null
-#define TRUE 1 //for a boolean like function
-#define FALSE 0 //for a boolean like function
 #define ERR_GEN -1 //general error
 #define ERR_FULL -2 //error signaling end of resources
 #define ERR_INVALID -3 //invalid parameter

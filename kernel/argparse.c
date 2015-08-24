@@ -6,7 +6,6 @@
 #include "process.h"
 #include "file.h"
 
-
 static void argparse_parse(char *);
 
 /* Get the command-line arguments and run the functions to process them. */
@@ -52,16 +51,16 @@ void atag_print(struct atag *t)
 }
 
 /*
-	Pulls name, start location, and size of file from command line
-	Opens file for process, then moves the process from
-	file to a location in memory.
-	Creates a process using the start location of process,
-	enables the VAS for the process, sets up the stack and heap,
-	then executes it.
-	@param Character pointer to command line
-	@param char* cmdline
+ Pulls name, start location, and size of file from command line
+ Opens file for process, then moves the process from
+ file to a location in memory.
+ Creates a process using the start location of process,
+ enables the VAS for the process, sets up the stack and heap,
+ then executes it.
+ @param Character pointer to command line
+ @param char* cmdline
 
-*/
+ */
 
 static void argparse_parse(char *cmdline)
 {
@@ -78,42 +77,43 @@ static void argparse_parse(char *cmdline)
 			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
-
-
 			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
 					name, start, len);
 
-
-			os_printf("START: %X \n", start+PROC_LOCATION);
+			os_printf("START: %X \n", start + PROC_LOCATION);
 
 			int fd = kopen("/hello", 'r');
 			struct stats fstats;
 			start += PROC_LOCATION;
 			get_stats("/hello", &fstats);
-			 len = fstats.size;
+			len = fstats.size;
 
-			int* location = start;
-			int storage2 = 0;
-			
-			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
-				os_printf("argparse.c: allocating page %d of %d\n", i+1, (len/BLOCK_SIZE) + 1);
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				int x = vm_allocate_page(KERNEL_VAS, (void*)v, VM_PERM_USER_RW );		
-				
+			int* location = (int*) start;
+
+			for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++)
+			{
+				os_printf("argparse.c: allocating page %d of %d\n", i + 1,
+						(len / BLOCK_SIZE) + 1);
+				uint32_t *v = (uint32_t*) (start + (i * BLOCK_SIZE));
+				int x = vm_allocate_page(KERNEL_VAS, (void*) v,
+						VM_PERM_USER_RW);
+				assert(x == 0);
+
 			}
 
-			int counter =0;
-			while(counter < len){
+			int counter = 0;
+			while (counter < len)
+			{
 				kread(fd, location, 4);
-				location +=1;
-				counter +=4;
-				
+				location += 1;
+				counter += 4;
+
 			}
 			//assert(1==12);
-			
-			pcb *test= process_create((uint32_t*) start);
 
-				vm_enable_vas(test->stored_vas);
+			pcb *test = process_create((uint32_t*) start);
+
+			vm_enable_vas(test->stored_vas);
 
 			test->len = len;
 			test->start = start;
@@ -121,11 +121,12 @@ static void argparse_parse(char *cmdline)
 			setup_process_vas(test);
 			init_proc_stack(test);
 			init_proc_heap(test);
-			
-			for(int i = 0; i < (len/BLOCK_SIZE) + 1; i++){
-				uint32_t *v = start + (i* BLOCK_SIZE);
-				vm_free_mapping(KERNEL_VAS, (void*)v);		
-				
+
+			for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++)
+			{
+				uint32_t *v = (uint32_t *) (start + (i * BLOCK_SIZE));
+				vm_free_mapping(KERNEL_VAS, (void*) v);
+
 			}
 
 			execute_process(test);
@@ -204,19 +205,18 @@ int hex_value_of_character(char c)
 	return -1;
 }
 
-
-uint32_t round_up(uint32_t c){
-
+uint32_t round_up(uint32_t c)
+{
 
 	c--;
 	c |= c >> 1;
 
-    c |= c >> 2;
-    c |= c >> 4;
-    c |= c >> 8;
+	c |= c >> 2;
+	c |= c >> 4;
+	c |= c >> 8;
 
-    c |= c >> 16;
-    c++;
-    return c;
+	c |= c >> 16;
+	c++;
+	return c;
 
 }

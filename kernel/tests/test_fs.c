@@ -42,6 +42,9 @@ int test_fs_1()
 	os_printf("Read %d bytes from file.\n", nbytes);
 	os_printf("the buffer is: '%s'\n", buf);
 	kclose(fd_new);
+	kclose (fd1);
+	kclose (fd2);
+	kclose (fd3);
 
 	return 0;
 }//end test_fs_1()
@@ -91,8 +94,9 @@ int test_fs_2() {
 		//os_printf("%d is valid.\n", i);
 	}
 	kclose(fd);
-	struct stats * result;
+	struct stats * result = NULL;
 	get_stats("/foobar2", result);
+	assert(!result->is_dir);
 	return 0;
 }
 

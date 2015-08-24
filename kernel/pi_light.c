@@ -1,5 +1,4 @@
 
-
 #include "mmap.h"
 #include <stdint.h>
 #include "pi_light.h"
@@ -11,7 +10,7 @@ volatile unsigned int* gpio;
 void set_up_LED()
 {
 	//Initialize the LED
-	gpio = (unsigned int*)GPIO_BASE;
+	gpio = (unsigned int*) GPIO_BASE;
 	gpio[1] |= (1 << 18);
 }
 void light_on()
@@ -25,13 +24,17 @@ void light_off()
 void on_off()
 {
 	light_on();
-	for (int i = 0; i < 250000; ++i) {}
+	for (int i = 0; i < 250000; ++i)
+	{
+	}
 	light_off();
-	for (int i = 0; i < 250000; ++i) {}
+	for (int i = 0; i < 250000; ++i)
+	{
+	}
 }
 void LED_alternate()
 {
-	
+
 	for (int i = 0; i < 20; ++i)
 	{
 		on_off();

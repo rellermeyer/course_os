@@ -420,7 +420,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
         task->node->priority = SAFE_NICE(niceness);
         prq_enqueue(tasks, task->node); // add it again to see if its position in the queue
 
-    }+
+    }
 
     __sched_resume_timer_irq();
 

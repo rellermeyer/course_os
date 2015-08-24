@@ -58,45 +58,37 @@ void start(uint32_t *p_bootargs)
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
 	/*print_uart0("p_bootargs: ");
-	print_uart0((char*)p_bootargs);
-	print_uart0("\n");*/
-	os_printf("%X\n",*p_bootargs);
+	 print_uart0((char*)p_bootargs);
+	 print_uart0("\n");*/
+	os_printf("%X\n", *p_bootargs);
 	vm_init();
 	os_printf("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
 }
 
-void vm_test_early();
-
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs)
 {
-
-
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
-	
-	//vm_test_early();
-	//timer_test()
+
 	// Setup kmalloc...
 	init_heap();
 
 	//Test: UART0 mapped to the correct virtual address
 	print_uart0("MMU enabled\n");
-	//asm volatile("swi 1");
-	//while (1);
 
 	print_uart0("\nCourseOS!\n");
 	//p_bootargs = (uint32_t*)0x100;
-	INFO("Bootargs: %X\n",*p_bootargs);
+	INFO("Bootargs: %X\n", *p_bootargs);
 	/*print_uart0((char*)p_bootargs);
-	  print_uart0("\n");*/
+	 print_uart0("\n");*/
 
 	// Test stuff...
 	/*int *p = (int*)0xFFFFFFF0;
-	p[0] = 1;
-	os_printf("0x%x == 1?\n", p[0]);*/
+	 p[0] = 1;
+	 os_printf("0x%x == 1?\n", p[0]);*/
 
 	run_vm_tests();
 	INFO("There are %d free frames.\n", vm_count_free_frames());
@@ -105,8 +97,7 @@ void start2(uint32_t *p_bootargs)
 	run_prq_tests();
 	run_hmap_tests();
 
-	int retval;
-	kfs_init(0,0,0);
+	kfs_init(0, 0, 0);
 
 	//run_fs_tests();
 
@@ -119,18 +110,16 @@ void start2(uint32_t *p_bootargs)
 	//asm volatile("swi 1");
 
 	/*
-	4-15-15: 	#Prakash: 	What happens if we let the program load here?
-							Let's make argparse_process() do its thing
+	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
+	 Let's make argparse_process() do its thing
 
-				Note: As of 4-15-15 this fails horribly with hello.o not being
-				recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
-	*/
+	 Note: As of 4-15-15 this fails horribly with hello.o not being
+	 recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
+	 */
 
 	//assert(1==2 && "Test assert please ignore");
-
 	init_all_processes();
 	argparse_process(p_bootargs);
-	
 
 	print_uart0("done parsing atag list\n");
 
@@ -140,13 +129,11 @@ void start2(uint32_t *p_bootargs)
 	//initialize pcb table and PID
 	/* init_all_processes(); */
 	//print_process_state(0);
-
 	//run_process_tests();
-
 	//print_PID();
 	// init_q();
-
 	//main();
 	//asm volatile("wfi");
-	while (1);
+	while (1)
+		;
 }

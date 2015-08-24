@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "include/clock.h"
+#include "clock.h"
 
 
 void get_time(){
