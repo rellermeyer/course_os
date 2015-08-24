@@ -1,4 +1,4 @@
-#include "../include/hash_map.h"
+#include "hash_map.h"
 #include "klibc.h"
 
 /* this should be prime */

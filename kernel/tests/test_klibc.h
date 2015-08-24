@@ -1,5 +1,5 @@
-#include "../include/tests.h"
-#include "../include/klibc.h"
+#include "tests.h"
+#include "klibc.h"
 
 #define NUM_TESTS 3
 

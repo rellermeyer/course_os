@@ -9,8 +9,8 @@
  SIGTERM
  */
 
-#include "include/signals.h"
-#include "include/process.h"
+#include "signals.h"
+#include "process.h"
 
 void signal_mask(char * type, int index, uint32_t PID)
 {

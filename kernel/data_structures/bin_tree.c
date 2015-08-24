@@ -8,8 +8,8 @@
  *      Purpose: Implement b-trees for addresses
  *
  ********************************************************************/
-#include "../include/mem_alloc.h"
-#include "../include/bin_tree.h"
+#include "mem_alloc.h"
+#include "bin_tree.h"
 
 
 tree* init_tree()

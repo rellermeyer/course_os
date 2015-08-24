@@ -1,12 +1,7 @@
-#include "../include/tests.h"
-#include "../include/tests/test_priority_queue.h"
-#include "../include/priority_queue.h"
-#include "../include/klibc.h"
-
-// cd ~/Desktop/workspace/course_os
-// git add .
-// git commit -a -m 'message goes here'
-// git push
+#include "tests.h"
+#include "tests/test_priority_queue.h"
+#include "priority_queue.h"
+#include "klibc.h"
 
 #define NUM_TESTS 6
 #define DEFAULT_COUNT 10

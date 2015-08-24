@@ -1,7 +1,7 @@
-#include "include/global_defs.h"
-#include "include/tests.h"
-#include "include/klibc.h"
-#include "include/mem_alloc.h"
+#include "global_defs.h"
+#include "tests.h"
+#include "klibc.h"
+#include "mem_alloc.h"
 
 //This function executes and displays results of test set given to it.
 void run_tests(Test *tests[], int num_tests)

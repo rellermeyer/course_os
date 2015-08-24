@@ -1,7 +1,7 @@
 #include "vm.h"
 #include "memory.h"
 #include "klibc.h"
-#include "./frame.h"
+#include "frame.h"
 
 #define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
 #define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;

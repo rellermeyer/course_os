@@ -1,8 +1,8 @@
-#include "include/mmap.h"
-#include "include/memory.h"
-#include "include/klibc.h"
-#include "include/drivers/uart.h"
-#include "include/vm.h"
+#include "mmap.h"
+#include "memory.h"
+#include "klibc.h"
+#include "drivers/uart.h"
+#include "vm.h"
 
 /*
  * APX AP            Privileged    Unprivileged

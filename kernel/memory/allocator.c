@@ -1,6 +1,6 @@
-#include "allocator.h"
-#include <global_defs.h>
+#include "global_defs.h"
 #include "klibc.h"
+#include "allocator.h"
 
 uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
 

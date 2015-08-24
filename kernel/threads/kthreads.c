@@ -5,7 +5,7 @@
  *      Author: mwkurian
  */
 
-#include "../include/kthread.h"
+#include "kthread.h"
 #include <global_defs.h>
 
 kthread_handle* kthread_create(kthread_callback_handler cb_handler)
