@@ -11,15 +11,6 @@
 
 #define SYSTEM_SIZE 512 //how many files can be open at the same time
 
-//error codes used in return:
-#define TRUE 1 //for a boolean like function
-#define FALSE 0 //for a boolean like function
-#define ERR_GEN -1 //general error
-#define ERR_FULL -2 //error signaling end of resources
-#define ERR_INVALID -3 //invalid parameter
-#define SUCCESS 0 //no error
-#define NULL 0x0 //null 
-
 // Each cell of the array is a struct with infos about the file.
 // More fields can be added if necessary.
 struct file_descriptor {

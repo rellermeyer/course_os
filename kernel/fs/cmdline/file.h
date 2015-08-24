@@ -16,7 +16,6 @@
 
 
 //error codes used in return:
-#define NULL ((void*)0) //null
 #define TRUE 1 //for a boolean like function
 #define FALSE 0 //for a boolean like function
 #define ERR_GEN -1 //general error

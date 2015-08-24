@@ -3,14 +3,12 @@
 #include "stdint.h"
 
 /***********************************
-*	    SYSCALLS for Malloc        *
-************************************/
+ *	    SYSCALLS for Malloc        *
+ ************************************/
 
 #define SYSCALL_MALLOC 13
 #define SYSCALL_ALIGNED_ALLOC 14
 #define SYSCALL_FREE 15
-
-
 
 /**
  * malloc does a system call to allocate memory on the user heap
@@ -18,8 +16,8 @@
  * @param  size of the block of memory allocated
  * @param  uint32_t size
  * @return returns a pointer to the allocated block of memory
- 		   returns 0 if size is less than 1;
- */ 
+ returns 0 if size is less than 1;
+ */
 void* malloc(uint32_t size);
 
 /**

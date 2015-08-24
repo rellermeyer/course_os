@@ -23,7 +23,7 @@ CFLAGS += -std=gnu99
 CFLAGS += -ffreestanding 
 CFLAGS += -nostdinc
 CFLAGS += -Wall
-#CFLAGS += -Werror
+CFLAGS += -Werror
 PFLAGS += -mfpu=vfp
 #PFLAGS += -mfloat-abi=hard
 PFLAGS += -march=armv6zk

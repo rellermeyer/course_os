@@ -1,20 +1,20 @@
 //Contributors: Andrew Stepek, Michael Brennen, and Matthew Stromberg
 
 /*
-Signals
-*/
+ Signals
+ */
 /*
-SIGKILL
-SIGUSR
-SIGTERM
-*/
+ SIGKILL
+ SIGUSR
+ SIGTERM
+ */
 
 #include "include/signals.h"
 #include "include/process.h"
 
-void signal_mask (char * type, int index, uint32_t PID)
+void signal_mask(char * type, int index, uint32_t PID)
 {
 	pcb* pcb_t = get_PCB(PID);
-	pcb_t.mask[index]->type = type;	
+	pcb_t.mask[index]->type = type;
 }
 

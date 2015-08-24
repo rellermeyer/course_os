@@ -182,6 +182,6 @@ void run_hmap_tests() {
     tests[2] = create_test("test_hmap_3", &test_hmap_3);
     tests[3] = create_test("test_hmap_4", &test_hmap_4);
 
-    //run_tests(tests, NUM_TESTS);
+    run_tests(tests, NUM_TESTS);
 }
 

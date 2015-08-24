@@ -137,31 +137,3 @@ int32_t bv_free (bit_vector* bit_vec) {
 	kfree(bit_vec);
 	return 1;
 }
-
-/* write the bv out to disk */
-int32_t bv_serialize(bit_vector* bit_vec, uint32_t start_block, uint32_t end_block){
-    
-    int i = 0;
-    void* buf;
-    while((start_block < end_block) && i < bit_vec->actualLength){
-        
-        int block_num = i / 128; // use this to get the block number
-        sd_transmit((void*)bit_vec->vector,start_block * BLOCKSIZE);
-        start_block++;
-        i+= 128;
-    }
-}
-
-/* read the bv in from disk */
-int32_t bv_unserialize(bit_vector* bit_vec, uint32_t start_block, uint32_t end_block){
-    
-    int i = 0;
-    void* buf;
-    while((start_block < end_block) && i < bit_vec->actualLength){
-        
-        int block_num = i / 128; // use this to get the block number
-        sd_receive((void*)bit_vec->vector, start_block * BLOCKSIZE); // how does one get the value?
-        start_block++;
-        i+= 128;
-    }
-}

@@ -10,7 +10,7 @@ uint32_t __mem_extend_heap(uint32_t amt);
 
 alloc_handle * proc_allocator;
 uint32_t proc_buffer_size;
-uint32_t __mem_extend_proc_heap(uint32_t amt,struct vas* pvas);
+uint32_t __mem_extend_proc_heap(uint32_t amt);
 
 //bump pointer allocation
 void *mem_alloc(uint32_t size)
@@ -94,8 +94,10 @@ uint32_t init_process_heap(struct vas* vas)
     return STATUS_OK;
 }
 
-uint32_t __mem_extend_proc_heap(uint32_t amt, struct vas* pvas)
+uint32_t __mem_extend_proc_heap(uint32_t amt)
 {
+	struct vas* pvas = vm_get_current_vas();
+
     uint32_t amt_added = 0;
     while (amt_added < amt) 
     {

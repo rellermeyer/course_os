@@ -156,5 +156,5 @@ void run_vm_tests() {
 	tests[0] = create_test("test_vm_1", &test_vm_1);
 	run_tests(tests, NUM_TESTS);
 	// Just in case it returned in error...
-	vm_enable_vas((struct vas*) KERNEL_VAS);
+	//vm_enable_vas((struct vas*) KERNEL_VAS);
 }

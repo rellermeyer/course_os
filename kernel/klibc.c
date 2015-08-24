@@ -41,9 +41,9 @@ static char lower_case_digits[16] = "0123456789abcdef";
 static char upper_case_digits[16] = "0123456789ABCDEF";
 
 /*4-17-15: - Prakash 
-	* panic() added
-		- Currrently states the panic and stalls the machine
-*/
+ * panic() added
+ - Currrently states the panic and stalls the machine
+ */
 void panic()
 {
 	os_printf("Kernel panic!\n");
@@ -51,9 +51,9 @@ void panic()
 }
 
 /*4-17-15: - Prakash
-	_assert_fail() added
-		- This is a helper function for the assert() macro
-*/
+ _assert_fail() added
+ - This is a helper function for the assert() macro
+ */
 int _assert_fail(char *_file, unsigned int _line, char *_func)
 {
 	os_printf("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
@@ -81,54 +81,63 @@ int os_strcmp(const char *left, const char *right)
 //Responsibility is on the programmer to copy safely
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size)
 {
-    int limit = size / sizeof(uint32_t);
+	int limit = size / sizeof(uint32_t);
 
-    int i = 0;
-    for (; i < limit; i += 1) {
-        *(dest + i) = *(source + i);
-    }
+	int i = 0;
+	for (; i < limit; i += 1)
+	{
+		*(dest + i) = *(source + i);
+	}
 
-    char * d = (char*) (dest + i);
-    char * s = (char*) (source + i);
+	char * d = (char*) (dest + i);
+	char * s = (char*) (source + i);
 
-    i *= sizeof(uint32_t);
+	i *= sizeof(uint32_t);
 
-    for (; i < size; i++) {
-        *(d++) = *(s++);
-    }
-    source -= size;
-    dest -= size;
+	for (; i < size; i++)
+	{
+		*(d++) = *(s++);
+	}
+	source -= size;
+	dest -= size;
 }
 
 // base is between 2 and 16, inclusive
-int print_int(char *buf, int buflen,
-	      int val, int base, int is_unsigned, int padding, char pad_char,
-	      int is_uppercase)
+int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
+		int padding, char pad_char, int is_uppercase)
 {
 	int max_len = buflen;
 	int orig_max_len = max_len;
 	int negate = 0;
-	if (val < 0 && !is_unsigned) {
+	if (val < 0 && !is_unsigned)
+	{
 		val = -val;
 		negate = 1;
 	}
-        unsigned int temp = val;
+	unsigned int temp = val;
 
-	if (max_len == 0) return orig_max_len - max_len;
-	if (negate) {
+	if (max_len == 0)
+		return orig_max_len - max_len;
+	if (negate)
+	{
 		*buf = '-';
 		buf++;
 		max_len--;
-		if (max_len == 0) return orig_max_len - max_len;
+		if (max_len == 0)
+			return orig_max_len - max_len;
 	}
 
 	char tmp_buf[64];
 	int ndigits = 0;
-	while (temp != 0) {
-		if (is_uppercase) {
-			tmp_buf[ndigits] = upper_case_digits[temp%base];
-		} else {
-			tmp_buf[ndigits] = lower_case_digits[temp%base];
+	while (temp != 0)
+	{
+		if (is_uppercase)
+		{
+			tmp_buf[ndigits] = upper_case_digits[temp % base];
+		}
+		else
+		{
+			tmp_buf[ndigits] = lower_case_digits[temp % base];
 		}
 		temp = temp / base;
 		ndigits++;
@@ -136,27 +145,34 @@ int print_int(char *buf, int buflen,
 
 	// Zero-pad the output
 	int i;
-	if (padding > 0) {
-		for (i=0; i<padding-ndigits-negate; i++) {
+	if (padding > 0)
+	{
+		for (i = 0; i < padding - ndigits - negate; i++)
+		{
 			*buf = pad_char;
 			buf++;
 			max_len--;
-			if (max_len == 0) return orig_max_len;
+			if (max_len == 0)
+				return orig_max_len;
 		}
 	}
 
 	// Output the digits
-	for (i=ndigits-1; i>=0; i--) {
+	for (i = ndigits - 1; i >= 0; i--)
+	{
 		*buf = tmp_buf[i];
 		buf++;
 		max_len--;
-		if (max_len == 0) return orig_max_len;
+		if (max_len == 0)
+			return orig_max_len;
 	}
-	if (ndigits == 0 && padding<=0) {
+	if (ndigits == 0 && padding <= 0)
+	{
 		*buf = '0';
 		buf++;
 		max_len--;
-		if (max_len == 0) return orig_max_len;
+		if (max_len == 0)
+			return orig_max_len;
 	}
 
 	return orig_max_len - max_len;
@@ -165,9 +181,11 @@ int print_int(char *buf, int buflen,
 // args must already have been started
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 {
-	if (buflen == 0) return 0;
+	if (buflen == 0)
+		return 0;
 	buflen--;
-	if (buflen == 0) {
+	if (buflen == 0)
+	{
 		buf[0] = 0;
 		return 1;
 	}
@@ -183,7 +201,7 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 		{
 			str_buf++;
 			// This label is where we go after we've read an option.
-		reread_switch:;
+			reread_switch: ;
 			switch (*str_buf)
 			{
 			case '0':
@@ -191,7 +209,8 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 				// Then restart the switch statement.
 				padding = 0;
 				pad_char = '0';
-				while (*str_buf <= '9' && *str_buf >= '0') {
+				while (*str_buf <= '9' && *str_buf >= '0')
+				{
 					padding *= 10;
 					padding += *str_buf - '0';
 					str_buf++;
@@ -223,7 +242,8 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args)
 				str_arg = va_arg(args, char*);
 				os_strncpy(buf, str_arg, buflen);
 				n = os_strlen(str_arg);
-				if (n > buflen) {
+				if (n > buflen)
+				{
 					n = buflen;
 				}
 				break;
@@ -524,41 +544,44 @@ void* kmalloc(uint32_t size)
 	return block;
 }
 
-uint32_t kmcheck(){
-    return mem_check();
+uint32_t kmcheck()
+{
+	return mem_check();
 }
 
 // NOTE potentially expand these features. offer more
 // memory stats
-uint32_t km_size(){
-    return mem_get_heap_size();
+uint32_t km_size()
+{
+	return mem_get_heap_size();
 }
 
 void* kmalloc_aligned(uint32_t size, uint32_t alignment)
 {
-    void* block;
-    void* ptr;
+	void* block;
+	void* ptr;
 
-    switch (alignment) {
-        case 4:
-            block = kmalloc(size + 4);
-            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
-            return ptr;
-        case 1024:
-            block = kmalloc(size + 1024);
-            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
-            return ptr;
-        case 4096:
-            block = kmalloc(size + 4096);
-            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
-            return ptr;
-        case 16 * 1024:
-            block = kmalloc(size + 16 * 1024);
-            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
-            return ptr;
-        default:
-            return kmalloc(size);
-    }
+	switch (alignment)
+	{
+	case 4:
+		block = kmalloc(size + 4);
+		ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+		return ptr;
+	case 1024:
+		block = kmalloc(size + 1024);
+		ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+		return ptr;
+	case 4096:
+		block = kmalloc(size + 4096);
+		ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+		return ptr;
+	case 16 * 1024:
+		block = kmalloc(size + 16 * 1024);
+		ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+		return ptr;
+	default:
+		return kmalloc(size);
+	}
 }
 
 void kfree(void* ptr)
@@ -568,17 +591,17 @@ void kfree(void* ptr)
 
 unsigned int rand()
 {
-    static unsigned int z1 = 12345, z2 = 67891, z3 = 11121, z4 = 31415;
-    unsigned int b;
-    b = ((z1 << 6) ^ z1) >> 13;
-    z1 = ((z1 & 4294967294U) << 18) ^ b;
-    b = ((z2 << 2) ^ z2) >> 27;
-    z2 = ((z2 & 4294967288U) << 2) ^ b;
-    b = ((z3 << 13) ^ z3) >> 21;
-    z3 = ((z3 & 4294967280U) << 7) ^ b;
-    b = ((z4 << 3) ^ z4) >> 12;
-    z4 = ((z4 & 4294967168U) << 13) ^ b;
-    return (z1 ^ z2 ^ z3 ^ z4);
+	static unsigned int z1 = 12345, z2 = 67891, z3 = 11121, z4 = 31415;
+	unsigned int b;
+	b = ((z1 << 6) ^ z1) >> 13;
+	z1 = ((z1 & 4294967294U) << 18) ^ b;
+	b = ((z2 << 2) ^ z2) >> 27;
+	z2 = ((z2 & 4294967288U) << 2) ^ b;
+	b = ((z3 << 13) ^ z3) >> 21;
+	z3 = ((z3 & 4294967280U) << 7) ^ b;
+	b = ((z4 << 3) ^ z4) >> 12;
+	z4 = ((z4 & 4294967168U) << 13) ^ b;
+	return (z1 ^ z2 ^ z3 ^ z4);
 }
 
 /**
@@ -607,28 +630,29 @@ void* umalloc(uint32_t size)
 void* ualigned_alloc(uint32_t size, uint32_t alignment)
 {
 	void* block;
-    void* ptr;
+	void* ptr;
 
-    switch (alignment) {
-        case 4:
-            block = umalloc(size + 4);
-            ptr = (void*) (((uint32_t) block + 4) & ~0x3);
-            return ptr;
-        case 1024:
-            block = umalloc(size + 1024);
-            ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
-            return ptr;
-        case 4096:
-            block = umalloc(size + 4096);
-            ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
-            return ptr;
-        case 16 * 1024:
-            block = umalloc(size + 16 * 1024);
-            ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
-            return ptr;
-        default:
-            return umalloc(size);
-    }
+	switch (alignment)
+	{
+	case 4:
+		block = umalloc(size + 4);
+		ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+		return ptr;
+	case 1024:
+		block = umalloc(size + 1024);
+		ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+		return ptr;
+	case 4096:
+		block = umalloc(size + 4096);
+		ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+		return ptr;
+	case 16 * 1024:
+		block = umalloc(size + 16 * 1024);
+		ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+		return ptr;
+	default:
+		return umalloc(size);
+	}
 }
 
 /**
