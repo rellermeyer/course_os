@@ -180,7 +180,7 @@ int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int re
 		//initiallized successfully:
 		os_printf("SD Card initiallized successfully!!!\n");
 	}else{
-		os_printf("FATAL ERROR!!!!! SD Card NOT initiallized successfully!\n");
+		os_printf("FATAL ERROR!!!!! SD Card NOT initialized successfully!\n");
 		//handle errors returned by SD Card...will implement this later...
 	}//end else
 
@@ -1193,7 +1193,7 @@ int kopen(char* filepath, char mode){
  */
 int kread(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
-		os_printf("fd not valid \n");
+		os_printf("kread, fd not valid \n");
 		return ERR_INVALID;
 	}
 	if (buf == NULL) {
@@ -1244,7 +1244,7 @@ int kread(int fd_int, void* buf, int num_bytes) {
  */
 int kwrite(int fd_int, void* buf, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
-		os_printf("fd not valid \n");
+		os_printf("kwrite, fd not valid \n");
 		return ERR_INVALID;
 	}
 	if (buf == NULL) {
@@ -1427,7 +1427,7 @@ int kwrite(int fd_int, void* buf, int num_bytes) {
  */
 int kclose(int fd) {
 	if (fd < 0 || fd >= SYSTEM_SIZE) {
-		os_printf("fd not valid \n");
+		os_printf("kclose, fd not valid \n");
 		return ERR_INVALID;
 	}
 	int error;
@@ -1460,7 +1460,7 @@ int kclose(int fd) {
  */
 int kseek(int fd_int, int num_bytes) {
 	if (fd_int < 0 || fd_int >= SYSTEM_SIZE) {
-		os_printf("fd not valid \n");
+		os_printf("kseek, fd not valid \n");
 		return ERR_INVALID;
 	}
 	if (num_bytes <= 0) {
