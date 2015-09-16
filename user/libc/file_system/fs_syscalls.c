@@ -36,7 +36,7 @@ int create(char* filepath, char mode){
 
 //creates a directory
 int mkdir(char* filepath) {
-	long error = __syscall2(SYSCALL_MKDIR, (long)filepath);
+	long error = __syscall1(SYSCALL_MKDIR, (long)filepath);
 	return (int)error;
 }
 
@@ -103,7 +103,7 @@ int copy(char* source, char* dest, char mode) {
 		//os_printf("Enter mode of new file as r for read only or w for write, or 0 if copying a directory \n");
 		return -1;
 	}
-	long error = __syscall2(SYSCALL_COPY, (long)source, (long) dest, (long) mode);
+	long error = __syscall3(SYSCALL_COPY, (long)source, (long) dest, (long) mode);
 	return (int)error;
 }
 
@@ -113,7 +113,7 @@ int ls(char* filepath) {
 		//os_printf("enter a path! \n");
 		return -1;
 	}
-	long error = __syscall2(SYSCALL_LS, (long)filepath);
+	long error = __syscall1(SYSCALL_LS, (long)filepath);
 	return (int)error;
 }
 

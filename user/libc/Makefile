@@ -33,7 +33,8 @@ OBJS=stdio/printf.o \
      env/__environ.o \
      malloc/malloc_syscalls.o \
      exit/exit.o \
-     exit/_Exit.o
+     exit/_Exit.o \
+     file_system/fs_syscalls.o
 
 CFLAGS = -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
