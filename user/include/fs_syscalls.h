@@ -16,7 +16,6 @@
 #define SYSCALL_LS 12  // show contents of a directory
 
 
-
 //FUNCTIONS THE USER CAN CALL TO INTERACT WITH FILESYSTEM:
 
 int open(char* filepath, char mode);
