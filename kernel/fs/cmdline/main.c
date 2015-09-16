@@ -88,10 +88,10 @@ int main(int argc, char **argv)
 	while ((entry = readdir(dir))) {
 		if (entry->d_name[0] == '.') continue; // skip
 		printf("Adding %s...\n", entry->d_name);
-		char buf[256];
-		char buf2[256];
-		snprintf(buf, 256, "%s/%s", argv[1], entry->d_name);
-		snprintf(buf2, 256, "/%s", entry->d_name);
+		char buf[1024];
+		char buf2[1024];
+		snprintf(buf, 1024, "%s/%s", argv[1], entry->d_name);
+		snprintf(buf2, 1024, "/%s", entry->d_name);
 		addFile(buf, buf2);
 	}
 	closedir(dir);

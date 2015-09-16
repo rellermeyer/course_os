@@ -7,12 +7,21 @@ int main() {
 
 	printf("Hello world... from hello.c\n");
 
-	void* mem = 0;
-	mem = malloc(100);
+	printf("LET'S TEST %d\n", 10);
+
+	int* mem = 0;
+	mem = (int*) malloc(100);
 
 	printf("malloc returned %x\n", mem);
 
+	mem[0] = 1;
+	mem[10] = 2;
+
+
+
     free(mem);
+
+    printf("success\n");
 
     while(1);
 }
