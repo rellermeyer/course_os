@@ -11,7 +11,7 @@
 void swap_init()
 {
 	// initialize a swap space struct to hold values to then pass
-	// TODO: change to garauntee allocation in RAM
+	// TODO: change to guarantee allocation in RAM
 	holder = (struct swap_space*) kmalloc(sizeof(struct swap_space));
 }
 

@@ -104,7 +104,7 @@ uint32_t *vm_alloc_coarse_page_table()
 	{
 		LOG(
 				"Could not allocate a coarse page table, bad things will happen soon.\n");
-		return 0x0;
+		return NULL;
 	}
 	vm_l2pt_free_list = ((struct vm_free_list*) vptr)->next;
 	os_memset((void*) vptr, 0, L2_PAGE_TABLE_SIZE);
@@ -149,9 +149,9 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 {
 	CHECK_VPTR;
 
-	// We have to save the current VAS
+	// We have to save the current VAS and switch to the kernel VAS
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*) V_L1PTBASE);
+	vm_use_kernel_vas();
 
 	// TODO: Check if the vas already has a mapping there.
 	void *pptr = vm_get_free_frame();
@@ -160,6 +160,9 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 		// We need to swap! (or something...)
 		return VM_ERR_UNKNOWN; // For now, just fail
 	}
+
+	os_printf("mapping VA %x to PA %x\n", vptr, pptr);
+
 	//LOG("Free frame is at: %X\n", pptr);
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
 	if (retval)
@@ -170,6 +173,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 		vm_enable_vas(prev_vas);
 		return retval;
 	}
+
 	vm_enable_vas(prev_vas);
 	return 0;
 }
@@ -218,11 +222,13 @@ int vm_free_page(struct vas *vas, void *vptr)
 
 int vm_pin(struct vas *vas, void *vptr)
 {
+	// FIXME: unimplemented
 	return 0;
 }
 
 int vm_unpin(struct vas *vas, void *vptr)
 {
+	// FIXME: unimplemented
 	return 0;
 }
 
@@ -233,6 +239,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission)
 	int perm = perm_mapping[permission];
 	if (perm == -1)
 		return VM_ERR_BADPERM;
+
 	uint32_t cur_entry = vas->l1_pagetable[(unsigned int) vptr >> 20];
 	if ((cur_entry & 3) == 2)
 	{
@@ -243,7 +250,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission)
 		// We need to allocate a coarse page table
 		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
 		vas->l1_pagetable[(unsigned int) vptr >> 20] = (uint32_t) vm_vtop(
-				KERNEL_VAS, vptr_coarse_pt) | 1;
+		KERNEL_VAS, vptr_coarse_pt) | 1;
 		cur_entry = vas->l1_pagetable[(unsigned int) vptr >> 20];
 	}
 
@@ -332,7 +339,7 @@ int vm_map_shared_memory(struct vas *vas, void *this_ptr, struct vas *other_vas,
 		// We need to allocate a coarse page table...
 		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
 		vas->l1_pagetable[(unsigned int) this_ptr >> 20] = (uint32_t) vm_vtop(
-				KERNEL_VAS, vptr_coarse_pt) | 1;
+		KERNEL_VAS, vptr_coarse_pt) | 1;
 		//LOG("Allocated coarse page table.\n");
 		//LOG("Should be zero: %X (%X)\n", vptr_coarse_pt[0], vptr_coarse_pt);
 	}

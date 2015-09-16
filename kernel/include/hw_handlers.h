@@ -52,6 +52,7 @@
 #define SYSCALL_ALIGNED_ALLOC 14
 #define SYSCALL_FREE 15
 #define SYSCALL_PRINTF 16
+#define SYSCALL_DUMMY 99
 
 void init_vector_table(void); 
 
