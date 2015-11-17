@@ -34,7 +34,9 @@ OBJS=stdio/printf.o \
      malloc/malloc_syscalls.o \
      exit/exit.o \
      exit/_Exit.o \
-     file_system/fs_syscalls.o
+     exit/assert.o \
+     file_system/fs_syscalls.o \
+     thread/thread.o
 
 CFLAGS = -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
@@ -61,4 +63,5 @@ clean:
 	rm -f dummy/*.o
 	rm -f env/*.o
 	rm -f exit/*.o
-	rm -f libc.a 
+	rm -f thread/*.o
+	rm -f libc.a
