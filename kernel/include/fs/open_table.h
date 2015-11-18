@@ -6,9 +6,9 @@
 //please use provided functinos to add/remove items 
 
 #include "global_defs.h"
-#include "file.h"
 #include "klibc.h"
-#include "bitvector.h"
+#include "fs/file.h"
+#include "data_structures/bitvector.h"
 
 #define SYSTEM_SIZE 512 //how many files can be open at the same time
 

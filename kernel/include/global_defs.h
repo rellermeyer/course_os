@@ -5,12 +5,17 @@
 
 #define TRUE 1
 #define FALSE 0
+
+#ifndef NULL
 #define NULL  ((void*) 0)
+#endif
 
 typedef char *String;
 typedef short Boolean;
 
+#ifndef __HOST
 typedef uint32_t size_t;
+#endif
 
 #define UNUSED(x) (void)(x)
 

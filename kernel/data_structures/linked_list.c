@@ -17,8 +17,8 @@
  *
  ********************************************************************/
 
-#include "linked_list.h"
 #include "klibc.h"
+#include "data_structures/linked_list.h"
 
 llist_handle* llist_create(void *data) { /* create more space than needed -- less resizing */
     llist_handle *result = (llist_handle *) kmalloc(sizeof(llist_node));

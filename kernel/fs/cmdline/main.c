@@ -13,7 +13,7 @@
  * > e.g. if someone changes include/file.h then fs/cmdline/file.h 
  *   needs to be updated
  *
- * POSSIBLE TODO: Somehow consolodate include files into one directory
+ * POSSIBLE TODO: Somehow consolidate include files into one directory
  * 
  * @section DESCRIPTION
  * 
@@ -21,10 +21,10 @@
  * it
  *
  */
-#include "file.h"
-#include<stdio.h>
-#include<dirent.h>
-#include<string.h>
+#include "fs/file.h"
+#include <stdio.h>
+#include <dirent.h>
+#include <string.h>
 
 /**
  * Adds a specific file to the card.sd image
