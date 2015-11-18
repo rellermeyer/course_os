@@ -4,7 +4,7 @@
 #include "klibc.h"
 #include "tests.h"
 #include "process.h"
-#include "file.h"
+#include "fs/file.h"
 
 static void argparse_parse(char *);
 

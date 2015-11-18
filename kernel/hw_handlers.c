@@ -9,7 +9,7 @@
 #include "interrupt.h"
 #include "klibc.h"
 #include "vm.h"
-#include "file.h"
+#include "fs/file.h"
 #include "process.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
