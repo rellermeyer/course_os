@@ -18,7 +18,7 @@
  * Completed On: 4/20/2015           Last Updated: 5/5/2015
  */
 #include "klibc.h"
-#include "mmci.h"
+#include "drivers/mmci.h"
 
 // MMCI Definitions - Used to access SD card registers; DO NOT CHANGE!
 #define MMCI_BASE 0x10005000

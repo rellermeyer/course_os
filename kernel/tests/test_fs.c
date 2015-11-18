@@ -6,8 +6,6 @@
 
 int test_fs_1()
 {
-
-
 	os_printf("\nCREATING /foo\n");
 	int fd1 = kcreate("/foo", 'w', 1);
 
