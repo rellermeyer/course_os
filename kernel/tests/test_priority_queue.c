@@ -1,6 +1,6 @@
 #include "tests.h"
 #include "tests/test_priority_queue.h"
-#include "priority_queue.h"
+#include "data_structures/priority_queue.h"
 #include "klibc.h"
 
 #define NUM_TESTS 6

@@ -28,7 +28,7 @@
 #include "drivers/mmci.c"
 #include "klibc.h"
 #include "vm.h"
-#include "open_table.h" //to initialize fs opentable
+#include "fs/open_table.h" //to initialize fs opentable
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"

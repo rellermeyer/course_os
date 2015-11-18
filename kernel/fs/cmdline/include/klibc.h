@@ -1,8 +1,9 @@
 #ifndef KLIBC_H
 #define KLIBC_H 1
 
-#include<stdlib.h>
-#include<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 typedef unsigned int os_size_t;
 
@@ -19,7 +20,7 @@ os_size_t os_strcspn(const char *s, const char *reject);
 void *os_memcpy(void *src, void *dst, int len);
 int os_strcmp(const char *left, const char *right);
 
-void* kmalloc(uint32_t);
-void kfree(void*);
+void* kmalloc(uint32_t size);
+void kfree(void* ptr);
 
 #endif

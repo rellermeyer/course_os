@@ -3,10 +3,10 @@
 //Since methods are provided, other files should not touch neither the free LL or the arrray, 
 // but just use the premade methods. 
 
-#include "file.h"
 #include "klibc.h"
-#include "open_table.h"
-#include "bitvector.h"
+#include "fs/file.h"
+#include "fs/open_table.h"
+#include "data_structures/bitvector.h"
 #include <stdint.h>
 
 

@@ -43,11 +43,10 @@
  */
 #include <stdint.h>
 #include "klibc.h"
-//#include "linked_list.h"
-#include "bitvector.h"
-#include "open_table.h"
-#include "mmci.h"
-#include "file.h"
+#include "data_structures/bitvector.h"
+#include "fs/open_table.h"
+#include "fs/file.h"
+#include "drivers/mmci.h"
 
 #define TRANSMIT 0
 #define RECEIVE 1

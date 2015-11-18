@@ -1,5 +1,5 @@
-#include "priority_queue.h"
 #include "klibc.h"
+#include "data_structures/priority_queue.h"
 
 #define AMORITIZED_CONSTANT 2
 #define DEFAULT_COUNT 10
