@@ -1,6 +1,7 @@
 #!/bin/bash
 
-QEMU_VERSION=1.6.2
+#QEMU_VERSION=1.6.2
+QEMU_VERSION=2.4.1
 
 qemu-system-arm --version || {
 
