@@ -1,4 +1,4 @@
-all: toolchain u-boot libc kernel
+all: toolchain u-boot kernel
 
 toolchain:
 	cd ./toolchain && ./build.sh
@@ -7,12 +7,14 @@ toolchain:
 u-boot:
 	$(MAKE) -C u-boot
 .PHONY: u-boot
-kernel:
-	$(MAKE) -C kernel
+
+libc:
 	$(MAKE) -C user/libc
+
+kernel: libc
+	$(MAKE) -C kernel
 	$(MAKE) -C user/hello
 .PHONY: kernel
-
 
 clean:
 	$(MAKE) -C u-boot clean
@@ -29,4 +31,3 @@ docs:
 	doxygen doxyfile
 	$(MAKE) -C latex pdf
 	mv ./latex/refman.pdf course_os_docs.pdf
-	 
