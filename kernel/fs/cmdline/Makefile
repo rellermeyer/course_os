@@ -1,6 +1,6 @@
 INCLUDES+=-Iinclude
 
-CC=gcc
+CC?=gcc
 
 CFLAGS+=-O0
 CFLAGS+=-g
