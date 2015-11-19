@@ -1,7 +1,9 @@
+all: toolchain u-boot libc kernel
 
 toolchain:
-	cd ./toolchain/ && ./build.sh
+	cd ./toolchain && ./build.sh
 .PHONY: toolchain
+
 u-boot:
 	$(MAKE) -C u-boot
 .PHONY: u-boot
@@ -10,6 +12,8 @@ kernel:
 	$(MAKE) -C user/libc
 	$(MAKE) -C user/hello
 .PHONY: kernel
+
+
 clean:
 	$(MAKE) -C u-boot clean
 	$(MAKE) -C kernel clean

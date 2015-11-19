@@ -12,6 +12,9 @@ NEWLIB_VERSION=2.0.0
 GDB_VERSION=7.7
 GDB_EXT_VERSION=${GDB_VERSION}
 
+if [ -e ${PREFIX} ]; then
+	exit 0;
+fi
 
 rm -rf ${TARGET}
 
