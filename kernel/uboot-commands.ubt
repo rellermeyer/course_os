@@ -1,2 +1,2 @@
-setenv bootargs root=/dev/ram mem=128M -load hello 0x20000 0x12C2A
+setenv bootargs root=/dev/ram mem=128M -load /hello
 bootm 0x210000
