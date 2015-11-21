@@ -5,7 +5,7 @@
  *      Author: kittenRainbow
  */
 
-#include "array_list.h"
+#include "data_structures/array_list.h"
 
 arrl_handle* arrl_create() {
     return arrl_create_fixed(DEFAULT_BUCKET_SIZE);
@@ -14,7 +14,7 @@ arrl_handle* arrl_create() {
 arrl_handle* arrl_create_fixed(uint32_t bucket_size) {
     arrl_handle* result = (arrl_handle *) kmalloc(sizeof(arrl_handle));
     void** bucket = kmalloc(bucket_size * sizeof(void*));
-    llist_handle * l = create_list(bucket);
+    llist_handle * l = llist_create(bucket);
     result->linked_list = l;
     result->size = 0;
     result->capacity = bucket_size;
@@ -28,7 +28,7 @@ void arrl_append(arrl_handle* arrl, void* elem) {
 
     if (arrl->capacity == arrl->size) {
         void* data = kmalloc(arrl->bucket_size * sizeof(void*));
-        append(arrl->linked_list, data);
+        llist_enqueue(arrl->linked_list, data);
         arrl->capacity += arrl->bucket_size;
     }
 

@@ -20,6 +20,12 @@
 #include "klibc.h"
 #include "data_structures/linked_list.h"
 
+llist_node* llist_create_node(void *data) {
+    llist_node *node = (llist_node*) kmalloc(sizeof(llist_node));
+    node->data = data;
+    return node;
+}
+
 llist_handle* llist_create(void *data) { /* create more space than needed -- less resizing */
     llist_handle *result = (llist_handle *) kmalloc(sizeof(llist_node));
     result->count = 0;
@@ -27,19 +33,17 @@ llist_handle* llist_create(void *data) { /* create more space than needed -- les
     return result;
 }
 
-llist_node* llist_create_node(void *data) {
-    llist_node *node = (llist_node*) kmalloc(sizeof(llist_node));
-    node->data = data;
-    return node;
-}
-
 void llist_enqueue(llist_handle * list, void * data) {
     llist_insert(list, data, 0);
 }
 
+void* llist_get_data(llist_handle *l, int index) {
+    return llist_get_node(l, index)->data;
+}
+
 void* llist_dequeue(llist_handle * list) {
     void * data = llist_get_data(list, 0);
-    llist_remove_at(0);
+    llist_remove_at(list, 0);
     return data;
 }
 
@@ -77,7 +81,8 @@ void llist_insert(llist_handle *l, void *data, int index) {
     }
 }
 
-int llist_count(llist_handle *l){
+int llist_count(llist_handle *l)
+{
     return l->count;
 }
 
@@ -88,9 +93,7 @@ void llist_remove_at(llist_handle *l, int index) {
     llist_free_node(to_delete);
 }
 
-void* llist_get_data(llist_handle *l, int index) {
-    return llist_get_node(l, index)->data;
-}
+
 
 llist_node* llist_get_node(llist_handle *l, int index) {
     int i;

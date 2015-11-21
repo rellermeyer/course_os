@@ -8,7 +8,7 @@
 #ifndef KERNEL_INCLUDE_ARRAY_LIST_H_
 #define KERNEL_INCLUDE_ARRAY_LIST_H_
 
-#include "linked_list.h"
+#include "data_structures/linked_list.h"
 #include "klibc.h"
 
 #define DEFAULT_BUCKET_SIZE 20

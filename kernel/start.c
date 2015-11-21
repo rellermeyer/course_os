@@ -76,10 +76,6 @@ void start2(uint32_t *p_bootargs)
 	print_uart0("MMU enabled\n");
 
 	print_uart0("\nCourseOS!\n");
-	//p_bootargs = (uint32_t*)0x100;
-	INFO("Bootargs: %X\n", *p_bootargs);
-	/*print_uart0((char*)p_bootargs);
-	 print_uart0("\n");*/
 
 	// Test stuff...
 	/*int *p = (int*)0xFFFFFFF0;
@@ -102,8 +98,6 @@ void start2(uint32_t *p_bootargs)
 	//kclose(fd);
 
 	//while(1);
-
-	//asm volatile("swi 1");
 
 	/*
 	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
@@ -129,7 +123,6 @@ void start2(uint32_t *p_bootargs)
 	//print_PID();
 	// init_q();
 	//main();
-	//asm volatile("wfi");
-	while (1)
-		;
+
+	asm volatile("wfi");
 }

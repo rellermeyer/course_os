@@ -1,8 +1,12 @@
+#include "global_defs.h"
 #include "scheduler.h"
 #include "vm.h"
 #include "klibc.h"
 #include "process.h"
-#include "linked_list.h"
+#include "kthread.h"
+#include "data_structures/linked_list.h"
+#include "data_structures/hash_map.h"
+#include "data_structures/array_list.h"
 
 #define MAX_TASKS 100   // in the future, cap will be removed
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
@@ -21,7 +25,7 @@
 #define IS_PROCESS(a) (a->state == PROCESS)
 #define IS_KTHREAD(a) (a->state == KTHREAD)
 
-static char last_err[200];
+static char *last_err;
 static prq_handle * inactive_tasks;
 static prq_handle * active_tasks;
 static sched_task * active_task;
@@ -52,17 +56,41 @@ static hmap_handle * all_tasks_map;
 // kill: kill a process and its children processes
 //
 
-void __sched_register_timer_irq();
-void __sched_deregister_timer_irq();
-void __sched_pause_timer_irq();
-void __sched_resume_timer_irq();
-void __sched_dispatch();
+void __sched_register_timer_irq(void)
+{
+	// TODO: register the timer here
+}
+
+void __sched_deregister_timer_irq()
+{
+	// TODO: unregister the timer here
+}
+
+void __sched_pause_timer_irq()
+{
+	// TODO: suspend the timer here
+}
+
+void __sched_resume_timer_irq()
+{
+	// TODO: resume the timer here
+}
+
+// get the current process id
+uint32_t sched_get_active_tid() {
+    if (active_task) {
+        return active_task->tid;
+    }
+
+    return (uint32_t) STATUS_FAIL;
+}
+
+
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
-uint32_t __sched_remove_task(sched_task * task);
 
 // Initialize the scheduler. Should be called by the kernel ONLY
 uint32_t sched_init() {
-    vm_enable_kernel_vas();
+	vm_use_kernel_vas();
 
     os_printf("Initializing scheduler\n");
     last_err = "No error";
@@ -70,7 +98,7 @@ uint32_t sched_init() {
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
 
-    _sched_register_timer_irq();
+    __sched_register_timer_irq();
 
     return STATUS_OK;
 }
@@ -90,7 +118,7 @@ uint32_t sched_deregister_callback_handler() {
 
 // Free the resources used the scheduler
 uint32_t sched_free() {
-    vm_enable_kernel_vas();
+	vm_use_kernel_vas();
 
     // FIXME kill active tasks
 
@@ -104,19 +132,24 @@ uint32_t sched_free() {
 
 static uint32_t sched_tid = 0;
 
-sched_task* sched_create_task_from_kthread(kthread_handle * kthread,
-        int niceness) {
-    return __sched_create_task(kthread, niceness, KTHREAD);
-}
-
-sched_task* sched_create_task_from_process(pcb * pcb_pointer, int niceness) {
-    return __sched_create_task(pcb_pointer, niceness, PROCESS);
+// issue messages for the active task
+void __sched_emit_messages(void) {
+    if (active_task->cb_handler) {
+        sched_message_chunk * chunk;
+        while ((chunk = llist_dequeue(active_task->message_queue)) != 0) {
+            active_task->cb_handler(chunk->src_pid, chunk->event, chunk->data,
+                    chunk->chunk_length, chunk->remain_length);
+            if (chunk) {
+                kfree(chunk);
+            }
+        }
+    }
 }
 
 sched_task* __sched_create_task(void * task_data, int niceness, uint32_t type) {
     if (prq_count(inactive_tasks) >= MAX_TASKS) {
         last_err = "Too many tasks";
-        return STATUS_FAIL;
+        return (sched_task*) STATUS_FAIL;
     }
 
     __sched_pause_timer_irq();
@@ -137,7 +170,7 @@ sched_task* __sched_create_task(void * task_data, int niceness, uint32_t type) {
 
     if (active_task) {
         task->parent_tid = active_task->tid;
-        arrl_add(active_task->children_tids, task->tid);
+        arrl_append(active_task->children_tids, (void*) task->tid);
     }
 
     __sched_resume_timer_irq();
@@ -146,8 +179,19 @@ sched_task* __sched_create_task(void * task_data, int niceness, uint32_t type) {
 
 }
 
+sched_task* sched_create_task_from_kthread(kthread_handle * kthread,
+        int niceness) {
+    return __sched_create_task(kthread, niceness, KTHREAD);
+}
+
+sched_task* sched_create_task_from_process(pcb * pcb_pointer, int niceness) {
+    return __sched_create_task(pcb_pointer, niceness, PROCESS);
+}
+
+
 // Helper function used by the scheduler internally. It will traverse the parent/child
 // list to find a subtask.
+#if 0
 sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
     if (parent_task && parent_task->tid == tid) {
         return parent_task;
@@ -164,20 +208,89 @@ sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t tid) {
 
     return 0;
 }
+#endif
 
 //
 // NOTE expecting access to kernel global vars
 void sched_waittid(uint32_t tid) {
-    while (1) {
-        sched_task * task = (sched_task*) hmap_get(&all_tasks_map, tid);
+	// FIXME: broken!
+	while (1) {
+        sched_task * task = (sched_task*) hmap_get(all_tasks_map, (unsigned long) tid);
         if (task == 0 || task->state == TASK_STATE_FINISHED) {
             break;
         }
-        sleep(500);
+
+        //sleep(500);
     }
 }
 
-void __sched_dispatch() {
+// contract
+// --------
+// must disable timer_interrupt
+uint32_t __sched_remove_task(sched_task * task) {
+    if (task == NULL) {
+        return (uint32_t) STATUS_FAIL;
+    }
+
+    switch (task->state) {
+        case TASK_STATE_INACTIVE: {
+            __sched_pause_timer_irq();
+            prq_remove(inactive_tasks, task->node);
+            prq_free_node(task->node);
+            __sched_resume_timer_irq();
+            break;
+        }
+        case TASK_STATE_ACTIVE: {
+            __sched_pause_timer_irq();
+
+            task->state = TASK_STATE_FINISHED;
+
+            if (IS_PROCESS(task)) {
+                vm_use_kernel_vas();
+                free_PCB(AS_PROCESS(task));
+            } else if (IS_KTHREAD(task)) {
+                // FIXME add later
+            }
+
+            hmap_remove(all_tasks_map, task->tid);
+            prq_remove(active_tasks, task->node);
+            prq_free_node(task->node);
+
+            int i = 0;
+            for (; i < arrl_count(task->children_tids); i++) {
+                // FIXME: this API does not exist anymore
+            	// sched_remove_task(arrl_get(task->children_tids, i));
+            }
+
+            __sched_resume_timer_irq();
+            break;
+        }
+        case TASK_STATE_FINISHED: {
+            // ignore
+            break;
+        }
+    }
+
+    __sched_resume_timer_irq();
+
+    return task->state;
+}
+
+
+// essentially a kill process
+uint32_t sched_remove_task(uint32_t tid) {
+    sched_task * task = (sched_task*) hmap_get(all_tasks_map, tid);
+    if (task) {
+        __sched_pause_timer_irq();
+        uint32_t status = __sched_remove_task(task);
+        __sched_resume_timer_irq();
+        return status;
+    }
+
+    return STATUS_FAIL;
+}
+
+void __sched_dispatch(void) {
     // prevent interrupts while handling another interrupt
     __sched_pause_timer_irq();
 
@@ -213,13 +326,13 @@ void __sched_dispatch() {
             if (IS_PROCESS(active_task)) {
                 vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                 __sched_resume_timer_irq();
-                execute_process_no_vas(AS_PROCESS(active_task));
+                execute_process(AS_PROCESS(active_task));
             } else if (IS_KTHREAD(active_task)) {
                 AS_KTHREAD(active_task)->cb_handler();
             }
 
             __sched_pause_timer_irq();
-            sched_remove_task(active_task);
+            sched_remove_task(active_task->tid);
             active_task = 0;
 
             // NOTE next interrupt will get the start the process
@@ -245,7 +358,8 @@ void __sched_dispatch() {
                         break;
                     }
 
-                    kthread_save_state(AS_KTHREAD(active_task));
+                    // FIXME: implement
+                    // kthread_save_state(AS_KTHREAD(active_task));
                 }
 
                 active_task = next_task;
@@ -257,7 +371,9 @@ void __sched_dispatch() {
                     load_process_state(AS_PROCESS(active_task)->PID); // continue with the next process
                 } else if (IS_KTHREAD(active_task)) {
                     __sched_emit_messages();
-                    kthread_load_state(AS_KTHREAD(active_task));
+
+                    // FIXME: implement
+                    // kthread_load_state(AS_KTHREAD(active_task));
                 }
             }
             break;
@@ -267,26 +383,12 @@ void __sched_dispatch() {
     __sched_resume_timer_irq();
 }
 
-// issue messages for the active task
-void __sched_emit_messages() {
-    if (active_task->cb_handler) {
-        sched_message_chunk * chunk;
-        while ((chunk = llist_dequeue(active_task)) != 0) {
-            active_task->cb_handler(chunk->src_pid, chunk->event, chunk->data,
-                    chunk->chunk_length, chunk->remain_length);
-            if (chunk) {
-                kfree(chunk);
-            }
-        }
-    }
-}
-
 // start process
 uint32_t sched_add_task(sched_task * task) {
     if (task) {
         if (task->state != TASK_STATE_NONE) {
             last_err = "Reusing task object not allowed";
-            return STATUS_FAIL;
+            return (uint32_t) STATUS_FAIL;
         }
 
         // use the kernel memory
@@ -300,7 +402,7 @@ uint32_t sched_add_task(sched_task * task) {
         task->node = new_node;
         prq_enqueue(inactive_tasks, new_node);
 
-        hmap_put(active_task->tid, active_task);
+        hmap_put(all_tasks_map, active_task->tid, active_task);
 
         if (IS_PROCESS(active_task)) {
             vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
@@ -312,81 +414,9 @@ uint32_t sched_add_task(sched_task * task) {
     }
 
     last_err = "Invalid sched_task pointer";
-    return STATUS_FAIL;
+    return (uint32_t) STATUS_FAIL;
 }
 
-// contract
-// --------
-// must disable timer_interrupt
-uint32_t __sched_remove_task(sched_task * task) {
-    if (task == NULL) {
-        return STATUS_FAIL;
-    }
-
-    switch (task->state) {
-        case TASK_STATE_INACTIVE: {
-            __sched_pause_timer_irq();
-            prq_remove(&inactive_tasks, task->node);
-            prq_free_node(task->node);
-            __sched_resume_timer_irq();
-            break;
-        }
-        case TASK_STATE_ACTIVE: {
-            __sched_pause_timer_irq();
-
-            task->state = TASK_STATE_FINISHED;
-
-            if (IS_PROCESS(task)) {
-                vm_use_kernel_vas();
-                free_PCB(AS_PROCESS(task));
-            } else if (IS_KTHREAD(task)) {
-                // FIXME add later
-            }
-
-            hmap_remove(task->tid);
-            prq_remove(active_tasks, task->node);
-            prq_free_node(task->node);
-
-            int i = 0;
-            for (; i < arrl_count(task->children_tids); i++) {
-                sched_remove_task(arrl_get(task->children_tids, i));
-            }
-
-            __sched_resume_timer_irq();
-            break;
-        }
-        case TASK_STATE_FINISHED: {
-            // ignore
-            break;
-        }
-    }
-
-    __sched_resume_timer_irq();
-
-    return task->state;
-}
-
-// essentially a kill process
-uint32_t sched_remove_task(uint32_t tid) {
-    sched_task * task = (sched_task*) hmap_get(&all_tasks_map, tid);
-    if (task) {
-        __sched_pause_timer_irq();
-        uint32_t status = __sched_remove_task(task);
-        __sched_resume_timer_irq();
-        return status;
-    }
-
-    return STATUS_FAIL;
-}
-
-// get the current process id
-uint32_t sched_get_active_tid() {
-    if (active_task) {
-        return active_task->tid;
-    }
-
-    return STATUS_FAIL;
-}
 
 const char * sched_last_err() {
     return last_err;
@@ -396,7 +426,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 
     sched_task * task;
 
-    if (!(task = hmap_get(&all_tasks_map, pid))) {
+    if (!(task = hmap_get(all_tasks_map, pid))) {
         return STATUS_FAIL;
     }
 
@@ -428,7 +458,8 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 }
 
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data,
-        int len) {
+        int len)
+{
     /*sched_task * dest_task;
 
      if (!(dest_task = hmap_get(&all_tasks_map, dest_pid))) {
