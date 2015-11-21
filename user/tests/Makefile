@@ -12,10 +12,10 @@ SPECS = -specs "../gcc.specs"
 all: test_1 test_2
 
 test_1: test_1.o
-	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff28000 -L../libc -static -lc -o test_1 test_1.o
+	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc -o test_1 test_1.o
 
 test_2: test_2.o
-	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff28000 -L../libc -static -lc -o test_2 test_2.o
+	$(CC) $(SPECS) -L../libc -static -lc -o test_2 test_2.o
 
 %.o: %.c
 	$(CC) $(SPECS) $(CFLAGS) -Wl,-Ttext-segment=0x9ff28000 -I../include -c -mcpu=arm1176jzf-s $< -o $@

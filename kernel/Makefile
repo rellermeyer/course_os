@@ -51,7 +51,7 @@ flash.bin: kernel.img script.img
 # 32678*4096 = 128MiB
 card.sd: fs-cmdline userhello
 	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
-	fs/cmdline/buildfs ../user/hello/
+	fs/cmdline/buildfs ../user/hello/ ../user/tests
 
 userhello:
 	make -C ../user/hello
