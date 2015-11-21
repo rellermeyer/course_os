@@ -55,7 +55,6 @@
 const int SUPERBLOCK = 1;
 // const int MAX_NAME_LENGTH = 32; moved this to a define
 int MAX_BLOCKS;
-// const int BLOCKSIZE = 512; moved this to a define...should be dynamic though...how?
 // const int INODE_SIZE = 128; shouldn't need this...should be able to do sizeof(Inode)
 int MAX_MEMORY;
 int INODE_TABLE_CACHE_SIZE;
@@ -93,18 +92,18 @@ int kfs_format()
 	sblock.fs_version = 1;
 	sblock.magic_num = 0xDEADBEAF;
 	sblock.sd_card_capacity = 128000000;
-	sblock.block_size = 512;
+	sblock.block_size = BLOCKSIZE;
 	sblock.root_inum = 0;
 	sblock.max_inodes = 4000;
-	sblock.inode_size = 512;
+	sblock.inode_size = BLOCKSIZE;
 	sblock.max_data_blocks = 200000;
 	sblock.inode_bitmap_loc = 10;
 	sblock.data_bitmap_loc = 50;
 	sblock.start_inode_table_loc = 1000;
 	sblock.start_data_blocks_loc = 50000;
 
-	void *block = kmalloc(512);
-	os_memset(block, 0, 512);
+	void *block = kmalloc(BLOCKSIZE);
+	os_memset(block, 0, BLOCKSIZE);
 	os_memcpy((uint32_t*)&sblock, block, sizeof(struct superblock));
 	sd_transmit(block, 1*BLOCKSIZE);
 
@@ -119,7 +118,7 @@ int kfs_format()
 	// root_inode.data_blocks[0] = sblock.start_data_blocks_loc;
 	root_inode.data_blocks[0] = 0;
 	root_inode.indirect_blocks_in_file = 0;
-	os_memset(block, 0, 512);
+	os_memset(block, 0, BLOCKSIZE);
 	os_memcpy((uint32_t*)&root_inode, block, sizeof(struct inode));
 	sd_transmit(block, sblock.start_inode_table_loc*BLOCKSIZE);
 
@@ -127,7 +126,7 @@ int kfs_format()
 	struct dir_data_block ddb;
 	ddb.block_num = 0;
 	ddb.num_entries = 0;
-	os_memset(block, 0, 512);
+	os_memset(block, 0, BLOCKSIZE);
 	os_memcpy((uint32_t*)&ddb, block, sizeof(struct dir_data_block));
 	sd_transmit(block, sblock.start_data_blocks_loc*BLOCKSIZE);
 
@@ -1567,12 +1566,12 @@ int kcreate(char* filepath, char mode, int is_this_a_dir) {
 		//WILL THIS FIX IT??????????		
 		transmit_receive_bitmap(TRANSMIT, data_block_bitmap, FS->data_bitmap_loc, FS->max_data_blocks, 0, 1);
 
-		void *block = kmalloc(512);
-		os_memset(block, 0, 512);
+		void *block = kmalloc(BLOCKSIZE);
+		os_memset(block, 0, BLOCKSIZE);
 		struct dir_data_block ddb;
 		ddb.block_num = new_data_block_loc;
 		ddb.num_entries = 0;
-		os_memset(block, 0, 512);
+		os_memset(block, 0, BLOCKSIZE);
 		os_memcpy((uint32_t*)&ddb, block, sizeof(struct dir_data_block));
 		sd_transmit((void*)block, block_address);
 		new_inode->data_blocks[0] = new_data_block_loc;
