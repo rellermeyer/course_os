@@ -74,19 +74,22 @@ static void argparse_parse(char *cmdline)
 		if (os_strcmp("-load", token) == 0)
 		{
 			char* name = os_strtok(NULL, " ");
-			uint32_t start = string_to_unsigned_int(os_strtok(NULL, " "), 16);
-			uint32_t len = string_to_unsigned_int(os_strtok(NULL, " "), 16);
 
-			os_printf("LOADING PROCESS <<%s>>, start address %X, length %X\n",
+			uint32_t start = PROC_LOCATION;
+			uint32_t len = 0;
+
+			os_printf("LOADING PROCESS <<%s>>, start address %X\n",
 					name, start, len);
 
-			os_printf("START: %X \n", start + PROC_LOCATION);
-
 			int fd = kopen("/hello", 'r');
+
+			os_printf("I AM HERE 2\n");
+
 			struct stats fstats;
-			start += PROC_LOCATION;
 			get_stats("/hello", &fstats);
 			len = fstats.size;
+
+			os_printf("FILE SIZE IS %d\n", len);
 
 			int* location = (int*) start;
 
