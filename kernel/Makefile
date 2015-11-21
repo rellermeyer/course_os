@@ -90,7 +90,7 @@ startup.o: startup.s
 	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
-	rm -f *.o
+	rm -f $(OBJS)
 	rm -f *.img
 	rm -f *.elf
 	rm -f *.bin
