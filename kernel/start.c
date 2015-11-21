@@ -25,7 +25,7 @@
 #include "process.h"
 #include "memory.h"
 #include "drivers/uart.h"
-#include "drivers/mmci.c"
+#include "drivers/mmci.h"
 #include "klibc.h"
 #include "vm.h"
 #include "fs/open_table.h" //to initialize fs opentable
@@ -57,10 +57,6 @@ void start(uint32_t *p_bootargs)
 {
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
-	/*print_uart0("p_bootargs: ");
-	 print_uart0((char*)p_bootargs);
-	 print_uart0("\n");*/
-	os_printf("%X\n", *p_bootargs);
 	vm_init();
 	os_printf("Initialized VM datastructures.\n");
 	mmap(p_bootargs);
