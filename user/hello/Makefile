@@ -7,14 +7,20 @@ LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 CFLAGS = -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
 
+PROGS  = hello
+PROGS += hello1
+PROGS += hello2
+
 SPECS = -specs "../gcc.specs"
 
-hello: hello.o
-	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc -o hello hello.o
+all: $(PROGS)
+
+$(PROGS): %: %.o
+	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc $< -o $@
 
 %.o: %.c
 	$(CC) $(SPECS) $(CFLAGS) -I../include -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
-	rm -f hello.o
-	rm -f hello
+	rm -f $(foreach prog,$(PROGS),$(prog).o)
+	rm -f $(PROGS)
