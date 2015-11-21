@@ -81,12 +81,10 @@ static void argparse_parse(char *cmdline)
 			os_printf("LOADING PROCESS <<%s>>, start address %X\n",
 					name, start, len);
 
-			int fd = kopen("/hello", 'r');
-
-			os_printf("I AM HERE 2\n");
+			int fd = kopen(name, 'r');
 
 			struct stats fstats;
-			get_stats("/hello", &fstats);
+			get_stats(name, &fstats);
 			len = fstats.size;
 
 			os_printf("FILE SIZE IS %d\n", len);
@@ -112,18 +110,17 @@ static void argparse_parse(char *cmdline)
 				counter += 4;
 
 			}
-			//assert(1==12);
 
-			pcb *test = process_create((uint32_t*) start);
+			pcb *proc = process_create((uint32_t*) start);
 
-			vm_enable_vas(test->stored_vas);
+			vm_enable_vas(proc->stored_vas);
 
-			test->len = len;
-			test->start = start;
-			test->name = name;
-			setup_process_vas(test);
-			init_proc_stack(test);
-			init_proc_heap(test);
+			proc->len = len;
+			proc->start = start;
+			proc->name = name;
+			setup_process_vas(proc);
+			init_proc_stack(proc);
+			init_proc_heap(proc);
 
 			for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++)
 			{
@@ -132,7 +129,7 @@ static void argparse_parse(char *cmdline)
 
 			}
 
-			execute_process(test);
+			execute_process(proc);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
