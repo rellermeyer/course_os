@@ -57,9 +57,10 @@ void addFile(const char *src_file_name, const char *dst_file_name)
 	char buf[BUF_SIZE];
 	int nread;
 
-	while ((nread = fread(buf, BUF_SIZE, 1, f)) > 0)
+	while ((nread = fread(buf, 1, BUF_SIZE, f)) > 0)
 	{
 		kwrite(fd, buf, nread);
+		//printf("\t\t%d bytes\n", nread);
 	}
 
 	kclose(fd);
