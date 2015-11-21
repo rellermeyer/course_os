@@ -5,10 +5,11 @@
  *      Author: mwkurian
  */
 
-#include "priority_queue.h"
-#include "array_list.h"
 #include "process.h"
 #include "klibc.h"
+#include "data_structures/priority_queue.h"
+#include "data_structures/linked_list.h"
+#include "data_structures/array_list.h"
 
 #ifndef KERNEL_INCLUDE_SCHEDULER_H_
 #define KERNEL_INCLUDE_SCHEDULER_H_

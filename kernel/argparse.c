@@ -130,6 +130,8 @@ static void argparse_parse(char *cmdline)
 			}
 
 			execute_process(proc);
+
+			os_printf("AFTER EXECUTE_PROCESS\n");
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
