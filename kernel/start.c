@@ -44,7 +44,6 @@
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
 extern int init_all_processes();
-extern int vm_count_free_frames();
 
 void uart_handler(void *null)
 {
@@ -62,6 +61,8 @@ void start(uint32_t *p_bootargs)
 	mmap(p_bootargs);
 }
 
+
+
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs)
@@ -71,9 +72,6 @@ void start2(uint32_t *p_bootargs)
 
 	// Setup kmalloc...
 	init_heap();
-
-	//Test: UART0 mapped to the correct virtual address
-	print_uart0("MMU enabled\n");
 
 	print_uart0("\nCourseOS!\n");
 
@@ -91,13 +89,6 @@ void start2(uint32_t *p_bootargs)
 
 	kfs_init(0, 0, 0);
 
-	//run_fs_tests();
-
-	//int fd = kopen("/hello", 'r');
-	//os_printf("fd: %d\n", fd);
-	//kclose(fd);
-
-	//while(1);
 
 	/*
 	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
@@ -107,8 +98,20 @@ void start2(uint32_t *p_bootargs)
 	 recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
 	 */
 
+	// enable interrupt handling
+	enable_interrupts();
+
+	// initialize the timers
+	initialize_timers();
+
 	//assert(1==2 && "Test assert please ignore");
 	init_all_processes();
+
+	// FIXME: temporary
+	os_printf("Programming the timer interrupt\n");
+	start_timer_interrupts(0, 10);
+
+
 	argparse_process(p_bootargs);
 
 	print_uart0("done parsing atag list\n");
@@ -124,5 +127,7 @@ void start2(uint32_t *p_bootargs)
 	// init_q();
 	//main();
 
-	asm volatile("wfi");
+	while (1) {
+		asm volatile("wfi");
+	}
 }

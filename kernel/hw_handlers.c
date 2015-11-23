@@ -243,6 +243,24 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void)
 void __attribute__((interrupt("FIQ"))) fiq_handler(void)
 {
 	os_printf("FIQ HANDLER\n");
+
+	int cpsr = disable_interrupt_save(FIQ);
+
+	int i = 0;
+	// do a straight run through the VIC_INT_STATUS to determine
+	// which interrupt lines need to be tended to
+	for (i = 0; i < MAX_NUM_INTERRUPTS; i++)
+	{
+		// is the line active?
+		if ((1 << i) & mmio_read(VIC_FIQ_STATUS))
+		{
+			// activate that specific handler
+			handle_irq_interrupt(i);
+		}
+	}
+
 // FIQ handler returns from the interrupt by executing:
 // SUBS PC, R14_fiq, #4
+
+	restore_proc_status(cpsr);
 }
