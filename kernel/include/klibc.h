@@ -23,11 +23,13 @@
  * --------------Spring 2015---------------
  * 4/15/15: Added implementation of assert() 
  */
+#ifndef __KLIBC_H__
+#define __KLIBC_H__
+
 #include <stdint.h>
 #include <stdarg.h>
 #include "global_defs.h"
-#ifndef __klibc_h
-#define __klibc_h
+
 typedef unsigned int os_size_t;
 
 // useful macros
@@ -49,6 +51,8 @@ typedef unsigned int os_size_t;
 #define M_2_SQRTPI 1.12837916709551257390
 #define M_SQRT2 1.41421356237309504880
 #define M_SQRT_2 0.707106781186547524401
+
+#define os_printf(...) printf(__VA_ARGS__)
 
 /* string.h type functionality for comparing strings or mem blocks */
 int os_memcmp(const void *left, const void *right, os_size_t num);
@@ -92,9 +96,9 @@ os_size_t os_strcspn(const char *s, const char *reject);
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
 /* TODO: create print function for kernel debugging purposes */
 
-void* kmalloc(uint32_t);
-void* kmalloc_aligned(uint32_t, uint32_t);
-void kfree(void*);
+void* kmalloc(uint32_t size);
+void* kmalloc_aligned(uint32_t size, uint32_t alignment);
+void kfree(void* ptr);
 uint32_t km_size();
 uint32_t kmcheck();
 

@@ -95,6 +95,7 @@ clean:
 	rm -f *.bin
 	rm -f *.map
 	rm -f drivers/*.o
+	rm -f fs/cmdline/buildfs
 	rm -f vm/*.o
 	rm -f tests/*.o
 	rm -f memory/*.o

@@ -3,15 +3,17 @@
 
 #include <stdint.h>
 
-typedef struct {
-  uint32_t timer_load_value; //read/write
-  uint32_t timer_actual_value; //read only
-  uint32_t control; //read/write
-  uint32_t interrupt_clear; // write only
-  uint32_t interrupt_status; //read only
-  uint32_t masked_interrupt_status; //read only
-  uint32_t background_timer_load_value; //read/write
+typedef struct  {
+  uint32_t timer_load_value; 			// read/write
+  uint32_t timer_actual_value; 			// read only
+  uint32_t control; 					// read/write
+  uint32_t interrupt_clear; 			// write only
+  uint32_t interrupt_status; 			// read only
+  uint32_t masked_interrupt_status; 	// read only
+  uint32_t background_timer_load_value; // read/write
 } rasp_pi_timer;
+
+_Static_assert (sizeof (rasp_pi_timer) == 28, "rasp_pi_timer check");
 
 void initialize_timers();
 int set_load_value(int timer_index, int value);
@@ -29,8 +31,5 @@ int enable_timer_interrupt(int timer_index);
 int disable_timer(int timer_index);
 void timer_start(int timer_index);
 
-
-
-rasp_pi_timer *timer_pointers[4];
 
 #endif
