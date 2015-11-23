@@ -11,6 +11,8 @@
 // this structure may need to be expanded if the secondary controller is incorporated
 static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
 
+static int initialized;
+
 // holds defined fiq interrupts
 static int check_if_fiq[MAX_NUM_INTERRUPTS];
 
@@ -31,7 +33,7 @@ interrupt_t ALL = ALL_INTERRUPT_MASK;
 
 // CLear Interrupts
 // Do not disable the VIC and the CSPR is disable in the hw_hanlders
-// you have to clear the inerrupt from the register handler
+// you have to clear the interrupt from the register handler
 // Look At timer.c it has a great example of it.
 // Here's the Website to the VIC we are using http://infocenter.arm.com/help/topic/com.arm.doc.ddi0181e/DDI0181.pdf
 
@@ -54,6 +56,20 @@ void init_fiqs()
 // have to be built in the driver and passed to register_
 int register_interrupt_handler(int num, interrupt_handler_t *handler)
 {
+	// lazy initialization
+	if (initialized != -1)
+	{
+		os_printf("INITIALIZING THE INTERRUPT SYSTEM\n");
+
+		for(int i=0; i<MAX_NUM_INTERRUPTS; i++)
+		{
+			handlers[i] = 0;
+		}
+
+		os_printf("INITIALIZED THE INTERRUPT SYSTEM\n");
+
+		initialized = -1;
+	}
 
 	if (num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
 		return -1;

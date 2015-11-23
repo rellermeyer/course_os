@@ -359,6 +359,7 @@ uint32_t free_PCB(pcb* pcb_p)
  @param pcb* pcb_p
  @return Process ID
 
+
  */
 uint32_t execute_process(pcb* pcb_p)
 {
@@ -393,9 +394,6 @@ uint32_t execute_process(pcb* pcb_p)
 	//Set state to running, this should be modified when the process is tossed into wait queues, etc
 	//Check header file for a list of states
 	pcb_p->current_state = PROCESS_RUNNING;
-
-	// FIXME: temporary
-	start_timer_interrupts(0, 100);
 
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
