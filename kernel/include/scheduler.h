@@ -37,7 +37,8 @@ typedef struct sched_message_chunk {
     char * data;
 } sched_message_chunk;
 
-uint32_t sched_init();
+uint32_t sched_init(void);
+void sched_start(void);
 uint32_t sched_free();
 uint32_t sched_add_task(sched_task * task);
 uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness);
@@ -45,6 +46,8 @@ uint32_t shed_remove_task(uint32_t pid);
 uint32_t sched_get_active_pid();
 void sched_waitpid(uint32_t pid);
 sched_task* sched_create_task(uint32_t* file_p, int niceness);
+sched_task* sched_create_task_from_kthread(kthread_handle * kthread, int niceness);
+sched_task* sched_create_task_from_process(pcb * pcb_pointer, int niceness);
 sched_task* sched_get_active_task();
 uint32_t sched_post_message(uint32_t dest_pid, uint32_t event, char * data, int len);
 uint32_t sched_register_callback_handler(sched_callback_handler cb_handler);

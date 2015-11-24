@@ -85,11 +85,8 @@ uint32_t sched_get_active_tid() {
     return (uint32_t) STATUS_FAIL;
 }
 
-
-sched_task* __sched_find_subtask(sched_task * parent_task, uint32_t pid);
-
 // Initialize the scheduler. Should be called by the kernel ONLY
-uint32_t sched_init() {
+uint32_t sched_init(void) {
 	vm_use_kernel_vas();
 
     os_printf("Initializing scheduler\n");
@@ -103,6 +100,12 @@ uint32_t sched_init() {
     __sched_register_timer_irq();
 
     return STATUS_OK;
+}
+
+// initial call that causes the scheduler to start
+void sched_start(void)
+{
+	__sched_dispatch();
 }
 
 uint32_t sched_register_callback_handler(sched_callback_handler cb_handler) {
