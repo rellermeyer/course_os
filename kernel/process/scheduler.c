@@ -98,6 +98,8 @@ uint32_t sched_init() {
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
     active_task = 0;
 
+    all_tasks_map = hmap_create();
+
     __sched_register_timer_irq();
 
     return STATUS_OK;
