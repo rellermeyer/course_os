@@ -3,7 +3,6 @@
 #include "vm.h"
 #include "klibc.h"
 #include "process.h"
-#include "kthread.h"
 #include "data_structures/linked_list.h"
 #include "data_structures/hash_map.h"
 #include "data_structures/array_list.h"
