@@ -96,11 +96,9 @@ uint32_t* next_free_slot_in_pcb_table()
  @return 0 if failed
  @return 1 for success
  */
-uint32_t save_process_state(uint32_t PID)
+uint32_t save_process_state(pcb* pcb_p)
 {
-	uint32_t* process_to_save = get_address_of_PCB(PID);
-	pcb* pcb_p = get_PCB(PID);
-
+	uint32_t* process_to_save = get_address_of_PCB(pcb_p->PID);
 	if (((uint32_t) process_to_save) == -1 || pcb_p == 0)
 	{
 		os_printf("Invalid PID in load_process_state");
@@ -135,17 +133,8 @@ uint32_t save_process_state(uint32_t PID)
  @return Returns 0 if successful
 
  */
-uint32_t load_process_state(uint32_t PID)
+void load_process_state(pcb* pcb_p)
 {
-	uint32_t* process_to_load = get_address_of_PCB(PID);
-	pcb* pcb_p = get_PCB(PID);
-
-	if (process_to_load == 0 || pcb_p == 0)
-	{
-		os_printf("Invalid PID in load_process_state");
-		return 0;
-	}
-	//while(1);
 	asm("MOV r0, %0"::"r"(pcb_p->R0):);
 	asm("MOV r1, %0"::"r"(pcb_p->R1):);
 	asm("MOV r2, %0"::"r"(pcb_p->R2):);
@@ -167,7 +156,7 @@ uint32_t load_process_state(uint32_t PID)
 
 	asm("MOV r15, %0"::"r"(pcb_p->R15):);
 
-	return 1;
+	__builtin_unreachable();
 }
 /*
  Prints the register variables that a PCB contains
@@ -361,13 +350,9 @@ uint32_t free_PCB(pcb* pcb_p)
 
 
  */
-uint32_t execute_process(pcb* pcb_p)
+void execute_process(pcb* pcb_p)
 {
-	if (!pcb_p)
-	{
-		os_printf("Cannot execute process. Exiting.\n");
-		return 0;
-	}
+	assert(pcb_p);
 
 	//Copy the current process's program counter to the new process's return register
 	//The new process will use R14 to return to the parent function
@@ -397,10 +382,7 @@ uint32_t execute_process(pcb* pcb_p)
 
 	//This will overwrite all our operating registers with the ones saved in the struct.
 	//As soon as this is called the processor will start executing the new process.
-	load_process_state(pcb_p->PID);
-	while (1)
-		;
-	return pcb_p->PID;
+	load_process_state(pcb_p);
 }
 
 /*
