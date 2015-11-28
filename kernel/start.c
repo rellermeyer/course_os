@@ -32,7 +32,7 @@
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
-// #include "scheduler.h"
+#include "scheduler.h"
 
 // Tests
 #include "tests/test_klibc.h"
@@ -107,10 +107,11 @@ void start2(uint32_t *p_bootargs)
 	//assert(1==2 && "Test assert please ignore");
 	init_all_processes();
 
+	sched_init();
+
 	// FIXME: temporary
 	os_printf("Programming the timer interrupt\n");
 	start_timer_interrupts(0, 10);
-
 
 	argparse_process(p_bootargs);
 

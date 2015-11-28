@@ -96,14 +96,9 @@ uint32_t* next_free_slot_in_pcb_table()
  @return 0 if failed
  @return 1 for success
  */
-uint32_t save_process_state(pcb* pcb_p)
+void save_process_state(pcb* pcb_p)
 {
-	uint32_t* process_to_save = get_address_of_PCB(pcb_p->PID);
-	if (((uint32_t) process_to_save) == -1 || pcb_p == 0)
-	{
-		os_printf("Invalid PID in load_process_state");
-		return 0;
-	}
+	assert(pcb_p && get_address_of_PCB(pcb_p->PID) > 0 && "Invalid PID in load_process_state");
 
 	asm("MOV %0, r0":"=r"(pcb_p->R0)::);
 	asm("MOV %0, r1":"=r"(pcb_p->R1)::);
@@ -121,9 +116,6 @@ uint32_t save_process_state(pcb* pcb_p)
 	asm("MOV %0, r13":"=r"(pcb_p->R13)::);
 	asm("MOV %0, r14":"=r"(pcb_p->R14)::);
 	asm("MOV %0, r15":"=r"(pcb_p->R15)::);
-
-	return 1;
-
 }
 
 /*

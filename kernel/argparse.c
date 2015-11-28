@@ -113,8 +113,6 @@ static void argparse_parse(char *cmdline)
 
 			pcb *proc = process_create((uint32_t*) start);
 
-			vm_enable_vas(proc->stored_vas);
-
 			proc->len = len;
 			proc->start = start;
 			proc->name = name;
@@ -130,8 +128,6 @@ static void argparse_parse(char *cmdline)
 			}
 
 			execute_process(proc);
-
-			os_printf("AFTER EXECUTE_PROCESS\n");
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{

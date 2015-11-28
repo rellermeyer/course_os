@@ -158,6 +158,7 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 	if (pptr == 0x0)
 	{
 		// We need to swap! (or something...)
+		vm_enable_vas(prev_vas);
 		return VM_ERR_UNKNOWN; // For now, just fail
 	}
 
@@ -203,7 +204,7 @@ int vm_free_page(struct vas *vas, void *vptr)
 
 	// We have to save the current VAS
 	struct vas *prev_vas = vm_current_vas;
-	vm_enable_vas((struct vas*) KERNEL_VAS);
+	vm_use_kernel_vas();
 
 	// TODO: Check if it was actually allocated
 	uint32_t entry = VM_L1_GET_ENTRY(vas->l1_pagetable, vptr);
