@@ -356,7 +356,7 @@ void __sched_dispatch(void) {
                         break;
                     }
 
-                    save_process_state(AS_PROCESS(last_task)->PID);
+                    save_process_state(AS_PROCESS(last_task));
                 } else if (IS_KTHREAD(active_task)) {
                     if (active_task == next_task) {
                         break;
@@ -372,7 +372,7 @@ void __sched_dispatch(void) {
                 if (IS_PROCESS(active_task)){
                     vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                     __sched_emit_messages();
-                    load_process_state(AS_PROCESS(active_task)->PID); // continue with the next process
+                    load_process_state(AS_PROCESS(active_task)); // continue with the next process
                 } else if (IS_KTHREAD(active_task)) {
                     __sched_emit_messages();
 
