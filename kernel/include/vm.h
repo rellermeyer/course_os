@@ -2,7 +2,8 @@
 #define __VM_H 1
 
 #include "memory.h"
-#include<stdint.h>
+#include <stdint.h>
+#include "klibc.h"
 
 //#define BLOCK_SIZE (1<<20)
 #define BLOCK_SIZE (1<<12)
@@ -173,6 +174,11 @@ struct vas *vm_get_current_vas();
  * Switches to the kernel's VAS.
  */
 void vm_use_kernel_vas();
+
+static inline void ensure_kernel_vas()
+{
+	assert (vm_get_current_vas() == KERNEL_VAS && "Must run in kernel VAS!");
+}
 
 void vm_test();
 
