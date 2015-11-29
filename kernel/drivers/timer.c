@@ -7,7 +7,8 @@
 
 rasp_pi_timer *timer_pointers[4];
 
-void handler(void* p);
+void timer_irq_handler(void* args);
+void (*handlers[4])(void *args);
 
 /* initializes timers as an array. Call this before
  * using any of the timer functions */
@@ -23,11 +24,13 @@ void initialize_timers()
 	timer_pointers[2] = (rasp_pi_timer*) TIMER_2;
 	timer_pointers[3] = (rasp_pi_timer*) TIMER_3;
 
+	handlers[0] = NULL;
+	handlers[1] = NULL;
+	handlers[2] = NULL;
+	handlers[3] = NULL;
+
 	interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
-	tmr_handler->handler = handler;
-
-	os_printf("@@@@@@@@ fn ptr: %X\n", tmr_handler);
-
+	tmr_handler->handler = timer_irq_handler;
 	register_interrupt_handler(4, tmr_handler);
 }
 
@@ -201,15 +204,6 @@ int print_control_status(int timer_index)
 	return 0;
 }
 
-void timer_start(int timer_index)
-{
-	os_printf("Timer driver loaded\n");
-	//set_prescale(timer_index,2);
-	enable_timer(timer_index);
-	os_printf("control address:%x\n", &(timer_pointers[timer_index]->control));
-	os_printf("control value:%x\n", timer_pointers[timer_index]->control);
-}
-
 /*starts interrupts every start_val ticks */
 //You give it a vallut and the specific timer you want to star.
 // YOu have four timers just start with timer zero
@@ -230,34 +224,33 @@ int start_timer_interrupts(int timer_index, int milliseconds)
 	set_background_load_value(timer_index, clicks);
 	set_periodic_mode(timer_index);
 	enable_timer_interrupt(timer_index);
-	timer_start(timer_index);
-	// return 0;
-	// return -1;
-
-//just testing code
-//int count=0;
-	/*while(1){
-	 os_printf("\n%d",get_current_timer_value(timer_index));
-	 if(get_current_timer_value(timer_index)==0){
-	 os_printf("\nInterrupt Control Val:%X \t Process Val:%X\t VIC Val:%X\t",get_timer_control_value(timer_index),get_proc_status(),mmio_read(VIC_INT_ENABLE));
-	 // count++;
-	 }
-	 //  if(get_current_timer_value(timer_index)==0){
-	 //	hw_interrupt_enable(4);
-	 ///	}
-	 //   if(get_current_timer_value(timer_index==9&count>0))
-	 //	hw_interrupt_enable(4);
-
-	 }  */
-
+	enable_timer(timer_index);
 	return 0;
 }
 
-void handler(void *args)
+int register_handler(int timer_index, void (*handler)(void *args))
+{
+	CHECK_TIMER_INDEX(timer_index);
+	handlers[timer_index] = handler;
+	return 0;
+}
+
+int unregister_handler(int timer_index)
+{
+	CHECK_TIMER_INDEX(timer_index);
+	handlers[timer_index] = NULL;
+	return 0;
+}
+
+void timer_irq_handler(void* args)
 {
 	os_printf("@@@@@@ RECEIVED TIMER INTERRUPT\n");
 
-	os_printf("ARGS ARE %d\n", args);
+	// TODO: find out which timer fired. For the moment, hard-code to 0
+	if (handlers[0] != NULL)
+	{
+		handlers[0](args);
+	}
 
 	clear_interrupt(0);
 }
