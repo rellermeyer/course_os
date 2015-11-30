@@ -9,19 +9,18 @@ CFLAGS += -std=c99 -ffreestanding -nostdinc
 
 SPECS = -specs "../gcc.specs"
 
-all: test_1 test_2
+PROGS  = test_1
+PROGS += test_2
 
-test_1: test_1.o
-	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc -o test_1 test_1.o
+all: $(PROGS)
 
-test_2: test_2.o
-	$(CC) $(SPECS) -L../libc -static -lc -o test_2 test_2.o
+$(PROGS): %: %.o
+	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc $< -o $@
 
 %.o: %.c
-	$(CC) $(SPECS) $(CFLAGS) -Wl,-Ttext-segment=0x9ff28000 -I../include -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(SPECS) $(CFLAGS) -I../include -c -mcpu=arm1176jzf-s $< -o $@
 
 clean:
-	rm -f test_1.o
-	rm -f test_1
-	rm -f test_2.o
-	rm -f test_2
+	rm -f $(foreach prog,$(PROGS),$(prog).o)
+	rm -f $(PROGS)
+
