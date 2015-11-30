@@ -1,9 +1,9 @@
 #include "global_defs.h"
+#include "kthread.h"
 #include "scheduler.h"
 #include "vm.h"
 #include "klibc.h"
 #include "process.h"
-#include "kthread.h"
 #include "data_structures/linked_list.h"
 #include "data_structures/hash_map.h"
 #include "data_structures/array_list.h"
@@ -59,6 +59,8 @@ static uint32_t sched_tid;
 // kill: kill a process and its children processes
 //
 #define SCHEDULER_TIMER 0
+
+void __sched_dispatch(void);
 
 void timer_handler(void *args)
 {
