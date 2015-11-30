@@ -262,7 +262,7 @@ uint32_t __sched_remove_task(sched_task * task) {
             task->state = TASK_STATE_FINISHED;
 
             if (IS_PROCESS(task)) {
-                free_PCB(AS_PROCESS(task));
+                process_destroy(AS_PROCESS(task));
             } else if (IS_KTHREAD(task)) {
                 // FIXME add later
             }
@@ -340,7 +340,7 @@ void __sched_dispatch(void) {
 
             if (IS_PROCESS(active_task)) {
                 __sched_resume_timer_irq();
-                execute_process(AS_PROCESS(active_task));
+                //execute_process(AS_PROCESS(active_task));
             } else if (IS_KTHREAD(active_task)) {
                 AS_KTHREAD(active_task)->cb_handler();
             }
@@ -366,7 +366,7 @@ void __sched_dispatch(void) {
                         break;
                     }
 
-                    save_process_state(AS_PROCESS(last_task));
+                    process_save_state(AS_PROCESS(last_task));
                 } else if (IS_KTHREAD(active_task)) {
                     if (active_task == next_task) {
                         break;
@@ -382,7 +382,7 @@ void __sched_dispatch(void) {
                 if (IS_PROCESS(active_task)){
                     vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                     __sched_emit_messages();
-                    load_process_state(AS_PROCESS(active_task)); // continue with the next process
+                    process_load_state(AS_PROCESS(active_task)); // continue with the next process
                 } else if (IS_KTHREAD(active_task)) {
                     __sched_emit_messages();
 
