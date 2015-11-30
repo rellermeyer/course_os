@@ -337,7 +337,6 @@ void __sched_dispatch(void) {
             active_task->state = TASK_STATE_ACTIVE;
 
             if (IS_PROCESS(active_task)) {
-                vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                 __sched_resume_timer_irq();
                 execute_process(AS_PROCESS(active_task));
             } else if (IS_KTHREAD(active_task)) {
