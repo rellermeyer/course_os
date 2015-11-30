@@ -32,6 +32,7 @@
 #include "mem_alloc.h"
 #include "tests.h"
 #include "drivers/timer.h"
+#include "kthread.h"
 #include "scheduler.h"
 
 // Tests

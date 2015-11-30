@@ -1,4 +1,5 @@
 #include "global_defs.h"
+#include "kthread.h"
 #include "scheduler.h"
 #include "vm.h"
 #include "klibc.h"
@@ -58,6 +59,8 @@ static uint32_t sched_tid;
 // kill: kill a process and its children processes
 //
 #define SCHEDULER_TIMER 0
+
+void __sched_dispatch(void);
 
 void timer_handler(void *args)
 {
@@ -336,7 +339,6 @@ void __sched_dispatch(void) {
             active_task->state = TASK_STATE_ACTIVE;
 
             if (IS_PROCESS(active_task)) {
-                vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
                 __sched_resume_timer_irq();
                 execute_process(AS_PROCESS(active_task));
             } else if (IS_KTHREAD(active_task)) {
