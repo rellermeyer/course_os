@@ -37,15 +37,6 @@ static uint32_t sched_tid;
 // NOTE
 // scheduler logic only. not tested
 
-// FIXME
-// - add comments
-// - register interrupt
-// - deregister interrupts instead of flag
-// - optimize
-// - add error messages
-// - remove a task (and children)
-// - emitting and receiving messages!
-
 // scheduler
 // ---------
 // round-robin timer-enabled scheduler that runs tasks in descending priority
