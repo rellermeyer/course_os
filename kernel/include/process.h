@@ -159,16 +159,12 @@ typedef struct pcb
 void process_init();
 
 //Process API - start process from elf
-int process_execute(char* name);
+pcb* process_create(const char *name);
+int process_execute(pcb* pcb_p);
 int process_destroy(pcb* pcb_p);
 
-pcb* __process_create();
-void __process_elf_init(pcb* pcb_p, char* name);
-void __process_stack_init(pcb* pcb_p);
-void __process_heap_init(pcb* pcb_p);
-
 //Execution functions
-void process_load_state(pcb* pcb_p)__attribute__ ((noreturn));
+void process_load_state(pcb* pcb_p) __attribute__ ((noreturn));
 void process_save_state(pcb* pcb_p);
 
 #endif

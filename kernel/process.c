@@ -12,23 +12,33 @@
 static pcb** pcb_table;
 static bit_vector* pcb_map;
 
+
+pcb* __process_create();
+void __process_elf_init(pcb* pcb_p, const char* name);
+void __process_stack_init(pcb* pcb_p);
+void __process_heap_init(pcb* pcb_p);
+
 void process_init()
 {
   pcb_table = kmalloc(MAX_PROCESSES * sizeof(pcb*));
   pcb_map = make_vector(MAX_PROCESSES);
 }
 
-int process_execute(char *name)
+pcb* process_create(const char *name)
 {
-  pcb* pcb_p = __process_create();
-  if(!pcb_p) {
-    return -1;
-  }
+	  pcb* pcb_p = __process_create();
+	  if(!pcb_p) {
+	    return NULL;
+	  }
 
-  __process_elf_init(pcb_p, name);
-  __process_stack_init(pcb_p);
-  __process_heap_init(pcb_p);
+	  __process_elf_init(pcb_p, name);
+	  __process_stack_init(pcb_p);
+	  __process_heap_init(pcb_p);
+	  return pcb_p;
+}
 
+int process_execute(pcb* pcb_p)
+{
   //Copy the current process's program counter to the new process's return register
   //The new process will use R14 to return to the parent function
   asm("MOV %0, r15":"=r"(pcb_p->R14)::);
@@ -74,7 +84,7 @@ pcb* __process_create()
   return pcb_p;
 }
 
-void __process_elf_init(pcb* pcb_p, char* name) {
+void __process_elf_init(pcb* pcb_p, const char* name) {
   int fd = kopen(name, 'r');
   uint32_t start = PROC_LOCATION;
   uint32_t len = 0;

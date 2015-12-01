@@ -386,7 +386,7 @@ void get_inode(int inum, struct inode* result_inode){
  * Returns the inode of a specific nested directory; at this time there is no error checking
  * or reporting on this function; needs to be added in at a later data
  */
-int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
+int get_inum_from_direct_data_block(struct inode* cur_inode, const char * next_path){
 	int inum = -1;
 	int i;
 	int file_found = 0; // initialize to false (i.e. file not found)
@@ -434,7 +434,7 @@ int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path){
  * Returns the inode of a specific nested directory; at this time there is no error checking
  * or reporting on this function; needs to be added in at a later data
 */
-int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path) {
+int get_inum_from_indirect_data_block(struct inode * cur_inode, const char * next_path) {
 	int i;
 	int inum = -1;
 	int cur_indirect_block_num = -1;
@@ -497,7 +497,7 @@ int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path
  * Returns 0 if inode was successfully located and stored; otherwise
  * returns -1
  */
-int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
+int kfind_inode(const char* filepath, int starting_inum, int dir_levels, struct inode* result_inode) { //filepath and starting inum must correspond...
 	int current_inum = starting_inum;
 
 	int a = 0;
@@ -550,10 +550,10 @@ int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode*
  * @param  ...
  * @return Description of the return value
  */
-void kfind_dir(char* filepath, struct dir_helper* result){
+void kfind_dir(const char* filepath, struct dir_helper* result){
 	int dir_levels = 0;
 	int total_chars = 0;
-	char* iterator = filepath; //root still level 0, so start from what's next
+	char* iterator = (char*) filepath; //root still level 0, so start from what's next
 	int index = 0;
 	while(index < MAX_NAME_LENGTH){
 		if(iterator[0] == '\0'){
@@ -1103,7 +1103,7 @@ int read_inode(struct inode *c_inode, int offset, void* buf, int num_bytes){
  * -1
  *
  */
-int kopen(char* filepath, char mode){
+int kopen(const char* filepath, const char mode){
 	if (filepath == NULL) {
 		os_printf("no directory specified \n");
 		return ERR_INVALID;
@@ -1509,7 +1509,7 @@ int kseek(int fd_int, int num_bytes) {
  * Returns 0 if the file/directory was created successfully
  * otherwise returns -1
  */
-int kcreate(char* filepath, char mode, int is_this_a_dir) {
+int kcreate(const char* filepath, char mode, int is_this_a_dir) {
 	if (filepath == NULL) {
 		os_printf("filepath not valid \n");
 		return ERR_INVALID;	
@@ -1975,7 +1975,7 @@ int krec_delete(struct inode * level_up_inode, struct inode * cur_inode){
  * error code
  */
 //delete the file or directory at filepath. Return -1 if the file does not exist 
-int kdelete(char* filepath, int recursive) {
+int kdelete(const char* filepath, int recursive) {
     int error;
     int inum = 0;
     
@@ -2061,7 +2061,7 @@ int kdelete(char* filepath, int recursive) {
  * Retun 0 if the file was copied successfully; otherwise return
  * an error code
  */
-int kcopy(char* source, char* dest, char mode) {
+int kcopy(const char* source, const char* dest, const char mode) {
 	int error = 0;
 	int inum = 0; //start from root
 
@@ -2132,7 +2132,7 @@ int kcopy(char* source, char* dest, char mode) {
  * Returns 0 if the function was executed correctly, otherwise returns
  * an error code
  */
-int kls(char* filepath) {
+int kls(const char* filepath) {
 	int error = 0;
 	int inum = 0; //starting from root
 	struct dir_helper* result = (struct dir_helper *) kmalloc(sizeof(struct dir_helper));
@@ -2212,7 +2212,7 @@ int kls(char* filepath) {
  * Returns 0 if information was successfully retrieved; otherwise
  * returns an error code
  */
-int get_stats(char * filepath, struct stats * result) {
+int get_stats(const char * filepath, struct stats * result) {
 	int inum = 0;
 	struct inode* cur_inode = (struct inode*) kmalloc(sizeof(struct inode));
 	struct dir_helper* help_result = (struct dir_helper*) kmalloc(sizeof(struct dir_helper));
