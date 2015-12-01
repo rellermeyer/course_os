@@ -107,21 +107,21 @@ struct stats //statistics about the file
 	int is_dir; //is this a directory
 };
 
-int kopen(char* filepath, char mode); //opens the file of filepath with permissions mode
+int kopen(const char* filepath, const char mode); //opens the file of filepath with permissions mode
 int kread(int fd, void* buf, int numBytes); //reads the open file corresponding to fd
 int kwrite(int fd, void* buf, int num_bytes); //writes the open file corresponding to fd
 int kclose(int fd); //closes the cpen file corresponding to fd
 int kseek(int fd, int num_bytes); //moves the offset of the open file fd
-int kdelete(char* filepath, int recursive); //deletes the file or directory following filepath
-int kcreate(char* filepath, char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
-int kcopy(char* source, char* dest, char mode); //copies the contents of a file 
-int kls(char* filepath); //shows contents of one directory
+int kdelete(const char* filepath, int recursive); //deletes the file or directory following filepath
+int kcreate(const char* filepath, const char mode, int is_this_a_dir); //creates and opens a file or directory with permissions mode in fielpath
+int kcopy(const char* source, const char* dest, const char mode); //copies the contents of a file
+int kls(const char* filepath); //shows contents of one directory
 int kfs_init(int inode_table_cache_size, int data_block_table_cache_size, int reformat); // initialize the filesystem:
 int kfs_shutdown();
 
 // // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // /* HELPER FUNCTIONS */
-int get_stats(char * filepath, struct stats * result);
+int get_stats(const char * filepath, struct stats * result);
 
 int kdelete_single_helper(struct inode * cur_inode);
 
@@ -138,17 +138,17 @@ void get_indirect_block(struct inode* cur_inode, int index, struct indirect_bloc
 void get_inode(int inum, struct inode* result_inode);
 
 //gets the inum of nextpath (file or dir) looking at the direct data blocks of cur_inode
-int get_inum_from_direct_data_block(struct inode* cur_inode, char * next_path);
+int get_inum_from_direct_data_block(struct inode* cur_inode, const char * next_path);
 
 //gets the inum of netxpath (file or dir) looking at the indirect data blocks of cur_inode
-int get_inum_from_indirect_data_block(struct inode * cur_inode, char * next_path);
+int get_inum_from_indirect_data_block(struct inode * cur_inode, const char * next_path);
 
 //finds the inode (will be result_inode) following filepath, going dir_levels down the path, starting from starting_inum
-int kfind_inode(char* filepath, int starting_inum, int dir_levels, struct inode* result_inode);
+int kfind_inode(const char* filepath, int starting_inum, int dir_levels, struct inode* result_inode);
 
 //finds the name of the directory path (result->truncated_path) and the name of the ending part (result->last) and the number of levels (result->levels)
 //result has to be kmalloc-ed by and kfree-d by whoever calls this functinos. Also remember to free last and truncated_path. 
-void kfind_dir(char* filepath, struct dir_helper* result);
+void kfind_dir(const char* filepath, struct dir_helper* result);
 
 //transmits or receives the data block bitvector or the inode bitvecotr to and from disk
 // First parameter: TRANSMIT or RECEIVE (defined)
