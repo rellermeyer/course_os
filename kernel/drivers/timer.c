@@ -244,6 +244,8 @@ int unregister_handler(int timer_index)
 
 void timer_irq_handler(void* args)
 {
+	clear_interrupt(0);
+
 	os_printf("@@@@@@ RECEIVED TIMER INTERRUPT\n");
 
 	// TODO: find out which timer fired. For the moment, hard-code to 0
@@ -251,8 +253,6 @@ void timer_irq_handler(void* args)
 	{
 		handlers[0](args);
 	}
-
-	clear_interrupt(0);
 }
 
 void timer_test()
