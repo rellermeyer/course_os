@@ -417,12 +417,6 @@ uint32_t sched_add_task(sched_task * task) {
 
         hmap_put(all_tasks_map, active_task->tid, active_task);
 
-        if (IS_PROCESS(active_task)) {
-            vm_enable_vas(AS_PROCESS(active_task)->stored_vas);
-        } else if (IS_KTHREAD(active_task)) {
-            // ignore
-        }
-
         return active_task->tid;
     }
 
