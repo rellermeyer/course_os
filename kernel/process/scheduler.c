@@ -331,7 +331,7 @@ void __sched_dispatch(void) {
 
             if (IS_PROCESS(active_task)) {
                 __sched_resume_timer_irq();
-                //execute_process(AS_PROCESS(active_task));
+                process_execute(AS_PROCESS(active_task));
             } else if (IS_KTHREAD(active_task)) {
                 AS_KTHREAD(active_task)->cb_handler();
             }
