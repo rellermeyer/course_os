@@ -154,27 +154,17 @@ typedef struct pcb
 //do we need to know where the data is?
 //output
 //create a corresponding pcb ds
-uint32_t* pcb_table; //Table showing all initialized processes.
-uint32_t* next_free_slot_in_pcb_table();
-void print_pcb_table();
-int init_pcb_table();
-pcb* process_create(uint32_t* file_p);
-uint32_t process_destroy(int PID);
-void print_PID();
-pcb* get_PCB(uint32_t PID);
-uint32_t free_PCB(pcb* pcb_p);
-uint32_t* get_address_of_PCB(uint32_t PID);
-void execute_process(pcb* pcb_p) __attribute__ ((noreturn));
-void load_process_state(pcb* pcb_p) __attribute__ ((noreturn));
-void save_process_state(pcb* pcb_p);
-uint32_t print_process_state(uint32_t PID);
-void init_proc_heap(pcb* pcb_p);
-void init_proc_stack(pcb * pcb_p);
 
-void setup_process_vas(pcb* pcb_p);
+//Init process system
+void process_init();
 
-// static void process_exit(process p); //harder because we have to clean up
-// int fork();
-// int process_suspend(process p);
-// int process_resume(process p);
+//Process API - start process from elf
+pcb* process_create(const char *name);
+int process_execute(pcb* pcb_p);
+int process_destroy(pcb* pcb_p);
+
+//Execution functions
+void process_load_state(pcb* pcb_p) __attribute__ ((noreturn));
+void process_save_state(pcb* pcb_p);
+
 #endif
