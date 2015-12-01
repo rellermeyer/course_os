@@ -74,7 +74,11 @@ static void argparse_parse(char *cmdline)
 		if (os_strcmp("-load", token) == 0)
 		{
 			char* name = os_strtok(NULL, " ");
-      process_execute(name);
+
+			pcb* proc = process_create(name);
+			assert(proc != NULL);
+			process_execute(proc);
+
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{
