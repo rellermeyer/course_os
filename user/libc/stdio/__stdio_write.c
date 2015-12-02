@@ -2,6 +2,8 @@
 #include <sys/uio.h>
 // #include <pthread.h>
 
+#define SYS_writev 101
+
 static void cleanup(void *p)
 {
 	FILE *f = p;
