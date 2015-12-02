@@ -30,6 +30,12 @@
 #include <stdarg.h>
 #include "global_defs.h"
 
+#ifndef __NO_WFI
+#define SLEEP 	while (1) asm volatile("wfi")
+#else
+#define SLEEP for(;;)
+#endif
+
 typedef unsigned int os_size_t;
 
 // useful macros

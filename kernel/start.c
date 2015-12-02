@@ -127,7 +127,6 @@ void start2(uint32_t *p_bootargs)
 	// init_q();
 	//main();
 
-	while (1) {
-		asm volatile("wfi");
-	}
+
+	SLEEP;
 }
