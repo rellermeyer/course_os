@@ -105,6 +105,10 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 	// System Call Handler
 	switch (callNumber)
 	{
+	case SYSCALL_EXIT:
+		// TODO: remove current process from scheduler
+		for (;;);
+		break;
 	case SYSCALL_DUMMY:
 		return 0L;
 
