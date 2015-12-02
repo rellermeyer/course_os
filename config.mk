@@ -7,3 +7,6 @@ QEMU=qemu-system-arm
 
 #UBOOT_VERSION=2010.03
 UBOOT_VERSION=2014.10
+
+#CFLAGS = -mcpu=arm1136j-s
+CFLAGS = -mcpu=arm1176jz-s

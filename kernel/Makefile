@@ -30,12 +30,11 @@ PFLAGS += -mtune=arm1176jzf-s
 PFLAGS += -nostartfiles
 CFLAGS += -g
 
-
 run: flash.bin card.sd
-	${QEMU} -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 run-debug: flash.bin card.sd
-	${QEMU} -S -s -M versatilepb -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
 
 gdb:
 	${GDB} -ex "target remote :1234" kernel.elf
@@ -86,7 +85,7 @@ startup.o: startup.s
 	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) -Iinclude -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
 clean:
 	rm -f $(OBJS)

@@ -22,6 +22,4 @@ int main() {
     free(mem);
 
     printf("success\n");
-
-    while(1);
 }
