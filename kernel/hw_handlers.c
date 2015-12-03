@@ -182,19 +182,21 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 {
-	os_printf("DATA ABORT HANDLER\n");
-	int pc, lr, sp, fp;
-	// not sure this is correct syntax, did we [Spring 2015 do this?]
-	asm volatile("mov %0, pc" : "=r" (pc));
+	int lr;
 	asm volatile("mov %0, lr" : "=r" (lr));
-	asm volatile("mov %0, sp" : "=r" (sp));
-	asm volatile("mov %0, fp" : "=r" (fp));
-	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
+	int pc = lr - 8;
+
+	int far;
+	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
+
+	os_printf("DATA ABORT HANDLER\n");
+	os_printf("faulting address: 0x%x\n", far);
+	os_printf("violating instruction (at 0x%x): %x\n", pc, *((int*) pc));
 
 	// Get the DSFR
 	int dsfr;
 	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
-	os_printf("DSFR: 0x%X\n", dsfr);
+	//os_printf("DSFR: 0x%X\n", dsfr);
 
 	switch (dsfr)
 	{
