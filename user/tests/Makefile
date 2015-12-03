@@ -4,7 +4,7 @@ TOOLCHAIN_PATH:=$(CURDIR)/../../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 
-CFLAGS = -Os -pipe
+CFLAGS += -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
 
 SPECS = -specs "../gcc.specs"
