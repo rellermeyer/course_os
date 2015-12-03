@@ -20,7 +20,11 @@ void main(void)
    int rc = thread_create(&thread, f, (void*) 1);
    assert(rc == 0);
 
-   printf("after thread_create\n");
+   int id = thread_get_id(thread);
+
+   assert(id > 0);
+
+   printf("passed\n");
 
    while(1) { }
 }

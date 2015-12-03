@@ -4,23 +4,20 @@
 
 void* f(void* arg)
 {
-   printf("this is the thread\n");
+   printf("in thread\n");
 
-   assert(((int)arg) == 1);
+   assert(thread_self() != NULL);
 
-   return arg;
+   printf("passed\n");
+
+   return NULL;
 }
 
 void main(void)
 {
    thread_t thread;
-
-   printf("before thread_create\n");
-
    int rc = thread_create(&thread, f, (void*) 1);
    assert(rc == 0);
 
-   printf("after thread_create\n");
-
-   while(1) { }
+   while (1) { }
 }

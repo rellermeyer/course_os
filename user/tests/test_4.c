@@ -8,6 +8,10 @@ void* f(void* arg)
 
    assert(((int)arg) == 1);
 
+   thread_exit(arg);
+
+   assert(0 && "Unreachable");
+
    return arg;
 }
 
