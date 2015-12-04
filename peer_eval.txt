@@ -1,0 +1,28 @@
+  ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗ ███████╗
+ ██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝
+ ██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗
+ ██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║
+ ╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝███████║
+
+  PEER EVALUATION
+-----------------------------------------------------------------------
+
+1) Group members
+     Name 1: [              ]
+     - Rating: [ ]  
+     Name 2: [              ]
+     - Rating: [ ] 
+     Name 3: [              ]
+     - Rating: [ ]  
+
+Notes: Rating can be:
+       [5] Excellent Contributor, outstanding contributions
+       [4] Solid Contributor, good team member
+       [3] Marginal Contributor, tried but could not get much done
+       [2] Unsatisfactory Contributor, was practically not involved much
+       [1] No show
+
+2) If you feel that your code does not reflect all the work that you put into
+   the project, you can summarize below what you tried to do, e.g., by describing
+   your intended design in sufficient technical detail. Also mention where you
+   had the biggest issues that prevented you from being more productive.
