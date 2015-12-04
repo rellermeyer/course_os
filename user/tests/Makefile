@@ -9,7 +9,8 @@ CFLAGS += -std=c99 -ffreestanding -nostdinc
 
 SPECS = -specs "../gcc.specs"
 
-PROGS  = test_1
+PROGS  = test_0
+PROGS += test_1
 PROGS += test_2
 PROGS += test_3
 PROGS += test_4
