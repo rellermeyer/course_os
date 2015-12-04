@@ -182,4 +182,12 @@ static inline void ensure_kernel_vas()
 
 void vm_test();
 
+static inline void vm_invalidate_tlb(void)
+{
+	// Invalidate the TLB
+	asm volatile("mcr p15, 0, %[r], c8, c5, 0" : : [r] "r" (0x0));
+	asm volatile("mcr p15, 0, %[r], c8, c6, 0" : : [r] "r" (0x0));
+	asm volatile("mcr p15, 0, %[r], c8, c7, 0" : : [r] "r" (0x0));
+}
+
 #endif
