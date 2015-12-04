@@ -4,7 +4,7 @@
 
 void main(void)
 {
-   thread_t thread = (thread_t) 0x1;
+   thread_t thread = (thread_t) NULL;
 
    int rc = thread_join(thread, NULL);
 
