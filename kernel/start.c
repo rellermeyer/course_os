@@ -72,7 +72,9 @@ void start2(uint32_t *p_bootargs)
 	// Setup kmalloc...
 	init_heap();
 
-	print_uart0("\nCourseOS!\n");
+	//print_uart0("\nCourseOS!\n");
+
+	splash();
 
 	// Test stuff...
 	/*int *p = (int*)0xFFFFFFF0;

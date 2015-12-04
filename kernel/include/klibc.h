@@ -156,4 +156,6 @@ void panic();
 int _assert_fail(char *_file, unsigned int _line, char *_func);
     //__attribute__ ((__noreturn__));
 
+void splash(void);
+
 #endif

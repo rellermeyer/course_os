@@ -43,8 +43,9 @@ int process_execute(pcb* pcb_p)
   //The new process will use R14 to return to the parent function
   asm("MOV %0, r15":"=r"(pcb_p->R14)::);
 
-  vm_enable_vas(pcb_p->stored_vas);
   pcb_p->current_state = PROCESS_RUNNING;
+
+  vm_enable_vas(pcb_p->stored_vas);
   process_load_state(pcb_p);
   return 0;
 }
@@ -228,7 +229,7 @@ void process_load_state(pcb* pcb_p)
   asm("MOV r8, %0"::"r"(pcb_p->R8):);
   asm("MOV r9, %0"::"r"(pcb_p->R9):);
   asm("MOV r10, %0"::"r"(pcb_p->R10):);
-  //asm("MOV r11, %0"::"r"(11):);
+
   asm("MOV r12, %0"::"r"(pcb_p->R12):);
 
   asm("MOV r13, %0"::"r"(pcb_p->R13):);
@@ -236,7 +237,20 @@ void process_load_state(pcb* pcb_p)
   asm("MOV r14, %0"::"r"(pcb_p->R14):);
 //assert(1==11);
 
+ // asm("MOV r11, %0"::"r"(pcb_p->R11):);
   asm("MOV r15, %0"::"r"(pcb_p->R15):);
+
+  /*
+  // move pc and fp to local stack
+  *((uint32_t*)(PROC_START+4)) = pcb_p->R11;
+  *((uint32_t*)(PROC_START+8)) = pcb_p->R15;
+
+  vm_invalidate_tlb();
+
+ // asm("MOV r11, %0"::"r"(PROC_START+4):);
+  asm("MOV r15, %0"::"r"(PROC_START+8):);
+  */
+
 
   __builtin_unreachable();
 }

@@ -22,9 +22,10 @@
 #include "klibc.h"
 #include "global_defs.h"
 #include "mem_alloc.h"
+#include "interrupt.h"
+
 //FIXME: decouple
 #include "drivers/uart.h"
-extern void print_char_uart0(char);
 
 #define LOWER_CASE 0
 #define UPPER_CASE 1
@@ -46,8 +47,26 @@ static char upper_case_digits[16] = "0123456789ABCDEF";
  */
 void panic()
 {
-	os_printf("Kernel panic!\n");
+	disable_interrupts();
+	//os_printf("Kernel panic!\n");
+	os_printf("\n     )                        (                     \n");
+	os_printf("  ( /(                   (    )\\ )                  \n");
+	os_printf("  )\\()) (  (           ( )\\  (()/(   )      (       \n");
+	os_printf("|((_)\\ ))\\ )(   (     ))((_)  /(_)| /(  (   )\\  (   \n");
+	os_printf("|_ ((_)((_|()\\  )\\ ) /((_)   (_)) )(_)) )\\ |(_) )\\  \n");
+	os_printf("| |/ (_))  ((_)_(_/((_))| |  | _ ((_)_ _(_/((_)((_) \n");
+	os_printf("  ' </ -_)| '_| ' \\)) -_) |  |  _/ _` | ' \\)) / _|  \n");
+	os_printf(" _|\\_\\___||_| |_||_|\\___|_|  |_| \\__,_|_||_||_\\__|  ");
 	SLEEP;
+}
+
+void splash()
+{
+	os_printf("\n\t ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗ ███████╗\n");
+	os_printf("\t██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝\n");
+	os_printf("\t██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗\n");
+	os_printf("\t██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║\n");
+	os_printf("\t╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝███████║\n\n");
 }
 
 /*4-17-15: - Prakash

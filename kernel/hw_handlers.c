@@ -79,6 +79,12 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
 
 	os_printf("COPRO: %x\n", copro);
 	os_printf("violating instruction (at %x): %x\n", pc, *((int*) pc));
+	if (pc >= V_KERNBASE && pc < V_KERNTOP)
+	{
+		os_printf("(instruction is in kernel address range)\n");
+	}
+
+	panic();
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
@@ -201,9 +207,7 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
 
 	os_printf("PREFETCH ABORT HANDLER, violating address: %x\n", (lr - 4));
 
-	// kill
-	while (1)
-		;
+	panic();
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
@@ -215,8 +219,12 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 	int far;
 	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
 
-	os_printf("DATA ABORT HANDLER\n");
+	os_printf("DATA ABORT HANDLER (Page Fault)\n");
 	os_printf("faulting address: 0x%x\n", far);
+	if (far >= V_KDSBASE)
+	{
+		os_printf("(address is in kernel address range)\n");
+	}
 	os_printf("violating instruction (at 0x%x): %x\n", pc, *((int*) pc));
 
 	// Get the DSFR

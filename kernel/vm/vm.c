@@ -182,10 +182,12 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes,
 		int permission)
 {
+	int rc;
 	unsigned char *p = (unsigned char*) vptr;
 	while (p - (unsigned char*) vptr < nbytes)
 	{
-		vm_allocate_page(vas, p, permission);
+		rc = vm_allocate_page(vas, p, permission);
+		assert(rc == 0);
 		p += BLOCK_SIZE;
 	}
 	return p;
@@ -384,7 +386,7 @@ void vm_enable_vas(struct vas *vas)
 
 	// Clear the BTAC
 	// Performed by cleaning the caches, below
-	//asm volatile("mcr p15, 0, %[r], c7, c5, 6" : : [r] "r" (0x0));
+	// asm volatile("mcr p15, 0, %[r], c7, c5, 6" : : [r] "r" (0x0));
 
 	// Flush the write caches
 	asm volatile("MCR p15, 0, %[r], c7, c10, 4" : : [r] "r" (0x0));
