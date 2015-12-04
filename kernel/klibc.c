@@ -540,7 +540,7 @@ int32_t abs(int32_t val)
 
 // Return string converted to int form, or 0 if not applicable
 // Necessary comments provided in atof() (next function)
-int atoi(const char *string)
+int katoi(const char *string)
 {
 	if (!string)
 		return 0;
@@ -548,17 +548,17 @@ int atoi(const char *string)
 	int integer = 0;
 	int sign = 1;
 
-	if (*num == '-') {
+	if (*string == '-') {
 		sign = -1;
-		num++;
-	} else if (*num == '+') {
-		num++;
+		string++;
+	} else if (*string == '+') {
+		string++;
 	}
 
-	while (*num != '\0') {
-		if (*num >= '0' && *num <= '9') {
+	while (*string != '\0') {
+		if (*string >= '0' && *string <= '9') {
 			integer *= 10;
-			integer += (*num - '0');
+			integer += (*string - '0');
 		} else {
 			return 0;
 		}
@@ -567,7 +567,7 @@ int atoi(const char *string)
 }
 
 // Return string converted to double form, or 0 if not applicable
-double atof(const char *string)
+double katof(const char *string)
 {
 	if (!string)
 		return 0.0;
@@ -579,24 +579,24 @@ double atof(const char *string)
 	bool after_decimal = false; // decimal point reached?
 
 	// Check if string includes sign (including a "+")
-	if (*num == '-') {
+	if (*string == '-') {
 		sign = -1;
-		num++; // progress to next char
-	} else if (*num == '+') {
-		num++;
+		string++; // progress to next char
+	} else if (*string == '+') {
+		string++;
 	}
 
-	while (*num != '\0') {
-		if (*num >= '0' && *num <= '9') {
+	while (*string != '\0') {
+		if (*string >= '0' && *string <= '9') {
 			if (after_decimal) {
 				fraction *= 10; // progress to next position in integer
-				fraction += (*num - '0'); // add integer form of current number in string
+				fraction += (*string - '0'); // add integer form of current number in string
 				divisor *= 10;
 			} else {
 				integer *= 10; // progress to next position in integer
-				integer += (*num - '0'); // add integer form of current number in string
+				integer += (*string - '0'); // add integer form of current number in string
 			}
-		} else if (*num == '.') {
+		} else if (*string == '.') {
 			if (after_decimal)
 				return 0.0; // more than one '.'
 			after_decimal = true;
@@ -604,9 +604,95 @@ double atof(const char *string)
 		else {
 			return 0.0; // current char in string is not a number or '.'
 		}
-		num++;
+		string++;
 	}
 	return sign * (integer + (fraction/divisor));
+}
+
+// Return string converted to long int form, or 0 if not applicable
+long int katol(const char *string)
+{
+	return (long int)katoi(string);
+}
+
+// Same as katof, but makes endptr point to the string which comes after the number
+double kstrtod(const char *string, char **endptr)
+{
+	if (!string)
+		return 0.0;
+
+	double integer = 0.0;
+	double fraction = 0.0;
+	int sign = 1;
+	int divisor = 1;
+	bool after_decimal = false;
+	bool result found = false;
+	double result = 0.0;
+
+	if (*string == '-') {
+		sign = -1;
+		string++;
+	} else if (*string == '+')
+		string++;
+	}
+
+	while (!result_found) {
+		if (*string >= '0' && *string <= '9') {
+			if (after_decimal) {
+				fraction *= 10;
+				fraction += (*string - '0');
+				divisor *= 10;
+			} else {
+				integer *= 10;
+				integer += (*string - '0');
+			}
+			string++;
+		} else if (*string == '.') {
+			if (after_decimal)
+				return 0.0;
+			after_decimal = true;
+			string++;
+		} else {
+			result = sign * (integer + (fraction/divisor));
+			result_found = true;
+		}
+	}
+	endptr = *string;
+
+	return result;
+} 
+
+//Same as katol, but makes endptr point to the string which comes after the number
+long int kstrtol(const char *string, char **endptr)
+{
+	if (!string)
+		return 0;
+
+	long int integer = 0;
+	long int result = 0;
+	bool result_found = false;
+	int sign = 1;
+
+	if (*string == '-') {
+		sign = -1;
+		string++;
+	} else if (*string == '+') {
+		string++;
+	}
+
+	while (!result_found) {
+		if (*string >= '0' && *string <= '9') {
+			integer *= 10;
+			integer += (*string - '0');
+			string++;
+		} else {
+			result = sign * integer;
+			result_found = true;
+		}
+	}
+	endptr = *string;
+
+	return result;
 }
 
 void *kmalloc(uint32_t size)
