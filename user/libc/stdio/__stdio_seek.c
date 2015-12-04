@@ -1,5 +1,7 @@
 #include "stdio_impl.h"
 
+#define SYS_lseek 102
+
 off_t __stdio_seek(FILE *f, off_t off, int whence)
 {
 	off_t ret;

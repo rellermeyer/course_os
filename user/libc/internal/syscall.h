@@ -1,7 +1,7 @@
 #ifndef _INTERNAL_SYSCALL_H
 #define _INTERNAL_SYSCALL_H
 
-#include <sys/syscall.h>
+//#include <sys/syscall.h>
 #include "syscall_arch.h"
 
 #ifndef __scc
