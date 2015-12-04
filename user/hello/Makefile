@@ -4,7 +4,7 @@ TOOLCHAIN_PATH:=$(CURDIR)/../../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-ld
 
-CFLAGS = -Os -pipe
+CFLAGS += -Os -pipe
 CFLAGS += -std=c99 -ffreestanding -nostdinc
 
 PROGS  = hello
@@ -19,7 +19,7 @@ $(PROGS): %: %.o
 	$(CC) $(SPECS) -Wl,-Ttext-segment=0x9ff08000 -L../libc -static -lc $< -o $@
 
 %.o: %.c
-	$(CC) $(SPECS) $(CFLAGS) -I../include -c -mcpu=arm1176jzf-s $< -o $@
+	$(CC) $(SPECS) $(CFLAGS) -I../include -c $< -o $@
 
 clean:
 	rm -f $(foreach prog,$(PROGS),$(prog).o)

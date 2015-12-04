@@ -56,7 +56,29 @@ void reset_handler(void)
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
 {
+	int spsr, lr;
+
+	asm volatile("mrs %0, spsr" : "=r"(spsr));
+	asm volatile("mov %0, lr" : "=r" (lr));
+
 	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
+
+	int thumb = spsr & 0x20;
+	int pc = thumb ? lr - 0x2 : lr - 0x4;
+
+	int copro = (*(int*)pc & 0xf00000) >> 24;
+
+	if (spsr & 0x20) {
+		os_printf("THUMB mode\n");
+	} else {
+		os_printf("ARM mode\n");
+	}
+	if (spsr & 0x1000000) {
+		os_printf("JAZELLE enabled\n");
+	}
+
+	os_printf("COPRO: %x\n", copro);
+	os_printf("violating instruction (at %x): %x\n", pc, *((int*) pc));
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
@@ -83,6 +105,10 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 	// System Call Handler
 	switch (callNumber)
 	{
+	case SYSCALL_EXIT:
+		// TODO: remove current process from scheduler
+		for (;;);
+		break;
 	case SYSCALL_DUMMY:
 		return 0L;
 
@@ -182,19 +208,21 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 {
-	os_printf("DATA ABORT HANDLER\n");
-	int pc, lr, sp, fp;
-	// not sure this is correct syntax, did we [Spring 2015 do this?]
-	asm volatile("mov %0, pc" : "=r" (pc));
+	int lr;
 	asm volatile("mov %0, lr" : "=r" (lr));
-	asm volatile("mov %0, sp" : "=r" (sp));
-	asm volatile("mov %0, fp" : "=r" (fp));
-	os_printf("HANDLER: pc=%x, lr=%x, sp=%x, fp=%x\n", pc, lr, sp, fp);
+	int pc = lr - 8;
+
+	int far;
+	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
+
+	os_printf("DATA ABORT HANDLER\n");
+	os_printf("faulting address: 0x%x\n", far);
+	os_printf("violating instruction (at 0x%x): %x\n", pc, *((int*) pc));
 
 	// Get the DSFR
 	int dsfr;
 	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
-	os_printf("DSFR: 0x%X\n", dsfr);
+	//os_printf("DSFR: 0x%X\n", dsfr);
 
 	switch (dsfr)
 	{

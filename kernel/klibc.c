@@ -47,7 +47,7 @@ static char upper_case_digits[16] = "0123456789ABCDEF";
 void panic()
 {
 	os_printf("Kernel panic!\n");
-	asm("wfi");
+	SLEEP;
 }
 
 /*4-17-15: - Prakash

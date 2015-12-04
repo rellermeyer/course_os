@@ -75,59 +75,10 @@ static void argparse_parse(char *cmdline)
 		{
 			char* name = os_strtok(NULL, " ");
 
-			uint32_t start = PROC_LOCATION;
-			uint32_t len = 0;
+			pcb* proc = process_create(name);
+			assert(proc != NULL);
+			process_execute(proc);
 
-			os_printf("LOADING PROCESS <<%s>>, start address %X\n",
-					name, start, len);
-
-			int fd = kopen(name, 'r');
-
-			struct stats fstats;
-			get_stats(name, &fstats);
-			len = fstats.size;
-
-			os_printf("FILE SIZE IS %d\n", len);
-
-			int* location = (int*) start;
-
-			for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++)
-			{
-				os_printf("argparse.c: allocating page %d of %d\n", i + 1,
-						(len / BLOCK_SIZE) + 1);
-				uint32_t *v = (uint32_t*) (start + (i * BLOCK_SIZE));
-				int x = vm_allocate_page(KERNEL_VAS, (void*) v,
-						VM_PERM_USER_RW);
-				assert(x == 0);
-
-			}
-
-			int counter = 0;
-			while (counter < len)
-			{
-				kread(fd, location, 4);
-				location += 1;
-				counter += 4;
-
-			}
-
-			pcb *proc = process_create((uint32_t*) start);
-
-			proc->len = len;
-			proc->start = start;
-			proc->name = name;
-			setup_process_vas(proc);
-			init_proc_stack(proc);
-			init_proc_heap(proc);
-
-			for (int i = 0; i < (len / BLOCK_SIZE) + 1; i++)
-			{
-				uint32_t *v = (uint32_t *) (start + (i * BLOCK_SIZE));
-				vm_free_mapping(KERNEL_VAS, (void*) v);
-
-			}
-
-			execute_process(proc);
 		}
 		else if (os_strcmp("-test", token) == 0)
 		{

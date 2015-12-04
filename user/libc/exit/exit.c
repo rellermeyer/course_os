@@ -19,6 +19,8 @@ extern void (*const __fini_array_start)() __attribute__((weak));
 extern void (*const __fini_array_end)() __attribute__((weak));
 #endif
 
+#define SYS_pause	102
+
 _Noreturn void exit(int code)
 {
 	static int lock;

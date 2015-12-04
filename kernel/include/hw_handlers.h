@@ -53,6 +53,9 @@
 #define SYSCALL_FREE 15
 #define SYSCALL_PRINTF 16
 #define SYSCALL_DUMMY 99
+#define SYSCALL_EXIT 100
+#define SYSCALL_WRITEV 101
+#define SYSCALL_PAUSE 102
 
 void init_vector_table(void); 
 
