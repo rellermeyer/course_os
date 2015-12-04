@@ -2,9 +2,9 @@
  * klibc.c
  *
  * (Any collaborators, please add your name)
- * Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
+ * Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag, Collin Massey
  *
- * Last edited: 21 April 2014
+ * Last edited: 4 December 2015
  *
  * Purpose:  Provide basic libc funtionality for CourseOS
  *     This file provides function implementations
@@ -14,7 +14,7 @@
  *   can be used by prepending os_ suffix.
  *
  * Notes:  The following were adapted directly from musl-libc:
- *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok,
+ *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok
  ********************************************************************/
 #include <stdint.h>
 #include <stdarg.h>
@@ -538,10 +538,90 @@ int32_t abs(int32_t val)
 	return (val + mask) ^ mask;
 }
 
-void* kmalloc(uint32_t size)
+// Return string converted to int form, or 0 if not applicable
+// Necessary comments provided in atof() (next function)
+int atoi(const char *string)
+{
+	if (!string)
+		return 0;
+
+	int integer = 0;
+	int sign = 1;
+
+	if (*num == '-') {
+		sign = -1;
+		num++;
+	} else if (*num == '+') {
+		num++;
+	}
+
+	while (*num != '\0') {
+		if (*num >= '0' && *num <= '9') {
+			integer *= 10;
+			integer += (*num - '0');
+		} else {
+			return 0;
+		}
+	}
+	return sign * integer;
+}
+
+// Return string converted to double form, or 0 if not applicable
+double atof(const char *string)
+{
+	if (!string)
+		return 0.0;
+
+	double integer = 0.0; // before decimal
+	double fraction = 0.0; // after decimal
+	int sign = 1; // positive or negative?
+	int divisor = 1; // used to push fraction past decimal point
+	bool after_decimal = false; // decimal point reached?
+
+	// Check if string includes sign (including a "+")
+	if (*num == '-') {
+		sign = -1;
+		num++; // progress to next char
+	} else if (*num == '+') {
+		num++;
+	}
+
+	while (*num != '\0') {
+		if (*num >= '0' && *num <= '9') {
+			if (after_decimal) {
+				fraction *= 10; // progress to next position in integer
+				fraction += (*num - '0'); // add integer form of current number in string
+				divisor *= 10;
+			} else {
+				integer *= 10; // progress to next position in integer
+				integer += (*num - '0'); // add integer form of current number in string
+			}
+		} else if (*num == '.') {
+			if (after_decimal)
+				return 0.0; // more than one '.'
+			after_decimal = true;
+		}
+		else {
+			return 0.0; // current char in string is not a number or '.'
+		}
+		num++;
+	}
+	return sign * (integer + (fraction/divisor));
+}
+
+void *kmalloc(uint32_t size)
 {
 	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
 	return block;
+}
+
+// Allocates n * size portion of memory (set to 0) and returns it
+void *kcalloc(uint32_t n, uint32_t size)
+{
+	uint32_t total_size = n * size;
+	void* block = kmalloc(total_size);
+
+	return block ? os_memset(block, 0, total_size) : NULL;
 }
 
 uint32_t kmcheck()
@@ -587,6 +667,36 @@ void* kmalloc_aligned(uint32_t size, uint32_t alignment)
 void kfree(void* ptr)
 {
 	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
+}
+
+// FIXME: Implement kmalloc_size() (or something like it)
+// Resize memory pointed to by ptr to new size
+void *krealloc(void *ptr, uint32_t size)
+{
+	if (!ptr)
+		return kmalloc(size);
+
+	if (size == 0) {
+		kfree(ptr);
+		return NULL;
+	}
+
+	/* I'm not sure how to implement kmalloc_size(),
+	 * which returns the size of the block pointed
+	 * to by a pointer, without keeping track of
+	 * the size of the block pointed to whenever
+	 * kmalloc() is called, or by defining it
+
+	uint32_t msize = kmalloc_size(ptr);
+	if (msize >= size)
+		return ptr;
+	
+
+	void *new_ptr = kmalloc(size);
+	os_memcpy(new_ptr, ptr, msize);
+	return new_ptr; */
+
+	return ptr;
 }
 
 unsigned int rand()
