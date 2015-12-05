@@ -11,8 +11,15 @@ void setAddrWindow(int x1, int y1, int x2, int y2);
 // TODO: Need Delay function
 int lcd_init() {
 
+	int i = 0;
+
     run_mmci(ILI9341_SOFTRESET, 0);
+
 //    delay(50);
+    while(i < 50) {
+    	i++;
+    }
+
     run_mmci(ILI9341_DISPLAYOFF, 0);
 
     run_mmci(ILI9341_POWERCONTROL1, 0x23);
@@ -26,9 +33,21 @@ int lcd_init() {
     run_mmci(ILI9341_ENTRYMODE, 0x07);
 
     run_mmci(ILI9341_SLEEPOUT, 0);
+
 //    delay(150);
+    i = 0;
+    while(i < 150) {
+    	i++;
+    }
+
     run_mmci(ILI9341_DISPLAYON, 0);
+
 //    delay(500);
+    i = 0;
+    while(i < 500) {
+    	i++;
+    }
+
     setAddrWindow(0, 0, TFTWIDTH-1, TFTHEIGHT-1);
     return 0;
 }
