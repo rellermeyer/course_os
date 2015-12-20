@@ -209,13 +209,50 @@ void process_save_state(pcb* pcb_p)
   asm("MOV %0, r15":"=r"(pcb_p->R15)::);
 }
 
+#define offsetof(st, m) __builtin_offsetof(st, m)
+
+__attribute((naked)) void process_load_state(pcb* pcb_p)
+{
+   asm volatile(
+    "mov  ip, r0  \n\t" \
+    "ldr  r0, [ip, %0] \n\t " \
+	"ldr  r1, [ip, %1] \n\t " \
+	"ldr  r2, [ip, %3] \n\t " \
+	"ldr  r4, [ip, %4] \n\t " \
+	"ldr  r5, [ip, %5] \n\t " \
+	"ldr  r6, [ip, %6] \n\t " \
+	"ldr  r7, [ip, %7] \n\t " \
+	"ldr  r8, [ip, %8] \n\t " \
+	"ldr  r9, [ip, %9] \n\t " \
+	"ldr  r10, [ip, %10] \n\t " \
+	"ldr  r11, [ip, %11] \n\t " \
+	"ldr  r13, [ip, %12] \n\t " \
+	"ldr  r14, [ip, %13] \n\t " \
+	"ldr  ip, [ip, %14] \n\t " \
+	"mcr p15, 0, r0, c8, c7, 0 \n\t" \
+	"mov  r15, ip \n\t"
+	:: "i" (offsetof(pcb, R0)),
+	  "i" (offsetof(pcb, R1)),
+	  "i" (offsetof(pcb, R2)),
+	  "i" (offsetof(pcb, R3)),
+	  "i" (offsetof(pcb, R4)),
+	  "i" (offsetof(pcb, R5)),
+	  "i" (offsetof(pcb, R6)),
+	  "i" (offsetof(pcb, R7)),
+	  "i" (offsetof(pcb, R8)),
+	  "i" (offsetof(pcb, R9)),
+	  "i" (offsetof(pcb, R10)),
+	  "i" (offsetof(pcb, R11)),
+	  "i" (offsetof(pcb, R13)),
+	  "i" (offsetof(pcb, R14)),
+	  "i" (offsetof(pcb, R15)) :
+   );
+}
 /*
  Loads registers using values in pcb
  @param Process ID
- @param PID
- @return Returns 0 if successful
-
  */
+/*
 void process_load_state(pcb* pcb_p)
 {
   asm("MOV r0, %0"::"r"(pcb_p->R0):);
@@ -229,29 +266,18 @@ void process_load_state(pcb* pcb_p)
   asm("MOV r8, %0"::"r"(pcb_p->R8):);
   asm("MOV r9, %0"::"r"(pcb_p->R9):);
   asm("MOV r10, %0"::"r"(pcb_p->R10):);
-
   asm("MOV r12, %0"::"r"(pcb_p->R12):);
-
   asm("MOV r13, %0"::"r"(pcb_p->R13):);
-
   asm("MOV r14, %0"::"r"(pcb_p->R14):);
-//assert(1==11);
 
- // asm("MOV r11, %0"::"r"(pcb_p->R11):);
-  asm("MOV r15, %0"::"r"(pcb_p->R15):);
-
-  /*
-  // move pc and fp to local stack
-  *((uint32_t*)(PROC_START+4)) = pcb_p->R11;
-  *((uint32_t*)(PROC_START+8)) = pcb_p->R15;
+  // move pc to process stack
+  *((uint32_t*)(PROC_START+4)) = pcb_p->R15;
 
   vm_invalidate_tlb();
 
- // asm("MOV r11, %0"::"r"(PROC_START+4):);
-  asm("MOV r15, %0"::"r"(PROC_START+8):);
-  */
-
+  asm("MOV r12, %0":: "i" ((PROC_START+4)):);
+  asm("ldr r15, [r12]" :::);
 
   __builtin_unreachable();
 }
-
+*/
