@@ -47,7 +47,8 @@ static char upper_case_digits[16] = "0123456789ABCDEF";
  */
 void panic()
 {
-	disable_interrupts();
+	disable_interrupts()
+	;
 	//os_printf("Kernel panic!\n");
 	os_printf("\n     )                        (                     \n");
 	os_printf("  ( /(                   (    )\\ )                  \n");
@@ -62,11 +63,16 @@ void panic()
 
 void splash()
 {
-	os_printf("\n\t ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗ ███████╗\n");
-	os_printf("\t██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝\n");
-	os_printf("\t██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗\n");
-	os_printf("\t██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║\n");
-	os_printf("\t╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝███████║\n\n");
+	os_printf(
+			"\n\t ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗ ███████╗\n");
+	os_printf(
+			"\t██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝\n");
+	os_printf(
+			"\t██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗\n");
+	os_printf(
+			"\t██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║\n");
+	os_printf(
+			"\t╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝███████║\n\n");
 }
 
 /*4-17-15: - Prakash
@@ -304,15 +310,14 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...)
 	return n;
 }
 
-int os_printf(const char *str_buf, ...)
-{
-	va_list args;
-	va_start(args, str_buf);
-	char buf[256];
-	int n = os_vsnprintf(buf, 255, str_buf, args);
-	va_end(args);
-	print_uart0(buf);
-	return n;
+int os_printf(const char *str_buf, ...){
+va_list args;
+va_start(args, str_buf);
+char buf[256];
+int n = os_vsnprintf(buf, 255, str_buf, args);
+va_end(args);
+print_uart0(buf);
+return n;
 }
 
 /* Set the first n bytes of dest to be the value c.*/
@@ -567,18 +572,25 @@ int katoi(const char *string)
 	int integer = 0;
 	int sign = 1;
 
-	if (*string == '-') {
+	if (*string == '-')
+	{
 		sign = -1;
 		string++;
-	} else if (*string == '+') {
+	}
+	else if (*string == '+')
+	{
 		string++;
 	}
 
-	while (*string != '\0') {
-		if (*string >= '0' && *string <= '9') {
+	while (*string != '\0')
+	{
+		if (*string >= '0' && *string <= '9')
+		{
 			integer *= 10;
 			integer += (*string - '0');
-		} else {
+		}
+		else
+		{
 			return 0;
 		}
 	}
@@ -595,45 +607,57 @@ double katof(const char *string)
 	double fraction = 0.0; // after decimal
 	int sign = 1; // positive or negative?
 	int divisor = 1; // used to push fraction past decimal point
-	bool after_decimal = false; // decimal point reached?
+	Boolean after_decimal = FALSE; // decimal point reached?
 
 	// Check if string includes sign (including a "+")
-	if (*string == '-') {
+	if (*string == '-')
+	{
 		sign = -1;
 		string++; // progress to next char
-	} else if (*string == '+') {
+	}
+	else if (*string == '+')
+	{
 		string++;
 	}
 
-	while (*string != '\0') {
-		if (*string >= '0' && *string <= '9') {
-			if (after_decimal) {
+	while (*string != '\0')
+	{
+		if (*string >= '0' && *string <= '9')
+		{
+			if (after_decimal)
+			{
 				fraction *= 10; // progress to next position in integer
 				fraction += (*string - '0'); // add integer form of current number in string
 				divisor *= 10;
-			} else {
+			}
+			else
+			{
 				integer *= 10; // progress to next position in integer
 				integer += (*string - '0'); // add integer form of current number in string
 			}
-		} else if (*string == '.') {
+		}
+		else if (*string == '.')
+		{
 			if (after_decimal)
 				return 0.0; // more than one '.'
-			after_decimal = true;
+			after_decimal = TRUE;
 		}
-		else {
+		else
+		{
 			return 0.0; // current char in string is not a number or '.'
 		}
 		string++;
 	}
-	return sign * (integer + (fraction/divisor));
+	return sign * (integer + (fraction / divisor));
 }
 
 // Return string converted to long int form, or 0 if not applicable
 long int katol(const char *string)
 {
-	return (long int)katoi(string);
+	return (long int) katoi(string);
 }
 
+/*
 // Same as katof, but makes endptr point to the string which comes after the number
 double kstrtod(const char *string, char **endptr)
 {
@@ -644,179 +668,200 @@ double kstrtod(const char *string, char **endptr)
 	double fraction = 0.0;
 	int sign = 1;
 	int divisor = 1;
-	bool after_decimal = false;
-	bool result found = false;
+	Boolean after_decimal = FALSE;
+	Boolean result_found = FALSE;
 	double result = 0.0;
 
-	if (*string == '-') {
+	if (*string == '-')
+	{
 		sign = -1;
 		string++;
-	} else if (*string == '+')
+	}
+	else if (*string == '+')
+		string++;
+}
+
+while (!result_found)
+{
+	if (*string >= '0' && *string <= '9')
+	{
+		if (after_decimal)
+		{
+			fraction *= 10;
+			fraction += (*string - '0');
+			divisor *= 10;
+		}
+		else
+		{
+			integer *= 10;
+			integer += (*string - '0');
+		}
 		string++;
 	}
-
-	while (!result_found) {
-		if (*string >= '0' && *string <= '9') {
-			if (after_decimal) {
-				fraction *= 10;
-				fraction += (*string - '0');
-				divisor *= 10;
-			} else {
-				integer *= 10;
-				integer += (*string - '0');
-			}
-			string++;
-		} else if (*string == '.') {
-			if (after_decimal)
-				return 0.0;
-			after_decimal = true;
-			string++;
-		} else {
-			result = sign * (integer + (fraction/divisor));
-			result_found = true;
-		}
+	else if (*string == '.')
+	{
+		if (after_decimal)
+		return 0.0;
+		after_decimal = true;
+		string++;
 	}
-	endptr = *string;
+	else
+	{
+		result = sign * (integer + (fraction/divisor));
+		result_found = true;
+	}
+}
 
-	return result;
-} 
+*endptr = string;
+
+return result;
+}
+*/
 
 //Same as katol, but makes endptr point to the string which comes after the number
 long int kstrtol(const char *string, char **endptr)
 {
-	if (!string)
-		return 0;
+if (!string)
+	return 0;
 
-	long int integer = 0;
-	long int result = 0;
-	bool result_found = false;
-	int sign = 1;
+long int integer = 0;
+long int result = 0;
+Boolean result_found = FALSE;
+int sign = 1;
 
-	if (*string == '-') {
-		sign = -1;
-		string++;
-	} else if (*string == '+') {
+if (*string == '-')
+{
+	sign = -1;
+	string++;
+}
+else if (*string == '+')
+{
+	string++;
+}
+
+while (!result_found)
+{
+	if (*string >= '0' && *string <= '9')
+	{
+		integer *= 10;
+		integer += (*string - '0');
 		string++;
 	}
-
-	while (!result_found) {
-		if (*string >= '0' && *string <= '9') {
-			integer *= 10;
-			integer += (*string - '0');
-			string++;
-		} else {
-			result = sign * integer;
-			result_found = true;
-		}
+	else
+	{
+		result = sign * integer;
+		result_found = TRUE;
 	}
-	endptr = *string;
+}
+*endptr = (char*) string;
 
-	return result;
+return result;
 }
 
 void *kmalloc(uint32_t size)
 {
-	void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
-	return block;
+void* block = (void*) allocate(size, 0 /* unused */, 0 /* unused */);
+return block;
 }
 
 // Allocates n * size portion of memory (set to 0) and returns it
 void *kcalloc(uint32_t n, uint32_t size)
 {
-	uint32_t total_size = n * size;
-	void* block = kmalloc(total_size);
+uint32_t total_size = n * size;
+void* block = kmalloc(total_size);
 
-	return block ? os_memset(block, 0, total_size) : NULL;
+return block ? os_memset(block, 0, total_size) : NULL;
 }
 
 uint32_t kmcheck()
 {
-	return mem_check();
+return mem_check();
 }
 
 // NOTE potentially expand these features. offer more
 // memory stats
 uint32_t km_size()
 {
-	return mem_get_heap_size();
+return mem_get_heap_size();
 }
 
 void* kmalloc_aligned(uint32_t size, uint32_t alignment)
 {
-	void* block;
-	void* ptr;
+void* block;
+void* ptr;
 
-	switch (alignment)
-	{
-	case 4:
-		block = kmalloc(size + 4);
-		ptr = (void*) (((uint32_t) block + 4) & ~0x3);
-		return ptr;
-	case 1024:
-		block = kmalloc(size + 1024);
-		ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
-		return ptr;
-	case 4096:
-		block = kmalloc(size + 4096);
-		ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
-		return ptr;
-	case 16 * 1024:
-		block = kmalloc(size + 16 * 1024);
-		ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
-		return ptr;
-	default:
-		return kmalloc(size);
-	}
+switch (alignment)
+{
+case 4:
+	block = kmalloc(size + 4);
+	ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+	return ptr;
+case 1024:
+	block = kmalloc(size + 1024);
+	ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+	return ptr;
+case 4096:
+	block = kmalloc(size + 4096);
+	ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+	return ptr;
+case 16 * 1024:
+	block = kmalloc(size + 16 * 1024);
+	ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+	return ptr;
+default:
+	return kmalloc(size);
+}
 }
 
 void kfree(void* ptr)
 {
-	deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
+deallocate((uint32_t*) ptr, 0 /* unused */, 0 /* unused */);
 }
 
 // FIXME: Implement kmalloc_size() (or something like it)
 // Resize memory pointed to by ptr to new size
 void *krealloc(void *ptr, uint32_t size)
 {
-	if (!ptr)
-		return kmalloc(size);
+if (!ptr)
+	return kmalloc(size);
 
-	if (size == 0) {
-		kfree(ptr);
-		return NULL;
-	}
+if (size == 0)
+{
+	kfree(ptr);
+	return NULL;
+}
 
-	/* I'm not sure how to implement kmalloc_size(),
-	 * which returns the size of the block pointed
-	 * to by a pointer, without keeping track of
-	 * the size of the block pointed to whenever
-	 * kmalloc() is called, or by defining it
+/* I'm not sure how to implement kmalloc_size(),
+ * which returns the size of the block pointed
+ * to by a pointer, without keeping track of
+ * the size of the block pointed to whenever
+ * kmalloc() is called, or by defining it
 
-	uint32_t msize = kmalloc_size(ptr);
-	if (msize >= size)
-		return ptr;
-	
+ uint32_t msize = kmalloc_size(ptr);
+ if (msize >= size)
+ return ptr;
 
-	void *new_ptr = kmalloc(size);
-	os_memcpy(new_ptr, ptr, msize);
-	return new_ptr; */
 
-	return ptr;
+ void *new_ptr = kmalloc(size);
+ os_memcpy(new_ptr, ptr, msize);
+ return new_ptr; */
+
+return ptr;
 }
 
 unsigned int rand()
 {
-	static unsigned int z1 = 12345, z2 = 67891, z3 = 11121, z4 = 31415;
-	unsigned int b;
-	b = ((z1 << 6) ^ z1) >> 13;
-	z1 = ((z1 & 4294967294U) << 18) ^ b;
-	b = ((z2 << 2) ^ z2) >> 27;
-	z2 = ((z2 & 4294967288U) << 2) ^ b;
-	b = ((z3 << 13) ^ z3) >> 21;
-	z3 = ((z3 & 4294967280U) << 7) ^ b;
-	b = ((z4 << 3) ^ z4) >> 12;
-	z4 = ((z4 & 4294967168U) << 13) ^ b;
-	return (z1 ^ z2 ^ z3 ^ z4);
+static unsigned int z1 = 12345, z2 = 67891, z3 = 11121, z4 = 31415;
+unsigned int b;
+b = ((z1 << 6) ^ z1) >> 13;
+z1 = ((z1 & 4294967294U) << 18) ^ b;
+b = ((z2 << 2) ^ z2) >> 27;
+z2 = ((z2 & 4294967288U) << 2) ^ b;
+b = ((z3 << 13) ^ z3) >> 21;
+z3 = ((z3 & 4294967280U) << 7) ^ b;
+b = ((z4 << 3) ^ z4) >> 12;
+z4 = ((z4 & 4294967168U) << 13) ^ b;
+return (z1 ^ z2 ^ z3 ^ z4);
 }
 
 /**
@@ -828,8 +873,8 @@ unsigned int rand()
  */
 void* umalloc(uint32_t size)
 {
-	void* block = (void*) proc_allocate(size);
-	return block;
+void* block = (void*) proc_allocate(size);
+return block;
 }
 
 /**
@@ -844,30 +889,30 @@ void* umalloc(uint32_t size)
 
 void* ualigned_alloc(uint32_t size, uint32_t alignment)
 {
-	void* block;
-	void* ptr;
+void* block;
+void* ptr;
 
-	switch (alignment)
-	{
-	case 4:
-		block = umalloc(size + 4);
-		ptr = (void*) (((uint32_t) block + 4) & ~0x3);
-		return ptr;
-	case 1024:
-		block = umalloc(size + 1024);
-		ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
-		return ptr;
-	case 4096:
-		block = umalloc(size + 4096);
-		ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
-		return ptr;
-	case 16 * 1024:
-		block = umalloc(size + 16 * 1024);
-		ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
-		return ptr;
-	default:
-		return umalloc(size);
-	}
+switch (alignment)
+{
+case 4:
+	block = umalloc(size + 4);
+	ptr = (void*) (((uint32_t) block + 4) & ~0x3);
+	return ptr;
+case 1024:
+	block = umalloc(size + 1024);
+	ptr = (void*) (((uint32_t) block + 1024) & ~0x1ff);
+	return ptr;
+case 4096:
+	block = umalloc(size + 4096);
+	ptr = (void*) (((uint32_t) block + 4096) & ~0x7ff);
+	return ptr;
+case 16 * 1024:
+	block = umalloc(size + 16 * 1024);
+	ptr = (void*) (((uint32_t) block + 16 * 1024) & ~0x1fff);
+	return ptr;
+default:
+	return umalloc(size);
+}
 }
 
 /**
@@ -879,5 +924,5 @@ void* ualigned_alloc(uint32_t size, uint32_t alignment)
  */
 void ufree(void* ptr)
 {
-	proc_deallocate((uint32_t*) ptr);
+proc_deallocate((uint32_t*) ptr);
 }
