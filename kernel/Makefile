@@ -39,18 +39,8 @@ all: build/flash.bin build/card.sd
 
 make_Pi: build/kernelPi.img
 
-CFLAGS += -pipe
-CFLAGS += -std=gnu99 
-CFLAGS += -ffreestanding 
-CFLAGS += -nostdinc
-CFLAGS += -Wall
-CFLAGS += -Werror
-PFLAGS += -mfpu=vfp
-#PFLAGS += -mfloat-abi=hard
-PFLAGS += -march=armv6zk
-PFLAGS += -mtune=arm1176jzf-s
-PFLAGS += -nostartfiles
-CFLAGS += -g
+CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
+PFLAGS += -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 run: build/flash.bin build/card.sd | builddir
 	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
@@ -118,18 +108,6 @@ build/%.o: %.c | builddir
 	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
-	rm -f *.img
-	rm -f *.elf
-	rm -f *.bin
-	rm -f *.map
-	rm -f drivers/*.o
-	rm -f fs/cmdline/buildfs
-	rm -f vm/*.o
-	rm -f tests/*.o
-	rm -f memory/*.o
-	rm -f data_structures/*.o
-	rm -f mq/*.o
 	rm -rf build
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
 	@echo "('rm sd.card')"
