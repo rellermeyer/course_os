@@ -9,13 +9,35 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
-PIOBJS = start.o pi_light.o startup.o drivers/uart_pi.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o data_structures/bitvector.o data_structures/array_list.o data_structures/priority_queue.o data_structures/linked_list.o data_structures/hash_map.o process/scheduler.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o drivers/mmci.o
+COMMONOBJS = build/start.o build/startup.o build/argparse.o             \
+			 build/klibc.o build/interrupt.o build/process.o            \
+			 build/hw_handlers.o build/elf.o build/loader.o             \
+			 build/memory/mem_alloc.o build/memory/allocator.o          \
+			 build/mmap.o build/vm/frame.o build/vm/vm.o                \
+			 build/drivers/timer.o build/data_structures/bitvector.o    \
+			 build/data_structures/array_list.o 						\
+			 build/data_structures/priority_queue.o                     \
+			 build/data_structures/linked_list.o                        \
+			 build/data_structures/hash_map.o build/process/scheduler.o \
+			 build/fs/open_table.o build/fs/fat16/file.o                \
+			 build/drivers/mmci.o
 
-OBJS=start.o drivers/uart.o startup.o argparse.o klibc.o interrupt.o hw_handlers.o process.o elf.o loader.o memory/mem_alloc.o memory/allocator.o tests.o mmap.o vm/frame.o vm/vm.o drivers/timer.o process/scheduler.o data_structures/bitvector.o data_structures/array_list.o data_structures/linked_list.o data_structures/priority_queue.o data_structures/hash_map.o tests/test_mem_alloc.o tests/test_priority_queue.o tests/test_hash_map.o tests/test_vm.o fs/open_table.o fs/fat16/file.o tests/test_fs.o drivers/mmci.o
 
-all: flash.bin card.sd
 
-make_Pi: kernelPi.img
+TESTOBJS = build/tests.o build/tests/test_mem_alloc.o build/tests/test_hash_map.o \
+		   build/tests/test_priority_queue.o build/tests/test_vm.o                \
+		   build/tests/test_fs.o
+
+PIOBJS = build/pi_light.o build/drivers/uart_pi.o
+OBJS = build/drivers/uart.o
+
+OBJS += $(COMMONOBJS) $(TESTOBJS)
+PIOBJS += $(COMMONOBJS) $(TESTOBJS)
+
+
+all: build/flash.bin build/card.sd
+
+make_Pi: build/kernelPi.img
 
 CFLAGS += -pipe
 CFLAGS += -std=gnu99 
@@ -30,25 +52,31 @@ PFLAGS += -mtune=arm1176jzf-s
 PFLAGS += -nostartfiles
 CFLAGS += -g
 
-run: flash.bin card.sd
-	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+run: build/flash.bin build/card.sd | builddir
+	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
-run-debug: flash.bin card.sd
-	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel flash.bin -append "-load 0x410000 0x14000"
+test: build/flash.bin build/card.sd | builddir
+	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
-gdb:
-	${GDB} -ex "target remote :1234" kernel.elf
+run-debug: build/flash.bin build/card.sd | builddir
+	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+
+gdb: | builddir
+	${GDB} -ex "target remote :1234" build/kernel.elf
+
+builddir:
+	mkdir -p build
 
 #boots the kernel at 0x210000
-flash.bin: kernel.img script.img
-	dd if=/dev/zero of=flash.bin bs=4k count=1536
-	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=flash.bin conv=notrunc bs=4k
-	dd if=kernel.img of=flash.bin conv=notrunc bs=4k seek=512
-	dd if=script.img of=flash.bin conv=notrunc bs=4k seek=575
+build/flash.bin: build/kernel.img build/script.img | builddir
+	dd if=/dev/zero of=$@ bs=4k count=1536
+	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=build/flash.bin conv=notrunc bs=4k
+	dd if=build/kernel.img of=$@ conv=notrunc bs=4k seek=512
+	dd if=build/script.img of=$@ conv=notrunc bs=4k seek=575
 
 # 32678*4096 = 128MiB
-card.sd: fs-cmdline userhello
-	dd if=/dev/zero of=card.sd conv=notrunc bs=4096 count=32768
+build/card.sd: fs-cmdline userhello | builddir
+	dd if=/dev/zero of=$@ conv=notrunc bs=4096 count=32768
 	fs/cmdline/buildfs ../user/hello/
 
 userhello:
@@ -57,34 +85,36 @@ userhello:
 fs-cmdline:
 	make -C fs/cmdline
 
-kernel.elf: $(OBJS)
-	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o kernel.elf
+build/kernel.elf: $(OBJS) | builddir
+	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o $@
 
-kernel.bin: kernel.elf
-	$(OBJCOPY) -O binary kernel.elf kernel.bin
+build/kernel.bin: build/kernel.elf | builddir
+	$(OBJCOPY) -O binary $< $@
 
-kernel.img: kernel.bin
-	$(MKIMAGE) -A arm -C none -O linux -T kernel -d kernel.bin -a 0x00010000 -e 0x00010000 kernel.img
+build/kernel.img: build/kernel.bin | builddir
+	$(MKIMAGE) -A arm -C none -O linux -T kernel -d $< -a 0x00010000 -e 0x00010000 $@
 
 # Begin Pi Make
-kernelPi.elf: $(PIOBJS)
-	$(CC) -T kernelPi.ld -O2 $(PFLAGS) $(PIOBJS) -o kernelPi.elf
+build/kernelPi.elf: $(PIOBJS) | builddir
+	$(CC) -T kernelPi.ld -O2 $(PFLAGS) $(PIOBJS) -o $@
 
-kernelPi.img: kernelPi.elf
-	$(OBJCOPY) kernelPi.elf -O binary kernelPi.img
+build/kernelPi.img: build/kernelPi.elf | builddir
+	$(OBJCOPY) $< -O binary $@
 
 # End Pi Make
 
-script.img: uboot-commands.ubt
-	$(MKIMAGE) -A arm -C none -T script -d uboot-commands.ubt -a 0x10000 -e 0x10000 script.img
+build/script.img: uboot_configuration/uboot-commands.ubt | builddir
+	$(MKIMAGE) -A arm -C none -T script -d $< -a 0x10000 -e 0x10000 $@
 
-course_os.img: kernel.img
-	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin kernel.img > course_os.img
+build/course_os.img: build/kernel.img | builddir
+	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin $< > $@
 
-startup.o: startup.s
-	$(AS) -mcpu=arm1176jzf-s -g startup.s -o startup.o
+build/startup.o: startup.s | builddir
+	@mkdir -p $(shell dirname $@)
+	$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-%.o: %.c
+build/%.o: %.c | builddir
+	@mkdir -p $(shell dirname $@)
 	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
 clean:
@@ -100,5 +130,6 @@ clean:
 	rm -f memory/*.o
 	rm -f data_structures/*.o
 	rm -f mq/*.o
+	rm -rf build
 	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
 	@echo "('rm sd.card')"
