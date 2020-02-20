@@ -1,2 +1,0 @@
-setenv bootargs root=/dev/ram mem=128M -test
-bootm 0x210000

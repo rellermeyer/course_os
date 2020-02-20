@@ -1,6 +1,6 @@
 
 #include "mmap.h"
-#include <stdint.h>
+#include "src/klibc//include/stdint.h"
 #include "pi_light.h"
 
 //#define GPIO_BASE 0x20200000

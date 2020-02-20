@@ -1,5 +1,5 @@
 #include <string.h>
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 
 void *memset(void *dest, int c, size_t n)
 {
