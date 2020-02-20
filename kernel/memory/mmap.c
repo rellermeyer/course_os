@@ -172,7 +172,7 @@ void mmap(void *p_bootargs)
 	asm volatile("mov r0, %[args]" : : [args] "r" (p_bootargs));
 
 	asm volatile("cpsie if");
-	asm volatile (".include \"stacks.s\"");
+	asm volatile (".include \"memory/stacks.s\"");
 
 	//branch to proper kernel at start
 	asm volatile("bl start2");

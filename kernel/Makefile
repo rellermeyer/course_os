@@ -8,17 +8,17 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
-COMMONOBJS = build/start.o build/startup.o build/argparse.o             \
-			 build/klibc.o build/interrupt.o build/process/process.o    \
-			 build/hw_handlers.o build/process/elf.o build/loader.o     \
-			 build/memory/mem_alloc.o build/memory/allocator.o          \
-			 build/mmap.o build/vm/frame.o build/vm/vm.o                \
-			 build/drivers/timer.o build/data_structures/bitvector.o    \
-			 build/data_structures/array_list.o 						\
-			 build/data_structures/priority_queue.o                     \
-			 build/data_structures/linked_list.o                        \
-			 build/data_structures/hash_map.o build/process/scheduler.o \
-			 build/fs/open_table.o build/fs/fat16/file.o                \
+COMMONOBJS = build/start.o build/startup.o build/main/argparse.o            \
+			 build/main/klibc.o build/interrupt.o build/process/process.o   \
+			 build/hw_handlers.o build/process/elf.o build/process/loader.o \
+			 build/memory/mem_alloc.o build/memory/allocator.o              \
+			 build/memory/mmap.o build/vm/frame.o build/vm/vm.o             \
+			 build/drivers/timer.o build/data_structures/bitvector.o        \
+			 build/data_structures/array_list.o 					    	\
+			 build/data_structures/priority_queue.o                         \
+			 build/data_structures/linked_list.o                            \
+			 build/data_structures/hash_map.o build/process/scheduler.o     \
+			 build/fs/open_table.o build/fs/fat16/file.o                    \
 			 build/drivers/mmci.o
 
 
@@ -42,10 +42,6 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
 PFLAGS += -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 run: build/flash.bin build/card.sd | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
-test: build/flash.bin build/card.sd | builddir
-	@echo $(UBOOTBUILDFILE)
 	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 run-debug: build/flash.bin build/card.sd | builddir
@@ -99,7 +95,7 @@ build/script.img: $(UBOOTBUILDFILE) | builddir
 build/course_os.img: build/kernel.img | builddir
 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin $< > $@
 
-build/startup.o: startup.s | builddir
+build/startup.o: main/startup.s | builddir
 	@mkdir -p $(shell dirname $@)
 	$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 

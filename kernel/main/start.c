@@ -36,7 +36,7 @@
 #include "scheduler.h"
 
 // Tests
-#include "tests/test_klibc.h"
+#include "../tests/test_klibc.h"
 #include "tests/test_hash_map.h"
 #include "tests/test_mem_alloc.h"
 #include "tests/test_vm.h"
