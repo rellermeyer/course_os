@@ -53,7 +53,7 @@ int init_sd()
 
 int sd_transmit(void *data, uint32_t addr)
 {
-	FILE *f = fopen("card.sd", "r+");
+	FILE *f = fopen("build/card.sd", "r+");
 	fseek(f, addr, SEEK_SET);
 	fwrite(data, 1, 512, f);
 	fclose(f);
@@ -62,7 +62,7 @@ int sd_transmit(void *data, uint32_t addr)
 
 int sd_receive(void *data, uint32_t addr)
 {
-	FILE *f = fopen("card.sd", "r+");
+	FILE *f = fopen("build/card.sd", "r+");
 	fseek(f, addr, SEEK_SET);
 	fread(data, 1, 512, f);
 	fclose(f);

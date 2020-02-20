@@ -31,8 +31,8 @@ open_table.o: ../open_table.c
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-card.sd:
-	dd if=/dev/zero of=card.sd conv=notrunc bs=512 count=250000
+build/card.sd:
+	dd if=/dev/zero of=$@ conv=notrunc bs=512 count=250000
 
 clean:
 	rm -f $(OBJS)
