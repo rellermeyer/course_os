@@ -1,5 +1,5 @@
 #include <string.h>
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include <limits.h>
 
 #define SS (sizeof(size_t))

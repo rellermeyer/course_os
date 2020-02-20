@@ -1,5 +1,5 @@
 #include <string.h>
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include <endian.h>
 
 void *memcpy(void *restrict dest, const void *restrict src, size_t n)
