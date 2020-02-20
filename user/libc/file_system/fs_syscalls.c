@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include "../../include/fs_syscalls.h"
 #include "../arch/arm/syscall_arch.h"
 

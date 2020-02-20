@@ -8,10 +8,15 @@ cmake_minimum_required(VERSION 3.6)
 
 project(course_os)
 
-file(GLOB kernel_sources ./kernel/*.c ./kernel/**/*.c)
+file(GLOB_RECURSE kernel_sources ./kernel/src/*.c ./kernel/src/**/*.c)
+file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./kernel/src/**/include)
 
 set(SOURCE_FILES ${kernel_sources})
 
 add_executable(course_os ${SOURCE_FILES})
 
-include_directories(kernel/include)
+message(${kernel_include})
+
+include_directories(
+    ${kernel_include}
+)

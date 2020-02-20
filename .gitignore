@@ -30,4 +30,9 @@ build/
 Session.vim
 .netrwhist
 
+.floo
+.flooignore
+
+uboot-commands.ubt
+
 NOTES
