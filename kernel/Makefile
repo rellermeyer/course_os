@@ -1,4 +1,3 @@
-
 include $(CURDIR)/../config.mk
 
 TOOLCHAIN_PATH:=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
@@ -43,13 +42,14 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
 PFLAGS += -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 run: build/flash.bin build/card.sd | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 test: build/flash.bin build/card.sd | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	@echo $(UBOOTBUILDFILE)
+	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 run-debug: build/flash.bin build/card.sd | builddir
-	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 gdb: | builddir
 	${GDB} -ex "target remote :1234" build/kernel.elf
@@ -93,8 +93,8 @@ build/kernelPi.img: build/kernelPi.elf | builddir
 
 # End Pi Make
 
-build/script.img: uboot_configuration/uboot-commands.ubt | builddir
-	$(MKIMAGE) -A arm -C none -T script -d $< -a 0x10000 -e 0x10000 $@
+build/script.img: $(UBOOTBUILDFILE) | builddir
+	$(MKIMAGE) -A arm -C none -T script -d uboot_configuration/uboot-commands.ubt -a 0x10000 -e 0x10000 $@
 
 build/course_os.img: build/kernel.img | builddir
 	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin $< > $@
