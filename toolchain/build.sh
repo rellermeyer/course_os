@@ -9,7 +9,7 @@ URL=ftp://ftp.gnu.org/gnu
 GCC_VERSION=4.8.1
 BINUTILS_VERSION=2.24
 NEWLIB_VERSION=2.0.0
-GDB_VERSION=7.7
+GDB_VERSION=9.1
 GDB_EXT_VERSION=${GDB_VERSION}
 
 if [ -e ${PREFIX} ]; then
@@ -43,7 +43,7 @@ fi
 
 cd ${TARGET}/src
 
-if [ ! -d ${TARGET}/src/gcc-${GCC_VERSION} ]; then 
+if [ ! -d ${TARGET}/src/gcc-${GCC_VERSION} ]; then
    tar xvf ../orig/gcc-${GCC_VERSION}.tar.gz || exit 1;
 fi
 
