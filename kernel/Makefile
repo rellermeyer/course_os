@@ -9,8 +9,8 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 COMMONOBJS = build/start.o build/startup.o build/argparse.o             \
-			 build/klibc.o build/interrupt.o build/process.o            \
-			 build/hw_handlers.o build/elf.o build/loader.o             \
+			 build/klibc.o build/interrupt.o build/process/process.o    \
+			 build/hw_handlers.o build/process/elf.o build/loader.o     \
 			 build/memory/mem_alloc.o build/memory/allocator.o          \
 			 build/mmap.o build/vm/frame.o build/vm/vm.o                \
 			 build/drivers/timer.o build/data_structures/bitvector.o    \
