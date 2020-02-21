@@ -54,7 +54,7 @@ void swap_init();
 //void swap_init(os_size_t);  To be implemented... [specifies global page size]
 
 
-/* store_page will store a page to media - not common memory - storage, e.g. HDD
+/* store_page will store a page to media - not main memory - storage, e.g. HDD
  * from the page*. ID parameter passed will change to appropriate index (i.e. return value)
  * void* page -> data to be paged
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
@@ -70,7 +70,7 @@ uint32_t store_page_LZ(void*, uint32_t*); // All LZ functions not yet working...
 
 
 /* retrieve_page will retrieve the page identified the ID pointer and
- * will store it back into common memory (specified by the void *page pointer)
+ * will store it back into main memory (specified by the void *page pointer)
  *
  * Returns: NULL on failure or simply passes back ID on success
  * NOTE: Page size was set by store_page
@@ -83,7 +83,7 @@ uint32_t retrieve_page_LZ(void*, uint32_t*);
 os_size_t sum_stored();
 
 
-/* vm_swap_page will store a page from common memory (specified by void *page)
+/* vm_swap_page will store a page from main memory (specified by void *page)
  * to a swap space either on disk or a compressed block in memory
  *
  * Returns: The ID pointer - bit vector index - of where the swap_space was stored and 

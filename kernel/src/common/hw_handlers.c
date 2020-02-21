@@ -120,6 +120,8 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 		return 0L;
 
 		break;
+
+    // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
 	case SYSCALL_CREATE:
 		os_printf("Create system call called!\n");
 		return -1;

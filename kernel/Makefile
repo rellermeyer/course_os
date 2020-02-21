@@ -9,7 +9,7 @@ PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 # variables to define in the preprocessor.
 MEMORY = 128M
 DEFINITIONS =
-test: DEFINITIONS += TEST
+test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src
 BUILDDIR = build
@@ -42,7 +42,11 @@ CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
 test: build | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $$! > server.PID;
+	# montior the output, save exit code, remove logfile, kill qemu,
+	# remove pid file used to kill qemu, exit with correct exit code
+	$(SOURCEDIR)/test/monitor_tests.sh;e=$$?; rm test.log; kill $$(cat server.PID); rm server.PID; exit $$e
+
 
 run: build | builddir
 	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
@@ -91,12 +95,23 @@ builddir:
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@mkdir -p $(shell dirname $@)
-	$(AS) -mcpu=arm1176jzf-s -g $< -o $@
+	@echo Assembling $<
+	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(BUILDDIR)/%.o: $(SOURCEDIR)/%.c | builddir
-	@echo $(CFLAGS)
+$(BUILDDIR)/test/test.o: $(SOURCEDIR)/test/test.c dummy | builddir
+	@$(SOURCEDIR)/test/generate_tests.sh
 	@mkdir -p $(shell dirname $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+
+# depend on dummy to always recompile. There aren't that many files atm anyway and
+# when the definitions change, we have to recompile. TODO: move definitions to some kind of file
+# so make knows that when it changed it should recompile.
+$(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy | builddir
+	@mkdir -p $(shell dirname $@)
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILDDIR)
