@@ -28,6 +28,7 @@
 #include <timer.h>
 #include <scheduler.h>
 #include <mem_alloc.h>
+#include <test.h>
 
 // The file system has currently been *disabled* due to bugs
 //#include "fs/open_table.h" //to initialize fs opentable
@@ -43,15 +44,13 @@
 
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
-void uart_handler(void *null)
-{
+void uart_handler(void *null) {
 	print_uart0("uart0!\n");
 }
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
-void start(uint32_t *p_bootargs)
-{
+void start(uint32_t *p_bootargs) {
 	// Initialize the virtual memory
 	print_uart0("Enabling MMU...\n");
 	vm_init();
@@ -63,8 +62,7 @@ void start(uint32_t *p_bootargs)
 
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
-void start2(uint32_t *p_bootargs)
-{
+void start2(uint32_t *p_bootargs) {
 	// Setup all of the exception handlers... (hrm, interaction with VM?)
 	init_vector_table();
 
@@ -114,7 +112,11 @@ void start2(uint32_t *p_bootargs)
 	os_printf("Programming the timer interrupt\n");
 	start_timer_interrupts(0, 10);
 
+    #ifndef ENABLE_TESTS
 	argparse_process(p_bootargs);
+    #else
+	test_main();
+    #endif
 
 	print_uart0("done parsing atag list\n");
 

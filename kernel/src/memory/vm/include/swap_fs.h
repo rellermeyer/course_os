@@ -23,7 +23,7 @@ char *generate_filename(uint8_t);
 int32_t swapfs_init(int, uint8_t);
 
 
-/* swapfs_store will store a page to media - not common memory - storage, e.g. HDD
+/* swapfs_store will store a page to media - not main memory - storage, e.g. HDD
  * from the page*
  * void* page -> data to be paged
  * os_size_t pagesize: The size of a page in bytes, i.e. 4096 b
@@ -37,7 +37,7 @@ int64_t swapfs_store(void*, uint32_t*, uint8_t);
 
 
 /* swapfs_retrieve will retrieve the page identified by the ID pointer and
- * will store it back into common memory (specified by the void *page pointer)
+ * will store it back into main memory (specified by the void *page pointer)
  *
  * Returns: -1 on failure and 1 on success
  */
