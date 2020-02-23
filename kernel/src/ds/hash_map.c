@@ -1,5 +1,8 @@
 #include <hash_map.h>
-#include <klibc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 
 /* this should be prime */
 #define TABLE_STARTSIZE 1021
@@ -20,12 +23,10 @@ static unsigned long __hmap_is_prime(unsigned long val) {
             a = (a * a) % val;
             exp >>= 1;
         }
-
         if (p != 1) {
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -49,7 +50,7 @@ static void __hmap_rehash(hmap_handle* hmap) {
 
     hmap->size = __hmap_find_prime_greater_than(size << 1);
     hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry) * hmap->size);
-    os_memset(hmap->table, 0, sizeof(hmap_entry) * hmap->size);
+    memset(hmap->table, 0, sizeof(hmap_entry) * hmap->size);
     hmap->count = 0;
 
     while (--size >= 0) {
@@ -76,7 +77,7 @@ hmap_handle* hmap_create_fixed(int startsize) {
 
     hmap->table = (hmap_entry*) kmalloc(sizeof(hmap_entry) * startsize);
 
-    os_memset(hmap->table, 0, startsize);
+    memset(hmap->table, 0, startsize);
 
     hmap->size = startsize;
     hmap->count = 0;

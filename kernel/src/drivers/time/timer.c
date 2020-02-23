@@ -1,7 +1,8 @@
 /* Device Driver for ARM Dual-Timer Module (SP804)
  Reference Manual can be found here : http://infocenter.arm.com/help/topic/com.arm.doc.ddi0271d/DDI0271.pdf*/
 #include <stdint.h>
-#include <klibc.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <timer.h>
 #include <interrupt.h>
 

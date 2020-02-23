@@ -63,8 +63,7 @@ typedef enum PROCESS_STATE
 #define HEAP_BASE		0x90000000	
 
 
-typedef struct pcb
-{
+typedef struct pcb {
 	//ID data
 	char* name; /* for debugging purposes */
 	uint32_t PID;

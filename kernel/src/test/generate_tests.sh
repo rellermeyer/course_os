@@ -35,3 +35,5 @@ done
 echo "
   os_printf(\"TESTS COMPLETE\n\");
 }" >> "$DIR/test.c"
+
+

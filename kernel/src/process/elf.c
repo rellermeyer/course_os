@@ -1,12 +1,12 @@
 /* Worked on by Jeremy Wenzel, Kaelen Haag, and Sam Allen */
-#include "elf.h"
-#include "klibc.h"
-#include "../../src/klibc//include/stdint.h"        // Probably going to be removed
+#include <elf.h>
+#include <string.h>
+#include <stdint.h>
 
 unsigned char* filePointer;
 unsigned char* startPointer;
 //OVERHAUL TO MAKE EVERYTHING PASSED BY REFERENCE RATHER THAN VALUE.
-//I THINK WE SHOULD JUST COMMENT OUT ALL THE SECTION HEADER STUFF BECAUSE IT'S NOT USED AND WILL BE A PAINTO MESS WITH. NEED TO MAKE PROGRAM HEADER ARRAY PASS BY VALUE AND NEED TO FIX get_value to take in refernce rather than value. DO TONIGHT OR TOMORROW - KAELEN 
+//I THINK WE SHOULD JUST COMMENT OUT ALL THE SECTION HEADER STUFF BECAUSE IT'S NOT USED AND WILL BE A PAINTO MESS WITH. NEED TO MAKE PROGRAM HEADER ARRAY PASS BY VALUE AND NEED TO FIX get_value to take in refernce rather than value. DO TONIGHT OR TOMORROW - KAELEN
 
 /* Gets the value of the bytes on a big endian system */
 uint32_t do_big_endian(uint32_t size)
@@ -81,7 +81,7 @@ int32_t read_elf_header(Elf_Ehdr *h, unsigned char *pointer)
 	//os_printf("Size of char: %d\n", sizeof(char));
 	//os_printf("Size of get_value(1, h): %d\n", sizeof((char)get_value(1, h)));
 	char temp = get_value(1, h);
-	//os_printf("Size of temp: %d\n", sizeof(temp));	
+	//os_printf("Size of temp: %d\n", sizeof(temp));
 	h->e_ident[EI_CLASS] = temp; // get_value(1, h);		// get class
 
 	temp = get_value(1, h);
@@ -217,35 +217,35 @@ void parse_section_header_names(Elf_Ehdr *eh, Elf_Shdr sh[], uint32_t *pointer)
 	filePointer++;
 	while (i < eh->e_shnum)
 	{
-		if (os_strcmp(((char*) filePointer), ".symtab") == 0)
+		if (strcmp(((char*) filePointer), ".symtab") == 0)
 		{		// checks if symbol table
 			sh[i].sh_numname = SYMTAB;
 		}
-		else if (os_strcmp(((char*) filePointer), ".text") == 0)
+		else if (strcmp(((char*) filePointer), ".text") == 0)
 		{	// checks if .text table
 			sh[i].sh_numname = TEXT;
 		}
-		else if (os_strcmp(((char*) filePointer), ".comment") == 0)
+		else if (strcmp(((char*) filePointer), ".comment") == 0)
 		{	// checks if comment table
 			sh[i].sh_numname = COMMENT;
 		}
-		else if (os_strcmp(((char*) filePointer), ".strtab") == 0)
+		else if (strcmp(((char*) filePointer), ".strtab") == 0)
 		{	// checks if string table
 			sh[i].sh_numname = STRTAB;
 		}
-		else if (os_strcmp(((char*) filePointer), ".shstrtab") == 0)
+		else if (strcmp(((char*) filePointer), ".shstrtab") == 0)
 		{	// checks if section header string table
 			sh[i].sh_numname = SHSTRTAB;
 		}
-		else if (os_strcmp(((char*) filePointer), ".rodata") == 0)
+		else if (strcmp(((char*) filePointer), ".rodata") == 0)
 		{	// checks if read only data
 			sh[i].sh_numname = RODATA;
 		}
-		else if (os_strcmp(((char*) filePointer), ".data") == 0)
+		else if (strcmp(((char*) filePointer), ".data") == 0)
 		{	// checks if initialized data
 			sh[i].sh_numname = DATA;
 		}
-		else if (os_strcmp(((char*) filePointer), ".bss") == 0)
+		else if (strcmp(((char*) filePointer), ".bss") == 0)
 		{		// checks if unitialized data
 			sh[i].sh_numname = BSS;
 		}

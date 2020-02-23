@@ -7,10 +7,15 @@ do
   if [[ $line == *"TESTS COMPLETE"* ]]; then
     echo "COMPLETE"
     exit 0
-
+  elif [[ $line == *"MEMORY LEAK"* ]]; then
+    echo "FAILED (MEMORY: $line)"
+    exit 1
   elif [[ $line == *"FAILED"* ]]; then
     echo "FAILED"
-    exit 1
+    exit 2
+  elif [[ $line == *"DATA ABORT HANDLER"* ]]; then
+    echo "FAILED (EXCEPTION: $line)"
+    exit 3
   else
     echo "$line"
   fi

@@ -1,4 +1,5 @@
 #include <memory.h>
+#include <string.h>
 #include <klibc.h>
 #include <vm.h>
 
@@ -23,8 +24,7 @@ extern struct vm_free_list *vm_vas_free_list;
 extern struct vm_free_list *vm_l1pt_free_list;
 extern struct vm_free_list *vm_l2pt_free_list;
 
-void mmap(void *p_bootargs)
-{
+void mmap(void *p_bootargs) {
 	//char *cmdline_args = read_cmdline_tag(p_bootargs);
 	//print_uart0(cmdline_args);
 	//print_uart0("\n");
@@ -51,13 +51,12 @@ void mmap(void *p_bootargs)
 	//first_level_pt = 0x00200000 + 0x4000 = 0x00204000
 	os_printf("first_level_pt=%X\n", first_level_pt);
 
-	int i;
-	for (i = 0; i < PAGE_TABLE_SIZE >> 2; i++)
-	{
+	int i = 0;
+	for (; i < PAGE_TABLE_SIZE >> 2; i++) {
 		first_level_pt[i] = 0;
 	}
 
-	//temporarily map where it is until we copy it in VAS
+    //temporarily map where it is until we copy it in VAS
 	first_level_pt[P_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
 	//first_level_pt[0x07f00000>>20] = first_level_pt[7F] = 0x07f00000 = 0x07f04010
 	//														0x00004000
@@ -82,8 +81,7 @@ void mmap(void *p_bootargs)
 
 	//map 752MB of PCI interface one-to-one
 	unsigned int pci_bus_addr = PCIBASE;
-	for (i = (PCIBASE >> 20); i < (PCITOP >> 20); i++)
-	{
+	for (i = (PCIBASE >> 20); i < (PCITOP >> 20); i++) {
 		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
 		pci_bus_addr += 0x100000;
 	}
@@ -97,8 +95,7 @@ void mmap(void *p_bootargs)
 	// This is where we allocate frames from. Except for the first one.
 	unsigned int phys_addr = P_KERNTOP;
 	// +1 to skip L1PTBASE
-	for (i = (PMAPBASE >> 20); i < (PMAPTOP >> 20); i++)
-	{
+	for (i = (PMAPBASE >> 20); i < (PMAPTOP >> 20); i++) {
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
 	}

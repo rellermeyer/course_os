@@ -7,7 +7,7 @@
 #include <frame.h>
 
 //#define BLOCK_SIZE (1<<20)
-#define BLOCK_SIZE (1<<12)
+#define BLOCK_SIZE ((uint32_t)(1<<12))
 
 #define PAGE_TABLE_SIZE (1<<14)
 #define L2_PAGE_TABLE_SIZE (1<<12)

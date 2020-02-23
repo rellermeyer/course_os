@@ -1,9 +1,9 @@
-#include "../../src/klibc//include/stdint.h"
-#include "loader.h"
-#include "mem_alloc.h"
-#include "klibc.h"
-#include "process.h"
-#include "elf.h"
+#include <stdint.h>
+#include <loader.h>
+#include <stdlib.h>
+#include <process.h>
+#include <elf.h>
+#include <stdio.h>
 
 //Worked on by Kaelen Haag and Jeremy Wenzel
 //We determine what the size of our process is going to be
