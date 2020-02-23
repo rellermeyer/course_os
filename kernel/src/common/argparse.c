@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "include/argparse.h"
-#include "klibc.h"
+#include <argparse.h>
+#include <stdio.h>
+#include <string.h>
 #include <process.h>
-//#include "tests.h"
 
 static void argparse_parse(char *);
 
@@ -70,7 +70,7 @@ static void argparse_parse(char *cmdline)
 	{
 		os_printf("token: %s\n", token);
 
-		if (os_strcmp("-load", token) == 0)
+		if (strcmp("-load", token) == 0)
 		{
 			char* name = os_strtok(NULL, " ");
 
@@ -79,7 +79,7 @@ static void argparse_parse(char *cmdline)
 			process_execute(proc);
 
 		}
-		else if (os_strcmp("-test", token) == 0)
+		else if (strcmp("-test", token) == 0)
 		{
 			os_printf("RUNNING TESTS\n");
 			os_printf("Running tests...\n");
@@ -101,7 +101,7 @@ static void argparse_parse(char *cmdline)
  */
 int string_to_unsigned_int(char *input, int base)
 {
-	int i = os_strlen(input) - 1; // Index in the string
+	int i = strlen(input) - 1; // Index in the string
 
 	if (hex_value_of_character(input[i]) == -1)
 	{

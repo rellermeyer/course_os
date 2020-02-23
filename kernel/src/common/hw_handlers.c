@@ -7,7 +7,8 @@
 #include <mmap.h>
 #include <memory.h>
 #include <interrupt.h>
-#include <klibc.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <vm.h>
 #include <process.h>
 // TODO: fs is removed

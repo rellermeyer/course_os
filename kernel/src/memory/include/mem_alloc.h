@@ -1,9 +1,3 @@
-/*
-Log
-4/2: Adjusted bump allocation algorithm: Sean V, Faseeh A, John G, Taylor S
-4/7: Fixed mem_alloc again works properly: Sean V, Faseeh A, Taylor S.
-
-*/
 #ifndef __MEM_ALLOC_H__
 #define __MEM_ALLOC_H__
 
@@ -11,22 +5,23 @@ Log
 #include <stdint.h>
 
 #define MEM_START 0x500000
-#define PROC_START 0x90000000	
+#define PROC_START 0x90000000
 
+struct vas;
 
 uint32_t init_heap();
-void *allocate(uint32_t, uint32_t* /*unused*/, int32_t/*unused*/);
-void deallocate(void*, uint32_t*/*unused*/, int32_t/*unused*/);
+void *allocate(uint32_t size);
+void deallocate(void *ptr);
 
 /**
- * Initializes a processes heap, in the same manner that the 
+ * Initializes a processes heap, in the same manner that the
  * kernel heap is initialized
  *
  * @param  pointer to virtual address space (the process's VAS)
  * @param  struct vas* vas
  * @return returns status code (for error or for ok)
  */
-uint32_t init_process_heap();
+uint32_t init_process_heap(struct vas* vas);
 
 /**
  * Allocates memory on the heap for a process
@@ -45,8 +40,11 @@ void *proc_allocate(uint32_t);
  * @return nothing
  */
 void proc_deallocate(void*);
-alloc_handle* mem_get_allocator();
-int mem_check();
+heap_t* mem_get_allocator();
 uint32_t mem_get_heap_size();
+
+// get size of allocated blocks
+uint32_t allocation_size(void* ptr);
+uint32_t proc_blocksize(void* ptr);
 
 #endif

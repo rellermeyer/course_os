@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <klibc.h>
+#include <stdlib.h>
 #include <bitvector.h>
 
 uint32_t const WORD_SIZE = 32;
