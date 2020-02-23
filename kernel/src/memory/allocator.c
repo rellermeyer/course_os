@@ -1,323 +1,237 @@
-#include <klibc.h>
+// Adapted from https://github.com/CCareaga/heap_allocator
+
+
 #include <allocator.h>
+#include <stdio.h>
 
-uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount);
+int offset = sizeof(uint32_t) * 2;
+uint32_t overhead = sizeof(footer_t) + sizeof(node_t);
 
-/*
- * The kernel heap is organized in blocks. Each block has a header and a
- * footer each a 4 byte integer, at the beginning and end of the block.
- * The header and footer both specify the size of the block in question.
- * Used blocks are indicated by the heap header and the heap footer being
- * negative.
- *
- * To allocate a block, we start at the first block and walk through each
- * one, finding the first free block large enough to support a header,
- * footer, and the size requested.
- *
- * To free a block, we do a bunch of merging stuff to check to see if we
- * should merge with the blocks on the left or right of us, respectively.
- */
-alloc_handle* alloc_create(uint32_t * buffer, uint32_t buffer_size,
-        heap_extend_handler extend_handler) {
+// ========================================================
+// this function initializes a new heap structure, provided
+// an empty heap struct, and a place to start the heap
+//
+// NOTE: this function uses HEAP_INIT_SIZE to determine
+// how large the heap is so make sure the same constant
+// is used when allocating memory for your heap!
+// ========================================================
+void create_heap(heap_t *heap, uint32_t start) {
+    // first we create the initial region, this is the "wilderness" chunk
+    // the heap starts as just one big chunk of allocatable memory
+    node_t *init_region = (node_t *) start;
+    init_region->hole = 1;
+    init_region->size = (HEAP_INIT_SIZE) - sizeof(node_t) - sizeof(footer_t);
 
-    if (buffer_size <= sizeof(alloc_handle)) {
-        return 0;
-    }
+    create_foot(init_region); // create a foot (size must be defined)
 
-    alloc_handle* alloc_handle_ptr = (alloc_handle*) buffer;
+    // now we add the region to the correct bin and setup the heap struct
+    add_node(heap->bins[get_bin_index(init_region->size)], init_region);
 
-    // storing the alloc_handle struct
-    // inside the heading of the buffer
-    alloc_handle_ptr->heap = ((void*) buffer) + sizeof(alloc_handle);
-    alloc_handle_ptr->heap_size = buffer_size - sizeof(alloc_handle);
-    alloc_handle_ptr->extend_handler = extend_handler;
+    heap->start = start;
+    heap->end = start + HEAP_INIT_SIZE;
 
-    uint32_t* heap_header = alloc_handle_ptr->heap;
-    uint32_t* heap_footer = (uint32_t*) ((void*) alloc_handle_ptr->heap
-            + alloc_handle_ptr->heap_size - sizeof(int));
-
-    *heap_header = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
-    *heap_footer = alloc_handle_ptr->heap_size - 2 * sizeof(uint32_t);
-
-    return alloc_handle_ptr;
+#ifdef MEM_DEBUG
+    heap->bytes_allocated = 0;
+#endif
 }
 
-alloc_handle* alloc_create_fixed(uint32_t * buffer, uint32_t buffer_size) {
-    return alloc_create(buffer, buffer_size, NULL);
+// ========================================================
+// this is the allocation function of the heap, it takes
+// the heap struct pointer and the size of the chunk we
+// want. this function will search through the bins until
+// it finds a suitable chunk. it will then split the chunk
+// if neccesary and return the start of the chunk
+// ========================================================
+void *heap_alloc(heap_t *heap, uint32_t size) {
+    // first get the bin index that this chunk size should be in
+    int index = get_bin_index(size);
+    // now use this bin to try and find a good fitting chunk!
+    bin_t *temp = (bin_t *) heap->bins[index];
+
+    node_t *found = get_best_fit(temp, size);
+
+    // while no chunk if found advance through the bins until we
+    // find a chunk or get to the wilderness
+    while (found == NULL) {
+        if (index + 1 >= BIN_COUNT)
+            return NULL;
+
+        temp = heap->bins[++index];
+        found = get_best_fit(temp, size);
+    }
+
+    // if the difference between the found chunk and the requested chunk
+    // is bigger than the overhead (metadata size) + the min alloc size
+    // then we should split this chunk, otherwise just return the chunk
+    if ((found->size - size) > (overhead + MIN_ALLOC_SZ)) {
+        // do the math to get where to split at, then set its metadata
+        node_t *split = (node_t *)(((char *) found + overhead) + size);
+        split->size = found->size - size - (overhead);
+        split->hole = 1;
+
+        create_foot(split); // create a footer for the split
+
+        // now we need to get the new index for this split chunk
+        // place it in the correct bin
+        int new_idx = get_bin_index(split->size);
+        add_node(heap->bins[new_idx], split);
+
+        found->size = size; // set the found chunks size
+        create_foot(found); // since size changed, remake foot
+    }
+
+
+    found->hole = 0; // not a hole anymore
+    remove_node(heap->bins[index], found); // remove it from its bin
+
+    // these following lines are checks to determine if the heap should
+    // be expanded or contracted
+    // ==========================================
+    node_t *wild = get_wilderness(heap);
+    if (wild->size < MIN_WILDERNESS) {
+        int success = expand(heap, 0x1000);
+        if (success == 0) {
+            return NULL;
+        }
+    }
+    else if (wild->size > MAX_WILDERNESS) {
+        contract(heap, 0x1000);
+    }
+    // ==========================================
+
+    // since we don't need the prev and next fields when the chunk
+    // is in use by the user, we can clear these and return the
+    // address of the next field
+    found->prev = NULL;
+    found->next = NULL;
+
+
+#ifdef MEM_DEBUG
+    heap->bytes_allocated += found->size;
+    os_printf("MEM_DEBUG: ALLOC %i bytes at 0x%x\n", found->size, &found->next);
+#endif
+
+    return &found->next;
 }
 
-// TODO: what if there's an error allocating the page?
-// Returns a pointer to the new (big) free block's header
-uint32_t* __alloc_extend_heap(alloc_handle*allocator, uint32_t amount) {
-    if(!allocator->extend_handler) {
-        return 0;
+// ========================================================
+// this is the free function of the heap, it takes the
+// heap struct pointer and the pointer provided by the
+// heap_alloc function. the given chunk will be possibly
+// coalesced  and then placed in the correct bin
+// ========================================================
+void heap_free(heap_t *heap, void *p) {
+    bin_t *list;
+    footer_t *new_foot, *old_foot;
+
+    node_t *head = (node_t *) ((char *) p - offset);
+
+#ifdef MEM_DEBUG
+    heap->bytes_allocated -= head->size;
+    os_printf("MEM_DEBUG: FREE %i bytes\n", head->size);
+#endif
+
+    if (head == (node_t *) (uintptr_t) heap->start) {
+        head->hole = 1;
+        add_node(heap->bins[get_bin_index(head->size)], head);
+        return;
     }
 
-    uint32_t start_size = allocator->heap_size;
-    uint32_t amount_added = allocator->extend_handler(amount);
+    node_t *next = (node_t *) ((char *) get_foot(head) + sizeof(footer_t));
+    footer_t *f = (footer_t *) ((char *) head - sizeof(footer_t));
+    node_t *prev = f->header;
 
-    if (amount_added <= 0) {
-        return 0;
+    if (prev->hole) {
+        list = heap->bins[get_bin_index(prev->size)];
+        remove_node(list, prev);
+
+        prev->size += overhead + head->size;
+        new_foot = get_foot(head);
+        new_foot->header = prev;
+
+        head = prev;
     }
 
-    // Now extend the footer block
-    int32_t *orig_footer = (int32_t*) ((void*) allocator->heap + start_size
-            - sizeof(uint32_t));
+    if (next->hole) {
+        list = heap->bins[get_bin_index(next->size)];
+        remove_node(list, next);
 
-    allocator->heap_size += amount_added;
+        head->size += overhead + next->size;
 
-    // If it's free, simply move it (and update the header)
-    // If it's used, add a free block to the end
-    if (*orig_footer > 0) {
-        uint32_t *orig_header = (uint32_t*) ((void*) allocator->heap
-                + start_size - 2 * sizeof(uint32_t) - *orig_footer);
-        uint32_t *new_footer = (uint32_t*) ((void*) allocator->heap
-                + allocator->heap_size - sizeof(uint32_t));
+        old_foot = get_foot(next);
+        old_foot->header = 0;
+        next->size = 0;
+        next->hole = 0;
 
-        *new_footer = *orig_footer + amount_added;
-        *orig_header += amount_added;
-        return orig_header;
-    } else {
-
-        uint32_t *new_header = (uint32_t*) ((void*) allocator->heap + start_size);
-        uint32_t *new_footer = (uint32_t*) ((void*) allocator->heap
-                + allocator->heap_size - sizeof(uint32_t));
-        *new_header = amount_added - 2 * sizeof(uint32_t);
-        *new_footer = amount_added - 2 * sizeof(uint32_t);
-        return new_header;
+        new_foot = get_foot(head);
+        new_foot->header = head;
     }
 
-    return 0x0;
+    head->hole = 1;
+    add_node(heap->bins[get_bin_index(head->size)], head);
 }
 
-void* alloc_allocate(alloc_handle * allocator, uint32_t size) {
-    int32_t i, ret_ptr;
 
-    for (i = 0; i < allocator->heap_size;) {
-        uint32_t* header_addr = (uint32_t*) ((void*) allocator->heap + i);
-        int32_t header = *header_addr;
-
-        uint32_t* footer_addr = (uint32_t*) ((void*) allocator->heap + i
-                + sizeof(int32_t) + size);
-
-        //free and >= request
-	if (header > 0 && header >= size) {
-            //cannot split this block
-		if (header < (size + 2 * sizeof(int32_t) + sizeof(char))) {
-		    footer_addr = (uint32_t*) ((void*) allocator->heap + i
-					       + sizeof(int32_t) + abs(header));
-
-                ret_ptr = i + sizeof(int32_t);
-                //mark header as used
-                *header_addr = header * (-1);
-                //insert a footer at end of block
-                *footer_addr = header * (-1);
-                return (uint32_t*) ((void*) allocator->heap + ret_ptr);
-
-            }
-
-            //can split this block
-            else {
-                ret_ptr = i + sizeof(int32_t);
-
-                int32_t old_space = header;
-                int32_t occ_space = size + 2 * sizeof(int32_t);
-                //mark header as used
-                *header_addr = size * (-1);
-                //insert footer
-                *footer_addr = size * (-1);
-
-                //insert new free block header
-                uint32_t* new_header = (uint32_t*) ((void*) allocator->heap + i
-                        + 2 * sizeof(int32_t) + size);
-                *new_header = old_space - occ_space;
-                //insert new free block footer
-                uint32_t* new_footer = (uint32_t*) ((void*) allocator->heap + i
-                        + sizeof(int32_t) + old_space);
-                *new_footer = old_space - occ_space;
-
-                return (uint32_t*) ((void*) allocator->heap + ret_ptr);
-            }
-        }
-        //jump to the next block
-        else {
-            i = i + abs(header) + 2 * sizeof(int32_t);
-        }
-    }
-
-    // Allocate some more memory.
-    uint32_t new_amt = size + 2 * sizeof(uint32_t);
-    uint32_t *header = __alloc_extend_heap(allocator, new_amt);
-
-    if (header == 0) {
-        return 0;
-    }
-
-    // Recursive call. TODO: (relatively) Inefficient
-    return alloc_allocate(allocator, size);
+// these are left here to implement contraction / expansion
+uint32_t expand(heap_t *heap, uint32_t sz) {
+    os_printf("Trying to expand\n");
+    return 0; // fail for now
 }
 
-void alloc_deallocate(alloc_handle* allocator, void* ptr) {
-    uint32_t first_block = 0;
-    uint32_t last_block = 0;
+void contract(heap_t *heap, uint32_t sz) {
 
-    uint32_t* header_addr = (uint32_t*) ((void*) ptr - sizeof(int32_t));
-    uint32_t size = abs(*header_addr);
-
-    uint32_t* footer_addr = (uint32_t*) ((void*) ptr + size);
-
-    if (header_addr == allocator->heap) {
-        first_block = 1;
-    }
-
-    if (footer_addr + sizeof(int32_t)
-            == (void*) allocator->heap + allocator->heap_size) {
-        last_block = 1;
-    }
-
-    //os_printf("Freeing %d-sized block at %X. first/last=%d/%d\n", size, header_addr, first_block,last_block);
-
-    //only check and coalesce right block
-    if (first_block) {
-        uint32_t* right_header_addr = (uint32_t*) ((void*) footer_addr
-                + sizeof(int32_t));
-        int32_t right_block_size = *right_header_addr;
-
-        //free right block
-        if (right_block_size > 0) {
-            //set new header at freed blocks header
-            *header_addr = size + right_block_size + 2 * sizeof(int32_t);
-            //set new footer at right blocks footer
-            uint32_t* right_footer_addr = (uint32_t*) ((void*) footer_addr
-                    + 2 * sizeof(int32_t) + right_block_size);
-            *right_footer_addr = size + right_block_size + 2 * sizeof(int32_t);
-        } else {
-            //make freed blocks header and footer positive
-            *header_addr = size;
-            *footer_addr = size;
-        }
-    }
-
-    //only check and coalesce left block
-    if (last_block) {
-        uint32_t* left_block_header = (uint32_t*) ((void*) header_addr
-                - sizeof(int32_t));
-        int32_t left_block_size = *left_block_header;
-
-        //free left block
-        if (left_block_size > 0) {
-            //set new header at left blocks header
-            uint32_t* left_header_addr = (uint32_t*) ((void*) header_addr
-                    - 2 * sizeof(int32_t) - left_block_size);
-            *left_header_addr = size + left_block_size + 2 * sizeof(int32_t);
-            //set new footer at freed blocks footer
-            *footer_addr = size + left_block_size + 2 * sizeof(int32_t);
-        } else {
-            *header_addr = size;
-            *footer_addr = size;
-        }
-    }
-
-    //check and coalesce both adjacent blocks
-    if (!first_block && !last_block) {
-        uint32_t* right_block_header = (uint32_t*) ((void*) footer_addr
-                + sizeof(int32_t));
-        int32_t right_block_size = *right_block_header;
-
-        uint32_t* left_block_header = (uint32_t*) ((void*) header_addr
-                - sizeof(int32_t));
-        int32_t left_block_size = *left_block_header;
-	//os_printf("left/right sizes are %d/%d, size=%d\n", left_block_size, right_block_size, size);
-
-        //both adjacent blocks are free
-        if (right_block_size > 0 && left_block_size > 0) {
-            int32_t new_size = size + right_block_size + left_block_size
-                    + 4 * sizeof(int32_t);
-
-            //set new header at left blocks header
-            uint32_t* left_header_addr = (uint32_t*) ((void*) header_addr
-                    - 2 * sizeof(int32_t) - left_block_size);
-            *left_header_addr = new_size;
-            //set new footer at right blocks footer
-            uint32_t* right_footer_addr = (uint32_t*) ((void*) footer_addr
-                    + 2 * sizeof(int32_t) + right_block_size);
-            *right_footer_addr = new_size;
-        }
-
-        //only right free block
-        else if (right_block_size > 0 && left_block_size < 0) {
-            //set new header at freed blocks header
-            *header_addr = size + right_block_size + 2 * sizeof(int32_t);
-            //set new footer at right blocks footer
-            uint32_t* right_footer_addr = (uint32_t*) ((void*) footer_addr
-                    + 2 * sizeof(int32_t) + right_block_size);
-            *right_footer_addr = size + right_block_size + 2 * sizeof(int32_t);
-        }
-        //only left free block
-        else if (left_block_size > 0 && right_block_size < 0) {
-            //set new header at left blocks header
-            uint32_t* left_header_addr = (uint32_t*) ((void*) header_addr
-                    - 2 * sizeof(int32_t) - left_block_size);
-            *left_header_addr = size + left_block_size + 2 * sizeof(int32_t);
-            //set new footer at freed blocks footer
-            *footer_addr = size + left_block_size + 2 * sizeof(int32_t);
-        } else {
-            *header_addr = size;
-            *footer_addr = size;
-        }
-
-    }
 }
 
-/**
- * Returns 0 on success. -1 on error.
- */
-int alloc_check(alloc_handle* allocator) {
-    char* ptr = (char*) allocator->heap;
-    uint32_t* end_ptr = (uint32_t*) ((void*) allocator->heap
-            + allocator->heap_size);
-    int i, block = 0;
+// ========================================================
+// this function is the hashing function that converts
+// size => bin index. changing this function will change
+// the binning policy of the heap. right now it just
+// places any allocation < 8 in bin 0 and then for anything
+// above 8 it bins using the log base 2 of the size
+// ========================================================
+uint32_t get_bin_index(uint32_t sz) {
+    int index = 0;
+    sz = sz < 4 ? 4 : sz;
 
-    LOG("Checking memory...\n");
-    for (i = 0; i < allocator->heap_size; i += 0) {
-        uint32_t* block_addr = (uint32_t*) (ptr + sizeof(int32_t));
+    while (sz >>= 1) index++;
+    index -= 2;
 
-        uint32_t* header_addr = (uint32_t*) ptr;
-        int32_t block_header = *header_addr;
-        int32_t block_size = abs(block_header);
+    if (index > BIN_MAX_IDX) index = BIN_MAX_IDX;
 
-        uint32_t* footer_addr = (uint32_t*) (ptr + sizeof(int32_t) + block_size);
-        int32_t block_footer = *footer_addr;
-
-        if (block_header == block_footer && block_header <= 0) {
-            LOG("Block %d Allocated:", block);
-            LOG("\tsize = %d, address = %x\n", block_size, block_addr);
-        } else if (block_header == block_footer && block_header > 0) {
-            LOG("Block %d Free:", block);
-            LOG("\tsize = %d, address = %x\n", block_size, block_addr);
-        } else {
-            ERROR("INCONSISTENT HEAP\n");
-            ERROR("block_header = %d\n", block_header);
-            ERROR("block_footer = %d\n", block_footer);
-            ERROR("header addr = %x\n", header_addr);
-            ERROR("footer addr = %x\n", footer_addr);
-            return -1;
-        }
-
-        ptr = ptr + block_size + 2 * sizeof(int32_t);
-        block++;
-        if ((uint32_t*) ptr == end_ptr) {
-            return 0;
-        }
-    }
-
-    return 0;
+    return index;
 }
 
-uint32_t* alloc_get_heap(alloc_handle* allocator) {
-    return allocator->heap;
+// ========================================================
+// this function will create a footer given a node
+// the node's size must be set to the correct value!
+// ========================================================
+void create_foot(node_t *head) {
+    footer_t *foot = get_foot(head);
+    foot->header = head;
 }
 
-uint32_t alloc_get_heap_size(alloc_handle* allocator) {
-    return allocator->heap_size;
+
+// ========================================================
+// this function will get the footer pointer given a node
+// ========================================================
+footer_t *get_foot(node_t *node) {
+    return (footer_t *) ((char *) node + sizeof(node_t) + node->size);
+}
+
+// ========================================================
+// this function will get the wilderness node given a
+// heap struct pointer
+//
+// NOTE: this function banks on the heap's end field being
+// correct, it simply uses the footer at the end of the
+// heap because that is always the wilderness
+// ========================================================
+node_t *get_wilderness(heap_t *heap) {
+    footer_t *wild_foot = (footer_t *) ((char *) heap->end - sizeof(footer_t));
+    return wild_foot->header;
+}
+
+uint32_t get_alloc_size(void * ptr) {
+    node_t *head = (node_t *) (ptr - offset);
+    return head->size;
 }

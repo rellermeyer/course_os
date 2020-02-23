@@ -3,12 +3,12 @@ include $(CURDIR)/../config.mk
 # ===================== Configuration =====================
 
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
+CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O2
 PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
 MEMORY = 128M
-DEFINITIONS =
+DEFINITIONS = MEM_DEBUG
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src

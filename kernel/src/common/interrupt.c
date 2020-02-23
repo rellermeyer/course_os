@@ -4,7 +4,7 @@
  *
  */
 #include <interrupt.h>
-#include <klibc.h>
+#include <stdio.h>
 
 // there are 32 kinds of interrupts on the VIC
 // this structure may need to be expanded if the secondary controller is incorporated

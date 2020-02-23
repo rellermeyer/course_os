@@ -1,5 +1,7 @@
-#include <klibc.h>
+#include <stdlib.h>
 #include <priority_queue.h>
+#include <math.h>
+#include <string.h>
 
 #define AMORITIZED_CONSTANT 2
 #define DEFAULT_COUNT 10
@@ -82,8 +84,8 @@ void __prq_amoritize(prq_handle * queue) {
     int new_heap_size = queue->heap_size * AMORITIZED_CONSTANT;
     prq_node** new_heap = (prq_node**) kmalloc(
             sizeof(prq_node*) * new_heap_size);
-    os_memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
-            (os_size_t) queue->heap_size * sizeof(prq_node*));
+    memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
+            (size_t) queue->heap_size * sizeof(prq_node*));
     kfree(queue->heap);
     queue->heap = new_heap;
     queue->heap_size = new_heap_size;
@@ -136,7 +138,7 @@ prq_node * prq_dequeue(prq_handle * queue) {
 }
 
 prq_handle * prq_create_fixed(int n) {
-    n = MAX(1, n);
+    n = max(1, n);
     prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
     queue->count = 0;
     queue->heap_size = n + 1;

@@ -13,6 +13,10 @@ file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./kernel/src/**/include)
 
 set(SOURCE_FILES ${kernel_sources})
 
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+
+add_compile_definitions(ENABLE_TESTS MEM_DEBUG)
+
 add_executable(course_os ${SOURCE_FILES})
 
 message(${kernel_include})

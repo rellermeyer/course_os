@@ -1,13 +1,13 @@
-#include "vm.h"
-#include "memory.h"
-#include "klibc.h"
-#include "include/frame.h"
+#include <vm.h>
+#include <memory.h>
+#include <string.h>
+#include <frame.h>
 
 #define CHECK_VPTR if ((unsigned int)vptr & (BLOCK_SIZE-1)) return VM_ERR_BADV;
 #define CHECK_PPTR if ((unsigned int)pptr & (BLOCK_SIZE-1)) return VM_ERR_BADP;
 
-static const int perm_mapping[16] =
-{ 0,  // 0000 Nothing
+static const int perm_mapping[16] = {
+        0,  // 0000 Nothing
 		5,  // 0001 Privileged RO, nothing otherwise
 		6,  // 0010 User RO, privileged RO.
 		6,  // 0011 User RO, privileged RO.
@@ -107,7 +107,7 @@ uint32_t *vm_alloc_coarse_page_table()
 		return NULL;
 	}
 	vm_l2pt_free_list = ((struct vm_free_list*) vptr)->next;
-	os_memset((void*) vptr, 0, L2_PAGE_TABLE_SIZE);
+	memset((void*) vptr, 0, L2_PAGE_TABLE_SIZE);
 	return vptr;
 }
 
@@ -145,8 +145,7 @@ void vm_use_kernel_vas()
 	vm_enable_vas((struct vas*) V_L1PTBASE);
 }
 
-int vm_allocate_page(struct vas *vas, void *vptr, int permission)
-{
+int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 	CHECK_VPTR;
 
 	// We have to save the current VAS and switch to the kernel VAS
@@ -179,23 +178,25 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission)
 	return 0;
 }
 
-void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes,
-		int permission)
-{
-	int rc;
-	unsigned char *p = (unsigned char*) vptr;
-	while (p - (unsigned char*) vptr < nbytes)
-	{
-		rc = vm_allocate_page(vas, p, permission);
-		assert(rc == 0);
-		p += BLOCK_SIZE;
-	}
-	return p;
+void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permission) {
+    int rc;
+    unsigned char *p = (unsigned char*) vptr;
+    while (p - (unsigned char*) vptr < nbytes) {
+        rc = vm_allocate_page(vas, p, permission);
+        if(rc != STATUS_OK) {
+            os_printf("Allocate page failed with code %i\n", rc);
+            os_printf("vptr: 0x%x", (uint32_t)p);
+
+            panic();
+        }
+
+        p += BLOCK_SIZE;
+    }
+    return p;
 }
 
 
-int vm_free_page(struct vas *vas, void *vptr)
-{
+int vm_free_page(struct vas *vas, void *vptr) {
 	CHECK_VPTR;
 
 	// We have to save the current VAS
@@ -417,7 +418,7 @@ struct vas *vm_new_vas()
 			- (V_L1PTBASE - P_L1PTBASE));
 
 	// Zero out the page table
-	os_memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
+	memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
 
 	// Setup the static mappings...
 	// The kernel (high & low addresses)
