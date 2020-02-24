@@ -1,74 +1,35 @@
-#include <test.h>
-#include <vp_array_list.h>
-#include <stdio.h>
+#ifndef VP_ARRAYLIST_H
+#define VP_ARRAYLIST_H
+#include <stdint.h>
+#include <ds.h>
 
-void freefunc(void * data) {
-    if ((*(int *)data != 42)) {
-        panic();
-    }
-}
 
-int data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+typedef struct VPArrayList {
+    uint32_t length;
+    uint32_t capacity;
+    void ** array;
+} VPArrayList;
 
-TEST_CREATE(vpa_push_get_pop_test, {
-    uint32_t length = 30;
+VPArrayList * vpa_create(uint32_t initial_cap);
 
-    VPArrayList * arr = vpa_create(1);
-    for (int i = 0; i < length; i++){
-        vpa_push(arr, &data[i % 8]);
-    }
+// Frees the list.
+void vpa_free(VPArrayList * arr, FreeFunc freef);
 
-    ASSERT_EQ(arr->length, length);
-    ASSERT_GTEQ(arr->capacity, length);
+// Gets element of specified index;
+void * vpa_get(VPArrayList * list, uint32_t index);
 
-    for (int i = 0; i < length; i++){
-        int * a = vpa_get(arr, i);
+// Sets element to specific data
+void vpa_set(VPArrayList * list, uint32_t index, void * data);
 
-        ASSERT_EQ(*a, data[i % 8]);
-    }
+// Inserts data at the end of the list
+uint32_t vpa_push(VPArrayList * list, void * data);
 
-    ASSERT_EQ(arr->length, length);
-    ASSERT_GTEQ(arr->capacity, length);
+// Returns the topmost element and removes it fromhe list.
+void * vpa_pop(VPArrayList * list);
 
-    for (int i = length - 1; i >= 0; i--){
-        ASSERT_EQ(*(int *)vpa_pop(arr), data[i % 8]);
-    }
+// Truncates the list to specified size
+void vpa_resize(VPArrayList * list, uint32_t new_size, FreeFunc freeFunc);
 
-    ASSERT_EQ(arr->length, 0);
-    ASSERT_LT(arr->capacity, length);
+void * vpa_remove(VPArrayList * list, size_t index);
 
-    vpa_free(arr, NULL);
-})
-
-TEST_CREATE(vpa_push_set_pop_test, {
-    VPArrayList * arr = vpa_create(1);
-    for (int i = 0; i < 1000; i++){
-        vpa_push(arr, &data[i % 8]);
-    }
-
-    ASSERT_EQ(arr->length, 1000);
-    ASSERT_GTEQ(arr->capacity, 1000);
-
-    int intdata = 42;
-
-    for (int i = 0; i < 1000; i++){
-        vpa_set(arr, i, &intdata);
-    }
-
-    ASSERT_EQ(arr->length, 1000);
-    ASSERT_GTEQ(arr->capacity, 1000);
-
-    vpa_free(arr, freefunc);
-})
-
-TEST_CREATE(vpa_resize_test, {
-    VPArrayList * list = vpa_create(8);
-    ASSERT_EQ(list->length,0);
-    ASSERT_EQ(list->capacity, 8);
-
-    vpa_resize(list, 4, NULL);
-    ASSERT_EQ(list->length,0);
-    ASSERT_EQ(list->capacity, 4);
-
-    vpa_free(list, NULL);
-})
+#endif

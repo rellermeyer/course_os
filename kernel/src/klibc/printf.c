@@ -167,7 +167,7 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...) {
     return n;
 }
 
-int os_printf(const char *str_buf, ...) {
+int kprintf(const char *str_buf, ...) {
     va_list args;
     va_start(args, str_buf);
     char buf[256];

@@ -48,7 +48,7 @@ static inline bool __eq(Qstr * left, Qstr * right, bool fake) {
     while ((c = *(leftstr++)) != '\0') {
         hash = ((hash << 5) + hash) + c;  /* hash * 33 + c */
 
-        if (c != (*rightstr++)) {
+        if (equal && c != (*rightstr++)) {
             equal = false;
         }
     }
@@ -67,6 +67,10 @@ static inline bool __eq(Qstr * left, Qstr * right, bool fake) {
 
 bool qstr_eq(Qstr * left, Qstr * right) {
     return __eq(left, right, false);
+}
+
+void qstr_hash(Qstr * q) {
+    __eq(q, (Qstr *)"", true);
 }
 
 bool qstr_eq_null_terminated(Qstr * left, char * right) {

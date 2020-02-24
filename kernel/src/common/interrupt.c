@@ -58,14 +58,14 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler)
 	// lazy initialization
 	if (initialized != -1)
 	{
-		os_printf("INITIALIZING THE INTERRUPT SYSTEM\n");
+        kprintf("INITIALIZING THE INTERRUPT SYSTEM\n");
 
 		for(int i=0; i<MAX_NUM_INTERRUPTS; i++)
 		{
 			handlers[i] = 0;
 		}
 
-		os_printf("INITIALIZED THE INTERRUPT SYSTEM\n");
+        kprintf("INITIALIZED THE INTERRUPT SYSTEM\n");
 
 		initialized = -1;
 	}
@@ -74,7 +74,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler)
 		return -1;
 	else if (handlers[num] != 0)
 	{ // something has already been registered there
-		os_printf("Already registered\n");
+        kprintf("Already registered\n");
 		return -1;
 	}
 	else if (handler == 0) // we need a NULL macro
@@ -99,9 +99,9 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler)
 // the table of registered handlers, and calls the appropriate handler
 void handle_irq_interrupt(int interrupt_vector)
 {
-	os_printf("handling interrupt %d\n", interrupt_vector);
+    kprintf("handling interrupt %d\n", interrupt_vector);
 	// go to handler routine
-	os_printf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
+    kprintf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
 	handlers[interrupt_vector]->handler((void *) interrupt_vector);
 
 }

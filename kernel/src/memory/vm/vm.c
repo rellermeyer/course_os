@@ -116,7 +116,7 @@ uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr)
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS)
 	{
-		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+        kprintf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1)
 			;
 	}
@@ -128,7 +128,7 @@ uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr)
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
 	if (vas != KERNEL_VAS)
 	{
-		os_printf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
+        kprintf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
 		while (1)
 			;
 	}
@@ -161,14 +161,14 @@ int vm_allocate_page(struct vas *vas, void *vptr, int permission) {
 		return VM_ERR_UNKNOWN; // For now, just fail
 	}
 
-	os_printf("mapping VA %x to PA %x\n", vptr, pptr);
+    kprintf("mapping VA %x to PA %x\n", vptr, pptr);
 
 	//LOG("Free frame is at: %X\n", pptr);
 	int retval = vm_set_mapping(vas, vptr, pptr, permission);
 	if (retval)
 	{
 		// Release the frame to prevent a memory leak
-		os_printf("vm_set_mapping returned %d for 0x%X\n", retval, vptr);
+        kprintf("vm_set_mapping returned %d for 0x%X\n", retval, vptr);
 		vm_release_frame(pptr);
 		vm_enable_vas(prev_vas);
 		return retval;
@@ -184,8 +184,8 @@ void *vm_allocate_pages(struct vas *vas, void *vptr, uint32_t nbytes, int permis
     while (p - (unsigned char*) vptr < nbytes) {
         rc = vm_allocate_page(vas, p, permission);
         if(rc != STATUS_OK) {
-            os_printf("Allocate page failed with code %i\n", rc);
-            os_printf("vptr: 0x%x", (uint32_t)p);
+            kprintf("Allocate page failed with code %i\n", rc);
+            kprintf("vptr: 0x%x", (uint32_t) p);
 
             panic();
         }
@@ -410,7 +410,7 @@ struct vas *vm_new_vas()
 	struct vas *p = (struct vas*) vm_vas_free_list;
 	vm_vas_free_list = vm_vas_free_list->next;
 
-	os_printf("vm_l1pt_free_list=%X\n", vm_l1pt_free_list);
+    kprintf("vm_l1pt_free_list=%X\n", vm_l1pt_free_list);
 	p->l1_pagetable = (uint32_t*) vm_l1pt_free_list;
 	vm_l1pt_free_list = vm_l1pt_free_list->next;
 
@@ -418,7 +418,7 @@ struct vas *vm_new_vas()
 			- (V_L1PTBASE - P_L1PTBASE));
 
 	// Zero out the page table
-	memset(p->l1_pagetable, 0, PAGE_TABLE_SIZE);
+	memset((unsigned int *)p->l1_pagetable, 0, PAGE_TABLE_SIZE);
 
 	// Setup the static mappings...
 	// The kernel (high & low addresses)

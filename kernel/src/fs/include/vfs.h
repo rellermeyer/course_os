@@ -30,7 +30,6 @@ typedef struct FsOperations {
 
 } FsOperations;
 
-
 typedef struct FsIdentifier {
     char * fsname;
     const FsOperations * operations;
@@ -39,7 +38,7 @@ typedef struct FsIdentifier {
 typedef struct Vfs {
     uint32_t filesystems_size;
     uint32_t filesystems_filled;
-    const FsIdentifier ** filesystems;
+    const FsIdentifier ** filesystems; // TODO: change to vpa?
 
     // Inodes start at the head and are added at the tail end.
     // The linked list starts at head.
@@ -55,10 +54,15 @@ typedef enum VfsErr{
     ERR_NO_PARENT,
 } VfsErr;
 
+// Create and returns a VFS instance
 Vfs * vfs_create();
-VfsErr vfs_add_inode(Vfs * vfs, struct Inode * inode);
+// Adds an inode to the internal vfs inode list
+VfsErr vfs_add_inode(Vfs * vfs, struct Inode * node);
+// Register a new filesystem against the vfs
 VfsErr vfs_register(Vfs * vfs, const FsIdentifier * fs_identifier);
+// Frees all vfs related constructs: inodes,dentries, etc.
 void vfs_free(Vfs * vfs);
+// Get the direntry for the root of the filesystem: '/'
 struct DirEntry * vfs_get_root(Vfs * vfs);
 
 #endif

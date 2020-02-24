@@ -108,7 +108,7 @@ void *heap_alloc(heap_t *heap, uint32_t size) {
 
 #ifdef MEM_DEBUG
     heap->bytes_allocated += found->size;
-    os_printf("MEM_DEBUG: ALLOC %i bytes at 0x%x\n", found->size, &found->next);
+    kprintf("MEM_DEBUG: ALLOC %i bytes at 0x%x\n", found->size, &found->next);
 #endif
 
     return &found->next;
@@ -121,6 +121,11 @@ void *heap_alloc(heap_t *heap, uint32_t size) {
 // coalesced  and then placed in the correct bin
 // ========================================================
 void heap_free(heap_t *heap, void *p) {
+    if (p == NULL) {
+        return;
+    }
+
+
     bin_t *list;
     footer_t *new_foot, *old_foot;
 
@@ -128,7 +133,7 @@ void heap_free(heap_t *heap, void *p) {
 
 #ifdef MEM_DEBUG
     heap->bytes_allocated -= head->size;
-    os_printf("MEM_DEBUG: FREE %i bytes\n", head->size);
+    kprintf("MEM_DEBUG: FREE %i bytes\n", head->size);
 #endif
 
     if (head == (node_t *) (uintptr_t) heap->start) {
@@ -174,7 +179,7 @@ void heap_free(heap_t *heap, void *p) {
 
 // these are left here to implement contraction / expansion
 uint32_t expand(heap_t *heap, uint32_t sz) {
-    os_printf("Trying to expand\n");
+    kprintf("Trying to expand\n");
     return 0; // fail for now
 }
 

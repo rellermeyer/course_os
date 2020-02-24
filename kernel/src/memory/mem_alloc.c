@@ -54,7 +54,7 @@ uint32_t __mem_extend_heap(uint32_t amt)
         int retval = vm_allocate_page(KERNEL_VAS,
                 (void*) (MEM_START + buffer_size), VM_PERM_PRIVILEGED_RW);
         if (retval) {
-            os_printf("ERROR: vm_allocate_page(,%d,) returned %d\n",
+            kprintf("ERROR: vm_allocate_page(,%d,) returned %d\n",
                     MEM_START + amt_added, retval);
             break;
         }
@@ -70,7 +70,7 @@ uint32_t init_heap()
     // Allocate space for the heap_t struct. is too large but at least big enough.
     int retval = vm_allocate_page(KERNEL_VAS, (void*) MEM_START, VM_PERM_PRIVILEGED_RW);
     if (retval) {
-        os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+        kprintf("ERROR: vm_allocate_page returned %d\n", retval);
         return STATUS_FAIL;
     }
 
@@ -93,7 +93,7 @@ uint32_t init_heap()
 
     void * ret = vm_allocate_pages(KERNEL_VAS, (void *) addr, HEAP_INIT_SIZE, VM_PERM_PRIVILEGED_RW);
     if(addr + HEAP_INIT_SIZE != (uint32_t) ret) {
-        os_printf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
+        kprintf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
         return STATUS_FAIL;
     }
 
@@ -106,7 +106,7 @@ uint32_t init_heap()
 uint32_t init_process_heap(struct vas* vas) {
     int retval = vm_allocate_page(vas, (void*) PROC_START, VM_PERM_USER_RW);
     if (retval) {
-        os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+        kprintf("ERROR: vm_allocate_page returned %d\n", retval);
         return STATUS_FAIL;
     }
 
@@ -123,7 +123,7 @@ uint32_t init_process_heap(struct vas* vas) {
 
     void * ret = vm_allocate_pages(vas, (void *) addr, HEAP_INIT_SIZE, VM_PERM_USER_RW);
     if(addr + HEAP_INIT_SIZE != (uint32_t) ret){
-        os_printf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
+        kprintf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
         return STATUS_FAIL;
     }
 
@@ -142,11 +142,11 @@ uint32_t __mem_extend_proc_heap(uint32_t amt) {
         int retval = vm_allocate_page(pvas, (void*) PROC_START, VM_PERM_USER_RW);
         vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, pvas, (void*)PROC_START, VM_PERM_USER_RW);
         if (retval) {
-            os_printf("ERROR: vm_allocate_page returned %d\n", retval);
+            kprintf("ERROR: vm_allocate_page returned %d\n", retval);
             return STATUS_FAIL;
         }
         else{
-            os_printf("Page allocated for process heap at %x:\n",PROC_START);
+            kprintf("Page allocated for process heap at %x:\n", PROC_START);
         }
         amt_added += BLOCK_SIZE;
         proc_buffer_size += BLOCK_SIZE;

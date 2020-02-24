@@ -49,7 +49,7 @@ struct DirEntry *path_get_direntry(struct Vfs *vfs, Path *path, enum VfsErr *err
         pathpointer = path->array + 1;
 
     } else {
-        os_printf("Inode lookup only supports absolute path right now.");
+        kprintf("Inode lookup only supports absolute path right now.");
         panic();
         curr = NULL;
         pathpointer = path->array;
@@ -156,11 +156,11 @@ bool path_contents_equal(Path * a, Path * b) {
 }
 
 void path_print(Path * path) {
-    os_printf("Path: (%i) \"", path->length);
+    kprintf("Path: (%i) \"", path->length);
     for (int i = 0; i < path->length; i++){
-        os_printf("%c", path->array[i]);
+        kprintf("%c", path->array[i]);
     }
-    os_printf("\"\n");
+    kprintf("\"\n");
 }
 
 bool path_is_absolute(Path * path) {

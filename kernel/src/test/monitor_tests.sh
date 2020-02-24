@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 tail -f -n +1 "$DIR/../../test.log" | while read line
 do
   if [[ $line == *"TESTS COMPLETE"* ]]; then
-    echo "COMPLETE"
+    echo "$line"
     exit 0
   elif [[ $line == *"MEMORY LEAK"* ]]; then
     echo "FAILED (MEMORY: $line)"
