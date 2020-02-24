@@ -38,18 +38,18 @@ os_size_t det_proc_size(Elf_Ehdr *h, Elf_Phdr ph[])
 Elf_Ehdr* load_file(pcb * pcb_p, uint32_t * file_pointer)
 {
 	Elf_Ehdr *h = (Elf_Ehdr *) kmalloc(sizeof(Elf_Ehdr)); // Get elf header
-	os_printf("elf header= %x\n", h);
+    kprintf("elf header= %x\n", h);
 	int i = read_elf_header(h, (unsigned char *) file_pointer);
 
 	if (i == -1)
 	{
-		os_printf("File is Not an ELF File. Exiting\n");
+        kprintf("File is Not an ELF File. Exiting\n");
 		return 0;
 	}
 
 	if (h->e_phnum == 0)
 	{
-		os_printf("No Program headers in ELF file. Exiting\n");
+        kprintf("No Program headers in ELF file. Exiting\n");
 		return 0;
 	}
 

@@ -55,7 +55,7 @@ void __sched_dispatch(void);
 
 void timer_handler(void *args)
 {
-	os_printf("scheduler received timer interrupt, need to switch tasks...\n");
+    kprintf("scheduler received timer interrupt, need to switch tasks...\n");
 }
 
 void __sched_register_timer_irq(void)
@@ -93,7 +93,7 @@ uint32_t sched_init(void) {
 
 	sched_tid = 0;
 
-    os_printf("Initializing scheduler\n");
+    kprintf("Initializing scheduler\n");
     last_err = "No error";
     inactive_tasks = prq_create_fixed(MAX_TASKS);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);

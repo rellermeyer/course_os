@@ -15,7 +15,7 @@ void (*handlers[4])(void *args);
  * using any of the timer functions */
 void initialize_timers()
 {
-	os_printf("initializing timers\n");
+    kprintf("initializing timers\n");
 	volatile rasp_pi_timer *TIMER_0 = (rasp_pi_timer *) 0x101e2000;
 	volatile rasp_pi_timer *TIMER_1 = (rasp_pi_timer *) 0x101e2020;
 	volatile rasp_pi_timer *TIMER_2 = (rasp_pi_timer *) 0x101e3000;
@@ -201,7 +201,7 @@ int print_control_status(int timer_index)
 {
 	CHECK_TIMER_INDEX(timer_index);
 
-	os_printf("control byte:%x", timer_pointers[timer_index]->control);
+    kprintf("control byte:%x", timer_pointers[timer_index]->control);
 	return 0;
 }
 
@@ -220,7 +220,7 @@ int start_timer_interrupts(int timer_index, int milliseconds)
 
 	int clicks = conversion(timer_index, milliseconds);
 
-	os_printf("CLICKS ARE %d\n", clicks);
+    kprintf("CLICKS ARE %d\n", clicks);
 
 	set_background_load_value(timer_index, clicks);
 	set_periodic_mode(timer_index);
@@ -247,7 +247,7 @@ void timer_irq_handler(void* args)
 {
 	clear_interrupt(0);
 
-	os_printf("@@@@@@ RECEIVED TIMER INTERRUPT\n");
+    kprintf("@@@@@@ RECEIVED TIMER INTERRUPT\n");
 
 	// TODO: find out which timer fired. For the moment, hard-code to 0
 	if (handlers[0] != NULL)
@@ -266,7 +266,7 @@ void timer_test()
 	 os_printf("fn ptr: %X\n", simple_timer_handler);
 	 register_interrupt_handler(4, tmr_handler);*/
 
-	os_printf("FIQ status: %X\n", mmio_read(VIC_FIQ_STATUS));
+    kprintf("FIQ status: %X\n", mmio_read(VIC_FIQ_STATUS));
 	initialize_timers();
 	start_timer_interrupts(0, 10);
 	//print_control_status(1);

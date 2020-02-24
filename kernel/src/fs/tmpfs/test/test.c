@@ -11,7 +11,7 @@ TEST_CREATE(test_create_file, {
     TmpfsInode * root = (TmpfsInode *) create_tmpfs_root(test_vfs); // PARTIAL
     ASSERT_EQ(root->base.inode_type, DIRECTORY);
 
-    DirEntry * newfile = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
+    DirEntry *newfile = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
 
 
     VfsErr err = OK;
@@ -31,8 +31,7 @@ TEST_CREATE(test_create_dir, {
 
     TmpfsInode * root = (TmpfsInode *) create_tmpfs_root(test_vfs);
     ASSERT_EQ(root->base.inode_type, DIRECTORY);
-
-    DirEntry * newdir = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
+    DirEntry *newdir = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
 
     VfsErr err = OK;
     root->base.fs_identifier->operations->create_dir(root->base.direntry, newdir, &err);
@@ -50,8 +49,7 @@ TEST_CREATE(test_create_rw_file, {
 
     TmpfsInode * root = (TmpfsInode *) create_tmpfs_root(test_vfs);
     ASSERT_EQ(root->base.inode_type, DIRECTORY);
-
-    DirEntry * newfile = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
+    DirEntry *newfile = create_direntry(qstr_from_null_terminated_string("test"), root->base.direntry);
 
     VfsErr err = OK;
     root->base.fs_identifier->operations->create_file(root->base.direntry, newfile, &err);
@@ -106,8 +104,7 @@ TEST_CREATE(test_listdir, {
     VfsErr err = OK;
     root->inode->fs_identifier->operations->create_file(root, newfile, &err);
     ASSERT_EQ(err, OK);
-
-    VPArrayList * list = root->inode->fs_identifier->operations->list_dir(root, &err);
+    VPArrayList *list = root->inode->fs_identifier->operations->list_dir(root, &err);
     ASSERT_EQ(err, OK);
 
     DirEntry * first = vpa_get(list, 0);

@@ -54,7 +54,7 @@ void start(uint32_t *p_bootargs) {
     // Initialize the virtual memory
     print_uart0("Enabling MMU...\n");
     vm_init();
-    os_printf("Initialized VM datastructures.\n");
+    kprintf("Initialized VM datastructures.\n");
     mmap(p_bootargs);
 }
 
@@ -103,13 +103,12 @@ void start2(uint32_t *p_bootargs) {
     // initialize the timers
     initialize_timers();
 
-    //assert(1==2 && "Test assert please ignore");
     process_init();
 
     sched_init();
 
     // FIXME: temporary
-    os_printf("Programming the timer interrupt\n");
+    kprintf("Programming the timer interrupt\n");
     start_timer_interrupts(0, 10);
 
 #ifndef ENABLE_TESTS
@@ -130,6 +129,11 @@ void start2(uint32_t *p_bootargs) {
     //print_PID();
     // init_q();
     //common();
+
+    // TODO:
+    //  * Mount vfs
+    //  * Load initramfs into tmpfs
+    //  * execute userland init program
 
 
     SLEEP;

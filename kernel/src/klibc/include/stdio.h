@@ -29,7 +29,7 @@
  */
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args);
 int os_snprintf(char *buf, int buflen, const char *fmt_string, ...);
-int os_printf(const char *str_buf, ...);
+int kprintf(const char *str_buf, ...);
 
 
 

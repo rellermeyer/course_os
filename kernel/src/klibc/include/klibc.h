@@ -73,11 +73,11 @@ unsigned int rand();
 // development
 #define LOG_LEVEL 5
 
-#define DEBUG(...) if(LOG_LEVEL >= 5) os_printf(__VA_ARGS__)
-#define LOG(...) if(LOG_LEVEL >= 4) os_printf(__VA_ARGS__)
-#define INFO(...) if(LOG_LEVEL >= 3) os_printf(__VA_ARGS__)
-#define WARN(...) if(LOG_LEVEL >= 2) os_printf(__VA_ARGS__)
-#define ERROR(...) if(LOG_LEVEL >= 1) os_printf(__VA_ARGS__)
+#define DEBUG(...) if(LOG_LEVEL >= 5) kprintf(__VA_ARGS__)
+#define LOG(...) if(LOG_LEVEL >= 4) kprintf(__VA_ARGS__)
+#define INFO(...) if(LOG_LEVEL >= 3) kprintf(__VA_ARGS__)
+#define WARN(...) if(LOG_LEVEL >= 2) kprintf(__VA_ARGS__)
+#define ERROR(...) if(LOG_LEVEL >= 1) kprintf(__VA_ARGS__)
 
 //4-17-15: Initial panic * assert_fail functions added
 void panic();

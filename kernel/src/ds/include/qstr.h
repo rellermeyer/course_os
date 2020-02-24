@@ -32,4 +32,7 @@ bool qstr_eq(Qstr * left, Qstr * right);
 // Also calculates hash of left to speed up further stringcompares.
 bool qstr_eq_null_terminated(Qstr * left, char * right);
 
+// Hash the qstring
+void qstr_hash(Qstr * q);
+
 #endif

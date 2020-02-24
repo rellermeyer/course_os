@@ -52,7 +52,7 @@ void init_vector_table(void)
 /* handlers */
 void reset_handler(void)
 {
-	os_printf("RESET HANDLER\n");
+    kprintf("RESET HANDLER\n");
 	_Reset();
 }
 
@@ -63,7 +63,7 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
 	asm volatile("mrs %0, spsr" : "=r"(spsr));
 	asm volatile("mov %0, lr" : "=r" (lr));
 
-	os_printf("UNDEFINED INSTRUCTION HANDLER\n");
+    kprintf("UNDEFINED INSTRUCTION HANDLER\n");
 
 	int thumb = spsr & 0x20;
 	int pc = thumb ? lr - 0x2 : lr - 0x4;
@@ -71,19 +71,19 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
 	int copro = (*(int*)pc & 0xf00000) >> 24;
 
 	if (spsr & 0x20) {
-		os_printf("THUMB mode\n");
+        kprintf("THUMB mode\n");
 	} else {
-		os_printf("ARM mode\n");
+        kprintf("ARM mode\n");
 	}
 	if (spsr & 0x1000000) {
-		os_printf("JAZELLE enabled\n");
+        kprintf("JAZELLE enabled\n");
 	}
 
-	os_printf("COPRO: %x\n", copro);
-	os_printf("violating instruction (at %x): %x\n", pc, *((int*) pc));
+    kprintf("COPRO: %x\n", copro);
+    kprintf("violating instruction (at %x): %x\n", pc, *((int *) pc));
 	if (pc >= V_KERNBASE && pc < V_KERNTOP)
 	{
-		os_printf("(instruction is in kernel address range)\n");
+        kprintf("(instruction is in kernel address range)\n");
 	}
 
 	panic();
@@ -99,16 +99,16 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 	asm volatile ("MOV %0, r2":"=r"(r2)::);
 	asm volatile ("MOV %0, r3":"=r"(r3)::);
 
-	os_printf("SOFTWARE INTERRUPT HANDLER\n");
+    kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
 	// Print out syscall # for debug purposes
-	os_printf("Syscall #: ");
-	os_printf("%d\n", callNumber);
-	os_printf("arg0=%d\n", r0);
-	os_printf("arg1=%d\n", r1);
-	os_printf("arg2=%d\n", r2);
-	os_printf("arg3=%d\n", r3);
-	os_printf("\n");
+    kprintf("Syscall #: ");
+    kprintf("%d\n", callNumber);
+    kprintf("arg0=%d\n", r0);
+    kprintf("arg1=%d\n", r1);
+    kprintf("arg2=%d\n", r2);
+    kprintf("arg3=%d\n", r3);
+    kprintf("\n");
 
 	// System Call Handler
 	switch (callNumber)
@@ -124,90 +124,90 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 
     // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
 	case SYSCALL_CREATE:
-		os_printf("Create system call called!\n");
+        kprintf("Create system call called!\n");
 		return -1;
 
 //		return (long) kcreate((char*) r0, r1, 0);
 	case SYSCALL_DELETE:
-		os_printf("Delete system call called!\n");
+        kprintf("Delete system call called!\n");
 		return -1;
 
 //		return (long) kdelete((char*) r0, 1);
 	case SYSCALL_OPEN:
-		os_printf("Open system call called!\n");
+        kprintf("Open system call called!\n");
 		return -1;
 
 //		return (long) kopen((char*) r0, r1);
 	case SYSCALL_MKDIR:
-		os_printf("Mkdir system call called!\n");
+        kprintf("Mkdir system call called!\n");
 		return -1;
 
 //		return (long) kcreate((char*) r0, 'w', 1);
 	case SYSCALL_READ:
-		os_printf("Read system call called!\n");
+        kprintf("Read system call called!\n");
 		return -1;
 
 //		return (long) kread(r0, (void*) r1, r2);
 	case SYSCALL_WRITE:
-		os_printf("Write system call called!\n");
+        kprintf("Write system call called!\n");
 		return -1;
 
 //		return (long) kwrite(r0, (void*) r1, r2);
 	case SYSCALL_CLOSE:
-		os_printf("Close system call called!\n");
+        kprintf("Close system call called!\n");
 		return -1;
 
 //		return (long) kclose(r0);
 	case SYSCALL_SEEK:
-		os_printf("Seek system call called!\n");
+        kprintf("Seek system call called!\n");
 		return -1;
 
 //		return (long) kseek(r0, r1);
 	case SYSCALL_COPY:
-		os_printf("Copy system call called!\n");
+        kprintf("Copy system call called!\n");
 		return -1;
 
 //		return (long) kcopy((char*) r0, (char*) r1, r2);
 	case SYSCALL_LS:
-		os_printf("Ls system call called!\n");
+        kprintf("Ls system call called!\n");
 		return -1;
 //		return (long) kls((char*) r0);
 	case SYSCALL_SET_PERM:
-		os_printf("Set permission system call called!\n");
-		os_printf("Yet to be implemented\n");
+        kprintf("Set permission system call called!\n");
+            kprintf("Yet to be implemented\n");
 		return -1;
 	case SYSCALL_MEM_MAP:
-		os_printf("Memory map system call called!\n");
-		os_printf("Yet to be implemented\n");
+        kprintf("Memory map system call called!\n");
+            kprintf("Yet to be implemented\n");
 		return -1;
 
 	case SYSCALL_MALLOC:
-		os_printf("malloc system call called!\n");
+        kprintf("malloc system call called!\n");
 
 		void *ptr = umalloc(r0);
 
-		os_printf("malloc is about to return %x\n", ptr);
+            kprintf("malloc is about to return %x\n", ptr);
 
 		return (long) ptr;
 	case SYSCALL_ALIGNED_ALLOC:
-		os_printf("aligned_alloc system call called!\n");
+        kprintf("aligned_alloc system call called!\n");
 		void *ptr2 = ualigned_alloc(r0, r1);
 
-		os_printf("ualigned_alloc is about to return %x\n", ptr2);
+            kprintf("ualigned_alloc is about to return %x\n", ptr2);
 
 		return (long) ptr2;
 	case SYSCALL_FREE:
-		os_printf("Free system call called!\n");
+        kprintf("Free system call called!\n");
 
 		ufree((void*) r0);
 		return 0L;
 	case SYSCALL_PRINTF:
-		os_printf("Printf system call called!\n");
+        kprintf("Printf system call called!\n");
 
-		os_printf((const char*) r0);
+            kprintf((const char *) r0);
 		return 0L;
 	default:
-		os_printf("That wasn't a syscall you knob!\n");
+        kprintf("That wasn't a syscall you knob!\n");
 		return -1L;
 	}
 }
@@ -218,7 +218,7 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
 
 	asm volatile("mov %0, lr" : "=r" (lr));
 
-	os_printf("PREFETCH ABORT HANDLER, violating address: %x\n", (lr - 4));
+    kprintf("PREFETCH ABORT HANDLER, violating address: %x\n", (lr - 4));
 
 	panic();
 }
@@ -232,13 +232,13 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 	int far;
 	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
 
-	os_printf("DATA ABORT HANDLER (Page Fault)\n");
-	os_printf("faulting address: 0x%x\n", far);
+    kprintf("DATA ABORT HANDLER (Page Fault)\n");
+    kprintf("faulting address: 0x%x\n", far);
 	if (far >= V_KDSBASE)
 	{
-		os_printf("(address is in kernel address range)\n");
+        kprintf("(address is in kernel address range)\n");
 	}
-	os_printf("violating instruction (at 0x%x): %x\n", pc, *((int*) pc));
+    kprintf("violating instruction (at 0x%x): %x\n", pc, *((int *) pc));
 
 	// Get the DSFR
 	int dsfr;
@@ -259,14 +259,14 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 
 void reserved_handler(void)
 {
-	os_printf("RESERVED HANDLER\n");
+    kprintf("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void)
 {
 
-	os_printf("IRQ HANDLER\n");
+    kprintf("IRQ HANDLER\n");
 	int cpsr = disable_interrupt_save(IRQ);
 //	os_printf("disabled CSPR:%X\n",cpsr);
 	// Discover source of interrupt
@@ -291,7 +291,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void)
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void)
 {
-	os_printf("FIQ HANDLER\n");
+    kprintf("FIQ HANDLER\n");
 
 	int cpsr = disable_interrupt_save(FIQ);
 

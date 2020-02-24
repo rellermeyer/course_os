@@ -18,6 +18,5 @@ TEST_CREATE(test_get_root, {
     Inode * root2 = vfs_get_root(test_vfs)->inode;
 
     ASSERT_EQ(root1->id, root2->id);
-
     vfs_free(test_vfs);
 })

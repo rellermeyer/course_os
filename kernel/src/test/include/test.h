@@ -19,7 +19,7 @@
         isize_t nbytes = heap->bytes_allocated;         \
         block;                                          \
         if (nbytes != (isize_t)heap->bytes_allocated) { \
-            os_printf(                                  \
+            kprintf(                                    \
                     "FAILED (MEMORY LEAK: %i bytes) \n",\
                     heap->bytes_allocated - nbytes      \
             );                                          \
@@ -28,13 +28,13 @@
         return TEST_PASS;                               \
     }                                                   \
     int test_##name() {                                 \
-        os_printf("Testing %s\n", #name);               \
+        kprintf("Testing %s\n", #name);                 \
         int res = __internal_test_##name();             \
         if (res == TEST_PASS) {                         \
-            os_printf("PASSED\n");                      \
+            kprintf("PASSED\n");                        \
             return 1;                                   \
         } else {                                        \
-            os_printf("FAILED\n");                      \
+            kprintf("FAILED\n");                        \
             return 0;                                   \
         }                                               \
     }
@@ -45,13 +45,13 @@
         return TEST_PASS;                       \
     }                                           \
     int test_##name() {                         \
-        os_printf("Testing %s\n", #name);       \
+        kprintf("Testing %s\n", #name);         \
         int res = __internal_test_##name();     \
         if (res == TEST_PASS) {                 \
-            os_printf("PASSED\n");              \
+            kprintf("PASSED\n");                \
             return 1;                           \
         } else {                                \
-            os_printf("FAILED\n");              \
+            kprintf("FAILED\n");                \
             return 0;                           \
         }                                       \
     }
@@ -59,14 +59,14 @@
 
 #define PASS() return TEST_PASS
 #define FAIL() return TEST_FAIL
-#define ASSERT(expr) do { if(!expr) { os_printf("failed assertion: %s at ASSERT(%s)\n", __FILE__,  #expr); return TEST_FAIL; } } while(0)
-#define ASSERT_EQ(l, r) do { if(l != r) { os_printf("failed assertion: %s at ASSERT_EQ(%s, %s)\n", __FILE__,  #l, #r);  return TEST_FAIL; } } while(0)
-#define ASSERT_GT(l, r) do { if(l <= r) { os_printf("failed assertion: %s at ASSERT_GT(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
-#define ASSERT_GTEQ(l, r) do { if(l < r) { os_printf("failed assertion: %s at ASSERT_GTEQ(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
-#define ASSERT_LT(l, r) do { if(l >= r) { os_printf("failed assertion: %s at ASSERT_LT(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
-#define ASSERT_LTEQ(l, r) do { if(l > r) { os_printf("failed assertion: %s at ASSERT_LTEQ(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
-#define ASSERT_NEQ(l, r) do { if(l == r) { os_printf("failed assertion: %s at ASSERT_NEQ(%s, %s)\n", __FILE__, #l, #r); return TEST_FAIL; } } while(0)
-#define ASSERT_NOT_NULL(e) do { if(e == NULL) { os_printf("failed assertion: %s\n at ASSERT_NOT_NULL(%s)", __FILE__, #e); return TEST_FAIL; } } while(0)
+#define ASSERT(expr) do { if(!expr) { kprintf("failed assertion: %s at ASSERT(%s)\n", __FILE__,  #expr); return TEST_FAIL; } } while(0)
+#define ASSERT_EQ(l, r) do { if(l != r) { kprintf("failed assertion: %s at ASSERT_EQ(%s, %s)\n", __FILE__,  #l, #r);  return TEST_FAIL; } } while(0)
+#define ASSERT_GT(l, r) do { if(l <= r) { kprintf("failed assertion: %s at ASSERT_GT(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
+#define ASSERT_GTEQ(l, r) do { if(l < r) { kprintf("failed assertion: %s at ASSERT_GTEQ(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
+#define ASSERT_LT(l, r) do { if(l >= r) { kprintf("failed assertion: %s at ASSERT_LT(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
+#define ASSERT_LTEQ(l, r) do { if(l > r) { kprintf("failed assertion: %s at ASSERT_LTEQ(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
+#define ASSERT_NEQ(l, r) do { if(l == r) { kprintf("failed assertion: %s at ASSERT_NEQ(%s, %s)\n", __FILE__, #l, #r); return TEST_FAIL; } } while(0)
+#define ASSERT_NOT_NULL(e) do { if(e == NULL) { kprintf("failed assertion: %s\n at ASSERT_NOT_NULL(%s)", __FILE__, #e); return TEST_FAIL; } } while(0)
 
 #else
 
