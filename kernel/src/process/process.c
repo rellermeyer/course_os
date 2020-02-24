@@ -140,14 +140,14 @@ void __process_stack_init(pcb * pcb_p) {
         (void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
     if (retval)
     {
-      os_printf("vm_allocate_page error code: %d\n", retval);
+        kprintf("vm_allocate_page error code: %d\n", retval);
       break;
     }
     else
     {
-      os_printf(
-          "A page have been allocated for process stack at vptr: 0x%x\n",
-          (STACK_BASE + (i * BLOCK_SIZE)));
+        kprintf(
+                "A page have been allocated for process stack at vptr: 0x%x\n",
+                (STACK_BASE + (i * BLOCK_SIZE)));
     }
     vm_map_shared_memory(KERNEL_VAS,
                         (void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
@@ -176,7 +176,7 @@ void __process_stack_init(pcb * pcb_p) {
 void __process_heap_init(pcb* pcb_p) {
   //from mem_alloc.c
   init_process_heap(pcb_p->stored_vas);
-  os_printf("User Level Heap for Process PID %d initialized\n", pcb_p->PID);
+    kprintf("User Level Heap for Process PID %d initialized\n", pcb_p->PID);
 }
 
 /*

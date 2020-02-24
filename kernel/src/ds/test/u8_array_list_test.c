@@ -13,7 +13,7 @@ TEST_CREATE(u8a_push_get_pop_test, {
     ASSERT_EQ(arr->length, length);
     ASSERT_GTEQ(arr->capacity, length);
 
-    for (int i = 0; i < length; i++){
+    for (int i = 0; i < length; i++) {
         uint8_t a = u8a_get(arr, i);
         ASSERT_EQ(a, i % 0xff);
     }
@@ -40,7 +40,7 @@ TEST_CREATE(u8a_push_set_pop_test, {
     ASSERT_EQ(arr->length, 1000);
     ASSERT_GTEQ(arr->capacity, 1000);
 
-    for (int i = 0; i < 1000; i++){
+    for (int i = 0; i < 1000; i++) {
         u8a_set(arr, i, 42);
     }
 
@@ -63,7 +63,7 @@ TEST_CREATE(u8a_resize_test, {
     ASSERT_EQ(list->capacity, 8);
 
     u8a_resize(list, 4);
-    ASSERT_EQ(list->length,0);
+    ASSERT_EQ(list->length, 0);
     ASSERT_EQ(list->capacity, 4);
 
     u8a_free(list);

@@ -1,8 +1,8 @@
 #ifndef VP_ARRAYLIST_H
 #define VP_ARRAYLIST_H
 #include <stdint.h>
+#include <ds.h>
 
-typedef void (*FreeFunc)(void * data);
 
 typedef struct VPArrayList {
     uint32_t length;

@@ -36,7 +36,6 @@ TEST_CREATE(path_parent_test_1, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -48,7 +47,6 @@ TEST_CREATE(path_parent_test_2, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -60,7 +58,6 @@ TEST_CREATE(path_parent_test_3, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -72,7 +69,6 @@ TEST_CREATE(path_parent_test_4, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -84,7 +80,6 @@ TEST_CREATE(path_parent_test_5, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -96,7 +91,6 @@ TEST_CREATE(path_parent_test_6, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -108,7 +102,6 @@ TEST_CREATE(path_parent_test_7, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -120,7 +113,6 @@ TEST_CREATE(path_parent_test_8, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -132,7 +124,6 @@ TEST_CREATE(path_parent_test_9, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -144,7 +135,6 @@ TEST_CREATE(path_parent_test_10, {
     path_parent(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -153,7 +143,6 @@ TEST_CREATE(path_is_absolute_test, {
     Path * p1  = path_from_string("/test");
 
     ASSERT(path_is_absolute(p1));
-
     path_free(p1);
 })
 
@@ -161,7 +150,6 @@ TEST_CREATE(path_is_relative_test_1, {
     Path * p1  = path_from_string("./test");
 
     ASSERT(path_is_relative(p1));
-
     path_free(p1);
 })
 
@@ -169,7 +157,6 @@ TEST_CREATE(path_is_relative_test_2, {
     Path * p1  = path_from_string("test");
 
     ASSERT(path_is_relative(p1));
-
     path_free(p1);
 })
 
@@ -178,7 +165,6 @@ TEST_CREATE(path_clone_test, {
     Path * p2  = path_clone(p1);
 
     ASSERT(path_contents_equal(p1, p2));
-
     path_free(p1);
     path_free(p2);
 })
@@ -196,11 +182,9 @@ TEST_CREATE(path_find_file_test, {
     VfsErr err = OK;
     root->inode->fs_identifier->operations->create_file(root, newfile, &err);
     ASSERT_EQ(err, OK);
+    Path *p = path_from_string("/test");
 
-
-    Path * p = path_from_string("/test");
-
-    DirEntry * d = path_get_direntry(test_vfs, p, &err);
+    DirEntry *d = path_get_direntry(test_vfs, p, &err);
     ASSERT_EQ(err, OK);
 
 
