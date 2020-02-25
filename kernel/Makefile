@@ -1,5 +1,23 @@
 include $(CURDIR)/../config.mk
 
+# ===================== Configuration =====================
+
+# Flags to give to the c compiler
+CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
+PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
+
+# variables to define in the preprocessor.
+MEMORY = 128M
+DEFINITIONS =
+test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
+KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
+SOURCEDIR = src
+BUILDDIR = build
+# every directory named `include` will have it's contents autoincluded
+INCLUDEDIR = include
+
+# =================== End Configuration ===================
+
 TOOLCHAIN_PATH:=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
@@ -8,106 +26,95 @@ OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
-COMMONOBJS = build/start.o build/startup.o build/argparse.o             \
-			 build/klibc.o build/interrupt.o build/process.o            \
-			 build/hw_handlers.o build/elf.o build/loader.o             \
-			 build/memory/mem_alloc.o build/memory/allocator.o          \
-			 build/mmap.o build/vm/frame.o build/vm/vm.o                \
-			 build/drivers/timer.o build/data_structures/bitvector.o    \
-			 build/data_structures/array_list.o 						\
-			 build/data_structures/priority_queue.o                     \
-			 build/data_structures/linked_list.o                        \
-			 build/data_structures/hash_map.o build/process/scheduler.o \
-			 build/fs/open_table.o build/fs/fat16/file.o                \
-			 build/drivers/mmci.o
+DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
+C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c))
+C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
+    $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
+
+S_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.s))
+S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
+    $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
+
+OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
+
+INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
+CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
+CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
+
+test: build | builddir
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $$! > server.PID;
+	# montior the output, save exit code, remove logfile, kill qemu,
+	# remove pid file used to kill qemu, exit with correct exit code
+	$(SOURCEDIR)/test/monitor_tests.sh;e=$$?; rm test.log; kill $$(cat server.PID); rm server.PID; exit $$e
 
 
+run: build | builddir
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
-TESTOBJS = build/tests.o build/tests/test_mem_alloc.o build/tests/test_hash_map.o \
-		   build/tests/test_priority_queue.o build/tests/test_vm.o                \
-		   build/tests/test_fs.o
+build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
+build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
-PIOBJS = build/pi_light.o build/drivers/uart_pi.o
-OBJS = build/drivers/uart.o
-
-OBJS += $(COMMONOBJS) $(TESTOBJS)
-PIOBJS += $(COMMONOBJS) $(TESTOBJS)
-
-
-all: build/flash.bin build/card.sd
-
-make_Pi: build/kernelPi.img
-
-CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g
-PFLAGS += -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
-
-run: build/flash.bin build/card.sd | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
-test: build/flash.bin build/card.sd | builddir
-	@echo $(UBOOTBUILDFILE)
-	${QEMU} -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
-run-debug: build/flash.bin build/card.sd | builddir
-	${QEMU} -S -s -M versatilepb -cpu arm1176 -sd build/card.sd -m 128M -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
-gdb: | builddir
-	${GDB} -ex "target remote :1234" build/kernel.elf
-
-builddir:
-	mkdir -p build
-
-#boots the kernel at 0x210000
-build/flash.bin: build/kernel.img build/script.img | builddir
+$(BUILDDIR)/flash.bin: $(BUILDDIR)/kernel.img $(BUILDDIR)/bootloader.img
 	dd if=/dev/zero of=$@ bs=4k count=1536
-	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=build/flash.bin conv=notrunc bs=4k
-	dd if=build/kernel.img of=$@ conv=notrunc bs=4k seek=512
-	dd if=build/script.img of=$@ conv=notrunc bs=4k seek=575
+	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=$@ conv=notrunc bs=4k
+	# kernel
+	dd if=$(BUILDDIR)/kernel.img of=$@ conv=notrunc bs=4k seek=512
+	# bootloader
+	dd if=$(BUILDDIR)/bootloader.img of=$@ conv=notrunc bs=4k seek=575
 
-# 32678*4096 = 128MiB
-build/card.sd: fs-cmdline userhello | builddir
+$(BUILDDIR)/card.sd: | builddir
 	dd if=/dev/zero of=$@ conv=notrunc bs=4096 count=32768
-	fs/cmdline/buildfs ../user/hello/
 
-userhello:
-	make -C ../user/hello
+$(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
+	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJECT_FILES) -o $@
 
-fs-cmdline:
-	make -C fs/cmdline
-
-build/kernel.elf: $(OBJS) | builddir
-	$(LD) -T kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJS) -o $@
-
-build/kernel.bin: build/kernel.elf | builddir
+$(BUILDDIR)/kernel.bin: $(BUILDDIR)/kernel.elf | builddir
 	$(OBJCOPY) -O binary $< $@
 
-build/kernel.img: build/kernel.bin | builddir
+$(BUILDDIR)/kernel.img: $(BUILDDIR)/kernel.bin | builddir
 	$(MKIMAGE) -A arm -C none -O linux -T kernel -d $< -a 0x00010000 -e 0x00010000 $@
 
+# Begin bootloader Make
+uboot_configuration/uboot-commands.ubt: $(and $(KERNEL_PARAMS),dummy)
+	uboot_configuration/generate.sh $(KERNEL_PARAMS)
+
+$(BUILDDIR)/bootloader.img: uboot_configuration/uboot-commands.ubt | builddir
+	$(MKIMAGE) -A arm -C none -T script -d $< -a 0x10000 -e 0x10000 $@
+# End bootloader make
+
 # Begin Pi Make
-build/kernelPi.elf: $(PIOBJS) | builddir
-	$(CC) -T kernelPi.ld -O2 $(PFLAGS) $(PIOBJS) -o $@
+$(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
+	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $(C_OBJECT_FILES) -o $@
 
-build/kernelPi.img: build/kernelPi.elf | builddir
+$(BUILDDIR)/kernelPi.img: $(BUILDDIR)/kernelPi.elf | builddir
 	$(OBJCOPY) $< -O binary $@
-
 # End Pi Make
 
-build/script.img: $(UBOOTBUILDFILE) | builddir
-	$(MKIMAGE) -A arm -C none -T script -d uboot_configuration/uboot-commands.ubt -a 0x10000 -e 0x10000 $@
+builddir:
+	mkdir -p $(BUILDDIR)
 
-build/course_os.img: build/kernel.img | builddir
-	cat ../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin $< > $@
-
-build/startup.o: startup.s | builddir
+$(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@mkdir -p $(shell dirname $@)
-	$(AS) -mcpu=arm1176jzf-s -g $< -o $@
+	@echo Assembling $<
+	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-build/%.o: %.c | builddir
+$(BUILDDIR)/test/test.o: $(SOURCEDIR)/test/test.c dummy | builddir
+	@$(SOURCEDIR)/test/generate_tests.sh
 	@mkdir -p $(shell dirname $@)
-	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+
+# depend on dummy to always recompile. There aren't that many files atm anyway and
+# when the definitions change, we have to recompile. TODO: move definitions to some kind of file
+# so make knows that when it changed it should recompile.
+$(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy | builddir
+	@mkdir -p $(shell dirname $@)
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf build
-	@echo "I'm persisting the SD card 'card.sd', you'll have to remove that yourself if you want to rebuild it."
-	@echo "('rm sd.card')"
+	rm -rf $(BUILDDIR)
+
+# use to force rebuild of certain recipes
+dummy:;

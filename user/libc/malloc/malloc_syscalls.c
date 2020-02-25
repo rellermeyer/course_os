@@ -1,7 +1,7 @@
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include <malloc_syscalls.h>
 #include "../arch/arm/syscall_arch.h"
-#include "stdint.h"
+#include "../../../kernel/src/klibc//include/stdint.h"
 
 /**
  * malloc does a system call to allocate memory on the user heap

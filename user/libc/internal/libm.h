@@ -13,7 +13,7 @@
 #ifndef _LIBM_H
 #define _LIBM_H
 
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include <float.h>
 #include <math.h>
 #include <complex.h>

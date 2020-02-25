@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdarg.h>
+#include "../../../kernel/src/klibc/include/stdarg.h"
 #include "../arch/arm/syscall_arch.h"
 
 int printf(const char *restrict fmt, ...)
