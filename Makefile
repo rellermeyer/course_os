@@ -22,10 +22,16 @@ clean:
 	$(MAKE) -C user/libc clean
 	$(MAKE) -C user/hello clean
 .PHONY: clean
+
 build: u-boot kernel
-run: 
+.PHONY: build
+
+run: build
 	@$(MAKE) -C ./kernel run
 .PHONY: run
+
+test: build
+	@$(MAKE) -C ./kernel test
 
 docs:
 	doxygen doxyfile

@@ -106,7 +106,7 @@ void start2(uint32_t *p_bootargs)
 	initialize_timers();
 
 	//assert(1==2 && "Test assert please ignore");
-  process_init();
+    process_init();
 
 	sched_init();
 
