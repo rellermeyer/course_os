@@ -7,7 +7,7 @@ extern "C"
 #endif
 
 #include <features.h>
-#include <stdint.h>
+#include "../../kernel/src/klibc//include/stdint.h"
 
 #define __NEED_wchar_t
 #include <bits/alltypes.h>

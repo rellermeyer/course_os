@@ -1,5 +1,5 @@
 #include <math.h>
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 
 double frexp(double x, int *e)
 {
