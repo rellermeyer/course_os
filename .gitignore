@@ -3,6 +3,7 @@
 /kernel/flash.bin
 /kernel/boot-commands
 /kernel/card.sd
+/kernel/src/test/test.c
 /toolchain/target/
 /u-boot/u-boot-*
 /qemu/
@@ -22,6 +23,8 @@ build/
 *~
 *.swp
 /user/hello/hello
+/user/hello/hello1
+/user/hello/hello2
 /user/libc/libc.a
 
 [._]*.s[a-w][a-z]
