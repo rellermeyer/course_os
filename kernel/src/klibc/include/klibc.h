@@ -80,7 +80,7 @@ unsigned int rand();
 #define ERROR(...) if(LOG_LEVEL >= 1) kprintf(__VA_ARGS__)
 
 //4-17-15: Initial panic * assert_fail functions added
-void panic();
+void panic() __attribute__ ((noreturn));
 int _assert_fail(char *_file, unsigned int _line, char *_func);
     //__attribute__ ((__noreturn__));
 

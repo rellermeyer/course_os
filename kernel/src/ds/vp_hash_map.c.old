@@ -1,0 +1,118 @@
+#include <vp_hash_map.h.old>
+#include <stdlib.h>
+#include <stdio.h>
+
+
+static inline HashMapElement * __hm_get_internal(HashMap * hm, void * key) {
+    size_t index = elem->base.hash;
+
+    VPSLL_FOREACH(&hm->buckets[index], i) {
+        HashMapElement * elem = i->data;
+        if(compf(elem->base.key, key)) {
+            return elem;
+        }
+    }
+    return NULL;
+}
+
+// Creates a new hashmap with given hash function and number of buckets
+HashMap * hm_new(HashFunc hashf, FreeFunc datafreef, FreeFunc keyfreef, CompareFunc comparef, uint32_t n_buckets) {
+    HashMap * res = kmalloc(sizeof(HashMap));
+    *res = (HashMap) {
+        // We can calloc/zero this memory since vpslls have an initial size of 0 and NULL pointer.
+        // Therefore a zeroed piece of memory *is* a vpsll
+        .buckets = kcalloc(n_buckets, sizeof(VPSinglyLinkedList)),
+        .hashFunc = hashf,
+        .compareFunc = comparef,
+        .freeData = datafreef,
+        .freeKey = keyfreef,
+        .n_buckets = n_buckets,
+    };
+
+    return res;
+}
+
+HashSet * hs_new(HashFunc hashf, FreeFunc datafreef, FreeFunc keyfreef, CompareFunc comparef, uint32_t n_buckets) { return hm_new(hashf, datafreef, keyfreef, comparef, n_buckets); }
+
+static inline void __hm_insert_internal(HashMap * hm, struct HashMapElement * elem) {
+    size_t index = elem->base.hash;
+
+    struct HashMapElement * old = __hm_get_internal(hm, )
+
+    vpsll_push(&hm->buckets[index], elem);
+
+    return NULL;
+}
+
+// inserts an element into the hashmap/hashset
+void hm_insert(HashMap * hm, void * key, void * data) {
+    HashMapElement * hme = kmalloc(sizeof(HashMapElement));
+    *hme = (HashMapElement) {
+        .base = (HashSetElement) {
+            .hash = hm->hashFunc(key),
+            .key = key,
+        },
+        .data = data,
+    };
+
+    return __hm_insert_internal(hm, hme);
+}
+
+void hs_insert(HashSet * hs, void * key) {
+    HashSetElement * hse = kmalloc(sizeof(HashSetElement));
+
+    *hse = (HashSetElement) {
+        .hash = hs->hashFunc(key),
+        .key = key,
+    };
+
+    return __hm_insert_internal(hs, hse);
+}
+
+// Gets the element associated with the key
+void * hm_get(HashMap * hm, void * key) {
+    HashMapElement * res = __hm_get_internal(hm, key);
+    if (res != NULL) {
+        return res->data;
+    } else {
+        return NULL;
+    }
+}
+
+// Returns true if the element is included.
+bool hm_contains(HashMap * hm, void * key) {
+    return __hm_get_internal(hm, key) != NULL;
+}
+bool hs_contains(HashSet * hs, void * key) {return hm_contains(hs, key)}
+
+// removes an element from the hashmap/hashset, returns the element so it can be freed
+void * hm_remove(HashMap * hm, void * key) {
+
+}
+
+void * hs_remove(HashSet * hs, void * key) { return hm_remove(hs, key);}
+
+
+void hm_free(HashMap * hm) {
+    for (int i = 0; i < hm->buckets; i++) {
+
+        VPSinglyLinkedList * lst = &hm->buckets[i];
+
+        struct VPSinglyLinkedListLink * curr = lst->head;
+        while (curr != NULL) {
+            struct VPSinglyLinkedListLink * last = curr;
+            curr = curr->next;
+            if (freef != NULL) {
+                freef(last->data);
+            }
+            kfree(last);
+        }
+
+        vpsll_free_inner(, );
+    }
+    kfree(hm);
+}
+
+void hs_free(HashSet * hs) {
+    return hm_free(hs);
+}

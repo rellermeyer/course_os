@@ -28,3 +28,17 @@ TEST_CREATE(test_alloc_realloc_free, {
 
     kfree(a);
 })
+
+TEST_CREATE(test_free_null, {
+    kfree(NULL);
+})
+
+TEST_CREATE(test_calloc, {
+    int * test = kcalloc(100, sizeof(int));
+
+    for (int i = 0; i < 100; i++) {
+        ASSERT_EQ(test[i], 0);
+    }
+
+    kfree(test);
+})

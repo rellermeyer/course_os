@@ -54,6 +54,7 @@ void panic() {
     kprintf("  ' </ -_)| '_| ' \\)) -_) |  |  _/ _` | ' \\)) / _|  \n");
     kprintf(" _|\\_\\___||_| |_||_|\\___|_|  |_| \\__,_|_||_||_\\__|  ");
     SLEEP;
+    __builtin_unreachable();
 }
 
 void splash() {

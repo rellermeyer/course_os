@@ -40,18 +40,22 @@ void *kmalloc(uint32_t size) {
 
 
 // Allocates n * size portion of memory (set to 0) and returns it
-void *kcalloc(uint32_t n, uint32_t size) {
+void *kcalloc(size_t n, size_t size) {
     uint32_t total_size = n * size;
-    void *block = kmalloc(total_size);
+    void * block = kmalloc(total_size);
 
-    return block ? memset(block, 0, total_size) : NULL;
+    if (block == NULL) {
+        return NULL;
+    } else {
+        memset(block, 0, total_size);
+        return block;
+    }
 }
 
 uint32_t kmalloc_size(void* ptr) {
     return allocation_size(ptr);
 }
 
-// FIXME: Implement kmalloc_size() (or something like it)
 // TODO: Implement in-place realloc if the next block is free.
 // Resize memory pointed to by ptr to new size
 void * krealloc(void *ptr, uint32_t newsize) {

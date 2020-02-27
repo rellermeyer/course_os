@@ -32,7 +32,7 @@ void initialize_timers()
 
 	interrupt_handler_t *tmr_handler = kmalloc(sizeof(interrupt_handler_t));
 	tmr_handler->handler = timer_irq_handler;
-	register_interrupt_handler(4, tmr_handler);
+	register_interrupt_handler(TIMER_A_IRQ, tmr_handler);
 }
 
 #define CHECK_TIMER_INDEX(index) { if (index < 0 || index > 4) return -1; }
@@ -243,8 +243,7 @@ int unregister_handler(int timer_index)
 	return 0;
 }
 
-void timer_irq_handler(void* args)
-{
+void timer_irq_handler(void* args) {
 	clear_interrupt(0);
 
     kprintf("@@@@@@ RECEIVED TIMER INTERRUPT\n");
