@@ -43,5 +43,3 @@ echo "
 }
 #endif
 " >> "$DIR/test.c"
-
-
