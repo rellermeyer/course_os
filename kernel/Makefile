@@ -41,6 +41,9 @@ INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
+build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
+build_pi: $(BUILDDIR)/kernelPi.img | builddir
+
 test: build | builddir
 	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $$! > server.PID;
 	# montior the output, save exit code, remove logfile, kill qemu,
@@ -49,10 +52,11 @@ test: build | builddir
 
 
 run: build | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	# nographic to turn off the gui
+	# monitor none to disable stdio monitoring so
+	# serial stdio works
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
-build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
-build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 $(BUILDDIR)/flash.bin: $(BUILDDIR)/kernel.img $(BUILDDIR)/bootloader.img
 	dd if=/dev/zero of=$@ bs=4k count=1536

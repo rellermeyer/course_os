@@ -6,6 +6,8 @@
 #include <interrupt.h>
 #include <stdio.h>
 
+volatile uint32_t * const PIC_ADDRESS = (volatile uint32_t *)0x10140000;
+
 // there are 32 kinds of interrupts on the VIC
 // this structure may need to be expanded if the secondary controller is incorporated
 static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
@@ -51,34 +53,33 @@ void init_fiqs()
 // when you register an interrupt handler it's line will be enabled in the VIC
 // telling the device itself to fire interrupts should be done in the driver
 //
+// TODO: We do now ------------------------------V
 // also, since we don't really have a working malloc, the handler structure will
 // have to be built in the driver and passed to register_
-int register_interrupt_handler(int num, interrupt_handler_t *handler)
-{
-	// lazy initialization
-	if (initialized != -1)
-	{
+int register_interrupt_handler(enum InterruptID num, interrupt_handler_t *handler) {
+    // lazy initialization
+    if (initialized != -1) {
         kprintf("INITIALIZING THE INTERRUPT SYSTEM\n");
 
-		for(int i=0; i<MAX_NUM_INTERRUPTS; i++)
-		{
-			handlers[i] = 0;
-		}
+        for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
+            handlers[i] = 0;
+        }
 
         kprintf("INITIALIZED THE INTERRUPT SYSTEM\n");
 
-		initialized = -1;
-	}
+        initialized = -1;
+    }
 
-	if (num < 0 || num > MAX_NUM_INTERRUPTS) // bad irq number
-		return -1;
-	else if (handlers[num] != 0)
-	{ // something has already been registered there
-        kprintf("Already registered\n");
-		return -1;
-	}
-	else if (handler == 0) // we need a NULL macro
-		return -1;
+    if (num < 0 || num > MAX_NUM_INTERRUPTS) {
+        kprintf("Register a handler between 0 and %i\n", MAX_NUM_INTERRUPTS);
+        panic();
+    } else if (handlers[num] != NULL) {
+        kprintf("Tried to re-register interrupt handler %i\n", num);
+        panic();
+	} else if (handler == NULL) {
+        kprintf("The interrupt handler can't be NULL\n");
+        panic();
+    }
 
 	// put the handler in the array
 	handlers[num] = handler;
@@ -87,9 +88,10 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler)
 	hw_interrupt_enable(num);
 
 	// check to see if this is an FIQ
-	if (check_if_fiq[num])
-		// update the "select" register on the VIC
-		vic_select_fiq(num);
+	if (check_if_fiq[num]){
+        // update the "select" register on the VIC
+        vic_select_fiq(num);
+    }
 
 	// return a success value
 	return 0;
@@ -97,8 +99,7 @@ int register_interrupt_handler(int num, interrupt_handler_t *handler)
 
 // handle_interrupt takes a number (the interrupt from the VIC), looks into
 // the table of registered handlers, and calls the appropriate handler
-void handle_irq_interrupt(int interrupt_vector)
-{
+void handle_irq_interrupt(enum InterruptID interrupt_vector) {
     kprintf("handling interrupt %d\n", interrupt_vector);
 	// go to handler routine
     kprintf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
@@ -107,8 +108,7 @@ void handle_irq_interrupt(int interrupt_vector)
 }
 
 /* enable IRQ and/or FIQ */
-void enable_interrupt(interrupt_t mask)
-{
+void enable_interrupt(interrupt_t mask) {
 	get_proc_status();
 
 	// enable interrupt on the core

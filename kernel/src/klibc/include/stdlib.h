@@ -7,6 +7,7 @@ void* kmalloc(uint32_t size);
 void* kmalloc_aligned(uint32_t size, uint32_t alignment);
 void kfree(void* ptr);
 void *krealloc(void *ptr, uint32_t size);
+void *kcalloc(size_t n, size_t size);
 
 /**
  * umalloc allocates memory on the user heap

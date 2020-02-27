@@ -9,6 +9,7 @@ VPSinglyLinkedList * vpsll_create() {
     return res;
 }
 
+
 void vpsll_free(VPSinglyLinkedList * lst, FreeFunc freef) {
     struct VPSinglyLinkedListLink * curr = lst->head;
     while (curr != NULL) {
@@ -19,7 +20,6 @@ void vpsll_free(VPSinglyLinkedList * lst, FreeFunc freef) {
         }
         kfree(last);
     }
-
     kfree(lst);
 }
 
