@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#QEMU_VERSION=1.6.2
 QEMU_VERSION=2.4.1
 
 qemu-system-arm --version || {
@@ -13,5 +12,5 @@ qemu-system-arm --version || {
 		tar xvf qemu-${QEMU_VERSION}.tar.bz2
 	fi
 
-	cd qemu-${QEMU_VERSION}; ./configure --prefix=`pwd`/../qemu --target-list=arm-softmmu && make all install
+	cd qemu-${QEMU_VERSION}; ./configure --prefix="$(pwd)/../qemu" --target-list=arm-softmmu && make all install
 }
