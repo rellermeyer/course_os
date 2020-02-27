@@ -9,10 +9,16 @@
 /qemu/
 !/qemu/build.sh
 build/
+/cmake-build-*/
+/html/
+/latex/
+/course_os_docs.pdf
 
 .settings/
 .cproject
 .project
+/.idea/
+/.vscode/
 
 #always exclude these from being pushed
 *.o
