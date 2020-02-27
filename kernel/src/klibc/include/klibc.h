@@ -73,11 +73,28 @@ unsigned int rand();
 // development
 #define LOG_LEVEL 5
 
-#define DEBUG(...) if(LOG_LEVEL >= 5) kprintf(__VA_ARGS__)
-#define LOG(...) if(LOG_LEVEL >= 4) kprintf(__VA_ARGS__)
-#define INFO(...) if(LOG_LEVEL >= 3) kprintf(__VA_ARGS__)
-#define WARN(...) if(LOG_LEVEL >= 2) kprintf(__VA_ARGS__)
-#define ERROR(...) if(LOG_LEVEL >= 1) kprintf(__VA_ARGS__)
+//#if LOG_LEVEL >= 5
+#define DEBUG(...) kprintf("DEBUG: "  __VA_ARGS__) // :+1:
+//#else
+//#define DEBUG(...)
+//#endif
+#define LOG(...) kprintf(__VA_ARGS__)
+#define INFO(...) kprintf(__VA_ARGS__)
+#define WARN(...)  kprintf(__VA_ARGS__) // :+1:
+#define ERROR(...) kprintf(__VA_ARGS__);
+
+#define ___asm_opcode_swab32(x) (	\
+        (((x) << 24) & 0xFF000000)	\
+    | (((x) <<  8) & 0x00FF0000)	\
+    | (((x) >>  8) & 0x0000FF00)	\
+    | (((x) >> 24) & 0x000000FF)	\
+)
+
+// Defines an instruction that will raise an undefined instruction code on both ARM (and hopefully THUMB2)
+#define UNDEFINED_INSTRUCTION_BYTES 0xF7F1A2F3
+#define STRINGIFY2(X) #X
+#define STRINGIFY(X) STRINGIFY2(X)
+#define FATAL() asm volatile(".long " STRINGIFY(UNDEFINED_INSTRUCTION_BYTES));
 
 //4-17-15: Initial panic * assert_fail functions added
 void panic() __attribute__ ((noreturn));

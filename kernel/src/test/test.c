@@ -7,22 +7,17 @@
 #include <stdio.h>
 
 
-int test_test_alloc_free();
-int test_test_alloc_free_large();
-int test_test_alloc_realloc_free();
-int test_test_free_null();
-int test_test_calloc();
-int test_u8a_push_get_pop_test();
-int test_u8a_push_set_pop_test();
-int test_u8a_resize_test();
-int test_u8a_push_string_test();
-int test_u8a_clone_test();
 int test_test_compare_nonequal_length();
 int test_test_compare_equal_length();
 int test_test_compare_equal_length_eq();
 int test_test_compare_equal_length_eq_null();
 int test_test_compare_various();
 int test_test_hash();
+int test_u8a_push_get_pop_test();
+int test_u8a_push_set_pop_test();
+int test_u8a_resize_test();
+int test_u8a_push_string_test();
+int test_u8a_clone_test();
 int test_test_create_ll();
 int test_test_iter_ll();
 int test_test_get_ll();
@@ -32,10 +27,12 @@ int test_test_vpsll_remove();
 int test_test_vpsll_set();
 int test_test_create_hm();
 int test_test_free_entries_hm();
-int test_test_create_file();
-int test_test_create_dir();
-int test_test_create_rw_file();
-int test_test_listdir();
+int test_test_vm_1();
+int test_test_alloc_free();
+int test_test_alloc_free_large();
+int test_test_alloc_realloc_free();
+int test_test_free_null();
+int test_test_calloc();
 int test_test_create_vfs();
 int test_test_get_root();
 int test_path_create_test();
@@ -61,23 +58,22 @@ int test_path_filename_test_1();
 int test_path_filename_test_2();
 int test_path_filename_test_3();
 int test_path_filename_test_4();
+int test_test_create_file();
+int test_test_create_dir();
+int test_test_create_rw_file();
+int test_test_listdir();
 void test_main(){
-    if (!test_test_alloc_free()) {return;}
-    if (!test_test_alloc_free_large()) {return;}
-    if (!test_test_alloc_realloc_free()) {return;}
-    if (!test_test_free_null()) {return;}
-    if (!test_test_calloc()) {return;}
-    if (!test_u8a_push_get_pop_test()) {return;}
-    if (!test_u8a_push_set_pop_test()) {return;}
-    if (!test_u8a_resize_test()) {return;}
-    if (!test_u8a_push_string_test()) {return;}
-    if (!test_u8a_clone_test()) {return;}
     if (!test_test_compare_nonequal_length()) {return;}
     if (!test_test_compare_equal_length()) {return;}
     if (!test_test_compare_equal_length_eq()) {return;}
     if (!test_test_compare_equal_length_eq_null()) {return;}
     if (!test_test_compare_various()) {return;}
     if (!test_test_hash()) {return;}
+    if (!test_u8a_push_get_pop_test()) {return;}
+    if (!test_u8a_push_set_pop_test()) {return;}
+    if (!test_u8a_resize_test()) {return;}
+    if (!test_u8a_push_string_test()) {return;}
+    if (!test_u8a_clone_test()) {return;}
     if (!test_test_create_ll()) {return;}
     if (!test_test_iter_ll()) {return;}
     if (!test_test_get_ll()) {return;}
@@ -87,10 +83,12 @@ void test_main(){
     if (!test_test_vpsll_set()) {return;}
     if (!test_test_create_hm()) {return;}
     if (!test_test_free_entries_hm()) {return;}
-    if (!test_test_create_file()) {return;}
-    if (!test_test_create_dir()) {return;}
-    if (!test_test_create_rw_file()) {return;}
-    if (!test_test_listdir()) {return;}
+    if (!test_test_vm_1()) {return;}
+    if (!test_test_alloc_free()) {return;}
+    if (!test_test_alloc_free_large()) {return;}
+    if (!test_test_alloc_realloc_free()) {return;}
+    if (!test_test_free_null()) {return;}
+    if (!test_test_calloc()) {return;}
     if (!test_test_create_vfs()) {return;}
     if (!test_test_get_root()) {return;}
     if (!test_path_create_test()) {return;}
@@ -116,8 +114,12 @@ void test_main(){
     if (!test_path_filename_test_2()) {return;}
     if (!test_path_filename_test_3()) {return;}
     if (!test_path_filename_test_4()) {return;}
+    if (!test_test_create_file()) {return;}
+    if (!test_test_create_dir()) {return;}
+    if (!test_test_create_rw_file()) {return;}
+    if (!test_test_listdir()) {return;}
 
-  kprintf("TESTS COMPLETE. Passed %i tests\n", 54);
+  kprintf("TESTS COMPLETE. Passed %i tests\n", 55);
 }
 #endif
 

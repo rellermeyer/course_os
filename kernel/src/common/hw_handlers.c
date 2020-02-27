@@ -63,12 +63,17 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
 	asm volatile("mrs %0, spsr" : "=r"(spsr));
 	asm volatile("mov %0, lr" : "=r" (lr));
 
-    kprintf("UNDEFINED INSTRUCTION HANDLER\n");
-
 	int thumb = spsr & 0x20;
 	int pc = thumb ? lr - 0x2 : lr - 0x4;
 
-	int copro = (*(int*)pc & 0xf00000) >> 24;
+	if ((*(size_t *) pc) == UNDEFINED_INSTRUCTION_BYTES){
+        kprintf("FATAL ERROR\n");
+        panic();
+	}
+
+	kprintf("UNDEFINED INSTRUCTION HANDLER\n");
+
+    int copro = (*(int*)pc & 0xf00000) >> 24;
 
 	if (spsr & 0x20) {
         kprintf("THUMB mode\n");
