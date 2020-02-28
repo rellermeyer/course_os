@@ -41,7 +41,7 @@ TEST_CREATE(test_vm_1, {
 
         // Test allocating frames...
         #define P3_BASE 0x24000000
-        int retval = vm_allocate_page(vas3, (void*) P3_BASE,VM_PERM_PRIVILEGED_RW);
+        int retval = vm_allocate_page(vas3, (void*) P3_BASE, VM_PERM_PRIVILEGED_RW);
 
         // vm_allocate_page fails
         ASSERT(!retval);
@@ -90,11 +90,11 @@ TEST_CREATE(test_vm_1, {
             p -= BLOCK_SIZE;
         }
 
-        // FIXME: This part of the test crashes the os, we should capture that in some way.
+        // FIXME: This part of the test crashes the os, we should catch that in some way.
         // Test the data abort...
-//        WARN("You should see a data abort...\n");
-//        int i = p[-1];
-//        LOG("%d\n", i);
+        //WARN("You should see a data abort...\n");
+        //int i = p[-1];
+        //LOG("%d\n", i);
 
         // Free the page!
         LOG("Freeing page at %X\n", p);
