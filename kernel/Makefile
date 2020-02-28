@@ -49,10 +49,7 @@ build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
-	${QEMU} -M versatilepb -audiodev none,id=none -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $$! > server.PID;
-	# montior the output, save exit code, remove logfile, kill qemu,
-	# remove pid file used to kill qemu, exit with correct exit code
-	#$(SOURCEDIR)/test/monitor_tests.sh;e=$$?; rm test.log; kill $$(cat server.PID); rm server.PID; exit $$e
+	${QEMU} -M versatilepb -audiodev none,id=none -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 
 run: build | builddir
@@ -108,13 +105,9 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(TEST_MAIN_FILE):
+$(TEST_MAIN_FILE): dummy
 	@$(SOURCEDIR)/test/generate_tests.sh
 
-
-test_and_generate:
-	generate_test
-	test
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file

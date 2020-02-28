@@ -21,12 +21,12 @@ jobs:
 #        with:
 #          path: u-boot
 #          key: u-boot
-#
+
       - name: Install Dependencies
         run: |
           sudo apt-get update &&
           sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
-#
+
 #      - name: Install Toolchain
 #        if: steps.cache-toolchain.outputs.cache-hit != 'true'
 #        run: make toolchain
@@ -39,7 +39,6 @@ jobs:
 
       - name: Test
         run: |
-          set -x
           mkdir -p kernel/build;
           wget https://static.jonay2000.nl/build/card.sd -O kernel/build/card.sd;
           wget https://static.jonay2000.nl/build/flash.bin -O kernel/build/flash.bin;

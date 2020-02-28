@@ -110,12 +110,12 @@ void start2(uint32_t *p_bootargs) {
     kprintf("Programming the timer interrupt\n");
     start_timer_interrupts(0, 10);
 
-//    _Poweroff;
-
 #ifndef ENABLE_TESTS
     argparse_process(p_bootargs);
 #else
     test_main();
+    // If we return, the tests failed.
+    shutdown_qemu_nonzero();
 #endif
 
     print_uart0("done parsing atag list\n");
@@ -136,8 +136,5 @@ void start2(uint32_t *p_bootargs) {
     //  * Load initramfs into tmpfs
     //  * execute userland init program
 
-
-    asm volatile ("MOV R0, #0x18");
-    asm volatile ("LDR R1, =0x20026");
-    asm volatile ("svc 0x00123456");
+    SLEEP;
 }

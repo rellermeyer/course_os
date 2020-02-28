@@ -70,5 +70,12 @@ void reserved_handler(void);		// 0x14
 void __attribute__((interrupt("IRQ"))) irq_handler(void);			// 0x18
 void __attribute__((interrupt("FIQ"))) fiq_handler(void);			// 0x1c
 
+/**
+ * Semihosting
+ */
+
+void shutdown_qemu_nonzero();
+void shutdown_qemu_zero();
+void debugger();
 
 #endif
