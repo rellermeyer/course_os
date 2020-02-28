@@ -15,6 +15,7 @@ SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have it's contents autoincluded
 INCLUDEDIR = include
+TEST_MAIN_FILE = $(SOURCEDIR)/test/test.c
 
 # =================== End Configuration ===================
 
@@ -27,7 +28,8 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
-C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c))
+C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)
+# Add test.c when we are compiling tests
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
 
@@ -36,6 +38,8 @@ S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
     $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
+#test: OBJECT_FILES += $(patsubst $(SOURCEDIR)/%.c, $(BUILDDIR)/%.o, $(TEST_MAIN_FILE))
+
 
 INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
@@ -70,7 +74,9 @@ $(BUILDDIR)/card.sd: | builddir
 	dd if=/dev/zero of=$@ conv=notrunc bs=4096 count=32768
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
-	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJECT_FILES) -o $@
+	@echo $<
+	@echo $^
+	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
 
 $(BUILDDIR)/kernel.bin: $(BUILDDIR)/kernel.elf | builddir
 	$(OBJCOPY) -O binary $< $@
@@ -102,12 +108,13 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(BUILDDIR)/test/test.o: $(SOURCEDIR)/test/test.c dummy | builddir
+$(TEST_MAIN_FILE):
 	@$(SOURCEDIR)/test/generate_tests.sh
-	@mkdir -p $(shell dirname $@)
-	@echo Compiling $<
-	@$(CC) $(CFLAGS) -c $< -o $@
 
+
+test_and_generate:
+	generate_test
+	test
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
@@ -119,6 +126,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy | builddir
 
 clean:
 	rm -rf $(BUILDDIR)
+	rm -rf $(SOURCEDIR)/test/test.c
 
 # use to force rebuild of certain recipes
 dummy:;
