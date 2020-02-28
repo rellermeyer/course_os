@@ -19,6 +19,6 @@ do
     echo "FAILED (EXCEPTION: $line)"
     exit 3
   else
-    echo ">>$line"
+    echo "$line"
   fi
 done
