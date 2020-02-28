@@ -26,11 +26,11 @@ clean:
 build: u-boot kernel
 .PHONY: build
 
-run: build
+run: u-boot
 	@$(MAKE) -C ./kernel run
 .PHONY: run
 
-test: build
+test: u-boot
 	@$(MAKE) -C ./kernel test
 
 docs:

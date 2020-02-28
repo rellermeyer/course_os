@@ -7,15 +7,15 @@
 #include <frame.h>
 
 //#define BLOCK_SIZE (1<<20)
-#define BLOCK_SIZE (1<<12)
+#define BLOCK_SIZE ((uint32_t)(1<<12))
 
 #define PAGE_TABLE_SIZE (1<<14)
 #define L2_PAGE_TABLE_SIZE (1<<12)
 
 struct vas {
 	// A pointer to the first level of the pagetable.
-	unsigned int *l1_pagetable;
-	unsigned int *l1_pagetable_phys; // The physical address to it
+    volatile unsigned int *l1_pagetable;
+    volatile unsigned int *l1_pagetable_phys; // The physical address to it
 
 	// A pointer to the next VAS (it's a linked list)
 	struct vas *next;

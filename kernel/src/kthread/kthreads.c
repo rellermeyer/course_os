@@ -6,7 +6,7 @@
  */
 
 #include <kthread.h>
-#include <klibc.h>
+#include <stdlib.h>
 #include <scheduler.h>
 
 kthread_handle* kthread_create(kthread_callback_handler cb_handler)
@@ -18,7 +18,7 @@ kthread_handle* kthread_create(kthread_callback_handler cb_handler)
 
 uint32_t kthread_start(kthread_handle * kthread)
 {
-	sched_task * task = sched_create_task(kthread);
-	sched_add_task(task);
+	sched_task * task = sched_create_task_from_kthread(kthread, 0);
+	return sched_add_task(task);
 }
 

@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "include/argparse.h"
-#include "klibc.h"
+#include <argparse.h>
+#include <stdio.h>
+#include <string.h>
 #include <process.h>
-//#include "tests.h"
 
 static void argparse_parse(char *);
 
@@ -12,9 +12,9 @@ void argparse_process(uint32_t *p_bootargs)
 {
 	for (atag_iterator(tag, p_bootargs))
 	{
-		os_printf("tag (+%d) %d\n",
-				(((uint32_t) ((uint32_t*) tag)) - ((uint32_t) p_bootargs)),
-				tag->header.tag);
+        kprintf("tag (+%d) %d\n",
+                (((uint32_t) ((uint32_t *) tag)) - ((uint32_t) p_bootargs)),
+                tag->header.tag);
 		atag_print(tag);
 		if (tag->header.tag == ATAG_CMDLINE)
 		{
@@ -30,21 +30,21 @@ void atag_print(struct atag *t)
 	case ATAG_CORE:
 		if (t->header.size == 2)
 		{
-			os_printf("ATAG_CORE\n");
+            kprintf("ATAG_CORE\n");
 		}
 		else
 		{
-			os_printf("ATAG_CORE (FLAGS=%d, PAGESIZE=%d, ROOTDEV=%d)\n",
-					t->content.core.flags, t->content.core.pagesize,
-					t->content.core.rootdev);
+            kprintf("ATAG_CORE (FLAGS=%d, PAGESIZE=%d, ROOTDEV=%d)\n",
+                    t->content.core.flags, t->content.core.pagesize,
+                    t->content.core.rootdev);
 		}
 		break;
 	case ATAG_MEM:
-		os_printf("ATAG_MEM (SIZE=%d, START=%d)\n", t->content.mem.size,
-				t->content.mem.start);
+        kprintf("ATAG_MEM (SIZE=%d, START=%d)\n", t->content.mem.size,
+                t->content.mem.start);
 		break;
 	case ATAG_CMDLINE:
-		os_printf("ATAG_CMDLINE (%s)\n", &t->content.cmdline.cmdline);
+        kprintf("ATAG_CMDLINE (%s)\n", &t->content.cmdline.cmdline);
 		break;
 	}
 }
@@ -68,9 +68,9 @@ static void argparse_parse(char *cmdline)
 
 	while (token != NULL)
 	{
-		os_printf("token: %s\n", token);
+        kprintf("token: %s\n", token);
 
-		if (os_strcmp("-load", token) == 0)
+		if (strcmp("-load", token) == 0)
 		{
 			char* name = os_strtok(NULL, " ");
 
@@ -79,10 +79,10 @@ static void argparse_parse(char *cmdline)
 			process_execute(proc);
 
 		}
-		else if (os_strcmp("-test", token) == 0)
+		else if (strcmp("-test", token) == 0)
 		{
-			os_printf("RUNNING TESTS\n");
-			os_printf("Running tests...\n");
+            kprintf("RUNNING TESTS\n");
+            kprintf("Running tests...\n");
 //			Test *tests[2];
 //			tests[0] = create_test("This passes", &test1);
 //			tests[1] = create_test("This fails", &test2);
@@ -101,7 +101,7 @@ static void argparse_parse(char *cmdline)
  */
 int string_to_unsigned_int(char *input, int base)
 {
-	int i = os_strlen(input) - 1; // Index in the string
+	int i = strlen(input) - 1; // Index in the string
 
 	if (hex_value_of_character(input[i]) == -1)
 	{

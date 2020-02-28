@@ -110,7 +110,7 @@ int init_sd()
 	// Eventually print some status message here if the SD card
 	// failed to initialize properly but for now just print 
 	// that it was loaded OK
-	os_printf("\nSD card ready for transfer\n");
+    kprintf("\nSD card ready for transfer\n");
 	
 	return status();
 }
@@ -118,7 +118,7 @@ int init_sd()
 /**
  * SD Capacity Method
  *
- * Returns the maximum capacity of the SD card in bytes; for our 
+ * Returns the maximum filled of the SD card in bytes; for our
  * current needs it computes the size statically
  *
  * TODO: Eventually this needs to be set up to calculate the size

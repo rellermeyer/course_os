@@ -15,12 +15,12 @@ int test_hmap_1() {
     hmap_handle* hmap2 = hmap_create_fixed(3);
 
     if (!hmap1) {
-        os_printf("expected value");
+        kprintf("expected value");
         return TEST_FAIL;
     }
 
     if (!hmap2) {
-        os_printf("expected value");
+        kprintf("expected value");
         return TEST_FAIL;
     }
 

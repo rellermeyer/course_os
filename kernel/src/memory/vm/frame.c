@@ -42,7 +42,7 @@ void vm_release_frame(void *p)
 	p += 0xf0000000; // Convert from PPTR to VPTR
 	struct vm_free_frame *flist = p;
 	flist->next = vm_free_list;
-	os_printf("%X %X\n", flist, vm_free_list);
+    kprintf("%X %X\n", flist, vm_free_list);
 	vm_free_list = p;
 }
 

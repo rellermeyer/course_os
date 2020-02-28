@@ -3,15 +3,22 @@
 /kernel/flash.bin
 /kernel/boot-commands
 /kernel/card.sd
+/kernel/src/test/test.c
 /toolchain/target/
 /u-boot/u-boot-*
 /qemu/
 !/qemu/build.sh
 build/
+/cmake-build-*/
+/html/
+/latex/
+/course_os_docs.pdf
 
 .settings/
 .cproject
 .project
+/.idea/
+/.vscode/
 
 #always exclude these from being pushed
 *.o
@@ -22,6 +29,8 @@ build/
 *~
 *.swp
 /user/hello/hello
+/user/hello/hello1
+/user/hello/hello2
 /user/libc/libc.a
 
 [._]*.s[a-w][a-z]
@@ -36,3 +45,4 @@ Session.vim
 uboot-commands.ubt
 
 NOTES
+/server.PID
