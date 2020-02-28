@@ -27,12 +27,12 @@ jobs:
           sudo apt-get update &&
           sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
 
-      - name: Install u-boot
-        run: make u-boot
-
       - name: Install Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: make toolchain
+
+      - name: Install u-boot
+        run: make u-boot
 
       - name: Compile
         run: make build
