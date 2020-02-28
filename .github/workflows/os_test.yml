@@ -16,11 +16,11 @@ jobs:
             key: toolchain
 
       - name: Cache u-boot
-          id: cache-u-boot
-          uses: actions/cache@v1
-          with:
-            path: u-boot
-            key: u-boot
+        id: cache-u-boot
+        uses: actions/cache@v1
+        with:
+          path: u-boot
+          key: u-boot
 
       - name: Install Dependencies
         run: |
