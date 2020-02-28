@@ -41,7 +41,7 @@ done
 # shellcheck disable=SC2028
 echo "
   kprintf(\"TESTS COMPLETE. Passed %i tests\n\", "$len");
-  shutdown_qemu_zero();
+  SemihostingCall(ApplicationExit);
 }
 #endif
 " >> "$DIR/test.c"

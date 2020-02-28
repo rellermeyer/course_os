@@ -317,35 +317,16 @@ void __attribute__((interrupt("FIQ"))) fiq_handler(void)
 	restore_proc_status(cpsr);
 }
 
-/**
- * Semihosting calls
- * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0471g/CHDJHHDI.html
- */
+void SemihostingCall(enum SemihostingSWI mode) {
 
-void shutdown_qemu_zero() {
-    asm volatile ("MOV R0, #0x18");
-    asm volatile ("LDR R1, =0x20026");
-    asm volatile ("svc 0x00123456");
-    __builtin_unreachable();
+    int a = mode;
+
+    asm volatile (
+        "MOV r0, #0x18\n"
+        "LDR r1, %[in0]\n"
+        "svc 0x00123456\n"
+        :
+        : [in0] "m"  (a)
+    );
+
 }
-
-void shutdown_qemu_nonzero() {
-    asm volatile ("MOV R0, #0x18");
-    asm volatile ("LDR R1, =0x20029");
-    asm volatile ("svc 0x00123456");
-    __builtin_unreachable();
-}
-
-void debugger() {
-    asm volatile ("MOV R0, #0x18");
-    asm volatile ("LDR R1, =0x20020");
-    asm volatile ("svc 0x00123456");
-}
-
-//void test() {
-//    asm volatile ("LDR R1, =%0"
-//        :
-//        : "a" (0x20026)
-//        : "r0"
-//    );
-//}

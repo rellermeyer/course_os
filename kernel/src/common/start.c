@@ -110,12 +110,14 @@ void start2(uint32_t *p_bootargs) {
     kprintf("Programming the timer interrupt\n");
     start_timer_interrupts(0, 10);
 
+//    exit_test();
+
 #ifndef ENABLE_TESTS
     argparse_process(p_bootargs);
 #else
     test_main();
     // If we return, the tests failed.
-    shutdown_qemu_nonzero();
+    SemihostingCall(OSSpecific);
 #endif
 
     print_uart0("done parsing atag list\n");
