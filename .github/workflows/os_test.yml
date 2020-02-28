@@ -42,5 +42,5 @@ jobs:
           mkdir -p kernel/build;
           wget https://static.jonay2000.nl/build/card.sd -O kernel/build/card.sd;
           wget https://static.jonay2000.nl/build/flash.bin -O kernel/build/flash.bin;
-          qemu-system-arm -M versatilepb -cpu arm1176 -sd kernel/build/card.sd -m 128M -nographic -kernel kernel/build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $! > server.PID;
+          qemu-system-arm -M versatilepb -cpu arm1176 -sd kernel/build/card.sd -m 128M -nographic -kernel kernel/build/flash.bin -append "-load 0x410000 0x14000" > kernel/test.log & echo $! > server.PID;
           kernel/src/test/monitor_tests.sh;e=$?; rm test.log; kill $(cat server.PID); rm server.PID; exit $e
