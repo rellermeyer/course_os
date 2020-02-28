@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-tail -f -n +1 "$DIR/../../test.log" | while read line
+tail -f -n +1 "$DIR/../../test.log" | while read -r line
 do
   if [[ $line == *"TESTS COMPLETE"* ]]; then
     echo "$line"
@@ -20,4 +20,3 @@ do
     echo "$line"
   fi
 done
-
