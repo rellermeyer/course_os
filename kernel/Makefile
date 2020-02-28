@@ -49,7 +49,7 @@ build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
-	${QEMU} -M versatilepb -audiodev none,id=none -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 
 run: build | builddir
