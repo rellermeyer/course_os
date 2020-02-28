@@ -106,10 +106,11 @@ void start2(uint32_t *p_bootargs) {
     process_init();
 
     sched_init();
-
     // FIXME: temporary
     kprintf("Programming the timer interrupt\n");
     start_timer_interrupts(0, 10);
+
+//    _Poweroff;
 
 #ifndef ENABLE_TESTS
     argparse_process(p_bootargs);
@@ -136,5 +137,7 @@ void start2(uint32_t *p_bootargs) {
     //  * execute userland init program
 
 
-    SLEEP;
+    asm volatile ("MOV R0, #0x18");
+    asm volatile ("LDR R1, =0x20026");
+    asm volatile ("svc 0x00123456");
 }
