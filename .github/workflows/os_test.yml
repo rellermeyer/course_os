@@ -16,14 +16,13 @@ jobs:
             key: toolchain
 
       - name: Install Dependencies
-        run:
-          - apt-get update
-          - apt-get install build-essential qemu-system-arm python3 wget -y
+        run: |
+        apt-get update &&
+        apt-get install build-essential qemu-system-arm python3 wget -y
 
       - name: Install Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run:
-          - make toolchain
+        run: make toolchain
 
       - name: Compile
         run: make build
