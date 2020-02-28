@@ -32,10 +32,10 @@
  */
 #include "stdint.h"
 
-#define BRANCH_INSTRUCTION	0xe59ff018	// ldr pc, pc+offset
+#define BRANCH_INSTRUCTION    0xe59ff018    // ldr pc, pc+offset
 
 // System Call Types
-#define SYSCALL_CREATE 0  
+#define SYSCALL_CREATE 0
 #define SYSCALL_SWITCH 1
 #define SYSCALL_DELETE 2
 #define SYSCALL_OPEN 3
@@ -46,8 +46,8 @@
 #define SYSCALL_MEM_MAP 8
 #define SYSCALL_SEEK 9
 #define SYSCALL_MKDIR 10
-#define SYSCALL_COPY 11   
-#define SYSCALL_LS 12  
+#define SYSCALL_COPY 11
+#define SYSCALL_LS 12
 #define SYSCALL_MALLOC 13
 #define SYSCALL_ALIGNED_ALLOC 14
 #define SYSCALL_FREE 15
@@ -57,18 +57,38 @@
 #define SYSCALL_WRITEV 101
 #define SYSCALL_PAUSE 102
 
-void init_vector_table(void); 
+void init_vector_table(void);
 
 // vector table handlers, should be loaded at 0x00 in this order!
 extern void _Reset();
-void reset_handler(void);
-void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void);	// 0x04
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void);	// 0x08
-void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void);	// 0x0c
-void __attribute__((interrupt("ABORT"))) data_abort_handler(void);		// 0x10
-void reserved_handler(void);		// 0x14
-void __attribute__((interrupt("IRQ"))) irq_handler(void);			// 0x18
-void __attribute__((interrupt("FIQ"))) fiq_handler(void);			// 0x1c
 
+void reset_handler(void);
+
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void);    // 0x04
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void);    // 0x08
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void);    // 0x0c
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void);        // 0x10
+void reserved_handler(void);        // 0x14
+void __attribute__((interrupt("IRQ"))) irq_handler(void);            // 0x18
+void __attribute__((interrupt("FIQ"))) fiq_handler(void);            // 0x1c
+
+/**
+ * Semihosting calls
+ * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0471g/CHDJHHDI.html
+ */
+enum SemihostingSWI {
+    BreakPoint          = 0x20020,
+    WatchPoint          = 0x20021,
+    StepComplete        = 0x20022,
+    RunTimeErrorUnknown = 0x20023,
+    InternalError       = 0x20024,
+    UserInterruption    = 0x20025,
+    ApplicationExit     = 0x20026, // Qemu exits with 0
+    StackOverflow       = 0x20027,
+    DivisionByZero      = 0x20028,
+    OSSpecific          = 0x20029, // Qemu exits with 1
+};
+
+void SemihostingCall(enum SemihostingSWI mode);
 
 #endif

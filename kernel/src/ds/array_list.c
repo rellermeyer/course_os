@@ -6,7 +6,9 @@
  */
 
 #include <array_list.h>
-#include <klibc.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 arrl_handle* arrl_create() {
     return arrl_create_fixed(DEFAULT_BUCKET_SIZE);
@@ -68,7 +70,7 @@ void arrl_remove(arrl_handle* arrl, void* elem) {
 
     // Except the last bucket, shift each bucket up by one and copy first element of the next bucket to the last cell of the current bucket
     out: while (curr_bucket != tail) {
-        os_memcpy(*(((uint32_t**)curr_bucket->data) + bucket_index + 1),
+        memcpy(*(((uint32_t**)curr_bucket->data) + bucket_index + 1),
                   *(((uint32_t**)curr_bucket->data) + bucket_index + 0),
                 bucket_size - bucket_index - 1);
         bucket_index = 0;

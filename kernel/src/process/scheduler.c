@@ -1,12 +1,13 @@
 #include <kthread.h>
 #include <scheduler.h>
 #include <vm.h>
-#include <klibc.h>
+#include <stdlib.h>
 #include <process.h>
 #include <linked_list.h>
 #include <hash_map.h>
 #include <array_list.h>
 #include <timer.h>
+#include <math.h>
 
 #define MAX_TASKS 100   // in the future, cap will be removed
 #define MAX_ACTIVE_TASKS 4  // in the future, will dynamically change based on load
@@ -16,7 +17,7 @@
 #define TASK_STATE_INACTIVE  2  // task is in the wait queue (about to be executed)
 #define TASK_STATE_ACTIVE 1     // task is part of the running tasks; it is being interleaved and executed atm
 #define TASK_STATE_NONE 0       // task is just created (no real state)
-#define SAFE_NICE(n) MAX(MIN(MAX_NICENESS, n), n)
+#define SAFE_NICE(n) max(min(MAX_NICENESS, n), n)
 #define KTHREAD 0
 #define PROCESS 1
 
@@ -54,7 +55,7 @@ void __sched_dispatch(void);
 
 void timer_handler(void *args)
 {
-	os_printf("scheduler received timer interrupt, need to switch tasks...\n");
+    kprintf("scheduler received timer interrupt, need to switch tasks...\n");
 }
 
 void __sched_register_timer_irq(void)
@@ -92,7 +93,7 @@ uint32_t sched_init(void) {
 
 	sched_tid = 0;
 
-    os_printf("Initializing scheduler\n");
+    kprintf("Initializing scheduler\n");
     last_err = "No error";
     inactive_tasks = prq_create_fixed(MAX_TASKS);
     active_tasks = prq_create_fixed(MAX_ACTIVE_TASKS);
@@ -429,7 +430,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
 
     __sched_pause_timer_irq();
 
-    prq_handle * tasks;
+    prq_handle * tasks = NULL;
 
     switch (task->state) {
         case TASK_STATE_ACTIVE:
@@ -442,7 +443,7 @@ uint32_t sched_set_niceness(uint32_t pid, uint32_t niceness) {
             break;
     }
 
-    if (tasks) {
+    if (tasks != NULL) {
         prq_remove(tasks, task->node); // remove the running task from queue
         task->node->priority = SAFE_NICE(niceness);
         prq_enqueue(tasks, task->node); // add it again to see if its position in the queue

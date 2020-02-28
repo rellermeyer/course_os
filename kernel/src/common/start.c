@@ -45,17 +45,17 @@
 #define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
 
 void uart_handler(void *null) {
-	print_uart0("uart0!\n");
+    print_uart0("uart0!\n");
 }
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
-	// Initialize the virtual memory
-	print_uart0("Enabling MMU...\n");
-	vm_init();
-	os_printf("Initialized VM datastructures.\n");
-	mmap(p_bootargs);
+    // Initialize the virtual memory
+    print_uart0("Enabling MMU...\n");
+    vm_init();
+    kprintf("Initialized VM datastructures.\n");
+    mmap(p_bootargs);
 }
 
 
@@ -63,74 +63,80 @@ void start(uint32_t *p_bootargs) {
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs) {
-	// Setup all of the exception handlers... (hrm, interaction with VM?)
-	init_vector_table();
+    // Setup all of the exception handlers... (hrm, interaction with VM?)
+    init_vector_table();
 
-	// Setup kmalloc...
-	init_heap();
+    // Setup kmalloc...
+    init_heap();
 
-	//print_uart0("\nCourseOS!\n");
+    //print_uart0("\nCourseOS!\n");
 
-	splash();
+    splash();
 
-	// Test stuff...
-	/*int *p = (int*)0xFFFFFFF0;
-	 p[0] = 1;
-	 os_printf("0x%x == 1?\n", p[0]);*/
+    // Test stuff...
+    /*int *p = (int*)0xFFFFFFF0;
+     p[0] = 1;
+     os_printf("0x%x == 1?\n", p[0]);*/
 
-	//run_vm_tests();
-	//INFO("There are %d free frames.\n", vm_count_free_frames());
-	//run_mem_alloc_tests();
-	//INFO("There are %d free frames.\n", vm_count_free_frames());
-	//run_prq_tests();
-	//run_hmap_tests();
+    //run_vm_tests();
+    //INFO("There are %d free frames.\n", vm_count_free_frames());
+    //run_mem_alloc_tests();
+    //INFO("There are %d free frames.\n", vm_count_free_frames());
+    //run_prq_tests();
+    //run_hmap_tests();
 
-	// The file system has currently been *disabled* due to bugs
+    // The file system has currently been *disabled* due to bugs
     //	kfs_init(0, 0, 0);
 
 
-	/*
-	 4-15-15: 	#Prakash: 	What happens if we let the program load here?
-	 Let's make argparse_process() do its thing
+    /*
+     4-15-15: 	#Prakash: 	What happens if we let the program load here?
+     Let's make argparse_process() do its thing
 
-	 Note: As of 4-15-15 this fails horribly with hello.o not being
-	 recognized as an ELF file and DATA ABORT HANDLER being syscalled			   
-	 */
+     Note: As of 4-15-15 this fails horribly with hello.o not being
+     recognized as an ELF file and DATA ABORT HANDLER being syscalled
+     */
 
-	// enable interrupt handling
-	enable_interrupts();
+    // enable interrupt handling
+    enable_interrupts();
 
-	// initialize the timers
-	initialize_timers();
+    // initialize the timers
+    initialize_timers();
 
-	//assert(1==2 && "Test assert please ignore");
     process_init();
 
-	sched_init();
+    sched_init();
+    // FIXME: temporary
+    kprintf("Programming the timer interrupt\n");
+    start_timer_interrupts(0, 10);
 
-	// FIXME: temporary
-	os_printf("Programming the timer interrupt\n");
-	start_timer_interrupts(0, 10);
+//    exit_test();
 
-    #ifndef ENABLE_TESTS
-	argparse_process(p_bootargs);
-    #else
-	test_main();
-    #endif
+#ifndef ENABLE_TESTS
+    argparse_process(p_bootargs);
+#else
+    test_main();
+    // If we return, the tests failed.
+    SemihostingCall(OSSpecific);
+#endif
 
-	print_uart0("done parsing atag list\n");
+    print_uart0("done parsing atag list\n");
 
-	//init_kheap(31 * 0x100000);
-	//init_uheap(0x100000);
+    //init_kheap(31 * 0x100000);
+    //init_uheap(0x100000);
 
-	//initialize pcb table and PID
-	/* init_all_processes(); */
-	//print_process_state(0);
-	//run_process_tests();
-	//print_PID();
-	// init_q();
-	//common();
+    //initialize pcb table and PID
+    /* init_all_processes(); */
+    //print_process_state(0);
+    //run_process_tests();
+    //print_PID();
+    // init_q();
+    //common();
 
+    // TODO:
+    //  * Mount vfs
+    //  * Load initramfs into tmpfs
+    //  * execute userland init program
 
-	SLEEP;
+    SLEEP;
 }

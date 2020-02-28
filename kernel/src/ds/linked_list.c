@@ -17,7 +17,8 @@
  *
  ********************************************************************/
 
-#include <klibc.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <linked_list.h>
 
 llist_node* llist_create_node(void *data) {
@@ -65,11 +66,10 @@ void llist_free_node(llist_node *node) {
 }
 
 void llist_insert(llist_handle *l, void *data, int index) {
-    int i;
     llist_node *next = l->head;
-    llist_node *prev;
+    llist_node *prev = NULL;
     l->count++;
-    for (i = 0; i < index; i++) {
+    for (int i = 0; i < index; i++) {
         prev = next;
         next = next->next;
     }
@@ -96,9 +96,8 @@ void llist_remove_at(llist_handle *l, int index) {
 
 
 llist_node* llist_get_node(llist_handle *l, int index) {
-    int i;
     llist_node *tmp = l->head;
-    for (i = 0; i < index; i++) {
+    for (int i = 0; i < index; i++) {
         tmp = tmp->next;
     }
     return tmp;

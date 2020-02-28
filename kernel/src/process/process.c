@@ -1,7 +1,8 @@
 #include <process.h>
-#include <klibc.h>
+#include <stdlib.h>
 #include <mem_alloc.h>
 #include <vm.h>
+#include <string.h>
 //#include <file.h>
 #include <bitvector.h>
 
@@ -131,8 +132,7 @@ void __process_elf_init(pcb* pcb_p, const char* name) {
  @param pcb* pcb_p
 
  */
-void __process_stack_init(pcb * pcb_p)
-{
+void __process_stack_init(pcb * pcb_p) {
   int retval = 0;
   for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++)
   {
@@ -140,14 +140,14 @@ void __process_stack_init(pcb * pcb_p)
         (void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
     if (retval)
     {
-      os_printf("vm_allocate_page error code: %d\n", retval);
+        kprintf("vm_allocate_page error code: %d\n", retval);
       break;
     }
     else
     {
-      os_printf(
-          "A page have been allocated for process stack at vptr: 0x%x\n",
-          (STACK_BASE + (i * BLOCK_SIZE)));
+        kprintf(
+                "A page have been allocated for process stack at vptr: 0x%x\n",
+                (STACK_BASE + (i * BLOCK_SIZE)));
     }
     vm_map_shared_memory(KERNEL_VAS,
                         (void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
@@ -163,7 +163,7 @@ void __process_stack_init(pcb * pcb_p)
   stack_top[-5] = STACK_BASE;
   stack_top[-6] = 1;
 
-  os_strcpy((char*) STACK_BASE, pcb_p->name);
+  strcpy((char*) STACK_BASE, pcb_p->name);
 
   // We need to set sp (r13) to stack_top - 12
   pcb_p->R13 = STACK_TOP - 4 * 6;
@@ -172,20 +172,20 @@ void __process_stack_init(pcb * pcb_p)
     vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
   }
 }
-void __process_heap_init(pcb* pcb_p)
-{
+
+void __process_heap_init(pcb* pcb_p) {
   //from mem_alloc.c
   init_process_heap(pcb_p->stored_vas);
-  os_printf("User Level Heap for Process PID %d initialized\n", pcb_p->PID);
+    kprintf("User Level Heap for Process PID %d initialized\n", pcb_p->PID);
 }
+
 /*
  Saves all of the Registers on the machine to the PCB
  @param Process ID
  @return 0 if failed
  @return 1 for success
  */
-void process_save_state(pcb* pcb_p)
-{
+void process_save_state(pcb* pcb_p) {
   assert(pcb_p);
 
   asm("MOV %0, r0":"=r"(pcb_p->R0)::);

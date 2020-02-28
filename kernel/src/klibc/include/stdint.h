@@ -35,6 +35,22 @@ typedef uint16_t uint_least16_t;
 typedef uint32_t uint_least32_t;
 typedef uint64_t uint_least64_t;
 
+#define MACHINE_WORDSIZE 32
+
+#if MACHINE_WORDSIZE == 32
+typedef uint32_t size_t;
+typedef int32_t isize_t;
+#else
+#if MACHINE_WORDSIZE == 64
+#error "TODO: we declare some pointers as uint32_t meaning that this mode is not currently supported."
+typedef uint64_t size_t;
+typedef int64_t isize_t;
+#else
+#error "WORDSIZE not supported"
+#endif
+#endif
+
+
 #define INT8_MIN   (-1-0x7f)
 #define INT16_MIN  (-1-0x7fff)
 #define INT32_MIN  (-1-0x7fffffff)
