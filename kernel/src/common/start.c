@@ -106,15 +106,18 @@ void start2(uint32_t *p_bootargs) {
     process_init();
 
     sched_init();
-
     // FIXME: temporary
     kprintf("Programming the timer interrupt\n");
     start_timer_interrupts(0, 10);
+
+//    exit_test();
 
 #ifndef ENABLE_TESTS
     argparse_process(p_bootargs);
 #else
     test_main();
+    // If we return, the tests failed.
+    SemihostingCall(OSSpecific);
 #endif
 
     print_uart0("done parsing atag list\n");
@@ -134,7 +137,6 @@ void start2(uint32_t *p_bootargs) {
     //  * Mount vfs
     //  * Load initramfs into tmpfs
     //  * execute userland init program
-
 
     SLEEP;
 }

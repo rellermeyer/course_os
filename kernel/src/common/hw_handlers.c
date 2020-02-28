@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <vm.h>
 #include <process.h>
-// TODO: fs is removed
-//#include "fs/file.h"
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table(void)
@@ -317,4 +315,18 @@ void __attribute__((interrupt("FIQ"))) fiq_handler(void)
 // SUBS PC, R14_fiq, #4
 
 	restore_proc_status(cpsr);
+}
+
+void SemihostingCall(enum SemihostingSWI mode) {
+
+    int a = mode;
+
+    asm volatile (
+        "MOV r0, #0x18\n"
+        "LDR r1, %[in0]\n"
+        "svc 0x00123456\n"
+        :
+        : [in0] "m"  (a)
+    );
+
 }

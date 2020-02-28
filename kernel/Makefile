@@ -15,6 +15,7 @@ SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have it's contents autoincluded
 INCLUDEDIR = include
+TEST_MAIN_FILE = $(SOURCEDIR)/test/test.c
 
 # =================== End Configuration ===================
 
@@ -27,7 +28,8 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
-C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c))
+C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)
+# Add test.c when we are compiling tests
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
 
@@ -36,6 +38,8 @@ S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
     $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
+#test: OBJECT_FILES += $(patsubst $(SOURCEDIR)/%.c, $(BUILDDIR)/%.o, $(TEST_MAIN_FILE))
+
 
 INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
@@ -45,17 +49,14 @@ build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -kernel build/flash.bin -append "-load 0x410000 0x14000" > test.log & echo $$! > server.PID;
-	# montior the output, save exit code, remove logfile, kill qemu,
-	# remove pid file used to kill qemu, exit with correct exit code
-	$(SOURCEDIR)/test/monitor_tests.sh;e=$$?; rm test.log; kill $$(cat server.PID); rm server.PID; exit $$e
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 
 run: build | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
 
 
 $(BUILDDIR)/flash.bin: $(BUILDDIR)/kernel.img $(BUILDDIR)/bootloader.img
@@ -70,7 +71,9 @@ $(BUILDDIR)/card.sd: | builddir
 	dd if=/dev/zero of=$@ conv=notrunc bs=4096 count=32768
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
-	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $(OBJECT_FILES) -o $@
+	@echo $<
+	@echo $^
+	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
 
 $(BUILDDIR)/kernel.bin: $(BUILDDIR)/kernel.elf | builddir
 	$(OBJCOPY) -O binary $< $@
@@ -102,11 +105,8 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(BUILDDIR)/test/test.o: $(SOURCEDIR)/test/test.c dummy | builddir
+$(TEST_MAIN_FILE): dummy
 	@$(SOURCEDIR)/test/generate_tests.sh
-	@mkdir -p $(shell dirname $@)
-	@echo Compiling $<
-	@$(CC) $(CFLAGS) -c $< -o $@
 
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
@@ -119,6 +119,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy | builddir
 
 clean:
 	rm -rf $(BUILDDIR)
+	rm -rf $(SOURCEDIR)/test/test.c
 
 # use to force rebuild of certain recipes
 dummy:;

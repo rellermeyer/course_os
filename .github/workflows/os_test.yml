@@ -1,0 +1,41 @@
+name: course_os test suite
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Toolchain
+        id: cache-toolchain
+        uses: actions/cache@v1
+        with:
+            path: toolchain
+            key: toolchain
+
+      - name: Cache u-boot
+        id: cache-u-boot
+        uses: actions/cache@v1
+        with:
+          path: u-boot
+          key: u-boot
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
+
+      - name: Install Toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: make toolchain
+
+      - name: Install u-boot
+        run: make u-boot
+
+      - name: Compile
+        run: make build
+
+      - name: Test
+        run: make test
