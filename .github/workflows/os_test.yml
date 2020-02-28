@@ -18,7 +18,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update &&
-          sudo apt-get install build-essential qemu-system-arm python3 wget -y
+          sudo apt-get install build-essential qemu-system-arm python3 wget texinfo -y
 
       - name: Install Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
