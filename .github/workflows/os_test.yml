@@ -21,8 +21,8 @@ jobs:
           sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
 
       - name: Install Toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: make toolchain
+        #if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: rm -rf toolchain/arm-none-eabi/ && make toolchain
 
       - name: Compile
         run: make build
