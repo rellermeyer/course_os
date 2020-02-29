@@ -2,7 +2,7 @@ ENTRY(_Reset)
 SECTIONS
 {
 	. = 0x8000;
-	.startup . : { build//common/startup.o(.text) }
+	.startup . : { build/common/startup.o(.text) }
 	.text : { *(.text) }
  	.data : { *(.data) }
 	.bss : { *(.bss COMMON) }
