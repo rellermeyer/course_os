@@ -25,26 +25,27 @@ void init_vector_table(void)
 	 *dst++ = *src++;
 	 */
 
+	uint32_t * start = vm_vtop(KERNEL_VAS, 0x00);
+
 	/* Primary Vector Table */
-	mmio_write(0x00, BRANCH_INSTRUCTION);
-	mmio_write(0x04, BRANCH_INSTRUCTION);
-	mmio_write(0x08, BRANCH_INSTRUCTION);
-	mmio_write(0x0C, BRANCH_INSTRUCTION);
-	mmio_write(0x10, BRANCH_INSTRUCTION);
-	mmio_write(0x14, BRANCH_INSTRUCTION);
-	mmio_write(0x18, BRANCH_INSTRUCTION);
-	mmio_write(0x1C, BRANCH_INSTRUCTION);
+	mmio_write(start, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x04, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x08, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x0C, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x10, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x14, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x18, BRANCH_INSTRUCTION);
+	mmio_write(start + 0x1C, BRANCH_INSTRUCTION);
 
-	/* Secondary Vector Table */
-	mmio_write(0x20, &reset_handler);
-	mmio_write(0x24, &undef_instruction_handler);
-	mmio_write(0x28, &software_interrupt_handler);
-	mmio_write(0x2C, &prefetch_abort_handler);
-	mmio_write(0x30, &data_abort_handler);
-	mmio_write(0x34, &reserved_handler);
-	mmio_write(0x38, &irq_handler);
-	mmio_write(0x3C, &fiq_handler);
-
+    /* Secondary Vector Table */
+	mmio_write(start + 0x20, &reset_handler);
+	mmio_write(start + 0x24, &undef_instruction_handler);
+	mmio_write(start + 0x28, &software_interrupt_handler);
+	mmio_write(start + 0x2C, &prefetch_abort_handler);
+	mmio_write(start + 0x30, &data_abort_handler);
+	mmio_write(start + 0x34, &reserved_handler);
+	mmio_write(start + 0x38, &irq_handler);
+	mmio_write(start + 0x3C, &fiq_handler);
 }
 
 /* handlers */

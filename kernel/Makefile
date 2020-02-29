@@ -3,7 +3,7 @@ include $(CURDIR)/../config.mk
 # ===================== Configuration =====================
 
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O2 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp
+CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O3 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
