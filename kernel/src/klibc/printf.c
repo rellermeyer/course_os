@@ -173,6 +173,6 @@ int kprintf(const char *str_buf, ...) {
     char buf[256];
     int n = os_vsnprintf(buf, 255, str_buf, args);
     va_end(args);
-    print_uart0(buf);
+    uart0_puts(buf);
     return n;
 }

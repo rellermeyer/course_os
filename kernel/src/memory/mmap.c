@@ -33,7 +33,7 @@ void mmap(void *p_bootargs) {
 	//stash register state on the stack
 	asm volatile("push {r0-r11}");
 
-    kprintf("%X\n", p_bootargs);
+    kprintf("Boot arguments location: %X\n", p_bootargs);
 
 	/*
 	 int pte;
@@ -146,10 +146,10 @@ void mmap(void *p_bootargs) {
 	//Read contents into control
 	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
 	//Set bit 0,1,2,12,13
-	//control |= 0x3007; //0b11000000000111
+    //	control |= 0x3007; //0b11000000000111
 	control |= 0x1007; //0b01000000000111 (No high vectors)
 	control |= 1 << 23; // Enable ARMv6
-	//control |= 1<<29; // Enable ForceAP
+    //	control |= 1<<29; // Enable ForceAPs
     kprintf("control reg: 0x%x\n", control);
 	//Write back value into the register
 	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));

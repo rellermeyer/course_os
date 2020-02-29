@@ -4,103 +4,91 @@
 #include <stdint.h>
 #include <uart.h>
 #include <interrupt.h>
+#include <stdio.h>
 
-void uart_init() {
-    // Register the uart interrupt handler.
-//    register_interrupt_handler(UART0_IRQ, UART0_INTERRUPT_HANDLER)
-}
+// 0x3F200000 + 0x1000
 
-void print_uart0(const char *s) {
-	while (*s != '\0') {
-		uart_write_byte(UART0_ADDRESS, *s);
-		s++;
-	}
-}
+/*
+// raspberry pi 2 + 3
+volatile UartInterface * const UART0_ADDRESS = (volatile UartInterface *)0x3f201000;
+volatile UartInterface * const UART1_ADDRESS = (volatile UartInterface *)0x3f202000;
+volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x3f203000;
 
-void print_char_uart0(char c) {
-    uart_write_byte(UART0_ADDRESS, c);
-}
+// raspberry pi zero, 1, b+ etc
+volatile UartInterface * const UART0_ADDRESS = (volatile UartInterface *)0x20201000;
+volatile UartInterface * const UART1_ADDRESS = (volatile UartInterface *)0x20202000;
+volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x20203000;
 
-/* print the full 32 bits of a word at the given address */
-/* trailing newline... */
-void print_word_bits(uint32_t * c) {
-	int i;
-	for (i = 31; i >= 0; i--)
-		*c & (1 << i) ? print_uart0("1") : print_uart0("0");
-	print_uart0("\n");
-}
-
-/* print the full 8-digit hex code of a word at the given address */
-/* no '0x' prefix, NO trailing newline */
-void print_word_hex(uint32_t * c) {
-	int i;
-	uint32_t a;
-	for (i = 0x7; i >= 0x0; i--)
-	{
-		a = *c & (0xf << (i * 0x4));
-		a >>= (i * 0x4);
-
-		if (a <= 9)
-            uart_write_byte(UART0_ADDRESS, (uint32_t )(a + (uint32_t )'0'));
-		else if (a <= 0xf)
-            uart_write_byte(UART0_ADDRESS, (uint32_t )((a - 0xa) + (uint32_t )'a'));
-		else
-            uart_write_byte(UART0_ADDRESS, (uint32_t )('?'));
-	}
-}
-
-/* display memory at given address */
-/* format is: "[address]: word1 word2 word3\n", etc. */
-/* displays 30 words (10 lines) */
-void md(uint32_t * start) {
-	int i, j;
-	uint32_t *addr = start;
-	for (i = 0; i < 10; i++) {
-		print_uart0("0x");
-		print_word_hex((uint32_t *) &addr);
-		print_uart0(": ");
-		for (j = 0; j < 3; j++) {
-			print_word_hex(addr);
-			print_uart0("  ");
-			addr++;
-		}
-		print_uart0("\n");
-	}
-}
-
-/*void print_uart0(const char *s) {*/
-/*while (uart->dd->uart0_inter_val == 0) {}*/
-/*if(uart.UARTCR & RXE > 0) */
-/*{*/
-/*while(*s != '\0') */
-/*{*/
-/**UART0 = (uint32_t)(*s);*/
-/*s++;*/
-/*}*/
-/*}*/
-/*}*/
-
-/*  We need to implement a lock here.  klibc will be implementing the buffer
- *    we just need to ensure the FIFO isn't read out of order.
+// raspberry pi 4:
+volatile UartInterface * const UART0_ADDRESS = (volatile UartInterface *)0xfe201000;
+volatile UartInterface * const UART1_ADDRESS = (volatile UartInterface *)0xfe202000;
+volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0xfe203000;
  */
-/*char *read_uart0() */
-/*{*/
-/*uint32_t buffer[STD_IN_BUFFER_SIZE] = {0};*/
-/*while (uart->dd->uart0_inter_val == 0) {}*/
-/*uint32_t *iterator = buffer;*/
-/*do */
-/*{*/
-/*if(uart.UARTCR & TXE > 0) */
-/*{*/
-/*break;*/
-/*} */
-/*else */
-/*{*/
-/**iterator = uart.UARTDR;*/
-/*iterator++;*/
-/*}*/
-/*} while (*iterator != '\0');*/
-/*return buffer;*/
-/*}*/
+// VersatilePB
+volatile UartInterface * const UART0_ADDRESS = (volatile UartInterface *)0x101f1000;
+volatile UartInterface * const UART1_ADDRESS = (volatile UartInterface *)0x101f2000;
+volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x101f3000;
+
+
+
+static inline void delay(int32_t count)
+{
+    asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
+    : "=r"(count): [count]"0"(count) : "cc");
+}
+
+void set_baud_rate(volatile UartInterface * interface, uint32_t baud_rate) {
+    const int UART_CLOCK_SPEED = 4000000;
+    float divider = UART_CLOCK_SPEED / (16.0f * baud_rate);
+    uint16_t integer_divider = (uint16_t)divider;
+    uint8_t fractional_divider = ((divider - integer_divider) * 64) + 0.5;
+
+    interface->IBRD = integer_divider;        // Integer baud rate divider
+    interface->FBRD = fractional_divider;     // Fractional baud rate divider
+};
+
+void uart_early_init() {
+    //Disable UART
+    UART0_ADDRESS->CR = 0x00000000;
+
+    #define GPPUD (GPIO_ADDRESS_PI + 0x94) //Controls pull up/down on GPIO pins
+    #define GPPUDCLK0 (GPIO_ADDRESS_PI + 0x98) //GPIO Clo
+
+    mmio_write(GPPUD, 0x00000000);
+    delay(150);
+
+    mmio_write(GPPUDCLK0, (1<<14) | (1<<15));
+    delay(150);
+
+    mmio_write(GPPUDCLK0,0x00000000);
+
+    UART0_ADDRESS->ICR = 0x7ff;
+    //Enable DMA memory reads & writes with UART
+    //mmio_write(UARTDMACR, (1<<0) | (1<<1));
+
+    //Enable FIFO and set word length to 8
+    UART0_ADDRESS->LCR_H = (1<<4) | (1<<5) | (1<<6);
+
+    set_baud_rate(UART0_ADDRESS, 115200);
+
+    //Enable interrupts
+    UART0_ADDRESS->IMSC = CTCMIM | RXIM | TXIM | RTIM | FEIM | PEIM | BEIM | OEIM;
+    //Enable UART and UART transfer
+    UART0_ADDRESS->CR = (1<<0) | (1<<8) | (1 << 9);
+
+
+    kprintf("Baud rate: %i:%i\n", UART0_ADDRESS->IBRD, UART0_ADDRESS->FBRD);
+}
+
+void uart_late_init() {
+    // Register the uart interrupt handler.
+    //    register_interrupt_handler(UART0_IRQ, UART0_INTERRUPT_HANDLER)
+
+    //    kprintf("uart: 0x%x\n", UART0_ADDRESS->IMSC);
+    //    UART0_ADDRESS->IMSC = RXIM;
+    //    kprintf("uart: 0x%x\n", UART0_ADDRESS->IMSC);
+}
+
+
 
 #endif // RASPBERRY_PI

@@ -3,8 +3,8 @@ include $(CURDIR)/../config.mk
 # ===================== Configuration =====================
 
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O2
-PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
+CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O2 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp
+#PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
 MEMORY = 128M
@@ -29,7 +29,6 @@ GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
 C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)
-# Add test.c when we are compiling tests
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
 
@@ -38,56 +37,27 @@ S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
     $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
-#test: OBJECT_FILES += $(patsubst $(SOURCEDIR)/%.c, $(BUILDDIR)/%.o, $(TEST_MAIN_FILE))
-
 
 INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
-build: $(BUILDDIR)/card.sd $(BUILDDIR)/flash.bin | builddir
+build:  $(BUILDDIR)/kernel.elf | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
+	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  versatilepb -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
-	${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
-
-
-$(BUILDDIR)/flash.bin: $(BUILDDIR)/kernel.img $(BUILDDIR)/bootloader.img
-	dd if=/dev/zero of=$@ bs=4k count=1536
-	dd if=../u-boot/u-boot-$(UBOOT_VERSION)/u-boot.bin of=$@ conv=notrunc bs=4k
-	# kernel
-	dd if=$(BUILDDIR)/kernel.img of=$@ conv=notrunc bs=4k seek=512
-	# bootloader
-	dd if=$(BUILDDIR)/bootloader.img of=$@ conv=notrunc bs=4k seek=575
-
-$(BUILDDIR)/card.sd: | builddir
-	dd if=/dev/zero of=$@ conv=notrunc bs=4096 count=32768
+	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M versatilepb -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
-	@echo $<
-	@echo $^
 	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
-
-$(BUILDDIR)/kernel.bin: $(BUILDDIR)/kernel.elf | builddir
-	$(OBJCOPY) -O binary $< $@
-
-$(BUILDDIR)/kernel.img: $(BUILDDIR)/kernel.bin | builddir
-	$(MKIMAGE) -A arm -C none -O linux -T kernel -d $< -a 0x00010000 -e 0x00010000 $@
-
-# Begin bootloader Make
-uboot_configuration/uboot-commands.ubt: $(and $(KERNEL_PARAMS),dummy)
-	uboot_configuration/generate.sh $(KERNEL_PARAMS)
-
-$(BUILDDIR)/bootloader.img: uboot_configuration/uboot-commands.ubt | builddir
-	$(MKIMAGE) -A arm -C none -T script -d $< -a 0x10000 -e 0x10000 $@
-# End bootloader make
 
 # Begin Pi Make
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
@@ -107,7 +77,6 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 
 $(TEST_MAIN_FILE): dummy
 	@$(SOURCEDIR)/test/generate_tests.sh
-
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
