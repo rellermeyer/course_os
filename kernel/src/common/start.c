@@ -30,34 +30,18 @@
 #include <mem_alloc.h>
 #include <test.h>
 
-// The file system has currently been *disabled* due to bugs
-//#include "fs/open_table.h" //to initialize fs opentable
-//#include "tests.h"
-
-
-// Tests
-//#include "../../tests/test_klibc.h"
-//#include "tests/test_hash_map.h"
-//#include "tests/test_mem_alloc.h"
-//#include "tests/test_vm.h"
-//#include "tests/test_priority_queue.h"
-
-#define UART0_IMSC (*((volatile uint32_t *)(UART0_ADDRESS + 0x038)))
-
-void uart_handler(void *null) {
-    print_uart0("uart0!\n");
-}
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
     // Initialize the virtual memory
-    print_uart0("Enabling MMU...\n");
+    uart_early_init();
+
+    kprintf("Enabling MMU...\n");
     vm_init();
     kprintf("Initialized VM datastructures.\n");
     mmap(p_bootargs);
 }
-
 
 
 // This start is what starts the kernel. Note that virtual memory is enabled
@@ -68,8 +52,6 @@ void start2(uint32_t *p_bootargs) {
 
     // Setup kmalloc...
     init_heap();
-
-    //print_uart0("\nCourseOS!\n");
 
     splash();
 
@@ -100,6 +82,8 @@ void start2(uint32_t *p_bootargs) {
     // enable interrupt handling
     enable_interrupts();
 
+    uart_late_init();
+
     // initialize the timers
     initialize_timers();
 
@@ -112,15 +96,18 @@ void start2(uint32_t *p_bootargs) {
 
 //    exit_test();
 
+    kprintf("0x%x\n", p_bootargs);
+
 #ifndef ENABLE_TESTS
-    argparse_process(p_bootargs);
+//    argparse_process(p_bootargs);
+//
+// TODO: Start init process
 #else
     test_main();
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
 #endif
-
-    print_uart0("done parsing atag list\n");
+    kprintf("done parsing atag list\n");
 
     //init_kheap(31 * 0x100000);
     //init_uheap(0x100000);
@@ -137,6 +124,5 @@ void start2(uint32_t *p_bootargs) {
     //  * Mount vfs
     //  * Load initramfs into tmpfs
     //  * execute userland init program
-
     SLEEP;
 }
