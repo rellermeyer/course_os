@@ -124,14 +124,14 @@ void mmap(void *p_bootargs) {
     kprintf("0x%X\n", first_level_pt[(PMAPBASE + 0x100000) >> 20]);
 
 	//TTBR0
-	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
-	// Translation table 1 
-	//asm volatile("mcr p15, 0, %[addr], c2, c0, 1" : : [addr] "r" (pt_addr));
-	//asm volatile("mcr p15, 0, %[n], c2, c0, 2" : : [n] "r" (0));
-
-	//Set Domain Access Control to enforce out permissions
-	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
-	asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
+//	asm volatile("mcr p15, 0, %[addr], c2, c0, 0" : : [addr] "r" (pt_addr));
+//	// Translation table 1
+////	asm volatile("mcr p15, 0, %[addr], c2, c0, 1" : : [addr] "r" (pt_addr));
+////	asm volatile("mcr p15, 0, %[n], c2, c0, 2" : : [n] "r" (0));
+//
+//	//Set Domain Access Control to enforce out permissions
+//	//b01 = Client. Accesses are checked against the access permission bits in the TLB entry.
+//	asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x1));
 
 	/*CONTROL REGISTER
 	 *	Enable MMU by setting 0
@@ -141,18 +141,35 @@ void mmap(void *p_bootargs) {
 	 *	V bit 13 (1=high vectors 0xffff0000)
 	 * We disable high vectors, since low vectors work just fine.
 	 */
-	unsigned int control;
+//	volatile unsigned int control;
 
 	//Read contents into control
-	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
-	//Set bit 0,1,2,12,13
-    //	control |= 0x3007; //0b11000000000111
-	control |= 0x1007; //0b01000000000111 (No high vectors)
-	control |= 1 << 23; // Enable ARMv6
-    //	control |= 1<<29; // Enable ForceAPs
-    kprintf("control reg: 0x%x\n", control);
-	//Write back value into the register
-	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
+//	asm volatile("mrc p15, 0, %[control], c1, c0, 0" : [control] "=r" (control));
+//	//Set bit 0,1,2,12,13
+//    //	control |= 0x3007; //0b11000000000111
+//	control |= 0x1007; //0b01000000000111 (No high vectors)
+//	control |= 1 << 23; // Enable ARMv6
+//    //	control |= 1<<29; // Enable ForceAPs
+//    kprintf("control reg: 0x%x\n", control);
+//	//Write back value into the register
+//	asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
+
+    asm volatile (
+    "mcr p15, 0, %[addr], c2, c0, 0\n"
+
+    "mov r3, #0x1\n"
+    "mcr p15, 0, r3, c3, c0, 0\n"
+
+    "mrc p15, 0, r3, c1, c0, 0\n"
+    "mov r4, #0x1000 \n"
+    "add r4, #0x7 \n"
+    "orr r3, r4 \n"
+    "orr r3, #0x800000 \n"
+    //        "orr r0, r0, #0x01\n"
+    "mcr p15, 0, r3, c1, c0, 0 \n"
+    :
+    : [addr] "r" (pt_addr)
+    );
 
 	// Build the free frame list
 	vm_build_free_frame_list((void*) PMAPBASE + 0x100000, (void*) PMAPTOP);	//(void*)PMAPBASE+(unsigned int)((PMAPTOP)-(PMAPBASE)));
