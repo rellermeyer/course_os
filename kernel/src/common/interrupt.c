@@ -104,11 +104,11 @@ void handle_irq_interrupt(enum InterruptID interrupt_vector) {
 	// go to handler routine
     kprintf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
 	handlers[interrupt_vector]->handler((void *) interrupt_vector);
-
 }
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(interrupt_t mask) {
+    kprintf("Enabling interrupts with mask %i\n", mask);
 	get_proc_status();
 
 	// enable interrupt on the core
@@ -129,7 +129,9 @@ void enable_interrupt(interrupt_t mask) {
 /* disable IRQ and/or FIQ */
 void disable_interrupt(interrupt_t mask)
 {
-	// disable interrupts on the core
+    kprintf("Disabling interrupts with mask %i\n", mask);
+
+    // disable interrupts on the core
 	switch (mask)
 	{
 	case IRQ_MASK:
@@ -147,7 +149,10 @@ void disable_interrupt(interrupt_t mask)
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
 int disable_interrupt_save(interrupt_t mask)
 {
-	/* get a copy of the current process status register */
+
+    kprintf("Disabling interrupts (save) with mask %i\n", mask);
+
+    /* get a copy of the current process status register */
 	int cpsr;
 	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
 	// disable interrupts on the core
