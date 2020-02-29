@@ -199,4 +199,7 @@ static inline void vm_invalidate_tlb(void)
 	asm volatile("mcr p15, 0, %[r], c8, c7, 0" : : [r] "r" (0x0));
 }
 
+uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr);
+uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr);
+
 #endif
