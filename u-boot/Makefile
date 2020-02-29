@@ -13,16 +13,17 @@ run: $(UBOOT_DIR)/u-boot.bin
 
 $(UBOOT_DIR)/u-boot.bin: $(UBOOT_DIR)
 	-cd $(UBOOT_DIR); patch --silent --forward -p1 < ../versatile.patch
+	sed -i 's/armv5/armv6/g' $(UBOOT_DIR)/arch/arm/cpu/arm1136/config.mk # It's actually armv6 and we don't need the compiler compat
 	cd $(UBOOT_DIR); make versatileqemu_config ARCH=arm CPU=arm1136 CROSS_COMPILE=$(BARE_METAL_TUPLE)-
 	cp -r $(UBOOT_DIR)/arch/arm/cpu/arm926ejs/versatile $(UBOOT_DIR)/arch/arm/cpu/arm1136
-	cd $(UBOOT_DIR); make all ARCH=arm CPU=arm1136 CROSS_COMPILE=$(BARE_METAL_TUPLE)-	
+	cd $(UBOOT_DIR); make all ARCH=arm CPU=arm1136 CROSS_COMPILE=$(BARE_METAL_TUPLE)-
 
 $(UBOOT_DIR): $(UBOOT_ARCHIVE)
 	tar xvf $(UBOOT_ARCHIVE)
 
 $(UBOOT_ARCHIVE):
 	wget $(UBOOT_URL)
-	 
+
 clean:
 	rm -rf $(UBOOT_DIR)
 
