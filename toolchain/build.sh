@@ -43,8 +43,10 @@ fi
 
 cd "${TARGET}/src"
 
+
 if [ ! -d "${TARGET}/src/gcc-${GCC_VERSION}" ]; then
    tar xf ../orig/gcc-${GCC_VERSION}.tar.gz || exit 1;
+
 fi
 
 if [ ! -d "${TARGET}/src/gdb-${GDB_EXT_VERSION}" ]; then
