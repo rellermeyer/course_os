@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <uart.h>
+#include <chipset.h>
 #include <string.h>
 
 static char lower_case_digits[16] = "0123456789abcdef";
@@ -167,12 +167,19 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...) {
     return n;
 }
 
+void puts(const char *s) {
+    while (*s != '\0') {
+        chipset.uart_putc(*s, 0);
+        s++;
+    }
+}
+
 int kprintf(const char *str_buf, ...) {
     va_list args;
     va_start(args, str_buf);
     char buf[256];
     int n = os_vsnprintf(buf, 255, str_buf, args);
     va_end(args);
-    uart0_puts(buf);
+    puts(buf);
     return n;
 }

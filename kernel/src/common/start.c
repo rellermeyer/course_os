@@ -17,86 +17,69 @@
  */
 
 #include <stdint.h>
-#include <hw_handlers.h>
-#include <argparse.h>
 #include <interrupt.h>
+#include <argparse.h>
 #include <mmap.h>
 #include <process.h>
-#include <uart.h>
 #include <klibc.h>
 #include <vm.h>
-#include <timer.h>
 #include <scheduler.h>
 #include <mem_alloc.h>
 #include <test.h>
-
+#include <hardwareinfo.h>
+#include <chipset.h>
+#include <timer.h>
+#include <interruptold.h>
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
-    // Initialize the virtual memory
-    uart_early_init();
+    prepare_pagetable();
+
+
+    // Before this point, all code has to be hardware independent.
+    // After this point, code can request the hardware info struct to find out what
+    // Code should be ran.
+    init_hardwareinfo();
+
+    // Initialize the chipset and enable uart
+    init_chipset();
+
+    print_hardwareinfo();
 
     kprintf("Enabling MMU...\n");
     vm_init();
     kprintf("Initialized VM datastructures.\n");
+
+    // Paging and virtual memory is initialized. This code jumps us to start2.
     mmap(p_bootargs);
 }
-
 
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs) {
-    // Setup all of the exception handlers... (hrm, interaction with VM?)
+
+    // Set up the exception handlers.
     init_vector_table();
 
-    // Setup kmalloc...
+    // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
 
     splash();
 
-    // Test stuff...
-    /*int *p = (int*)0xFFFFFFF0;
-     p[0] = 1;
-     os_printf("0x%x == 1?\n", p[0]);*/
 
-    //run_vm_tests();
-    //INFO("There are %d free frames.\n", vm_count_free_frames());
-    //run_mem_alloc_tests();
-    //INFO("There are %d free frames.\n", vm_count_free_frames());
-    //run_prq_tests();
-    //run_hmap_tests();
+    // Turn on interrupts
+    enable_interrupt(BOTH);
 
-    // The file system has currently been *disabled* due to bugs
-    //	kfs_init(0, 0, 0);
-
-
-    /*
-     4-15-15: 	#Prakash: 	What happens if we let the program load here?
-     Let's make argparse_process() do its thing
-
-     Note: As of 4-15-15 this fails horribly with hello.o not being
-     recognized as an ELF file and DATA ABORT HANDLER being syscalled
-     */
-
-    // enable interrupt handling
-    enable_interrupts();
-
-    uart_late_init();
-
-    // initialize the timers
-    initialize_timers();
+    // Call the chipset again to do post-interrupt-enable initialization
+    chipset.late_init();
 
     process_init();
 
-    sched_init();
     // FIXME: temporary
-    kprintf("Programming the timer interrupt\n");
-    start_timer_interrupts(0, 10);
+    sched_init();
 
-//    exit_test();
-
-    kprintf("0x%x\n", p_bootargs);
+    kprintf("bootargs: 0x%x\n", p_bootargs);
 
 #ifndef ENABLE_TESTS
 //    argparse_process(p_bootargs);
@@ -124,5 +107,9 @@ void start2(uint32_t *p_bootargs) {
     //  * Mount vfs
     //  * Load initramfs into tmpfs
     //  * execute userland init program
+
+    asm volatile("cpsie i");
+
+    kprintf("End of start method.\n");
     SLEEP;
 }

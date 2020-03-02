@@ -2,8 +2,9 @@ include $(CURDIR)/../config.mk
 
 # ===================== Configuration =====================
 
+# TODO should we have "-nostdinc"?
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -nostdinc -Wall -Werror -g -O3 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp
+CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
@@ -47,14 +48,14 @@ build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  versatilepb -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M versatilepb -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@

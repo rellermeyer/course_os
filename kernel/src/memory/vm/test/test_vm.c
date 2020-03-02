@@ -92,9 +92,9 @@ TEST_CREATE(test_vm_1, {
 
         // FIXME: This part of the test crashes the os, we should catch that in some way.
         // Test the data abort...
-        //WARN("You should see a data abort...\n");
-        //int i = p[-1];
-        //LOG("%d\n", i);
+//        WARN("You should see a data abort...\n");
+//        int i = p[-1];
+//        LOG("%d\n", i);
 
         // Free the page!
         LOG("Freeing page at %X\n", p);

@@ -1,189 +1,381 @@
-/*
- *
- * Interrupts  
- *
- */
+#include <interrupt.h>
+#include <mmap.h>
+#include <memory.h>
 #include <interrupt.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <vm.h>
+#include <chipset.h>
 
-volatile uint32_t * const PIC_ADDRESS = (volatile uint32_t *)0x10140000;
+/* copy vector table from wherever QEMU loads the kernel to 0x00 */
+void init_vector_table() {
+	/* This doesn't seem to work well with virtual memory; reverting
+	 * to old method.       
+	 extern uint32_t vector_table_start, vector_table_end;
+	 uint32_t *src = &vector_table_start;
+	 uint32_t *dst = (uint32_t *) HIVECTABLE;
 
-// there are 32 kinds of interrupts on the VIC
-// this structure may need to be expanded if the secondary controller is incorporated
-static interrupt_handler_t *handlers[MAX_NUM_INTERRUPTS];
+	 while(src < &vector_table_end)
+	 *dst++ = *src++;
+	 */
 
-static int initialized;
+	/* Primary Vector Table */
+	mmio_write(0x0, BRANCH_INSTRUCTION);
+	mmio_write(0x04, BRANCH_INSTRUCTION);
+	mmio_write(0x08, BRANCH_INSTRUCTION);
+	mmio_write(0x0C, BRANCH_INSTRUCTION);
+	mmio_write(0x10, BRANCH_INSTRUCTION);
+	mmio_write(0x14, BRANCH_INSTRUCTION);
+	mmio_write(0x18, BRANCH_INSTRUCTION);
+	mmio_write(0x1C, BRANCH_INSTRUCTION);
 
-// holds defined fiq interrupts
-static int check_if_fiq[MAX_NUM_INTERRUPTS];
+    /* Secondary Vector Table */
+	mmio_write(0x20, &reset_handler);
+	mmio_write(0x24, &undef_instruction_handler);
+	mmio_write(0x28, &software_interrupt_handler);
+	mmio_write(0x2C, &prefetch_abort_handler);
+	mmio_write(0x30, &data_abort_handler);
+	mmio_write(0x34, &reserved_handler);
+	mmio_write(0x38, &irq_handler);
+	mmio_write(0x3C, &fiq_handler);
 
-// define interrupt types
-interrupt_t IRQ = IRQ_MASK;
-interrupt_t FIQ = FIQ_MASK;
-interrupt_t ALL = ALL_INTERRUPT_MASK;
+}
 
-// In a system with an interrupt controller, software is required to:
-// determine from the interrupt controller which interrupt source is requesting service
-// determine where the service routine for that interrupt source is loaded
-// mask or clear that interrupt source, before re-enabling processor interrupts to permit another interrupt to be taken.
-
-// Interrupts must be enabled in three places:
-// (1) the core (CPSR)
-// (2) the VIC (interrupt controller)
-// (3) (sometimes) in the device (this should be done in the device driver)
-
-// CLear Interrupts
-// Do not disable the VIC and the CSPR is disable in the hw_hanlders
-// you have to clear the interrupt from the register handler
-// Look At timer.c it has a great example of it.
-// Here's the Website to the VIC we are using http://infocenter.arm.com/help/topic/com.arm.doc.ddi0181e/DDI0181.pdf
-
-//They are three handlers you must use First is the (IRQ)interrupt handler its in hw_handlers.c (with attribute Irq)
-// second is the ISR routine handler which is the one in interrupt.c
-// third is the specific handler you created a great example is in the timer.c it is called timer_interrupt_handler.
-// If youre having an error it must be in the third handler not the first two.
-
-// Setup FIQ interrupts
-void init_fiqs()
+/* handlers */
+void reset_handler(void)
 {
-	check_if_fiq[11] = 1; // synchronous serial port
-	check_if_fiq[17] = 1; // DMA controller  
+    kprintf("RESET HANDLER\n");
+	_Reset();
 }
 
-// when you register an interrupt handler it's line will be enabled in the VIC
-// telling the device itself to fire interrupts should be done in the driver
-//
-// TODO: We do now ------------------------------V
-// also, since we don't really have a working malloc, the handler structure will
-// have to be built in the driver and passed to register_
-int register_interrupt_handler(enum InterruptID num, interrupt_handler_t *handler) {
-    // lazy initialization
-    if (initialized != -1) {
-        kprintf("INITIALIZING THE INTERRUPT SYSTEM\n");
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
+{
+	int spsr, lr;
 
-        for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
-            handlers[i] = 0;
-        }
+	asm volatile("mrs %0, spsr" : "=r"(spsr));
+	asm volatile("mov %0, lr" : "=r" (lr));
 
-        kprintf("INITIALIZED THE INTERRUPT SYSTEM\n");
+	int thumb = spsr & 0x20;
+	int pc = thumb ? lr - 0x2 : lr - 0x4;
 
-        initialized = -1;
-    }
-
-    if (num < 0 || num > MAX_NUM_INTERRUPTS) {
-        kprintf("Register a handler between 0 and %i\n", MAX_NUM_INTERRUPTS);
+	if ((*(size_t *) pc) == UNDEFINED_INSTRUCTION_BYTES){
+        kprintf("FATAL ERROR\n");
         panic();
-    } else if (handlers[num] != NULL) {
-        kprintf("Tried to re-register interrupt handler %i\n", num);
-        panic();
-	} else if (handler == NULL) {
-        kprintf("The interrupt handler can't be NULL\n");
-        panic();
-    }
+	}
 
-	// put the handler in the array
-	handlers[num] = handler;
+	kprintf("UNDEFINED INSTRUCTION HANDLER\n");
 
-	// enable the specific interrupt in hardware on the VIC
-	hw_interrupt_enable(num);
+    int copro = (*(int*)pc & 0xf00000) >> 24;
 
-	// check to see if this is an FIQ
-	if (check_if_fiq[num]){
-        // update the "select" register on the VIC
-        vic_select_fiq(num);
-    }
+	if (spsr & 0x20) {
+        kprintf("THUMB mode\n");
+	} else {
+        kprintf("ARM mode\n");
+	}
+	if (spsr & 0x1000000) {
+        kprintf("JAZELLE enabled\n");
+	}
 
-	// return a success value
-	return 0;
+    kprintf("COPRO: %x\n", copro);
+    kprintf("violating instruction (at %x): %x\n", pc, *((int *) pc));
+	if (pc >= V_KERNBASE && pc < V_KERNTOP)
+	{
+        kprintf("(instruction is in kernel address range)\n");
+	}
+
+	panic();
 }
 
-// handle_interrupt takes a number (the interrupt from the VIC), looks into
-// the table of registered handlers, and calls the appropriate handler
-void handle_irq_interrupt(enum InterruptID interrupt_vector) {
-    kprintf("handling interrupt %d\n", interrupt_vector);
-	// go to handler routine
-    kprintf("Jumping to %X...\n", handlers[interrupt_vector]->handler);
-	handlers[interrupt_vector]->handler((void *) interrupt_vector);
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
+{
+	int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+
+	asm volatile ("MOV %0, r7":"=r"(callNumber)::);
+	asm volatile ("MOV %0, r0":"=r"(r0)::);
+	asm volatile ("MOV %0, r1":"=r"(r1)::);
+	asm volatile ("MOV %0, r2":"=r"(r2)::);
+	asm volatile ("MOV %0, r3":"=r"(r3)::);
+
+    kprintf("SOFTWARE INTERRUPT HANDLER\n");
+
+	// Print out syscall # for debug purposes
+    kprintf("Syscall #: ");
+    kprintf("%d\n", callNumber);
+    kprintf("arg0=%d\n", r0);
+    kprintf("arg1=%d\n", r1);
+    kprintf("arg2=%d\n", r2);
+    kprintf("arg3=%d\n", r3);
+    kprintf("\n");
+
+	// System Call Handler
+	switch (callNumber)
+	{
+	case SYSCALL_EXIT:
+		// TODO: remove current process from scheduler
+		for (;;);
+		break;
+	case SYSCALL_DUMMY:
+		return 0L;
+		break;
+
+    // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
+	case SYSCALL_CREATE:
+        kprintf("Create system call called!\n");
+		return -1;
+
+//		return (long) kcreate((char*) r0, r1, 0);
+	case SYSCALL_DELETE:
+        kprintf("Delete system call called!\n");
+		return -1;
+
+//		return (long) kdelete((char*) r0, 1);
+	case SYSCALL_OPEN:
+        kprintf("Open system call called!\n");
+		return -1;
+
+//		return (long) kopen((char*) r0, r1);
+	case SYSCALL_MKDIR:
+        kprintf("Mkdir system call called!\n");
+		return -1;
+
+//		return (long) kcreate((char*) r0, 'w', 1);
+	case SYSCALL_READ:
+        kprintf("Read system call called!\n");
+		return -1;
+
+//		return (long) kread(r0, (void*) r1, r2);
+	case SYSCALL_WRITE:
+        kprintf("Write system call called!\n");
+		return -1;
+
+//		return (long) kwrite(r0, (void*) r1, r2);
+	case SYSCALL_CLOSE:
+        kprintf("Close system call called!\n");
+		return -1;
+
+//		return (long) kclose(r0);
+	case SYSCALL_SEEK:
+        kprintf("Seek system call called!\n");
+		return -1;
+
+//		return (long) kseek(r0, r1);
+	case SYSCALL_COPY:
+        kprintf("Copy system call called!\n");
+		return -1;
+
+//		return (long) kcopy((char*) r0, (char*) r1, r2);
+	case SYSCALL_LS:
+        kprintf("Ls system call called!\n");
+		return -1;
+//		return (long) kls((char*) r0);
+	case SYSCALL_SET_PERM:
+        kprintf("Set permission system call called!\n");
+            kprintf("Yet to be implemented\n");
+		return -1;
+	case SYSCALL_MEM_MAP:
+        kprintf("Memory map system call called!\n");
+            kprintf("Yet to be implemented\n");
+		return -1;
+
+	case SYSCALL_MALLOC:
+        kprintf("malloc system call called!\n");
+
+		void *ptr = umalloc(r0);
+
+            kprintf("malloc is about to return %x\n", ptr);
+
+		return (long) ptr;
+	case SYSCALL_ALIGNED_ALLOC:
+        kprintf("aligned_alloc system call called!\n");
+		void *ptr2 = ualigned_alloc(r0, r1);
+
+            kprintf("ualigned_alloc is about to return %x\n", ptr2);
+
+		return (long) ptr2;
+	case SYSCALL_FREE:
+        kprintf("Free system call called!\n");
+
+		ufree((void*) r0);
+		return 0L;
+	case SYSCALL_PRINTF:
+        kprintf("Printf system call called!\n");
+
+            kprintf((const char *) r0);
+		return 0L;
+	default:
+        kprintf("That wasn't a syscall you knob!\n");
+		return -1L;
+	}
+}
+
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
+{
+	int lr;
+
+	asm volatile("mov %0, lr" : "=r" (lr));
+
+    kprintf("PREFETCH ABORT HANDLER, violating address: %x\n", (lr - 4));
+
+	panic();
+}
+
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
+{
+	int lr;
+	asm volatile("mov %0, lr" : "=r" (lr));
+	int pc = lr - 8;
+
+	int far;
+	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
+
+    kprintf("DATA ABORT HANDLER (Page Fault)\n");
+    kprintf("faulting address: 0x%x\n", far);
+	if (far >= V_KDSBASE)
+	{
+        kprintf("(address is in kernel address range)\n");
+	}
+    kprintf("violating instruction (at 0x%x): %x\n", pc, *((int *) pc));
+
+	// Get the DSFR
+	int dsfr;
+	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
+	//os_printf("DSFR: 0x%X\n", dsfr);
+
+	switch (dsfr)
+	{
+	case 6: // Access bit.
+		// Set it to 1 so we don't get notified again.
+		// TODO: The eviction policy will listen to this.
+		*((unsigned int*) (V_L1PTBASE + 2 * PAGE_TABLE_SIZE)) |= (1 << 4);
+		break;
+	default:
+		break;
+	};
+}
+
+void reserved_handler(void)
+{
+    kprintf("RESERVED HANDLER\n");
+}
+
+// the attribute automatically saves and restores state
+void __attribute__((interrupt("IRQ"))) irq_handler(void) {
+    kprintf("IRQ HANDLER\n");
+    return chipset.handle_irq();
+
+//    int * pendingregister = (int *) 0x40000060;
+//	int cpsr = disable_interrupt_save(IRQ);
+
+    //os_printf("disabled CSPR:%X\n",cpsr);
+	// Discover source of interrupt
+	// do a straight run through the VIC_INT_STATUS to determine
+	// which interrupt lines need to be tended to
+//	for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
+//		// is the line active?
+//		if ((1 << i) & mmio_read(&interrupt_registers->irq_basic_pending)) {
+//			// activate that specific handler
+//			handle_irq_interrupt(i);
+//		}
+//	}
+	// we've gone through the VIC and handled all active interrupts
+    // restore_proc_status(cpsr);
+
+    //	enable_interrupt(IRQ_MASK);
+
+}
+
+void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
+    kprintf("FIQ HANDLER\n");
+    return chipset.handle_fiq();
+
+//    handle_irq_interrupt(interrupt_registers->fiq_control & 0x7f);
+
+
+// FIQ handler returns from the interrupt by executing:
+// SUBS PC, R14_fiq, #4
+}
+
+void SemihostingCall(enum SemihostingSWI mode) {
+
+    int a = mode;
+    asm volatile (
+        "MOV r0, #0x18\n"
+        "LDR r1, %[in0]\n"
+        "svc 0x00123456\n"
+        :
+        : [in0] "m"  (a)
+    );
 }
 
 /* enable IRQ and/or FIQ */
-void enable_interrupt(interrupt_t mask) {
+void enable_interrupt(InterruptType mask) {
     kprintf("Enabling interrupts with mask %i\n", mask);
-	get_proc_status();
 
-	// enable interrupt on the core
-	switch (mask)
-	{
-	case IRQ_MASK:
-		asm volatile("cpsie i");
-		break;
-	case FIQ_MASK:
-		asm volatile("cpsie f");
-		break;
-	case ALL_INTERRUPT_MASK:
-		asm volatile("cpsie if");
-		break;
-	}
+    // enable interrupt on the core
+    switch (mask) {
+        case IRQ:
+            asm volatile("cpsie i");
+            break;
+        case FIQ:
+            asm volatile("cpsie f");
+            break;
+        case BOTH:
+            asm volatile("cpsie if");
+            break;
+    }
 }
 
 /* disable IRQ and/or FIQ */
-void disable_interrupt(interrupt_t mask)
-{
+void disable_interrupt(InterruptType mask) {
     kprintf("Disabling interrupts with mask %i\n", mask);
 
     // disable interrupts on the core
-	switch (mask)
-	{
-	case IRQ_MASK:
-		asm volatile("cpsid i");
-		break;
-	case FIQ_MASK:
-		asm volatile("cpsid f");
-		break;
-	case ALL_INTERRUPT_MASK:
-		asm volatile("cpsid if");
-		break;
-	}
+    switch (mask) {
+        case IRQ:
+            asm volatile("cpsid i");
+            break;
+        case FIQ:
+            asm volatile("cpsid f");
+            break;
+        case BOTH:
+            asm volatile("cpsid if");
+            break;
+    }
 }
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
-int disable_interrupt_save(interrupt_t mask)
-{
+int disable_interrupt_save(InterruptType mask) {
 
     kprintf("Disabling interrupts (save) with mask %i\n", mask);
 
     /* get a copy of the current process status register */
-	int cpsr;
-	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	// disable interrupts on the core
-	switch (mask)
-	{
-	case IRQ_MASK:
-		asm volatile("cpsid i");
-		break;
-	case FIQ_MASK:
-		asm volatile("cpsid f");
-		break;
-	case ALL_INTERRUPT_MASK:
-		asm volatile("cpsid if");
-		break;
-	}
-	return cpsr;
+    int cpsr;
+    asm volatile("mrs %0, cpsr" : "=r"(cpsr));
+    // disable interrupts on the core
+    switch (mask) {
+        case IRQ:
+            asm volatile("cpsid i");
+            break;
+        case FIQ:
+            asm volatile("cpsid f");
+            break;
+        case BOTH:
+            asm volatile("cpsid if");
+            break;
+    }
+    return cpsr;
 }
 
 /* return a full 32-bit copy of the current process status register */
-int get_proc_status(void)
-{
-	int cpsr;
-	asm volatile("mrs %0, cpsr" : "=r"(cpsr));
-	return cpsr;
+int get_proc_status() {
+    int cpsr;
+    asm volatile("mrs %0, cpsr" : "=r"(cpsr));
+    return cpsr;
 }
 
 /* restore control status (interrupt, mode bits) of the cpsr */
-/* (e.g. when we return from a handler, restore value from 
+/* (e.g. when we return from a handler, restore value from
  disable_interrupt_save				     */
-void restore_proc_status(int cpsr)
-{
-	asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
+void restore_proc_status(int cpsr) {
+    asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }
-

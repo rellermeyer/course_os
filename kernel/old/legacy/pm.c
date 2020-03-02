@@ -1,7 +1,7 @@
 #include "pm.h"
 #include "../../src/klibc//include/stdint.h"
 #include "../../src/klibc//include/stdarg.h"
-#include "../../src/common/include/interrupt.h"
+#include "interruptold.h"
 #include "klibc.h"
 #include "stack.h"
 

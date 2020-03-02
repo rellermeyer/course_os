@@ -38,110 +38,111 @@ struct vm_free_list *vm_l2pt_free_list = 0x0;
 
 void vm_init()
 {
-	// Initialize the VAS structures. We allocate enough for 4096 VASs.
-	struct vm_free_list *free_vas = (struct vm_free_list*) P_L1PTBASE;
-	//vm_vas_free_list = free_vas;
-	vm_vas_free_list = (struct vm_free_list*) ((void*) free_vas + V_L1PTBASE
-			- P_L1PTBASE);
+    const int num_vas = 1024;
+
+	// Initialize the VAS structures. We allocate enough for num_vas VASs.
+	struct vm_free_list * free_vas = (struct vm_free_list*) P_L1PTBASE;
+    kprintf("free_vas start location 0x%x\n", free_vas);
+
+//    vm_vas_free_list = free_vas;
+	vm_vas_free_list = (struct vm_free_list*) ((void*) free_vas + V_L1PTBASE - P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
-	while ((uint32_t) free_vas < P_L1PTBASE + sizeof(struct vas) * 4096)
+    while ((uint32_t) free_vas < P_L1PTBASE + sizeof(struct vas) * num_vas)
 	{
 		free_vas->next = 0x0;
 		if (last)
 		{
-			last->next = (struct vm_free_list*) ((void*) free_vas + V_L1PTBASE
-					- P_L1PTBASE);
+			last->next = (struct vm_free_list*) ((void*) free_vas + V_L1PTBASE - P_L1PTBASE);
 		}
 		last = free_vas;
-		free_vas =
-				(struct vm_free_list*) ((void*) free_vas + sizeof(struct vas));
+		free_vas = (struct vm_free_list*) ((void*) free_vas + sizeof(struct vas));
 	}
+    // FIXME: doesn't this overlap with the l1pt?
+    kprintf("free_vas end location 0x%x\n", free_vas);
 
 	// Initialize the L1 page tables
-	struct vm_free_list *free_l1pt = (struct vm_free_list*) (P_L1PTBASE
-			+ sizeof(struct vas) * 4096);
-	vm_l1pt_free_list = (struct vm_free_list*) ((void*) free_l1pt + V_L1PTBASE
-			- P_L1PTBASE);
-	last = 0x0;
+	struct vm_free_list * free_l1pt = (struct vm_free_list*) (P_L1PTBASE + sizeof(struct vas) * num_vas);
+
+    kprintf("free_l1pt start location 0x%x\n", free_l1pt);
+
+    vm_l1pt_free_list = (struct vm_free_list*) ((void*) free_l1pt + V_L1PTBASE - P_L1PTBASE);
+
+
+    last = 0x0;
 	while ((uint32_t) free_l1pt < P_L1PTBASE + (1 << 20) - ((1 << 20) >> 2))
 	{
 		free_l1pt->next = 0x0;
 		if (last)
 		{
-			last->next = (struct vm_free_list*) ((void*) free_l1pt + V_L1PTBASE
-					- P_L1PTBASE);
+			last->next = (struct vm_free_list*) ((void*) free_l1pt + V_L1PTBASE - P_L1PTBASE);
 		}
 		last = free_l1pt;
-		free_l1pt =
-				(struct vm_free_list*) ((void*) free_l1pt + PAGE_TABLE_SIZE);
+		free_l1pt = (struct vm_free_list*) ((void*) free_l1pt + PAGE_TABLE_SIZE);
 	}
+    kprintf("free_l1pt end location 0x%x\n", free_l1pt);
 
 	// Initialize the L2 coarse page tables
-	struct vm_free_list *free_l2pt = (struct vm_free_list*) (P_L1PTBASE
-			+ (1 << 19));
-	vm_l2pt_free_list = (struct vm_free_list*) ((void*) free_l2pt + V_L1PTBASE
-			- P_L1PTBASE);
+	struct vm_free_list * free_l2pt = (struct vm_free_list*) (P_L1PTBASE + (1 << 19));
+
+    kprintf("free_l2pt location 0x%x\n", free_l2pt);
+
+
+    vm_l2pt_free_list = (struct vm_free_list*) ((void*) free_l2pt + V_L1PTBASE - P_L1PTBASE);
 	last = 0x0;
 	while ((uint32_t) free_l2pt < P_L1PTBASE + (1 << 20))
 	{
 		free_l2pt->next = 0x0;
 		if (last)
 		{
-			last->next = (struct vm_free_list*) ((void*) free_l2pt + V_L1PTBASE
-					- P_L1PTBASE);
+			last->next = (struct vm_free_list*) ((void*) free_l2pt + V_L1PTBASE - P_L1PTBASE);
 		}
 		last = free_l2pt;
-		free_l2pt = (struct vm_free_list*) ((void*) free_l2pt
-				+ L2_PAGE_TABLE_SIZE);
+		free_l2pt = (struct vm_free_list*) ((void*) free_l2pt + L2_PAGE_TABLE_SIZE);
 	}
+
+    kprintf("free_l2pt end location 0x%x\n", free_l2pt);
+
 }
 
 uint32_t *vm_alloc_coarse_page_table()
 {
 	// TODO: What if we run out?
 	uint32_t *vptr = (uint32_t*) vm_l2pt_free_list;
+	kprintf("Allocating l2 pagetable at 0x%x\n", vptr);
 	if (vptr == 0x0)
 	{
-		LOG(
-				"Could not allocate a coarse page table, bad things will happen soon.\n");
+		LOG("Could not allocate a coarse page table, bad things will happen soon.\n");
 		return NULL;
 	}
 	vm_l2pt_free_list = ((struct vm_free_list*) vptr)->next;
 	memset((void*) vptr, 0, L2_PAGE_TABLE_SIZE);
 	return vptr;
+
 }
 
-uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr)
-{
+uint32_t *vm_vtop(struct vas *vas, uint32_t *vptr) {
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
-	if (vas != KERNEL_VAS)
-	{
+	if (vas != KERNEL_VAS) {
         kprintf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
-		while (1)
-			;
-	}
+        panic();
+    }
 	return (uint32_t*) ((void*) vptr - V_L1PTBASE + P_L1PTBASE);
 }
 
-uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr)
-{
+uint32_t *vm_ptov(struct vas *vas, uint32_t *vptr) {
 	// Hack. Assume it's all linearly mapped, and vas == KERNEL_VAS
-	if (vas != KERNEL_VAS)
-	{
+	if (vas != KERNEL_VAS) {
         kprintf("vas is not KERNEL_VAS in vm_vtop. :-(\n");
-		while (1)
-			;
+		panic();
 	}
 	return (uint32_t*) ((void*) vptr + V_L1PTBASE - P_L1PTBASE);
 }
 
-struct vas *vm_get_current_vas()
-{
+struct vas *vm_get_current_vas() {
 	return vm_current_vas;
 }
 
-void vm_use_kernel_vas()
-{
+void vm_use_kernel_vas() {
 	vm_enable_vas((struct vas*) V_L1PTBASE);
 }
 
@@ -218,20 +219,17 @@ int vm_free_page(struct vas *vas, void *vptr) {
 	return 0;
 }
 
-int vm_pin(struct vas *vas, void *vptr)
-{
+int vm_pin(struct vas *vas, void *vptr) {
 	// FIXME: unimplemented
 	return 0;
 }
 
-int vm_unpin(struct vas *vas, void *vptr)
-{
+int vm_unpin(struct vas *vas, void *vptr) {
 	// FIXME: unimplemented
 	return 0;
 }
 
-int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission)
-{
+int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission) {
 	CHECK_VPTR;
 	CHECK_PPTR;
 	int perm = perm_mapping[permission];
@@ -239,12 +237,10 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission)
 		return VM_ERR_BADPERM;
 
 	uint32_t cur_entry = vas->l1_pagetable[(unsigned int) vptr >> 20];
-	if ((cur_entry & 3) == 2)
-	{
+	if ((cur_entry & 3) == 2) {
 		return VM_ERR_MAPPED;
 	}
-	if ((cur_entry & 3) == 0)
-	{
+	if ((cur_entry & 3) == 0) {
 		// We need to allocate a coarse page table
 		uint32_t *vptr_coarse_pt = vm_alloc_coarse_page_table();
 		vas->l1_pagetable[(unsigned int) vptr >> 20] = (uint32_t) vm_vtop(
@@ -255,8 +251,7 @@ int vm_set_mapping(struct vas *vas, void *vptr, void *pptr, int permission)
 	uint32_t *l2_pagetable = vm_ptov(KERNEL_VAS,
 			(uint32_t*) VM_ENTRY_GET_L2(cur_entry));
 	int l2_idx = ((unsigned int) vptr & 0x000FF000) >> 12;
-	if (l2_pagetable[l2_idx])
-	{
+	if (l2_pagetable[l2_idx]) {
 		return VM_ERR_MAPPED;
 	}
 
@@ -399,12 +394,10 @@ void vm_enable_vas(struct vas *vas)
 
 struct vas *vm_new_vas()
 {
-	if (!vm_vas_free_list)
-	{
+	if (!vm_vas_free_list) {
 		return 0x0;
 	}
-	if (!vm_l1pt_free_list)
-	{
+	if (!vm_l1pt_free_list) {
 		return 0x0;
 	}
 	struct vas *p = (struct vas*) vm_vas_free_list;
@@ -414,35 +407,34 @@ struct vas *vm_new_vas()
 	p->l1_pagetable = (uint32_t*) vm_l1pt_free_list;
 	vm_l1pt_free_list = vm_l1pt_free_list->next;
 
-	p->l1_pagetable_phys = (unsigned int*) ((unsigned int) p->l1_pagetable
-			- (V_L1PTBASE - P_L1PTBASE));
+    p->l1_pagetable_phys = (unsigned int*) ((unsigned int) p->l1_pagetable - (V_L1PTBASE - P_L1PTBASE));
 
-	// Zero out the page table
-	memset((unsigned int *)p->l1_pagetable, 0, PAGE_TABLE_SIZE);
+    // Zero out the page table
+//    memset((unsigned int *)p->l1_pagetable, 0, PAGE_TABLE_SIZE);
+//
+//    // Setup the static mappings...
+//	// The kernel (high & low addresses)
+//	//should be less than a MB
+//	p->l1_pagetable[P_KERNBASE >> 20] = 0 << 20 | 0x0400 | 2;
+//
+//	//also map it to high memory at 0xf0000000
+//	p->l1_pagetable[V_KERNBASE >> 20] = 0 << 20 | 0x0400 | 2;
+//	p->l1_pagetable[(V_KERNBASE + 0x100000) >> 20] = 0x100000 | 0x0400 | 2;
+//
+//	// Kernel datastructures
+//	//temporarily map where it is until we copy it in VAS
+//	p->l1_pagetable[P_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
+//
+//	//1MB for static kernel data structures (stacks and l1 pt)
+//	p->l1_pagetable[V_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
+//
+//	// Our 1MB page to store VAS datastructures
+//	p->l1_pagetable[V_L1PTBASE >> 20] = P_L1PTBASE | 0x0400 | 2;
+//
+//	// 2MB of peripheral registers (so we get the serial port et. al.)
+//	p->l1_pagetable[PERIPHBASE >> 20] = PERIPHBASE | 0x0400 | 2;
+//	p->l1_pagetable[(PERIPHBASE + 0x100000) >> 20] = (PERIPHBASE + 0x100000) | 0x0400 | 2;
 
-	// Setup the static mappings...
-	// The kernel (high & low addresses)
-	//should be less than a MB
-	p->l1_pagetable[P_KERNBASE >> 20] = 0 << 20 | 0x0400 | 2;
-
-	//also map it to high memory at 0xf0000000
-	p->l1_pagetable[V_KERNBASE >> 20] = 0 << 20 | 0x0400 | 2;
-	p->l1_pagetable[(V_KERNBASE + 0x100000) >> 20] = 0x100000 | 0x0400 | 2;
-
-	// Kernel datastructures
-	//temporarily map where it is until we copy it in VAS
-	p->l1_pagetable[P_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
-
-	//1MB for static kernel data structures (stacks and l1 pt)
-	p->l1_pagetable[V_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
-
-	// Our 1MB page to store VAS datastructures
-	p->l1_pagetable[V_L1PTBASE >> 20] = P_L1PTBASE | 0x0400 | 2;
-
-	// 2MB of peripheral registers (so we get the serial port et. al.)
-	p->l1_pagetable[PERIPHBASE >> 20] = PERIPHBASE | 0x0400 | 2;
-	p->l1_pagetable[(PERIPHBASE + 0x100000) >> 20] = (PERIPHBASE + 0x100000)
-			| 0x0400 | 2;
 	return p;
 }
 
