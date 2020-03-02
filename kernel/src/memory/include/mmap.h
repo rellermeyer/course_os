@@ -6,14 +6,25 @@
 #define MMAP_H
 
 #include <stdint.h>
-#include <uart.h>
 
-#define mmio_read(address)		(*((volatile uint32_t *)(address)))
-#define mmio_write(address, value)	(*((volatile uint32_t *)(address)) = (volatile uint32_t)(value))
+#define mmio_read(address) (*((volatile uint32_t *)(address)))
+#define mmio_write(address, value) mmio_write_internal((volatile uint32_t *)(address), (volatile uint32_t)(value))
 
+// Do the mmio write in assembly to remove any chance of gcc optimizing the call away. *yes* even if it was marked volatile already.
+// Hence the 4 hours it took us to make timer.c work......
+static inline void mmio_write_internal(volatile uint32_t * address, volatile uint32_t value ) {
+    asm volatile (
+        "ldr r1, %1\n"
+        "str r1, %0\n"
+        ::
+        "m" (*address),
+        "m" (value)
+    );
+}
 
+void prepare_pagetable();
 void mmap(void *p_bootargs);
-
+void request_identity_mapped_section(size_t start_address, size_t megabytes);
 
 #define CLOCK_ADDRESS	(volatile uint32_t *const) 0x101e8000	/* RTC base address */
 

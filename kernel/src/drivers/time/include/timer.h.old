@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <stdint.h>
+#include "../../../src/klibc//include/stdint.h"
 
 typedef struct  {
   uint32_t timer_load_value; 			// read/write
@@ -13,6 +13,7 @@ typedef struct  {
   uint32_t background_timer_load_value; // read/write
 } rasp_pi_timer;
 
+_Static_assert (sizeof (rasp_pi_timer) == 28, "rasp_pi_timer check");
 
 void initialize_timers();
 int set_load_value(int timer_index, int value);

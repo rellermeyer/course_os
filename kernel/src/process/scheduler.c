@@ -6,7 +6,7 @@
 #include <linked_list.h>
 #include <hash_map.h>
 #include <array_list.h>
-#include <timer.h>
+#include <timer.h.old>
 #include <math.h>
 
 #define MAX_TASKS 100   // in the future, cap will be removed

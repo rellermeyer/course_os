@@ -16,7 +16,7 @@ echo "
 #ifdef ENABLE_TESTS
 
 #include <stdio.h>
-#include <hw_handlers.h>
+#include <interrupt.h>
 
 " >> "$DIR/test.c"
 
