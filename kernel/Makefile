@@ -14,9 +14,8 @@ test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests b
 KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src
 BUILDDIR = build
-# every directory named `include` will have it's contents autoincluded
+# every directory named `include` will have its contents autoincluded
 INCLUDEDIR = include
-TEST_MAIN_FILE = $(SOURCEDIR)/test/test.c
 
 # =================== End Configuration ===================
 
@@ -29,7 +28,8 @@ MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
-C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)
+C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
+C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(C_GEN_SOURCE_FILES)
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
 
@@ -39,7 +39,7 @@ S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
 
-INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
+INCLUDEDIRS := $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
@@ -62,21 +62,22 @@ $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 
 # Begin Pi Make
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
-	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $(C_OBJECT_FILES) -o $@
+	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $^ -o $@
 
 $(BUILDDIR)/kernelPi.img: $(BUILDDIR)/kernelPi.elf | builddir
 	$(OBJCOPY) $< -O binary $@
 # End Pi Make
 
 builddir:
-	mkdir -p $(BUILDDIR)
+	@mkdir -p $(BUILDDIR)
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@mkdir -p $(shell dirname $@)
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(TEST_MAIN_FILE): dummy
+$(SOURCEDIR)/test/test.c: dummy | builddir
+	@echo Generating tests
 	@$(SOURCEDIR)/test/generate_tests.sh
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
