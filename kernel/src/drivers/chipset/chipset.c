@@ -5,7 +5,13 @@
 #include <bcm2836.h>
 #include <string.h>
 
-ChipsetInterface chipset;
+// We use putc (and printf) before the chipset is initialized already.
+// This stub makes sure that nothing crashes if you do that.
+void uart_putc_stub(char c __attribute__((unused)), int channel __attribute__((unused))) { }
+
+ChipsetInterface chipset = {
+    .uart_putc = uart_putc_stub // Stub putc
+};
 
 void init_chipset() {
     HardwareInfo * info = get_hardwareinfo();
@@ -28,5 +34,4 @@ void init_chipset() {
             panic();
         }
     }
-    
 }

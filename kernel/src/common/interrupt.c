@@ -230,8 +230,7 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 
     kprintf("DATA ABORT HANDLER (Page Fault)\n");
     kprintf("faulting address: 0x%x\n", far);
-	if (far >= V_KDSBASE)
-	{
+	if (far >= V_KDSBASE) {
         kprintf("(address is in kernel address range)\n");
 	}
     kprintf("violating instruction (at 0x%x): %x\n", pc, *((int *) pc));
