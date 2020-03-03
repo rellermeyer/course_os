@@ -6,7 +6,6 @@
 #include <linked_list.h>
 #include <hash_map.h>
 #include <array_list.h>
-#include <timer.h.old>
 #include <math.h>
 
 #define MAX_TASKS 100   // in the future, cap will be removed
@@ -60,12 +59,12 @@ void timer_handler(void *args)
 
 void __sched_register_timer_irq(void)
 {
-	register_handler(SCHEDULER_TIMER, timer_handler);
+//	register_handler(SCHEDULER_TIMER, timer_handler);
 }
 
 void __sched_deregister_timer_irq()
 {
-	unregister_handler(SCHEDULER_TIMER);
+//	unregister_handler(SCHEDULER_TIMER);
 }
 
 void __sched_pause_timer_irq()

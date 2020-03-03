@@ -28,7 +28,6 @@ void bcm2836_on_interrupt(InterruptCallback callback) {
 
 void bcm2836_late_init() {
     bcm2836_timer_init();
-
 }
 
 void bcm2836_irq_handler() {

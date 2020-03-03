@@ -62,7 +62,7 @@ void mmap(void *p_bootargs) {
 //    }
 
     //temporarily map where it is until we copy it in VAS
-	first_level_pt[P_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
+//	first_level_pt[P_KDSBASE >> 20] = P_KDSBASE | 0x0400 | 2;
 	//first_level_pt[0x07f00000>>20] = first_level_pt[7F] = 0x07ffirst_level_pt=400000000 = 0x07f04010
 	//														0x00004000
 	//														0x00000010

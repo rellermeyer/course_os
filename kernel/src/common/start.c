@@ -18,8 +18,6 @@
 
 #include <stdint.h>
 #include <interrupt.h>
-#include <argparse.h>
-#include <mmap.h>
 #include <process.h>
 #include <klibc.h>
 #include <vm.h>
@@ -28,14 +26,14 @@
 #include <test.h>
 #include <hardwareinfo.h>
 #include <chipset.h>
-#include <timer.h>
-#include <interruptold.h>
+#include <vm2.h>
+#include <mmap.h>
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
     prepare_pagetable();
-
+    vm2_prepare();
 
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
@@ -50,6 +48,8 @@ void start(uint32_t *p_bootargs) {
     kprintf("Enabling MMU...\n");
     vm_init();
     kprintf("Initialized VM datastructures.\n");
+
+    vm2_start();
 
     // Paging and virtual memory is initialized. This code jumps us to start2.
     mmap(p_bootargs);
