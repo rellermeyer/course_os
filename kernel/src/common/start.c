@@ -58,6 +58,7 @@ void start(uint32_t *p_bootargs) {
 // This start is what starts the kernel. Note that virtual memory is enabled
 // at this point (And running, also, in the kernel's VAS).
 void start2(uint32_t *p_bootargs) {
+    kprintf("start address: 0x%x\n", start2);
 
     // Set up the exception handlers.
     init_vector_table();
