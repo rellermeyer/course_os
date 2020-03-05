@@ -56,11 +56,11 @@ typedef enum PROCESS_STATE
 
 #define MAX_PROCESSES  32
 
-#define STACK_BASE 		0x9f000000 
+#define P_STACK_BASE 		0x9f000000
 #define PROC_LOCATION	0x9ff00000
-#define STACK_SIZE 		(BLOCK_SIZE)
-#define STACK_TOP 		(STACK_BASE + STACK_SIZE)
-#define HEAP_BASE		0x90000000	
+#define P_STACK_SIZE 		(BLOCK_SIZE)
+#define P_STACK_TOP 		(P_STACK_BASE + P_STACK_SIZE)
+#define HEAP_BASE		0x90000000
 
 
 typedef struct pcb {

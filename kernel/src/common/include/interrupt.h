@@ -32,7 +32,7 @@
  */
 #include "stdint.h"
 
-#define BRANCH_INSTRUCTION    0xe59ff018    // ldr pc, pc+offset
+#define BRANCH_INSTRUCTION    0xe59ff018    // ldr pc, pc+offset (where offset is 0x20 bytes)
 
 // System Call Types
 #define SYSCALL_CREATE 0

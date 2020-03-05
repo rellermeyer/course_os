@@ -240,6 +240,10 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
 	//os_printf("DSFR: 0x%X\n", dsfr);
 
+#ifdef ENABLE_TESTS
+    panic();
+#endif
+
 	switch (dsfr)
 	{
 	case 6: // Access bit.

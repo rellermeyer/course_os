@@ -1,5 +1,3 @@
-
-
 #include "klibc.h"
 #include <mem_alloc.h>
 #include <allocator.h>
@@ -18,16 +16,16 @@ uint32_t __mem_extend_proc_heap(uint32_t amt);
 //bump pointer allocation
 void *mem_alloc(uint32_t size)
 {
-	uint32_t temp = size / 4;
+    uint32_t temp = size / 4;
 
-	if ((size % 4) > 0)
-	{
-		temp++;
-	}
-	uint32_t* allocBlock = nextBlock;
-	nextBlock = nextBlock + size;
+    if ((size % 4) > 0)
+    {
+        temp++;
+    }
+    uint32_t* allocBlock = nextBlock;
+    nextBlock = nextBlock + size;
 
-	return allocBlock;
+    return allocBlock;
 }
 
 /*
@@ -52,7 +50,7 @@ uint32_t __mem_extend_heap(uint32_t amt)
     uint32_t amt_added = 0;
     while (amt_added < amt) {
         int retval = vm_allocate_page(KERNEL_VAS,
-                (void*) (MEM_START + buffer_size), VM_PERM_PRIVILEGED_RW);
+                                      (void*) (MEM_START + buffer_size), VM_PERM_PRIVILEGED_RW);
         if (retval) {
             kprintf("ERROR: vm_allocate_page(,%d,) returned %d\n",
                     MEM_START + amt_added, retval);
@@ -134,7 +132,7 @@ uint32_t init_process_heap(struct vas* vas) {
 }
 
 uint32_t __mem_extend_proc_heap(uint32_t amt) {
-	struct vas* pvas = vm_get_current_vas();
+    struct vas* pvas = vm_get_current_vas();
 
     uint32_t amt_added = 0;
     while (amt_added < amt)
@@ -167,7 +165,7 @@ void proc_deallocate(void* ptr)
 }
 
 void *allocate(uint32_t size) {
-	return heap_alloc(allocator, size);
+    return heap_alloc(allocator, size);
 }
 
 void deallocate(void *ptr) {

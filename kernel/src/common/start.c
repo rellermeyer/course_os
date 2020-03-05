@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <interrupt.h>
+#include <mmap.h>
 #include <process.h>
 #include <klibc.h>
 #include <vm.h>
@@ -27,7 +28,6 @@
 #include <hardwareinfo.h>
 #include <chipset.h>
 #include <vm2.h>
-#include <mmap.h>
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
@@ -80,6 +80,7 @@ void start2(uint32_t *p_bootargs) {
     sched_init();
 
     kprintf("bootargs: 0x%x\n", p_bootargs);
+
 
 #ifndef ENABLE_TESTS
 //    argparse_process(p_bootargs);

@@ -4,6 +4,7 @@
  *  Created on: Apr 21, 2015
  *      Author: kittenRainbow
  */
+/// FIXME: All usages of this array list should be replaced with vp_array_list or even u8_array_list where applicable.
 
 #include <array_list.h>
 #include <stdlib.h>

@@ -67,6 +67,7 @@
 #define ASSERT_LTEQ(l, r) do { if(l > r) { kprintf("failed assertion: %s at ASSERT_LTEQ(%s, %s)\n", __FILE__, #l, #r);  return TEST_FAIL; } } while(0)
 #define ASSERT_NEQ(l, r) do { if(l == r) { kprintf("failed assertion: %s at ASSERT_NEQ(%s, %s)\n", __FILE__, #l, #r); return TEST_FAIL; } } while(0)
 #define ASSERT_NOT_NULL(e) do { if(e == NULL) { kprintf("failed assertion: %s\n at ASSERT_NOT_NULL(%s)", __FILE__, #e); return TEST_FAIL; } } while(0)
+#define ASSERT_NULL(e) do { if(e != NULL) { kprintf("failed assertion: %s\n at ASSERT_NULL(%s)", __FILE__, #e); return TEST_FAIL; } } while(0)
 
 #else
 
