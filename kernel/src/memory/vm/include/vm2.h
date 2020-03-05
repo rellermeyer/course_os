@@ -251,18 +251,19 @@ typedef union {
     } __attribute__((packed)) smallpage;
 } L2PagetableEntry;
 
-
+/// The representation of an L1Pagetable
 struct L1PageTable {
     L1PagetableEntry entries[0x1000];
 };
 
+/// The representation of an L1Pagetable
 struct L2PageTable {
     L2PagetableEntry entries[0x100];
 };
 
-
-
+/// Should be called early, initiliazes everything vm2 needs
 void vm2_prepare();
+/// Actually enables the MMU and switches the kernel to higher half
 void vm2_start();
 void vm2_map_virtual_to_physical_l1(size_t virtual, size_t physical);
 void vm2_map_nmegabytes_1to1(size_t address, size_t n);
