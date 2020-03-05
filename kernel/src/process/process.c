@@ -134,10 +134,10 @@ void __process_elf_init(pcb* pcb_p, const char* name) {
  */
 void __process_stack_init(pcb * pcb_p) {
   int retval = 0;
-  for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++)
+  for (int i = 0; i < (P_STACK_SIZE / BLOCK_SIZE); i++)
   {
     retval = vm_allocate_page(pcb_p->stored_vas,
-        (void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+                              (void*) (P_STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
     if (retval)
     {
         kprintf("vm_allocate_page error code: %d\n", retval);
@@ -147,29 +147,29 @@ void __process_stack_init(pcb * pcb_p) {
     {
         kprintf(
                 "A page have been allocated for process stack at vptr: 0x%x\n",
-                (STACK_BASE + (i * BLOCK_SIZE)));
+                (P_STACK_BASE + (i * BLOCK_SIZE)));
     }
     vm_map_shared_memory(KERNEL_VAS,
-                        (void*) (STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
-                        (void*) (STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
+                         (void*) (P_STACK_BASE + (i * BLOCK_SIZE)), pcb_p->stored_vas,
+                         (void*) (P_STACK_BASE + (i * BLOCK_SIZE)), VM_PERM_USER_RW);
   }
 
   // Stick a NULL at STACK_TOP-sizeof(int*)
-  uint32_t *stack_top = (uint32_t*) STACK_TOP;
+  uint32_t *stack_top = (uint32_t*) P_STACK_TOP;
   stack_top[-1] = 0;
   stack_top[-2] = 0;
   stack_top[-3] = 0;
   stack_top[-4] = 0;
-  stack_top[-5] = STACK_BASE;
+  stack_top[-5] = P_STACK_BASE;
   stack_top[-6] = 1;
 
-  strcpy((char*) STACK_BASE, pcb_p->name);
+  strcpy((char*) P_STACK_BASE, pcb_p->name);
 
   // We need to set sp (r13) to stack_top - 12
-  pcb_p->R13 = STACK_TOP - 4 * 6;
-  for (int i = 0; i < (STACK_SIZE / BLOCK_SIZE); i++)
+  pcb_p->R13 = P_STACK_TOP - 4 * 6;
+  for (int i = 0; i < (P_STACK_SIZE / BLOCK_SIZE); i++)
   {
-    vm_free_mapping(KERNEL_VAS, (void*) (STACK_BASE + (i * BLOCK_SIZE)));
+    vm_free_mapping(KERNEL_VAS, (void*) (P_STACK_BASE + (i * BLOCK_SIZE)));
   }
 }
 

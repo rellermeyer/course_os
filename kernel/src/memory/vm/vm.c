@@ -44,7 +44,7 @@ void vm_init()
 	struct vm_free_list * free_vas = (struct vm_free_list*) P_L1PTBASE;
     kprintf("free_vas start location 0x%x\n", free_vas);
 
-//    vm_vas_free_list = free_vas;
+    //    vm_vas_free_list = free_vas;
 	vm_vas_free_list = (struct vm_free_list*) ((void*) free_vas + V_L1PTBASE - P_L1PTBASE);
 	struct vm_free_list *last = 0x0;
     while ((uint32_t) free_vas < P_L1PTBASE + sizeof(struct vas) * num_vas)

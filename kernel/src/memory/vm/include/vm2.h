@@ -2,10 +2,7 @@
 #define VM_H
 
 #include <stdint.h>
-
-/// The L1 pagetable starts at 0x4000 and is itself 0x4000 bytes long. (0x1000 entries of 4 bytes).
-/// The kernel starts at 0x8000 which is exactly at the end of the pagetable. (What a coincidence *gasp*)
-#define L1PagetableLocation 0x4000
+#include <constants.h>
 
 /// A L1PagetableEntry is an entry in the top level pagetable.
 /// There is only one L1 pagetable and it is always located at address 0x4000.
@@ -44,7 +41,7 @@ typedef union L1PagetableEntry{
 
         /// Top 22 bits of the base address. Points to a L2 pagetable.
         /// formula:
-        /// base_address = (address >> 10) << 10;
+        /// base_address = (address >> 10);
         uint32_t base_address: 22;
 
     } coarse;
@@ -136,8 +133,8 @@ typedef union L1PagetableEntry{
         /// The top 8 bits now refer to a 16mb-large block
         ///
         /// formulae:
-        /// section_base_address = (address >> 20) << 20;
-        /// supersection_base_address = (address >> 24) << 24;
+        /// section_base_address = (address >> 20);
+        /// supersection_base_address = (address >> 24);
         uint32_t base_address: 12;
     } section;
 } L1PagetableEntry;
@@ -197,7 +194,7 @@ typedef union {
 
         /// Top 16 bits of the base address. Pointer to the first byte in a 64kb-large block.
         /// formula:
-        /// base_address = (address >> 16) << 16;
+        /// base_address = (address >> 16);
         uint32_t base_address: 16;
 
     } __attribute__((packed)) largepage;
@@ -248,7 +245,7 @@ typedef union {
 
         /// Top 20 bits of the base address. Pointer to the first byte in a 4kb-large block.
         /// formula:
-        /// base_address = (address >> 12) << 12;
+        /// base_address = (address >> 12);
         uint32_t base_address: 20;
 
     } __attribute__((packed)) smallpage;
@@ -257,16 +254,38 @@ typedef union {
 
 struct L1PageTable {
     L1PagetableEntry entries[0x1000];
-} __attribute__((packed));
+};
 
 struct L2PageTable {
-    L2PagetableEntry entries[0x400];
-} __attribute__((packed));
+    L2PagetableEntry entries[0x100];
+};
+
+
 
 void vm2_prepare();
 void vm2_start();
 void vm2_map_virtual_to_physical_l1(size_t virtual, size_t physical);
 void vm2_map_nmegabytes_1to1(size_t address, size_t n);
 
+/// From the `kernel.ld` linker file. These are not arrays but this is how you refer to the pointers by the linker script.
+extern const size_t KERNEL_BASE[]; // 0x8000
+extern const size_t KERNEL_TOP[];
+extern const size_t STACK_TOP[];
+
+/// Above 3Gigs is the virtual kernel area, this also includes all Virtual Memory constructs, and the kernel stack.
+#define KERNEL_VIRTUAL_OFFSET   (3u * Gibibyte)
+
+/// Make the kernel start in virtual memory at 3GB
+#define KERNEL_VIRTUAL_START    (KERNEL_VIRTUAL_OFFSET + (size_t)KERNEL_BASE)
+#define KERNEL_VIRTUAL_END      (KERNEL_VIRTUAL_OFFSET + (size_t)KERNEL_TOP)
+
+/// The L1 pagetable starts at 0x4000 and is itself 0x4000 bytes long. (0x1000 entries of 4 bytes).
+/// The kernel starts at 0x8000 which is exactly at the end of the pagetable. (What a coincidence *gasp*)
+#define PhysicalL1PagetableLocation     0x4000
+#define VirtualL1PagetableLocation      (KERNEL_VIRTUAL_OFFSET + PhysicalL1PagetableLocation)
+
+// The end of the kernel is guaranteed 1MiB aligned due to our linking script
+#define VirtualL2PagetableLocation      KERNEL_VIRTUAL_END
+#define PhysicalL2PagetableLocation     ((size_t)KERNEL_TOP)
 
 #endif

@@ -24,8 +24,7 @@ int vm_build_free_frame_list(void *start, void *end)
 	return 0;
 }
 
-void *vm_get_free_frame()
-{
+void *vm_get_free_frame() {
 	// Check if there are no frames
 	if (vm_free_list == 0x0)
 	{

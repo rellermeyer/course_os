@@ -25,8 +25,8 @@
 #define PERIPHBASE		0x3F000000
 #define PERIPHTOP		0x20000000
 
-//#define PCIBASE			0x41000000
-//#define PCITOP			0x70000000
+#define PCIBASE			0x41000000
+#define PCITOP			0x70000000
 
 //remapped physical memory for direct access
 #define PMAPBASE 		0xf0200000

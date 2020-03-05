@@ -2,14 +2,13 @@ ENTRY(_Reset)
 SECTIONS
 {
     . = 0x8000;
-    P_KERNBASE = .;
+    KERNEL_BASE = .;
     .startup . : { build/common/startup.o(.text) }
     .text : { *(.text) }
     .data : { *(.data) }
-    .bss : { *(.bss COMMON) }
-    P_KERNTOP = .;
-    . = ALIGN(8);
-    . = . + 0x1000;
-    stack_top = .;
-}
+    .bss : { *(.bss COMMON)}
 
+    /*make kernel top megabyte aligned*/
+    . = ALIGN(1024 * 1024);
+    KERNEL_TOP = .;
+}

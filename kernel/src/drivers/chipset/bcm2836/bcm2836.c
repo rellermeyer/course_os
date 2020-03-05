@@ -4,6 +4,7 @@
 #include <mmap.h>
 #include <interrupt.h>
 #include <stdio.h>
+#include <vm2.h>
 
 volatile struct BCM2836Registers * bcm2836_registers_base = (struct BCM2836Registers *) 0x40000000;
 const size_t BCM2836_peripheral_base = 0x3F000000;
@@ -54,8 +55,16 @@ void bcm2836_init() {
     chipset.late_init = &bcm2836_late_init;
 
     // Mapping memory used by bcm2836 peripherals
+    // TEMP (vm1):
     request_identity_mapped_section(BCM2836_peripheral_base, 4);
 
+    // TODO: remove vm1 code and leave only this vm2 call
+    vm2_map_nmegabytes_1to1(BCM2836_peripheral_base, 4);
+
     // Map control registers
+    // TEMP (vm1):
     request_identity_mapped_section((size_t)bcm2836_registers_base, 1);
+
+    // TODO: remove vm1 code and leave only this vm2 call
+    vm2_map_nmegabytes_1to1((size_t)bcm2836_registers_base, 1);
 }

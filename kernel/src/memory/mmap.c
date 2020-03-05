@@ -3,6 +3,7 @@
 #include <klibc.h>
 #include <vm.h>
 #include <interrupt.h>
+#include <constants.h>
 
 /*
  * APX AP            Privileged    Unprivileged
@@ -38,7 +39,6 @@ void request_identity_mapped_section(size_t start_address, size_t megabytes) {
     kprintf("Identity mapping %i megabyte(s) at 0x%x\n", megabytes, start_address);
 
     for (unsigned int i = 0; i < megabytes; i++) {
-        kprintf("i: %i\n", i * 0x100000);
         first_level_pt[(start_address + (i * 0x100000)) >> 20] = ((start_address + (i *0x100000)) & 0xFFF00000)  | 0x0400 | 2;
     }
 }
@@ -47,6 +47,9 @@ void prepare_pagetable() {
     memset((uint32_t *)first_level_pt,0, PAGE_TABLE_SIZE);
 }
 
+// 0x00000000
+//   ---  ---
+//   L1   off
 void mmap(void *p_bootargs) {
 
     disable_interrupt(BOTH);
@@ -91,11 +94,12 @@ void mmap(void *p_bootargs) {
 
     // TODO: re enable when we actually need it. 700mb seems a bit excessive though.
     //map 752MB of PCI interface one-to-one
-    //	unsigned int pci_bus_addr = PCIBASE;
-    //	for (int i = (PCIBASE >> 20); i < (PCITOP >> 20); i++) {
-    //		first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
-    //		pci_bus_addr += 0x100000;
-    //	}
+//    unsigned int pci_bus_addr = PCIBASE;
+//    for (int i = (PCIBASE >> 20); i < (PCITOP >> 20); i++) {
+//        first_level_pt[i] = pci_bus_addr | 0x0400 | 2;
+//        pci_bus_addr += 0x100000;
+//    }
+    request_identity_mapped_section(Gibibyte - 25 * Mibibyte, 20);
 
 	// Quick coarse page table address
 	//unsigned int coarse_page_table_address = P_L1PTBASE + 2*PAGE_TABLE_SIZE;
@@ -110,6 +114,7 @@ void mmap(void *p_bootargs) {
 		first_level_pt[i] = phys_addr | 0x0400 | 2;
 		phys_addr += 0x100000;
 	}
+
 
 	// Fill in the coarse page table
 	// (TODO: How do we handle 64kB pages? Do they take up 16 entries?)
