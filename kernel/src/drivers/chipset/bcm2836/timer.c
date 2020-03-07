@@ -37,7 +37,7 @@ static inline uint32_t get_frequency()
 
 static prq_handle* scheduled_timers;
 
-static void unmask_and_enable_timer()
+static inline void unmask_and_enable_timer()
 {
     // Disable output mask, enable timer
     static const uint32_t cntp_ctl = 0b01;
@@ -45,7 +45,7 @@ static void unmask_and_enable_timer()
     asm volatile ("mcr p15, 0, %0, c14, c2, 1" :: "r"(cntp_ctl));
 }
 
-static void mask_and_enable_timer()
+static inline void mask_and_enable_timer()
 {
     // Enable output mask, enable timer
     static const uint32_t cntp_ctl = 0b11;
@@ -53,7 +53,7 @@ static void mask_and_enable_timer()
     asm volatile ("mcr p15, 0, %0, c14, c2, 1" :: "r"(cntp_ctl));
 }
 
-static uint64_t get_phy_count()
+static inline uint64_t get_phy_count()
 {
     LittleEndianUint64 val;
     // Read CNTPCT
@@ -62,7 +62,7 @@ static uint64_t get_phy_count()
 }
 
 /*
-static int32_t get_phy_timer_val()
+static inline int32_t get_phy_timer_val()
 {
     int32_t val;
     // Read CNTP_TVAL
@@ -70,13 +70,13 @@ static int32_t get_phy_timer_val()
     return val;
 }
 
-static void set_phy_timer_val(int32_t val)
+static inline void set_phy_timer_val(int32_t val)
 {
     // Write CNTP_TVAL
     asm volatile ("mcr p15, 0, %0, c14, c2, 0" :: "r"(val));
 }
 
-static uint64_t get_phy_timer_cmp_val()
+static inline uint64_t get_phy_timer_cmp_val()
 {
     LittleEndianUint64 val;
     // Read CNTP_CVAL
@@ -85,7 +85,7 @@ static uint64_t get_phy_timer_cmp_val()
 }
 */
 
-static void set_phy_timer_cmp_val(uint64_t val)
+static inline void set_phy_timer_cmp_val(uint64_t val)
 {
     const LittleEndianUint64 le_val = (LittleEndianUint64)val;
     // Write CNTP_CVAL
@@ -98,9 +98,6 @@ static inline ScheduledTimer* get_prq_node_data(prq_node* node)
 }
 
 
-static void foo() {
-    kprintf("Timer callback called\n");
-}
 void bcm2836_timer_init()
 {
     const uint32_t freq = get_frequency();
@@ -112,12 +109,6 @@ void bcm2836_timer_init()
     scheduled_timers = prq_create();
 
     mask_and_enable_timer();
-
-
-    // TEMP
-    bcm2836_schedule_timer_once(foo, 2000);
-//    set_phy_timer_cmp_val(get_phy_count() + freq * 2000);
-//    unmask_and_enable_timer();
 }
 
 // TODO: Handle possibility of timer scheduling functions or interrupt handler being interrupted
@@ -128,7 +119,7 @@ void timer_handle_interrupt()
 
     // Process all timers that are not in the future, if any
     prq_node* next_timer_node = prq_peek(scheduled_timers);
-    while (get_prq_node_data(next_timer_node)->scheduled_count <= current_count) {
+    while (next_timer_node != NULL && get_prq_node_data(next_timer_node)->scheduled_count <= current_count) {
         prq_dequeue(scheduled_timers);
         ScheduledTimer* next_timer = get_prq_node_data(next_timer_node);
 
@@ -138,12 +129,15 @@ void timer_handle_interrupt()
 
         next_timer_node = prq_peek(scheduled_timers);
     }
-    set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
 
-
-    // TEMP
-//    kprintf("Timer interrupt received\n");
-//    mask_and_enable_timer();
+    // If there are no more scheduled timers in queue, mask interrupts until one is added again
+    if (next_timer_node == NULL) {
+        mask_and_enable_timer();
+    }
+    // If there still are, set compare val to next one
+    else {
+        set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
+    }
 }
 
 // TODO: Handle possibility of two timers getting scheduled for the same time (counter value), PRQ needs support
