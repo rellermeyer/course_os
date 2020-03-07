@@ -13,7 +13,7 @@
  *	+ IRQ - processing "normal" interrupts
  *	+ SVC - proctected mode for OS
  *	+ UND - processing an undefined instruction exception
- *	+ SYS - also protecteed mode for OS --if anyone wants to clarify, feel free--
+ *	+ SYS - also protected mode for OS --if anyone wants to clarify, feel free--
  *	These modes can be entered or exited by modifying the CPSR (status register)
  *
  *  exceptions (e.g. software interrupts, system calls, etc.), Interrupts (IRQ, FIQ)

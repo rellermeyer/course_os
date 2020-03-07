@@ -1,4 +1,3 @@
-
 #include <hardwareinfo.h>
 #include <stdio.h>
 #include <chipset.h>
@@ -7,8 +6,9 @@
 
 ChipsetInterface chipset;
 
-void init_chipset() {
-    HardwareInfo * info = get_hardwareinfo();
+void init_chipset()
+{
+    HardwareInfo* info = get_hardwareinfo();
 
     memset(&chipset, 0, sizeof(ChipsetInterface));
     
@@ -17,16 +17,15 @@ void init_chipset() {
             bcm2836_init();
             break;
         default: {
-            kprintf("Board type not supported for interrupts \n");
+            kprintf("Board type not supported for interrupts\n");
             panic();
         }
     }
     
     for (size_t i = 0; i < sizeof(ChipsetInterface) / sizeof(uint32_t); i++) {
-        if (((uint32_t **) &chipset)[i] == NULL) {
+        if (((uint32_t**) &chipset)[i] == NULL) {
             kprintf("Chipset did not satisfy the required interface. Missing field %i\n", i);
             panic();
         }
     }
-    
 }
