@@ -260,7 +260,6 @@ void reserved_handler(void)
 
 // the attribute automatically saves and restores state
 void __attribute__((interrupt("IRQ"))) irq_handler(void) {
-    kprintf("IRQ HANDLER\n");
     return chipset.handle_irq();
 
 //    int * pendingregister = (int *) 0x40000060;
@@ -309,7 +308,7 @@ void SemihostingCall(enum SemihostingSWI mode) {
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(InterruptType mask) {
-    kprintf("Enabling interrupts with mask %i\n", mask);
+    kprintf("Enabling interrupts with mask 0x%x\n", mask);
 
     // enable interrupt on the core
     switch (mask) {

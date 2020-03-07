@@ -29,7 +29,6 @@
 #include <hardwareinfo.h>
 #include <chipset.h>
 #include <timer.h>
-#include <interruptold.h>
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.

@@ -3,21 +3,24 @@
 
 #include <stdint.h>
 
+/*
+ * Abstract chipset driver interface
+ */
+
 void init_chipset();
 
 // A timer handle is an identifier for a timer so it can be descheduled later.
 // These handles must be unique.
 typedef size_t TimerHandle;
 typedef void (*TimerCallback)();
-typedef void (*UartCallback)(char c);
-typedef void (*InterruptCallback)();
 
-typedef struct ChipsetInterface {
+typedef void (*UartCallback)(char c);
+
+typedef struct ChipsetInterface
+{
     /// Timer Functions
-    //TODO: time/duration struct of some sort.
     TimerHandle (*schedule_timer_periodic)(TimerCallback callback, uint32_t ms);
     TimerHandle (*schedule_timer_once)(TimerCallback callback, uint32_t ms);
-
     void (*deschedule_timer)(TimerHandle handle);
 
     /// UART Functions
@@ -34,17 +37,14 @@ typedef struct ChipsetInterface {
     // is requested that does not exist, input from channel zero shall be given to this callback.
     void (*uart_on_message)(UartCallback callback, int uartchannel);
 
-    // Interrupt numbers are not guaranteed to work from one boardtype/version to another.
-    // Only use this function after checking hardwareinfo.
-    void (*on_interrupt)(InterruptCallback callback);
-
     void (*handle_irq)();
     void (*handle_fiq)();
 
     // Called for every chipset after interrupts and dynamic memory has been enabled
     // So the chipset can do some more initialization.
     void (*late_init)();
-} ChipsetInterface;
+}
+ChipsetInterface;
 
 ChipsetInterface chipset;
 

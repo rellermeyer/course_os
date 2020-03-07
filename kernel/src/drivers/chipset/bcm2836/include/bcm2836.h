@@ -1,11 +1,17 @@
 // Data sheet: https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
+
 #ifndef BCM2836_H
 #define BCM2836_H
 
 #include <stdint.h>
 
+/*
+ * Implementation of chipset driver interface for BCM2836
+ */
+
 // Starts at memory address 0x4000_0000
-struct BCM2836Registers {
+typedef struct BCM2836Registers
+{
     uint32_t ControlRegister;
     uint32_t __unused1;
     uint32_t CoreTimerPrescaler;
@@ -16,7 +22,7 @@ struct BCM2836Registers {
     uint32_t CoreTimerAccessLS32Bits;
     uint32_t CoreTimerAccessMS32Bits;
     uint32_t LocalInterupts0Routing;
-    uint32_t __LocalInterupts8Routing __attribute__ ((deprecated)); // Deprecated
+    uint32_t __LocalInterupts8Routing __attribute__((deprecated));
     uint32_t AxiOutstandingCounters;
     uint32_t AxiOutstandingIRQ;
     uint32_t LocalTimerControlAndStatus;
@@ -70,44 +76,40 @@ struct BCM2836Registers {
     uint32_t Core3Mailbox1ReadClear;
     uint32_t Core3Mailbox2ReadClear;
     uint32_t Core3Mailbox3ReadClear;
-};
+}
+BCM2836Registers;
 
-
-
-
-
-
-
-
-enum InterruptSource {
+enum InterruptSource
+{
     // nCNTPSIRQ : Secure physical timer event
-    PHYSICAL_SECURE_TIMER       = (1 << 0),
+    PHYSICAL_SECURE_TIMER     = (1 << 0),
 
     // nCNTPNSIRQ : Non-secure physical timer event
-    PHYSICAL_NONSECURE_TIMER    = (1 << 1),
+    PHYSICAL_NONSECURE_TIMER  = (1 << 1),
 
     // nCNTHPIRQ: Physical Timer for use in Hypervisor mode.
-    PHYSICAL_HYPERVISOR_TIMER   = (1 << 2),
+    PHYSICAL_HYPERVISOR_TIMER = (1 << 2),
 
     // nCNTVIRQ: Virtual Timer for use in Non-secure PL1 modes.
-    VIRTUAL_NONSECURE_TIMER     = (1 << 3),
+    VIRTUAL_NONSECURE_TIMER   = (1 << 3),
 
-    MAILBOX_0                   = (1 << 4),
-    MAILBOX_1                   = (1 << 5),
-    MAILBOX_2                   = (1 << 6),
-    MAILBOX_3                   = (1 << 7),
+    MAILBOX_0                 = (1 << 4),
+    MAILBOX_1                 = (1 << 5),
+    MAILBOX_2                 = (1 << 6),
+    MAILBOX_3                 = (1 << 7),
 
-    GPU                         = (1 << 8),
-    PMU                         = (1 << 9),
+    GPU                       = (1 << 8),
+    PMU                       = (1 << 9),
 
-    AXI                         = (1 << 10),
-    LOCAL_TIMER                 = (1 << 11),
+    AXI                       = (1 << 10),
+    LOCAL_TIMER               = (1 << 11),
 };
 
-volatile struct BCM2836Registers * bcm2836_registers_base;
+volatile BCM2836Registers* bcm2836_registers_base;
 
 void bcm2836_init();
 
+void bcm2836_late_init();
 
 extern const size_t BCM2836_peripheral_base;
 
