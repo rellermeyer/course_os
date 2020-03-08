@@ -35,6 +35,7 @@
 #define BRANCH_INSTRUCTION    0xe59ff018    // ldr pc, pc+offset (where offset is 0x20 bytes)
 
 // System Call Types
+// TODO: maybe make enum?
 #define SYSCALL_CREATE 0
 #define SYSCALL_SWITCH 1
 #define SYSCALL_DELETE 2

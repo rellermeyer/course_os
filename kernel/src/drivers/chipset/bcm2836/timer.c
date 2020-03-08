@@ -1,6 +1,6 @@
 #include <bcm2836.h>
 #include <stdio.h>
-#include <mmap.h>
+#include <mmio.h>
 #include <chipset.h>
 
 inline static uint32_t get_frequency() {

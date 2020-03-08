@@ -85,12 +85,9 @@ unsigned int rand();
 #else
 #define INFO(...)
 #endif
-//#define WARN(format, ...)   kprintf("\e[38;5;208m[WARN] " format "\e[0m\n", ##__VA_ARGS__)
+#define WARN(format, ...)   kprintf("\e[38;5;208m[WARN] " format "\e[0m\n", ##__VA_ARGS__)
 
-// Defines an instruction that will raise an undefined instruction code on both ARM (and hopefully THUMB2)
-#define UNDEFINED_INSTRUCTION_BYTES 0xF7F1A2F3
-#define STRINGIFY2(X) #X
-#define STRINGIFY(X) STRINGIFY2(X)
+
 #define FATAL(format, ...) kprintf("\e[38;5;160m[FATAL] \e[38;5;208m%s:%i\e[38;5;160m " format "\e[0m\n", __FILE__, __LINE__, ##__VA_ARGS__); panic()
 
 //4-17-15: Initial panic * assert_fail functions added

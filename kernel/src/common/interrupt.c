@@ -1,11 +1,8 @@
 #include <interrupt.h>
-#include <mmap.h>
-#include <memory.h>
-#include <interrupt.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <vm2.h>
 #include <chipset.h>
+#include <mmio.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
@@ -42,52 +39,44 @@ void init_vector_table() {
 }
 
 /* handlers */
-void reset_handler(void)
-{
-    kprintf("RESET HANDLER\n");
+void reset_handler(void) {
+    INFO("RESET HANDLER\n");
 	_Reset();
 }
 
-void __attribute__((interrupt("UNDEF"))) undef_instruction_handler(void)
-{
-	int spsr, lr;
+void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
+    size_t spsr, lr;
 
 	asm volatile("mrs %0, spsr" : "=r"(spsr));
 	asm volatile("mov %0, lr" : "=r" (lr));
 
-	int thumb = spsr & 0x20;
-	int pc = thumb ? lr - 0x2 : lr - 0x4;
+    size_t thumb = spsr & 0x20u;
+    size_t pc = thumb ? lr - 0x2u : lr - 0x4u;
 
-	if ((*(size_t *) pc) == UNDEFINED_INSTRUCTION_BYTES){
-        kprintf("FATAL ERROR\n");
-        panic();
-	}
 
-	kprintf("UNDEFINED INSTRUCTION HANDLER\n");
+	WARN("UNDEFINED INSTRUCTION HANDLER");
 
-    int copro = (*(int*)pc & 0xf00000) >> 24;
+    size_t copro = (*(size_t *)pc & 0xf00000u) >> 24u;
 
-	if (spsr & 0x20) {
-        kprintf("THUMB mode\n");
+	if (spsr & 0x20u) {
+        WARN("THUMB mode");
 	} else {
-        kprintf("ARM mode\n");
+        WARN("ARM mode");
 	}
-	if (spsr & 0x1000000) {
-        kprintf("JAZELLE enabled\n");
-	}
-
-    kprintf("COPRO: %x\n", copro);
-    kprintf("violating instruction (at %x): %x\n", pc, *((int *) pc));
-	if (pc >= V_KERNBASE && pc < V_KERNTOP)
-	{
-        kprintf("(instruction is in kernel address range)\n");
+	if (spsr & 0x1000000u) {
+        WARN("JAZELLE enabled");
 	}
 
-	panic();
+    WARN("COPRO: 0x%x", copro);
+    WARN("violating instruction (at 0x%x): 0x%x", pc, *((size_t *) pc));
+	if (pc >= KERNEL_VIRTUAL_START && pc < KERNEL_VIRTUAL_END) {
+        WARN("(instruction is in kernel address range)");
+	}
+
+	FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
-{
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 	int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
 
 	asm volatile ("MOV %0, r7":"=r"(callNumber)::);
@@ -188,15 +177,11 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
 	}
 }
 
-void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
-{
-	int lr;
-
+void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {
+	size_t lr;
 	asm volatile("mov %0, lr" : "=r" (lr));
 
-    kprintf("PREFETCH ABORT HANDLER, violating address: %x\n", (lr - 4));
-
-	panic();
+    FATAL("PREFETCH ABORT HANDLER, violating address: 0x%x", (lr - 4u));
 }
 
 void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
@@ -207,20 +192,20 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 	asm volatile("mov %0, lr" : "=r" (lr));
 	int pc = lr - 8;
 
-	int far;
+	uint32_t far;
 	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
 
-    DEBUG("DATA ABORT HANDLER (Page Fault)");
-    DEBUG("faulting address: 0x%x", far);
+    WARN("DATA ABORT HANDLER (Page Fault)");
+    WARN("faulting address: 0x%x", far);
 	if (far >= KERNEL_VIRTUAL_OFFSET) {
-        DEBUG("(address is in kernel address range)\n");
+        DEBUG("(address is in kernel address range)");
 	}
-    DEBUG("violating instruction (at 0x%x): %x", pc, *((int *) pc));
+    WARN("violating instruction (at 0x%x): 0x%x", pc, *((int *) pc));
 
 	// Get the Data Fault Status Register
 	int dfsr;
 	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dfsr));
-	DEBUG("DFSR: 0x%x", dfsr);
+    WARN("DFSR: 0x%x", dfsr);
 
 
     #ifdef ENABLE_TESTS
@@ -234,8 +219,9 @@ void reserved_handler(void)
 }
 
 // the attribute automatically saves and restores state
+// TODO: We might not want that! (context switches etc)
 void __attribute__((interrupt("IRQ"))) irq_handler(void) {
-    kprintf("IRQ HANDLER\n");
+    DEBUG("IRQ HANDLER");
     return chipset.handle_irq();
 
 //    int * pendingregister = (int *) 0x40000060;
@@ -260,7 +246,7 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void) {
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
-    kprintf("FIQ HANDLER\n");
+    DEBUG("FIQ HANDLER\n");
     return chipset.handle_fiq();
 
 //    handle_irq_interrupt(interrupt_registers->fiq_control & 0x7f);
@@ -283,7 +269,7 @@ void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI m
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(InterruptType mask) {
-    kprintf("Enabling interrupts with mask %i\n", mask);
+    INFO("Enabling interrupts with mask %i", mask);
 
     // enable interrupt on the core
     switch (mask) {
@@ -296,12 +282,15 @@ void enable_interrupt(InterruptType mask) {
         case BOTH:
             asm volatile("cpsie if");
             break;
+        default:
+            /** should never happen **/
+            return;
     }
 }
 
 /* disable IRQ and/or FIQ */
 void disable_interrupt(InterruptType mask) {
-    kprintf("Disabling interrupts with mask %i\n", mask);
+    INFO("Disabling interrupts with mask %i", mask);
 
     // disable interrupts on the core
     switch (mask) {
@@ -314,13 +303,16 @@ void disable_interrupt(InterruptType mask) {
         case BOTH:
             asm volatile("cpsid if");
             break;
+        default:
+            /** should never happen **/
+            return;
     }
 }
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
 int disable_interrupt_save(InterruptType mask) {
 
-    kprintf("Disabling interrupts (save) with mask %i\n", mask);
+    INFO("Disabling interrupts (save) with mask %i", mask);
 
     /* get a copy of the current process status register */
     int cpsr;
@@ -336,13 +328,16 @@ int disable_interrupt_save(InterruptType mask) {
         case BOTH:
             asm volatile("cpsid if");
             break;
+        default:
+            /** should never happen **/
+            return -1;
     }
     return cpsr;
 }
 
 /* return a full 32-bit copy of the current process status register */
-int get_proc_status() {
-    int cpsr;
+size_t get_proc_status() {
+    size_t cpsr;
     asm volatile("mrs %0, cpsr" : "=r"(cpsr));
     return cpsr;
 }
@@ -350,6 +345,6 @@ int get_proc_status() {
 /* restore control status (interrupt, mode bits) of the cpsr */
 /* (e.g. when we return from a handler, restore value from
  disable_interrupt_save				     */
-void restore_proc_status(int cpsr) {
+void restore_proc_status(size_t cpsr) {
     asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }
