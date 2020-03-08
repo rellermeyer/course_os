@@ -59,7 +59,6 @@ os_size_t os_strspn(char *s, char *accept);
 os_size_t os_strcspn(char *s, char *reject);
 
 void os_memcpy(uint32_t * source, uint32_t * dest, os_size_t size);
-/* TODO: create print function for kernel debugging purposes */
 
 
 uint32_t km_size();
@@ -68,33 +67,31 @@ uint32_t kmcheck();
 
 unsigned int rand();
 
-// as the codebase grows, it is important to use these macros
-// so that we can filter out unnecessary messages esp. during
-// development
-#define LOG_LEVEL 5
+#define LOG_LEVEL 4
 
-//#if LOG_LEVEL >= 5
-#define DEBUG(...) kprintf("DEBUG: "  __VA_ARGS__) // :+1:
-//#else
-//#define DEBUG(...)
-//#endif
-#define LOG(...) kprintf(__VA_ARGS__)
-#define INFO(...) kprintf(__VA_ARGS__)
-#define WARN(...)  kprintf(__VA_ARGS__) // :+1:
-#define ERROR(...) kprintf(__VA_ARGS__);
+#if LOG_LEVEL > 3
+#define TRACE(format, ...)  kprintf("\e[90m[TRACE] " format "\e[0m\n", ##__VA_ARGS__)
+#else
+#define TRACE(...)
+#endif
 
-#define ___asm_opcode_swab32(x) (	\
-        (((x) << 24) & 0xFF000000)	\
-    | (((x) <<  8) & 0x00FF0000)	\
-    | (((x) >>  8) & 0x0000FF00)	\
-    | (((x) >> 24) & 0x000000FF)	\
-)
+#if LOG_LEVEL > 2
+#define DEBUG(format, ...)  kprintf("[DEBUG] \e[92m%s:%i\e[0m " format "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define DEBUG(...)
+#endif
+#if LOG_LEVEL > 1
+#define INFO(format, ...)   kprintf("\e[96m[INFO]\e[0m " format "\n", ##__VA_ARGS__)
+#else
+#define INFO(...)
+#endif
+//#define WARN(format, ...)   kprintf("\e[38;5;208m[WARN] " format "\e[0m\n", ##__VA_ARGS__)
 
 // Defines an instruction that will raise an undefined instruction code on both ARM (and hopefully THUMB2)
 #define UNDEFINED_INSTRUCTION_BYTES 0xF7F1A2F3
 #define STRINGIFY2(X) #X
 #define STRINGIFY(X) STRINGIFY2(X)
-#define FATAL() asm volatile(".long " STRINGIFY(UNDEFINED_INSTRUCTION_BYTES));
+#define FATAL(format, ...) kprintf("\e[38;5;160m[FATAL] \e[38;5;208m%s:%i\e[38;5;160m " format "\e[0m\n", __FILE__, __LINE__, ##__VA_ARGS__); panic()
 
 //4-17-15: Initial panic * assert_fail functions added
 void panic() __attribute__ ((noreturn));

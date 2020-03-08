@@ -17,6 +17,9 @@ echo "
 
 #include <stdio.h>
 #include <interrupt.h>
+#include <test.h>
+
+size_t global_counter = 0;
 
 " >> "$DIR/test.c"
 

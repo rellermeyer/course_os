@@ -9,7 +9,8 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 
 # variables to define in the preprocessor.
 MEMORY = 1G
-DEFINITIONS = MEM_DEBUG
+DEFINITIONS = MEM_DEBUG ENABLE_TESTS
+#DEFINITIONS = MEM_DEBUG
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src
@@ -57,8 +58,18 @@ run: build | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
 	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
 
+debug: build | builddir
+		${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
+
+start_debug: build | builddir
+	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
+
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
+	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
+	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
+
+
 
 # Begin Pi Make
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir

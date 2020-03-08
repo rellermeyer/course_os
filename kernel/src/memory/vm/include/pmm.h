@@ -39,16 +39,17 @@
 /// The 1024 byte constant you might see popping up refers to the maximum number of 16 byte sliceinfo structs
 /// can fit in a single 16kb slice.
 
+// TODO: Excluded regions. (for mmio for example)
+// TODO: detect memory size.
+#define PMM_TOP 0x10000000 // 256 MiB and less than all Peripheral bases
 
-#ifndef PAGE_ALLOC_H
-#define PAGE_ALLOC_H
+#ifndef PMM_H
+#define PMM_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "vm2.h"
 
-// TODO: detect memory size.
-#define PAGEALLOC_TOP 0x8000000 // 128 MiB and less than all Peripheral bases
 
 #define SLICEINFO_PER_SLICE 1024
 
@@ -99,8 +100,7 @@ union MemorySlice {
 };
 
 
-/// The page allocator allocates ***Physical*** pages.
-struct PageAllocator {
+struct PhysicalMemoryManager {
     /// Two linked lists of unused and allocated slices, referred to by their SliceInfos.
     struct MemorySliceInfo * unused;
     struct MemorySliceInfo * allocated;
@@ -115,30 +115,22 @@ struct PageAllocator {
     size_t end;
 };
 
-struct PageAllocator pageallocator;
+struct PhysicalMemoryManager physicalMemoryManager;
 
 // Allocator specific operations
-void pagealloc_init(size_t start, size_t end);
-struct MemorySliceInfo * allocate_new_sliceinfo_slice();
-struct MemorySliceInfo * pagealloc_get_sliceinfo_for_slice(union MemorySlice * slice);
+void pmm_init(size_t start, size_t end);
+struct MemorySliceInfo * pmm_new_sliceinfo_slice();
+struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice);
 
 
 // Element operations
-struct L1PageTable * pagealloc_allocate_l1_pagetable();
-void pagealloc_free_l1_pagetable(struct L1PageTable * pt);
-struct L2PageTable * pagealloc_allocate_l2_pagetable();
-void pagealloc_free_l2_pagetable(struct L2PageTable * pt);
-struct Page * pagealloc_allocate_page();
-void pagealloc_free_page(struct Page * p);
+struct L1PageTable * pmm_allocate_l1_pagetable();
+void pmm_free_l1_pagetable(struct L1PageTable * pt);
+struct L2PageTable * pmm_allocate_l2_pagetable();
+void pmm_free_l2_pagetable(struct L2PageTable * pt);
+struct Page * pmm_allocate_page();
+void pmm_free_page(struct Page * p);
 
-// Returns the index of the first zero from the LSB
-size_t first_free(uint16_t);
 
-// MemorySliceInfo linked list helper functions.
-void push_to_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry);
-struct MemorySliceInfo * pop_from_ll(struct MemorySliceInfo ** head);
-// It's important that for this function you give it the correct head. If it's not it may happen
-// That the head you give it will be mixed up with the actual head of the list it was in.
-void remove_element_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry);
 
 #endif

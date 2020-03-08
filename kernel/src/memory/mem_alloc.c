@@ -3,30 +3,11 @@
 #include <allocator.h>
 #include <vm.h>
 #include <string.h>
+#include <vm2.h>
+#include <interrupt.h>
 
-uint32_t *nextBlock = (uint32_t*) MEM_START;
-uint32_t buffer_size;
 heap_t * allocator;
-uint32_t __mem_extend_heap(uint32_t amt);
-
-heap_t * proc_allocator;
-uint32_t proc_buffer_size;
-uint32_t __mem_extend_proc_heap(uint32_t amt);
-
-//bump pointer allocation
-void *mem_alloc(uint32_t size)
-{
-    uint32_t temp = size / 4;
-
-    if ((size % 4) > 0)
-    {
-        temp++;
-    }
-    uint32_t* allocBlock = nextBlock;
-    nextBlock = nextBlock + size;
-
-    return allocBlock;
-}
+size_t heap_end;
 
 /*
  * The kernel heap is organized in blocks. Each block has a header and a
@@ -43,125 +24,46 @@ void *mem_alloc(uint32_t size)
  * should merge with the blocks on the left or right of us, respectively.
  */
 
-// TODO: what if there's an error allocating the page?
-// Returns a pointer to the new (big) free block's header
-uint32_t __mem_extend_heap(uint32_t amt)
-{
-    uint32_t amt_added = 0;
-    while (amt_added < amt) {
-        int retval = vm_allocate_page(KERNEL_VAS,
-                                      (void*) (MEM_START + buffer_size), VM_PERM_PRIVILEGED_RW);
-        if (retval) {
-            kprintf("ERROR: vm_allocate_page(,%d,) returned %d\n",
-                    MEM_START + amt_added, retval);
-            break;
-        }
-        amt_added += BLOCK_SIZE;
-        buffer_size += BLOCK_SIZE;
-    }
+void init_heap() {
+    size_t heap_end = KERNEL_HEAP_BASE;
 
-    return amt_added;
-}
-
-uint32_t init_heap()
-{
     // Allocate space for the heap_t struct. is too large but at least big enough.
-    int retval = vm_allocate_page(KERNEL_VAS, (void*) MEM_START, VM_PERM_PRIVILEGED_RW);
-    if (retval) {
-        kprintf("ERROR: vm_allocate_page returned %d\n", retval);
-        return STATUS_FAIL;
+    void * ret = vm2_allocate_kernel_page(kernell1PageTable, KERNEL_HEAP_BASE, false);
+    if (ret == NULL) {
+        FATAL("Couldn't allocate page for the kernel heap");
     }
 
-    heap_t * heap = (heap_t * ) MEM_START;
+    heap_t * heap = (heap_t *) KERNEL_HEAP_BASE;
+
     memset(heap, 0, sizeof(heap_t));
 
-    uint32_t addr = (uint32_t)((void *) MEM_START + sizeof(heap_t));
+    heap_end += sizeof(heap_t);
 
     for(int i = 0; i < BIN_COUNT; i++) {
-        heap->bins[i] = (bin_t *) addr;
+        heap->bins[i] = (bin_t *) heap_end;
         memset(heap->bins[0], 0, sizeof(bin_t));
-        addr += sizeof(bin_t);
+        heap_end += sizeof(bin_t);
     }
 
-    assert(MEM_START + sizeof(heap_t) + BIN_COUNT * sizeof(bin_t) == addr)
+    assert(KERNEL_HEAP_BASE + sizeof(heap_t) + BIN_COUNT * sizeof(bin_t) == heap_end);
 
+    // current heap end.
+    size_t heap_start = heap_end;
 
-    // Find the next page boundary above addr
-    addr = (addr & ~(BLOCK_SIZE-1)) + BLOCK_SIZE;
+    while(heap_end < (heap_start + HEAP_INIT_SIZE + PAGE_SIZE)) {
+        if (vm2_allocate_kernel_page(kernell1PageTable, heap_end, false) == NULL) {
+            FATAL("Allocation of the kernel heap went wrong!");
+        }
 
-    void * ret = vm_allocate_pages(KERNEL_VAS, (void *) addr, HEAP_INIT_SIZE, VM_PERM_PRIVILEGED_RW);
-    if(addr + HEAP_INIT_SIZE != (uint32_t) ret) {
-        kprintf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
-        return STATUS_FAIL;
+        heap_end += PAGE_SIZE;
     }
 
-    //    allocator = alloc_create((uint32_t*) MEM_START, buffer_size, &__mem_extend_heap);
-    create_heap(heap, addr);
+    assert(heap_end >= (heap_start + HEAP_INIT_SIZE));
+
+    create_heap(heap, heap_start);
     allocator = heap;
-    return STATUS_OK;
-}
 
-uint32_t init_process_heap(struct vas* vas) {
-    int retval = vm_allocate_page(vas, (void*) PROC_START, VM_PERM_USER_RW);
-    if (retval) {
-        kprintf("ERROR: vm_allocate_page returned %d\n", retval);
-        return STATUS_FAIL;
-    }
-
-    heap_t * heap = (heap_t * ) PROC_START;
-    uint32_t addr = (uint32_t)((void *) PROC_START + sizeof(heap_t));
-
-    for(int i = 0; i < BIN_COUNT; i++) {
-        heap->bins[i] = (bin_t *) addr;
-        addr += sizeof(bin_t);
-    }
-
-    // Find the next page boundary above addr
-    addr = (addr & ~(BLOCK_SIZE-1)) + BLOCK_SIZE;
-
-    void * ret = vm_allocate_pages(vas, (void *) addr, HEAP_INIT_SIZE, VM_PERM_USER_RW);
-    if(addr + HEAP_INIT_SIZE != (uint32_t) ret){
-        kprintf("ERROR: vm_allocate_pages allocated a different amount than requested\n");
-        return STATUS_FAIL;
-    }
-
-    create_heap(heap, addr);
-    proc_allocator = heap;
-    vm_free_mapping(KERNEL_VAS, (void*) PROC_START); // ?
-    return STATUS_OK;
-}
-
-uint32_t __mem_extend_proc_heap(uint32_t amt) {
-    struct vas* pvas = vm_get_current_vas();
-
-    uint32_t amt_added = 0;
-    while (amt_added < amt)
-    {
-        int retval = vm_allocate_page(pvas, (void*) PROC_START, VM_PERM_USER_RW);
-        vm_map_shared_memory(KERNEL_VAS, (void*)PROC_START, pvas, (void*)PROC_START, VM_PERM_USER_RW);
-        if (retval) {
-            kprintf("ERROR: vm_allocate_page returned %d\n", retval);
-            return STATUS_FAIL;
-        }
-        else{
-            kprintf("Page allocated for process heap at %x:\n", PROC_START);
-        }
-        amt_added += BLOCK_SIZE;
-        proc_buffer_size += BLOCK_SIZE;
-    }
-
-    vm_free_mapping(KERNEL_VAS,(void*)PROC_START);
-    return amt_added;
-}
-
-void* proc_allocate(uint32_t size)
-{
-    return heap_alloc(proc_allocator, size);
-}
-
-void proc_deallocate(void* ptr)
-{
-    return heap_free(proc_allocator, ptr);
+    INFO("Heap successfully initialized.");
 }
 
 void *allocate(uint32_t size) {
@@ -178,10 +80,6 @@ uint32_t allocation_size(void* ptr) {
 
 heap_t * mem_get_allocator(){
     return allocator;
-}
-
-heap_t * mem_get_proc_allocator(){
-    return proc_allocator;
 }
 
 uint32_t mem_get_heap_size(){

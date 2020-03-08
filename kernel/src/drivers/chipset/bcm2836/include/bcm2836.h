@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+#define BCM2836_REGISTERS_PHYSICAL_BASE     0x40000000
+#define BCM2836_PERIPHERALS_PHYSICAL_BASE   0x3F000000
+
 // Starts at memory address 0x4000_0000
 struct BCM2836Registers {
     uint32_t ControlRegister;
@@ -72,19 +75,12 @@ struct BCM2836Registers {
     uint32_t Core3Mailbox3ReadClear;
 };
 
-
-
-
-
-
-
-
 enum InterruptSource {
     // nCNTPSIRQ : Secure physical timer event
-    PHYSICAL_SECURE_TIMER       = (1 << 0),
+    PHYSICAL_SECURE_TIMER       = (1u << 0u),
 
     // nCNTPNSIRQ : Non-secure physical timer event
-    PHYSICAL_NONSECURE_TIMER    = (1 << 1),
+    PHYSICAL_NONSECURE_TIMER    = (1u << 1),
 
     // nCNTHPIRQ: Physical Timer for use in Hypervisor mode.
     PHYSICAL_HYPERVISOR_TIMER   = (1 << 2),
@@ -104,11 +100,9 @@ enum InterruptSource {
     LOCAL_TIMER                 = (1 << 11),
 };
 
-volatile struct BCM2836Registers * bcm2836_registers_base;
-
 void bcm2836_init();
 
-
-extern const size_t BCM2836_peripheral_base;
+volatile struct BCM2836Registers * bcm2836_registers_base;
+size_t bcm2836_peripheral_base;
 
 #endif

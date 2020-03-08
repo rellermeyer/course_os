@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <constants.h>
+#include <stdbool.h>
+
 
 /// A L1PagetableEntry is an entry in the top level pagetable.
 /// There is only one L1 pagetable and it is always located at address 0x4000.
@@ -14,6 +16,9 @@
 /// * 6.10 (page faults and aborts)
 typedef union L1PagetableEntry{
     uint32_t entry;
+    /// A coarse l1pt entry means an l1pt entry that points to an l2pt.
+    /// The other possibility is a (super)section, where the l1pt maps a
+    /// far larger area of memory at once, without requiring an l2pt.
     struct {
         /// This 2 bit field gives what type of entry this is.
         /// 00 for invalid pages (pagefault)
@@ -140,7 +145,7 @@ typedef union L1PagetableEntry{
 } L1PagetableEntry;
 
 ///
-typedef union {
+typedef union L2PagetableEntry{
     uint32_t entry;
     struct {
         /// This 2 bit field gives what type of entry this is.
@@ -196,7 +201,6 @@ typedef union {
         /// formula:
         /// base_address = (address >> 16);
         uint32_t base_address: 16;
-
     } __attribute__((packed)) largepage;
 
     struct {
@@ -204,7 +208,7 @@ typedef union {
         /// 0 for invalid pages (pagefault)
         /// 1 for large pages (64kb).
         /// 2 for extended small pages (4kb)
-        /// 3 for exetended *non-executable* small pages. (4kb)
+        /// 3 for extended *non-executable* small pages. (4kb)
         /// Note that for large pages you have to repeat this entry 16x to fill up all 4kb entries that would lie within it,
         /// and the first of these 16 entries must be on a 16-word boundary
         uint32_t type: 2;
@@ -262,31 +266,64 @@ struct L2PageTable {
 };
 
 /// Should be called early, initiliazes everything vm2 needs
-void vm2_prepare();
 /// Actually enables the MMU and switches the kernel to higher half
 void vm2_start();
-void vm2_map_virtual_to_physical_l1(size_t virtual, size_t physical);
-void vm2_map_nmegabytes_1to1(size_t address, size_t n);
+
+/// Takes an L1PageTableEntry containing a physical address (in .*.base_address) and maps it to a physical addres.
+/// The `bool remap` can be set to true and then this will overwrite whatever was previously mapped at this virtual address
+/// in the pagetable. Will return if it did replace something. Generally remap should be set to false, and the kernel
+/// should panic when this happen. It usually indicates something went terribly enormously incredibly really really *really* wrong.
+bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEntry entry, size_t virtual, bool remap);
+
+/// Peripheral mappings
+/// Request a section of n megabytes virtual memory which is mapped to a physical section of ram of the
+/// same n megabytes in which some mmio is located. Returns the virtual address.
+size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes);
+
+/// Maps a new 4kb page with kernel permissions at a virtual address. Returns a reference to this page
+/// or null if unsuccesfull. The physical location of this page is determined by the pmm.
+/// Since this allocates a 4kb page, it has to go through l2 pagetables. It will create the right
+/// l2 pagetables as it needs. You can make the allocated page executable with the last parameter.
+void * vm2_allocate_kernel_page(struct L1PageTable * l1pt, size_t virtual, bool executable);
+
+/// Should be called after updating a pagetable.
+void vm2_flush_caches();
+
+///
+struct L1PageTable * kernell1PageTable;
 
 /// From the `kernel.ld` linker file. These are not arrays but this is how you refer to the pointers by the linker script.
-extern const size_t KERNEL_BASE[]; // 0x8000
-extern const size_t KERNEL_TOP[];
-extern const size_t STACK_TOP[];
+extern const size_t __KERNEL_BASE[];
+extern const size_t __KERNEL_TOP[];
+extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 
-/// Above 3Gigs is the virtual kernel area, this also includes all Virtual Memory constructs, and the kernel stack.
-#define KERNEL_VIRTUAL_OFFSET   (3u * Gibibyte)
+/// Above 2Gigs is the virtual kernel area, this also includes all Virtual Memory constructs, and the kernel stack.
+#define KERNEL_VIRTUAL_OFFSET   ((size_t)__KERNEL_VIRTUAL_OFFSET)
 
-/// Make the kernel start in virtual memory at 3GB
-#define KERNEL_VIRTUAL_START    (KERNEL_VIRTUAL_OFFSET + (size_t)KERNEL_BASE)
-#define KERNEL_VIRTUAL_END      (KERNEL_VIRTUAL_OFFSET + (size_t)KERNEL_TOP)
+#define PHYS2VIRT(address) ((size_t)(address) + KERNEL_VIRTUAL_OFFSET)
+#define VIRT2PHYS(address) ((size_t)(address) - KERNEL_VIRTUAL_OFFSET)
+
+/// Make the kernel start in virtual memory at 2GB
+#define KERNEL_VIRTUAL_START    ((size_t)__KERNEL_BASE)
+#define KERNEL_VIRTUAL_END      ((size_t)__KERNEL_TOP)
+
+/// Location of the Kernel's Physical Memory Manager's Info structs. Can grow to a max of 16MiB when using 4GiB RAM.
+#define KERNEL_PMM_BASE         KERNEL_VIRTUAL_END
+
+/// From this address down, mmio devices are mapped in the kernel's virtual address space.
+#define KERNEL_MMIO_BASE        (4 * Gibibyte)
+
+/// Address space for the kernel heap, grows towards the mmio
+#define KERNEL_HEAP_BASE        (3 * Gibibyte)
+
+#define KERNEL_PHYSICAL_START    (KERNEL_VIRTUAL_START - KERNEL_VIRTUAL_OFFSET)
+#define KERNEL_PHYSICAL_END      (KERNEL_VIRTUAL_END - KERNEL_VIRTUAL_OFFSET)
 
 /// The L1 pagetable starts at 0x4000 and is itself 0x4000 bytes long. (0x1000 entries of 4 bytes).
 /// The kernel starts at 0x8000 which is exactly at the end of the pagetable. (What a coincidence *gasp*)
 #define PhysicalL1PagetableLocation     0x4000
 #define VirtualL1PagetableLocation      (KERNEL_VIRTUAL_OFFSET + PhysicalL1PagetableLocation)
 
-// The end of the kernel is guaranteed 1MiB aligned due to our linking script
-#define VirtualL2PagetableLocation      KERNEL_VIRTUAL_END
-#define PhysicalL2PagetableLocation     ((size_t)KERNEL_TOP)
+#define PAGE_SIZE (4 * Kibibyte)
 
 #endif
