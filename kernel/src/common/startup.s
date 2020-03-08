@@ -8,6 +8,12 @@ _Reset:
     cmp r1, #0
     bne loop
 
+    // Move the interrupt vector tables to 0x80000000
+    ldr r0, =0xE000ED08
+    ldr r1, =0x80000000
+    str r1, [r0]
+
+
     ldr sp, =EARLY_KERNEL_STACK_TOP // Set the kernel/SVC stack
     push {r0-r11}
 
