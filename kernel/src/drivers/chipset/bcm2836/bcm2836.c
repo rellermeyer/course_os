@@ -1,7 +1,7 @@
 // https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
 #include <bcm2836.h>
 #include <chipset.h>
-#include <mmap.h>
+#include <mmio.h>
 #include <interrupt.h>
 #include <stdio.h>
 #include <vm2.h>

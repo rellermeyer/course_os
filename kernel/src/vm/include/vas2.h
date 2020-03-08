@@ -1,8 +1,8 @@
 #ifndef VAS_2_H
 #define VAS_2_H
 
-#include <vm2.h>
-#include <tlb_cache_id_allocator.h>
+#include "vm2.h"
+#include "tlb_cache_id_allocator.h"
 
 
 struct vas2 {

@@ -78,18 +78,7 @@ void start(uint32_t *p_bootargs) {
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
 #endif
-    kprintf("done parsing atag list\n");
 
-    //init_kheap(31 * 0x100000);
-    //init_uheap(0x100000);
-
-    //initialize pcb table and PID
-    /* init_all_processes(); */
-    //print_process_state(0);
-    //run_process_tests();
-    //print_PID();
-    // init_q();
-    //common();
 
     // TODO:
     //  * Mount vfs
@@ -98,6 +87,6 @@ void start(uint32_t *p_bootargs) {
 
     asm volatile("cpsie i");
 
-    kprintf("End of start method.\n");
+    INFO("End of boot sequence.\n");
     SLEEP;
 }
