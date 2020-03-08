@@ -310,8 +310,12 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 /// Location of the Kernel's Physical Memory Manager's Info structs. Can grow to a max of 16MiB when using 4GiB RAM.
 #define KERNEL_PMM_BASE         KERNEL_VIRTUAL_END
 
+// Location of the vector table in memory table.
+// http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0552a/BABIFJFG.html
+#define HIGH_VECTOR_LOCATION    0xFFFF0000
+
 /// From this address down, mmio devices are mapped in the kernel's virtual address space.
-#define KERNEL_MMIO_BASE        (4 * Gibibyte)
+#define KERNEL_MMIO_BASE        ((4 * Gibibyte) - (1 * Mebibyte))
 
 /// Address space for the kernel heap, grows towards the mmio
 #define KERNEL_HEAP_BASE        (3 * Gibibyte)

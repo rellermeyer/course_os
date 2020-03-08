@@ -33,13 +33,17 @@ uint32_t kmalloc_size(void* ptr) {
 // TODO: Implement in-place realloc if the next block is free.
 // Resize memory pointed to by ptr to new size
 void * krealloc(void *ptr, uint32_t newsize) {
+    if (ptr == NULL) {
+        TRACE("[MEM DEBUG] Realloc with nullptr");
+        return kmalloc(newsize);
+    }
+
     uint32_t oldsize = kmalloc_size(ptr);
+
 
     if (newsize == 0) {
         kfree(ptr);
         return NULL;
-    } else if (ptr == NULL) {
-        return kmalloc(newsize);
     } else if (newsize <= oldsize) {
         return ptr;
     } else {

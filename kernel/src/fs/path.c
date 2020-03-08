@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <fs.h>
 
+#include <test.h>
+
 
 const Path root = {
     .length = 1,

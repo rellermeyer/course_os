@@ -91,7 +91,7 @@ void vm2_start() {
 
     /// Unmap the 1:1 mapped first megabyte which startup.s created to boot to a higher half kernel.
     /// We don't need it anymore!
-//    kernell1PageTable->entries[0] = (L1PagetableEntry){0};
+    kernell1PageTable->entries[0] = (L1PagetableEntry){0};
 
     /// Map the entire gigabyte (or less on some boards, but never more) physical ram to virtual 2GB-3GB.
     /// this includes the kernel, kernel stack, kernel pagetables, process pagetables, pmm etc.
