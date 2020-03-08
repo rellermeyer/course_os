@@ -24,5 +24,6 @@ void init_hardwareinfo();
 // Get a pointer to the hardwareinfo struct.
 HardwareInfo * get_hardwareinfo();
 void print_hardwareinfo();
+BoardType detect_boardtype();
 
 #endif

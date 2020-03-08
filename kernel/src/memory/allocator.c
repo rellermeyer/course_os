@@ -108,7 +108,7 @@ void *heap_alloc(heap_t *heap, uint32_t size) {
 
 #ifdef MEM_DEBUG
     heap->bytes_allocated += found->size;
-    kprintf("MEM_DEBUG: ALLOC %i bytes at 0x%x\n", found->size, &found->next);
+    TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", found->size, &found->next);
 #endif
 
     return &found->next;
@@ -133,7 +133,7 @@ void heap_free(heap_t *heap, void *p) {
 
 #ifdef MEM_DEBUG
     heap->bytes_allocated -= head->size;
-    kprintf("MEM_DEBUG: FREE %i bytes\n", head->size);
+    TRACE("[MEM DEBUG] FREE %i bytes", head->size);
 #endif
 
     if (head == (node_t *) (uintptr_t) heap->start) {
@@ -179,7 +179,7 @@ void heap_free(heap_t *heap, void *p) {
 
 // these are left here to implement contraction / expansion
 uint32_t expand(heap_t *heap, uint32_t sz) {
-    kprintf("Trying to expand\n");
+    TRACE("[MEM DEBUG] Trying to expand");
     return 0; // fail for now
 }
 

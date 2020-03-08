@@ -4,7 +4,7 @@
 #include <interrupt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vm.h>
+#include <vm2.h>
 #include <chipset.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
@@ -20,24 +20,24 @@ void init_vector_table() {
 	 */
 
 	/* Primary Vector Table */
-	mmio_write(0x0, BRANCH_INSTRUCTION);
-	mmio_write(0x04, BRANCH_INSTRUCTION);
-	mmio_write(0x08, BRANCH_INSTRUCTION);
-	mmio_write(0x0C, BRANCH_INSTRUCTION);
-	mmio_write(0x10, BRANCH_INSTRUCTION);
-	mmio_write(0x14, BRANCH_INSTRUCTION);
-	mmio_write(0x18, BRANCH_INSTRUCTION);
-	mmio_write(0x1C, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x0, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x04, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x08, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x0C, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x10, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x14, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x18, BRANCH_INSTRUCTION);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x1C, BRANCH_INSTRUCTION);
 
     /* Secondary Vector Table */
-	mmio_write(0x20, &reset_handler);
-	mmio_write(0x24, &undef_instruction_handler);
-	mmio_write(0x28, &software_interrupt_handler);
-	mmio_write(0x2C, &prefetch_abort_handler);
-	mmio_write(0x30, &data_abort_handler);
-	mmio_write(0x34, &reserved_handler);
-	mmio_write(0x38, &irq_handler);
-	mmio_write(0x3C, &fiq_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x20, &reset_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x24, &undef_instruction_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x28, &software_interrupt_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x2C, &prefetch_abort_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x30, &data_abort_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x34, &reserved_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x38, &irq_handler);
+	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x3C, &fiq_handler);
 
 }
 
@@ -177,30 +177,10 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void)
             kprintf("Yet to be implemented\n");
 		return -1;
 
-	case SYSCALL_MALLOC:
-        kprintf("malloc system call called!\n");
-
-		void *ptr = umalloc(r0);
-
-            kprintf("malloc is about to return %x\n", ptr);
-
-		return (long) ptr;
-	case SYSCALL_ALIGNED_ALLOC:
-        kprintf("aligned_alloc system call called!\n");
-		void *ptr2 = ualigned_alloc(r0, r1);
-
-            kprintf("ualigned_alloc is about to return %x\n", ptr2);
-
-		return (long) ptr2;
-	case SYSCALL_FREE:
-        kprintf("Free system call called!\n");
-
-		ufree((void*) r0);
-		return 0L;
 	case SYSCALL_PRINTF:
         kprintf("Printf system call called!\n");
 
-            kprintf((const char *) r0);
+        kprintf((const char *) r0);
 		return 0L;
 	default:
         kprintf("That wasn't a syscall you knob!\n");
@@ -219,8 +199,10 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void)
 	panic();
 }
 
-void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
-{
+void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
+
+    // TODO Check if the address is valid according to the kernel and add it to the currently loaded pagetables if so.
+
 	int lr;
 	asm volatile("mov %0, lr" : "=r" (lr));
 	int pc = lr - 8;
@@ -228,32 +210,22 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void)
 	int far;
 	asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r" (far));
 
-    kprintf("DATA ABORT HANDLER (Page Fault)\n");
-    kprintf("faulting address: 0x%x\n", far);
-	if (far >= V_KDSBASE) {
-        kprintf("(address is in kernel address range)\n");
+    DEBUG("DATA ABORT HANDLER (Page Fault)");
+    DEBUG("faulting address: 0x%x", far);
+	if (far >= KERNEL_VIRTUAL_OFFSET) {
+        DEBUG("(address is in kernel address range)\n");
 	}
-    kprintf("violating instruction (at 0x%x): %x\n", pc, *((int *) pc));
+    DEBUG("violating instruction (at 0x%x): %x", pc, *((int *) pc));
 
-	// Get the DSFR
-	int dsfr;
-	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dsfr));
-	//os_printf("DSFR: 0x%X\n", dsfr);
+	// Get the Data Fault Status Register
+	int dfsr;
+	asm volatile("MRC p15, 0, %0, c5, c0, 0" : "=r" (dfsr));
+	DEBUG("DFSR: 0x%x", dfsr);
 
-#ifdef ENABLE_TESTS
-    panic();
-#endif
 
-	switch (dsfr)
-	{
-	case 6: // Access bit.
-		// Set it to 1 so we don't get notified again.
-		// TODO: The eviction policy will listen to this.
-		*((unsigned int*) (V_L1PTBASE + 2 * PAGE_TABLE_SIZE)) |= (1 << 4);
-		break;
-	default:
-		break;
-	};
+    #ifdef ENABLE_TESTS
+        panic();
+    #endif
 }
 
 void reserved_handler(void)
@@ -298,8 +270,7 @@ void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
 // SUBS PC, R14_fiq, #4
 }
 
-void SemihostingCall(enum SemihostingSWI mode) {
-
+void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI mode) {
     int a = mode;
     asm volatile (
         "MOV r0, #0x18\n"

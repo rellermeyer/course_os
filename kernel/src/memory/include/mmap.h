@@ -1,5 +1,5 @@
 /*
- *  Memory Mapped I/O addresses 
+ *  Memory Mapped I/O addresses
  */
 
 #ifndef MMAP_H
@@ -14,11 +14,11 @@
 // Hence the 4 hours it took us to make timer.c work......
 static inline void mmio_write_internal(volatile uint32_t * address, volatile uint32_t value ) {
     asm volatile (
-        "ldr r1, %1\n"
-        "str r1, %0\n"
-        ::
-        "m" (*address),
-        "m" (value)
+    "ldr r1, %1\n"
+    "str r1, %0\n"
+    ::
+    "m" (*address),
+    "m" (value)
     );
 }
 

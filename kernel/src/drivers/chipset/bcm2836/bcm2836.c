@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <vm2.h>
 
-volatile struct BCM2836Registers * bcm2836_registers_base = (struct BCM2836Registers *) 0x40000000;
-const size_t BCM2836_peripheral_base = 0x3F000000;
-
 //static TimerHandle handleindex;
 
 // uart.c
@@ -43,7 +40,6 @@ void bcm2836_fiq_handler() {
 }
 
 void bcm2836_init() {
-    bcm2836_uart_init();
     chipset.schedule_timer_periodic = &bcm2836_schedule_timer_periodic;
     chipset.schedule_timer_once = &bcm2836_schedule_timer_once;
     chipset.deschedule_timer = &bcm2836_deschedule_timer;
@@ -54,17 +50,26 @@ void bcm2836_init() {
     chipset.handle_fiq = &bcm2836_fiq_handler;
     chipset.late_init = &bcm2836_late_init;
 
-    // Mapping memory used by bcm2836 peripherals
-    // TEMP (vm1):
-    request_identity_mapped_section(BCM2836_peripheral_base, 4);
+    bcm2836_registers_base = (struct BCM2836Registers * ) vm2_map_peripheral(BCM2836_REGISTERS_PHYSICAL_BASE, 1);
+    bcm2836_peripheral_base = vm2_map_peripheral(BCM2836_PERIPHERALS_PHYSICAL_BASE, 4);
 
-    // TODO: remove vm1 code and leave only this vm2 call
-    vm2_map_nmegabytes_1to1(BCM2836_peripheral_base, 4);
+    bcm2836_uart_init();
 
-    // Map control registers
-    // TEMP (vm1):
-    request_identity_mapped_section((size_t)bcm2836_registers_base, 1);
-
-    // TODO: remove vm1 code and leave only this vm2 call
-    vm2_map_nmegabytes_1to1((size_t)bcm2836_registers_base, 1);
+//    // Mapping memory used by bcm2836 peripherals
+//    // TEMP (vm1):
+//    request_identity_mapped_section(BCM2836_peripheral_base, 4);
+//
+//
+//    vm2_map_peripheral()
+//    // TODO: remove vm1 code and leave only this vm2 call
+//    vm2_map_nmegabytes_1to1(BCM2836_PERIPHERALS_PHYSICAL_BASE, 4);
+//    vm2_map_peripheral()
+//
+//
+//    // Map control registers
+//    // TEMP (vm1):
+//    request_identity_mapped_section((size_t)bcm2836_registers_base, 1);
+//
+//    // TODO: remove vm1 code and leave only this vm2 call
+//    vm2_map_nmegabytes_1to1((size_t)bcm2836_registers_base, 1);
 }

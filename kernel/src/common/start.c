@@ -18,11 +18,7 @@
 
 #include <stdint.h>
 #include <interrupt.h>
-#include <mmap.h>
-#include <process.h>
 #include <klibc.h>
-#include <vm.h>
-#include <scheduler.h>
 #include <mem_alloc.h>
 #include <test.h>
 #include <hardwareinfo.h>
@@ -32,8 +28,6 @@
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
 void start(uint32_t *p_bootargs) {
-    prepare_pagetable();
-    vm2_prepare();
 
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
@@ -43,28 +37,27 @@ void start(uint32_t *p_bootargs) {
     // Initialize the chipset and enable uart
     init_chipset();
 
+    INFO("Started chipset specific handlers");
+
+    // just cosmetic (and for debugging)
     print_hardwareinfo();
+    detect_boardtype();
 
-    kprintf("Enabling MMU...\n");
-    vm_init();
-    kprintf("Initialized VM datastructures.\n");
-
+    // start proper virtual and physical memory management.
+    // Even though we already enabled the mmu in startup.s to
+    // create a higher half kernel. The pagetable created there
+    // was temporary and has to be replaced here.
+    INFO("Initializing the physical and virtual memory managers.");
     vm2_start();
 
-    // Paging and virtual memory is initialized. This code jumps us to start2.
-    mmap(p_bootargs);
-}
-
-// This start is what starts the kernel. Note that virtual memory is enabled
-// at this point (And running, also, in the kernel's VAS).
-void start2(uint32_t *p_bootargs) {
-    kprintf("start address: 0x%x\n", start2);
-
+    INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
     init_vector_table();
 
+    INFO("Setting up heap");
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
+
 
     splash();
 
@@ -74,13 +67,6 @@ void start2(uint32_t *p_bootargs) {
 
     // Call the chipset again to do post-interrupt-enable initialization
     chipset.late_init();
-
-    process_init();
-
-    // FIXME: temporary
-    sched_init();
-
-    kprintf("bootargs: 0x%x\n", p_bootargs);
 
 
 #ifndef ENABLE_TESTS

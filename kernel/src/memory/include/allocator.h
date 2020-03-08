@@ -1,3 +1,5 @@
+// Adapted from https://github.com/CCareaga/heap_allocator
+
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
