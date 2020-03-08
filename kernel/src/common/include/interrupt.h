@@ -81,16 +81,18 @@ enum SemihostingSWI {
     BreakPoint          = 0x20020,
     WatchPoint          = 0x20021,
     StepComplete        = 0x20022,
-    RunTimeErrorUnknown = 0x20023,
-    InternalError       = 0x20024,
-    UserInterruption    = 0x20025,
+    RunTimeErrorUnknown = 0x20023, // Qemu exits with 1
+    InternalError       = 0x20024, // Qemu exits with 1
+    UserInterruption    = 0x20025, // Qemu exits with 1
     ApplicationExit     = 0x20026, // Qemu exits with 0
-    StackOverflow       = 0x20027,
-    DivisionByZero      = 0x20028,
+    StackOverflow       = 0x20027, // Qemu exits with 1
+    DivisionByZero      = 0x20028, // Qemu exits with 1
     OSSpecific          = 0x20029, // Qemu exits with 1
 };
 
 void SemihostingCall(enum SemihostingSWI mode);
+
+void SemihostingOSExit(int code) __attribute__ ((noreturn));;
 
 typedef enum {
     IRQ,		// (this is bit 0x8 on the CPSR)
