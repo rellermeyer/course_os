@@ -267,6 +267,29 @@ void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI m
     );
 }
 
+
+/// Uses the ExtendedExit Semihosting call
+/// ARM Docs: https://developer.arm.com/docs/100863/0200/semihosting-operations/sys_exit_extended-0x20
+void __attribute__((always_inline)) inline SemihostingOSExit(int code) {
+    struct {
+        uint32_t field1;
+        uint32_t field2;
+    } parameters;
+
+    parameters.field1 = ApplicationExit;
+    parameters.field2 = code;
+
+    asm volatile (
+        "MOV r0, #0x20\n"
+        "mov r1, %[in0]\n"
+        "svc 0x00123456\n"
+        ::
+        [in0] "r" (&parameters)
+    );
+
+    __builtin_unreachable();
+}
+
 /* enable IRQ and/or FIQ */
 void enable_interrupt(InterruptType mask) {
     INFO("Enabling interrupts with mask %i", mask);
