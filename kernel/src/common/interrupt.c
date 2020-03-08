@@ -6,36 +6,36 @@
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
-	/* This doesn't seem to work well with virtual memory; reverting
-	 * to old method.       
-	 extern uint32_t vector_table_start, vector_table_end;
-	 uint32_t *src = &vector_table_start;
-	 uint32_t *dst = (uint32_t *) HIVECTABLE;
-
-	 while(src < &vector_table_end)
-	 *dst++ = *src++;
-	 */
+    // allocate space for the IVR at the high vector location.
+    vm2_allocate_kernel_page(kernell1PageTable, HIGH_VECTOR_LOCATION, true);
 
 	/* Primary Vector Table */
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x0, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x04, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x08, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x0C, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x10, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x14, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x18, BRANCH_INSTRUCTION);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x1C, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x00, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x04, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x08, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x0C, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x10, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x14, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x18, BRANCH_INSTRUCTION);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x1C, BRANCH_INSTRUCTION);
 
     /* Secondary Vector Table */
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x20, &reset_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x24, &undef_instruction_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x28, &software_interrupt_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x2C, &prefetch_abort_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x30, &data_abort_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x34, &reserved_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x38, &irq_handler);
-	mmio_write(KERNEL_VIRTUAL_OFFSET + 0x3C, &fiq_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x20, &reset_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x24, &undef_instruction_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x28, &software_interrupt_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x2C, &prefetch_abort_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x30, &data_abort_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x34, &reserved_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x38, &irq_handler);
+	mmio_write(HIGH_VECTOR_LOCATION + 0x3C, &fiq_handler);
 
+	/// Enable high vectors (Vectors located at HIGH_VECTOR_LOCATION).
+    asm volatile (
+        "mrc p15, 0, r1, c1, c0, 0 \n"  // Read p15
+        "orr r1, %0\n"                  // Enable High Vector bit
+        "mcr p15, 0, r1, c1, c0, 0\n"   // Set p15
+        :: "r" (1u << 13u)
+    );
 }
 
 /* handlers */

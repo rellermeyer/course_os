@@ -71,6 +71,7 @@ TEST_CREATE(path_parent_test_4, {
     ASSERT(path_contents_equal(p1, p2));
     path_free(p1);
     path_free(p2);
+
 })
 
 TEST_CREATE(path_parent_test_5, {
