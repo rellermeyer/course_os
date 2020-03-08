@@ -34,7 +34,10 @@ uint32_t kmalloc_size(void* ptr) {
 // Resize memory pointed to by ptr to new size
 void * krealloc(void *ptr, uint32_t newsize) {
     if (ptr == NULL) {
-        TRACE("[MEM DEBUG] Realloc with nullptr");
+        #if MEM_DEBUG
+            TRACE("[MEM DEBUG] Realloc with nullptr");
+        #endif
+
         return kmalloc(newsize);
     }
 

@@ -10,19 +10,34 @@
 /// * tlb_descriptor: A pair of above two numbers.
 
 struct TLBDescriptor {
-    uint32_t tlb_cache_id;
-    uint32_t cache_iteration;
+    uint8_t tlb_cache_id;
+    uint8_t cache_iteration;
 };
 
+/// Is set to true whenever all tlb_cache_ids are used up.
+bool tlb_everything_allocated;
+
+/**
+ * Requests a tlb_descriptor.
+ *
+ *
+ * Allocates you a new tlb_id,
+ * if [tlb_everything_allocated] is true you should flush caches.
+ * If [tlb_everything_allocated] is false, you don't have to flush caches.
+ * @returns a TLBDescriptor
+ */
 struct TLBDescriptor request_tlb_descriptor();
 
-/// Updates the current tlb_descriptor you have.
-/// If it was able to, it gives you the same tlb_cache_id that you already had.
-/// Then it returns false.
-///
-/// If all of those were allocated it updates your id and returns true.
-/// When this function returns true, flush the caches.
-bool get_and_update(struct TLBDescriptor* desc);
+/**
+ * Updates and checks a tlb_descriptor.
+ *
+ * It checks if your saved cache_iteration corresponds with the current one.
+ * If it doesn't it will update both, and return true.
+ * If it does it won't update and return false.
+ * @param desc the tlb_descriptor to check.
+ * @returns whether you should flush caches or not.
+ */
+bool check_and_update(struct TLBDescriptor* desc);
 
 
 #endif
