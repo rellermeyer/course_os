@@ -1,8 +1,6 @@
 #include <pmm.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <interrupt.h>
-#include <math.h>
 
 /// Private functions
 // Returns the index of the first zero from the LSB
