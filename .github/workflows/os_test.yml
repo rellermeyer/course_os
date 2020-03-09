@@ -19,8 +19,8 @@ jobs:
         id: cache-qemu
         uses: actions/cache@v1
         with:
-            path: toolchain
-            key: toolchain
+            path: qemu/qemu
+            key: qemu
 
       - name: Install Dependencies
         run: |
