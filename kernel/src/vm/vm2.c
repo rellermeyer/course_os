@@ -4,7 +4,6 @@
 #include <constants.h>
 #include <pmm.h>
 #include <hardwareinfo.h>
-#include <string.h>
 
 struct L1PageTable * kernell1PageTable = (struct L1PageTable *) VirtualL1PagetableLocation; // NOLINT(cppcoreguidelines-interfaces-global-init) (defined in linker script)
 bool mmu_started = false;
@@ -43,6 +42,7 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEn
     if (pt->entries[l1pt_index(virtual)].entry != 0) {
         if (remap) {
             remapped = true;
+            TRACE("[MEM DEBUG] Remapping l1 page located at 0x%x", virtual);
         } else {
             // The entry is already mapped
             FATAL("Request for already mapped address denied");
@@ -50,6 +50,11 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEn
     }
 
     kernell1PageTable->entries[l1pt_index(virtual)] = entry;
+
+    if (remap) {
+        // TODO: partial flush
+        vm2_flush_caches();
+    }
 
     return remapped;
 }
@@ -110,7 +115,7 @@ void vm2_start() {
     mmu_started = true;
 }
 
-void * vm2_allocate_kernel_page(struct L1PageTable * l1pt, size_t virtual, bool executable) {
+void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool executable, bool remap) {
     L1PagetableEntry * l1Entry = &l1pt->entries[l1pt_index(virtual)];
     struct L2PageTable * l2 = NULL;
 
@@ -133,6 +138,12 @@ void * vm2_allocate_kernel_page(struct L1PageTable * l1pt, size_t virtual, bool 
             }
             union L2PagetableEntry * l2Entry = &l2->entries[l2pt_index(virtual)];
 
+            if (l2Entry->entry != 0 && !remap) {
+                FATAL("Overwriting entry in l2pt : 0x%x", virtual);
+            }  else if (l2Entry->entry != 0 && remap) {
+                TRACE("[MEM DEBUG] Remapping l2 page located at 0x%x", virtual);
+            }
+
             *l2Entry = (union L2PagetableEntry) {
                 .smallpage = {
                     .type = 2 + !executable,
@@ -143,6 +154,10 @@ void * vm2_allocate_kernel_page(struct L1PageTable * l1pt, size_t virtual, bool 
                     .base_address = l2pt_base_address(((size_t)VIRT2PHYS(page))),
                 },
             };
+
+            if(remap) {
+                vm2_flush_caches();
+            }
 
             return page;
         default:

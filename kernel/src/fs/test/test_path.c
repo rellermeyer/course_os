@@ -166,6 +166,7 @@ TEST_CREATE(path_clone_test, {
     Path * p2  = path_clone(p1);
 
     ASSERT(path_contents_equal(p1, p2));
+
     path_free(p1);
     path_free(p2);
 })
