@@ -58,14 +58,13 @@ void start(uint32_t *p_bootargs) {
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
 
-
+    // Splash screen
     splash();
-
 
     // Turn on interrupts
     enable_interrupt(BOTH);
 
-    // Call the chipset again to do post-interrupt-enable initialization
+    // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
 

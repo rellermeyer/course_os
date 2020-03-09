@@ -41,9 +41,9 @@
  * panic() added
  - Currrently states the panic and stalls the machine
  */
-void panic() {
+void inline panic() {
     disable_interrupt(BOTH);
-    kprintf("Kernel panic!\n");
+    WARN("Kernel panic!\n");
     kprintf("\n     )                        (                     \n");
     kprintf("  ( /(                   (    )\\ )                  \n");
     kprintf("  )\\()) (  (           ( )\\  (()/(   )      (       \n");
