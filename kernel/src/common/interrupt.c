@@ -301,7 +301,7 @@ void enable_interrupt(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            FATAL("invalid interrupt mask");
+            WARN("invalid interrupt mask");
     }
 }
 
@@ -322,7 +322,7 @@ void disable_interrupt(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            FATAL("invalid interrupt mask");
+            WARN("invalid interrupt mask");
     }
 }
 
@@ -347,7 +347,7 @@ int disable_interrupt_save(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            FATAL("invalid interrupt mask");
+            WARN("invalid interrupt mask");
     }
     return cpsr;
 }
