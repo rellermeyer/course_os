@@ -21,6 +21,7 @@ void add_node(bin_t *bin, node_t* node) {
     }
 
     if (current == NULL) { // we reached the end of the list
+        // FIXME: previous could be null
         previous->next = node;
         node->prev = previous;
     }

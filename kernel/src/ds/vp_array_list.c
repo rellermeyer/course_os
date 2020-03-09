@@ -44,7 +44,7 @@ uint32_t vpa_push(VPArrayList * list, void * data) {
     list->array[list->length++] = data;
 
     if(list->length >= list->capacity) {
-        uint32_t new_size = max((list->capacity + (list->capacity >> 2)), list->capacity + 2);
+        uint32_t new_size = max((list->capacity + (list->capacity >> 2u)), list->capacity + 2);
 
         assert(new_size > list->capacity)
 

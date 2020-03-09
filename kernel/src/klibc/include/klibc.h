@@ -36,11 +36,6 @@
 #define SLEEP for(;;)
 #endif
 
-// TODO: previously in global_defs
-#define STATUS_OK 0
-#define STATUS_FAIL -1
-// END TODO
-
 typedef unsigned int os_size_t;
 
 

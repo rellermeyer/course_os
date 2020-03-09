@@ -30,9 +30,7 @@ void bcm2836_late_init() {
 
 void bcm2836_irq_handler() {
     volatile uint32_t pending = bcm2836_registers_base->Core0IRQSource;
-
-
-    kprintf("interrupt: 0x%x", pending);
+    TRACE("interrupt: 0x%x", pending);
 }
 
 void bcm2836_fiq_handler() {
@@ -54,22 +52,4 @@ void bcm2836_init() {
     bcm2836_peripheral_base = vm2_map_peripheral(BCM2836_PERIPHERALS_PHYSICAL_BASE, 4);
 
     bcm2836_uart_init();
-
-//    // Mapping memory used by bcm2836 peripherals
-//    // TEMP (vm1):
-//    request_identity_mapped_section(BCM2836_peripheral_base, 4);
-//
-//
-//    vm2_map_peripheral()
-//    // TODO: remove vm1 code and leave only this vm2 call
-//    vm2_map_nmegabytes_1to1(BCM2836_PERIPHERALS_PHYSICAL_BASE, 4);
-//    vm2_map_peripheral()
-//
-//
-//    // Map control registers
-//    // TEMP (vm1):
-//    request_identity_mapped_section((size_t)bcm2836_registers_base, 1);
-//
-//    // TODO: remove vm1 code and leave only this vm2 call
-//    vm2_map_nmegabytes_1to1((size_t)bcm2836_registers_base, 1);
 }
