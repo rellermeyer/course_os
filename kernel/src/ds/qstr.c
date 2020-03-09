@@ -46,7 +46,7 @@ static inline bool __eq(Qstr * left, Qstr * right, bool fake) {
     bool equal = true;
     char c;
     while ((c = *(leftstr++)) != '\0') {
-        hash = ((hash << 5) + hash) + c;  /* hash * 33 + c */
+        hash = ((hash << 5u) + hash) + c;  /* hash * 33 + c */
 
         if (equal && c != (*rightstr++)) {
             equal = false;

@@ -37,10 +37,7 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) (((x)-ONES) & (~(x)) & HIGHS)
 
-/*4-17-15: - Prakash
- * panic() added
- - Currrently states the panic and stalls the machine
- */
+// Currrently states the panic and stalls the machine or exits iff run within qemu with semihosting enabled.
 void inline panic() {
     disable_interrupt(BOTH);
     WARN("Kernel panic!\n");
@@ -79,8 +76,7 @@ void splash() {
  - This is a helper function for the assert() macro
  */
 int _assert_fail(char *_file, unsigned int _line, char *_func) {
-    kprintf("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
-    panic();
+    FATAL("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
     return 1;
 }
 

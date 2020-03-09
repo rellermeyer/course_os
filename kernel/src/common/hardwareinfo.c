@@ -18,7 +18,7 @@ BoardType detect_boardtype() {
         case 0xC07:
             return RaspBerryPiTwo; // bcm2836
         default:
-            panic();
+            FATAL("Unknown boardtype");
     }
 }
 

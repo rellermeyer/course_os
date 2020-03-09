@@ -7,7 +7,7 @@
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
     // allocate space for the IVR at the high vector location.
-    vm2_allocate_kernel_page(kernell1PageTable, HIGH_VECTOR_LOCATION, true, 0);
+    vm2_allocate_kernel_page(kernell1PageTable, HIGH_VECTOR_LOCATION, true, false);
 
 	/* Primary Vector Table */
 	mmio_write(HIGH_VECTOR_LOCATION + 0x00, BRANCH_INSTRUCTION);
@@ -209,13 +209,13 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 
 
     #ifdef ENABLE_TESTS
-        panic();
+        FATAL("Data abort is disallowed in tests");
     #endif
 }
 
 void reserved_handler(void)
 {
-    kprintf("RESERVED HANDLER\n");
+    INFO("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state
