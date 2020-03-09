@@ -43,7 +43,7 @@ done
 
 # shellcheck disable=SC2028
 echo "
-  kprintf(\"TESTS COMPLETE. Passed %i tests\n\", "$len");
+  kprintf(\"TESTS COMPLETE. Passed %i tests\n\", $len);
   SemihostingCall(ApplicationExit);
 }
 #endif

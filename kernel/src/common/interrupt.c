@@ -209,13 +209,13 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 
 
     #ifdef ENABLE_TESTS
-        panic();
+        FATAL("Data abort is disallowed in tests");
     #endif
 }
 
 void reserved_handler(void)
 {
-    kprintf("RESERVED HANDLER\n");
+    INFO("RESERVED HANDLER\n");
 }
 
 // the attribute automatically saves and restores state

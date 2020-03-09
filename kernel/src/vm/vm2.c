@@ -89,8 +89,7 @@ void vm2_start() {
             break;
         default:
             // TODO: memory detection? Or just not bother.
-            kprintf("Board type unsupported by VM2\n");
-            panic();
+            FATAL("Board type unsupported by VM2\n");
     }
 
     INFO("Using memory size 0x%x", available_RAM);

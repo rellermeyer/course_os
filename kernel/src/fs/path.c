@@ -51,8 +51,7 @@ struct DirEntry *path_get_direntry(struct Vfs *vfs, Path *path, enum VfsErr *err
         pathpointer = path->array + 1;
 
     } else {
-        kprintf("Inode lookup only supports absolute path right now.");
-        panic();
+        FATAL("Inode lookup only supports absolute path right now.");
         curr = NULL;
         pathpointer = path->array;
     }
