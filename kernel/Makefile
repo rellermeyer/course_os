@@ -9,7 +9,7 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 
 # variables to define in the preprocessor.
 MEMORY = 1G
-DEFINITIONS = MEM_DEBUG
+DEFINITIONS = MEM_DEBUG ENABLE_TESTS
 #DEFINITIONS = MEM_DEBUG
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)

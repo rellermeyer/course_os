@@ -1,9 +1,8 @@
-#include "klibc.h"
+#include <klibc.h>
 #include <mem_alloc.h>
 #include <allocator.h>
 #include <string.h>
 #include <vm2.h>
-#include <interrupt.h>
 
 heap_t * allocator;
 size_t heap_end;
@@ -24,10 +23,10 @@ size_t heap_end;
  */
 
 void init_heap() {
-    size_t heap_end = KERNEL_HEAP_BASE;
+    heap_end = KERNEL_HEAP_BASE;
 
     // Allocate space for the heap_t struct. is too large but at least big enough.
-    void * ret = vm2_allocate_kernel_page(kernell1PageTable, KERNEL_HEAP_BASE, false);
+    void * ret = vm2_allocate_kernel_page(kernell1PageTable, KERNEL_HEAP_BASE, false, 0);
     if (ret == NULL) {
         FATAL("Couldn't allocate page for the kernel heap");
     }
@@ -38,6 +37,7 @@ void init_heap() {
 
     heap_end += sizeof(heap_t);
 
+
     for(int i = 0; i < BIN_COUNT; i++) {
         heap->bins[i] = (bin_t *) heap_end;
         memset(heap->bins[0], 0, sizeof(bin_t));
@@ -47,10 +47,11 @@ void init_heap() {
     assert(KERNEL_HEAP_BASE + sizeof(heap_t) + BIN_COUNT * sizeof(bin_t) == heap_end);
 
     // current heap end.
+    heap_end = ALIGN(heap_end, PAGE_SIZE);
     size_t heap_start = heap_end;
 
-    while(heap_end < (heap_start + HEAP_INIT_SIZE + PAGE_SIZE)) {
-        if (vm2_allocate_kernel_page(kernell1PageTable, heap_end, false) == NULL) {
+    while(heap_end < (heap_start + HEAP_INIT_SIZE)) {
+        if (vm2_allocate_kernel_page(kernell1PageTable, heap_end, false, 0) == NULL) {
             FATAL("Allocation of the kernel heap went wrong!");
         }
 
