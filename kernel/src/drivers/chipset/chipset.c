@@ -23,15 +23,13 @@ void init_chipset() {
             bcm2836_init();
             break;
         default: {
-            kprintf("Board type not supported for interrupts \n");
-            panic();
+            FATAL("Board type not supported for interrupts \n");
         }
     }
     
     for (size_t i = 0; i < sizeof(ChipsetInterface) / sizeof(uint32_t); i++) {
         if (((uint32_t **) &chipset)[i] == NULL) {
-            kprintf("Chipset did not satisfy the required interface. Missing field %i\n", i);
-            panic();
+            FATAL("Chipset did not satisfy the required interface. Missing field %i\n", i);
         }
     }
 }

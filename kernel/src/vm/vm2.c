@@ -60,6 +60,7 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEn
 }
 
 void vm2_flush_caches() {
+    TRACE("[MEM DEBUG] Flushing caches");
     //TODO: Only a subset of these instructions are necessary
     asm volatile (
     "// invalidate caches\n"
@@ -88,8 +89,7 @@ void vm2_start() {
             break;
         default:
             // TODO: memory detection? Or just not bother.
-            kprintf("Board type unsupported by VM2\n");
-            panic();
+            FATAL("Board type unsupported by VM2\n");
     }
 
     INFO("Using memory size 0x%x", available_RAM);

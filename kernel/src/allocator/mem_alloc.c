@@ -1,10 +1,7 @@
 #include "klibc.h"
-#include <mem_alloc.h>
 #include <allocator.h>
 #include <string.h>
 #include <vm2.h>
-#include <interrupt.h>
-#include <stdlib.h>
 
 heap_t * allocator;
 size_t heap_end;
@@ -25,7 +22,7 @@ size_t heap_end;
  */
 
 void init_heap() {
-    size_t heap_end = KERNEL_HEAP_BASE;
+    heap_end = KERNEL_HEAP_BASE;
 
     // Allocate space for the heap_t struct. is too large but at least big enough.
     void * ret = vm2_allocate_kernel_page(kernell1PageTable, KERNEL_HEAP_BASE, false, 0);
