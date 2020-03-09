@@ -26,8 +26,8 @@ CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
-MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
+QEMU := $(CURDIR)/../${QEMU}
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
 C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)

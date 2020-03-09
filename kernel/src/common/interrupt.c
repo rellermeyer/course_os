@@ -270,14 +270,8 @@ void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI m
 
 /// Uses the ExtendedExit Semihosting call
 /// ARM Docs: https://developer.arm.com/docs/100863/0200/semihosting-operations/sys_exit_extended-0x20
-void __attribute__((always_inline)) inline SemihostingOSExit(int code) {
-    struct {
-        uint32_t field1;
-        uint32_t field2;
-    } parameters;
-
-    parameters.field1 = ApplicationExit;
-    parameters.field2 = code;
+void __attribute__((always_inline)) inline SemihostingOSExit(uint8_t code) {
+    struct {uint32_t f1; uint32_t f2;} parameters = {ApplicationExit, code };
 
     asm volatile (
         "MOV r0, #0x20\n"

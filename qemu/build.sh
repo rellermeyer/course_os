@@ -1,8 +1,8 @@
 #!/bin/bash
 
-QEMU_VERSION=2.4.1
+QEMU_VERSION=4.2.0
 
-qemu-system-arm --version || {
+{
 
 	if [ ! -e qemu-${QEMU_VERSION}.tar.bz2 ]; then 
 		wget http://wiki.qemu-project.org/download/qemu-${QEMU_VERSION}.tar.bz2
