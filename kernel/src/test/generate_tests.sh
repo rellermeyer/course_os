@@ -24,7 +24,7 @@ size_t global_counter = 0;
 " >> "$DIR/test.c"
 
 #TESTFNS=$(grep -hr --include "*.c" -oP "(?<=TEST_CREATE\()(.*)(?=,)")
-TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)")
+TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)" | sort -R)
 
 for FNNAME in $TESTFNS
 do
