@@ -3,6 +3,7 @@
 
 #include <allocator.h>
 #include <stdio.h>
+#include <test.h>
 
 int offset = sizeof(uint32_t) * 2;
 uint32_t overhead = sizeof(footer_t) + sizeof(node_t);

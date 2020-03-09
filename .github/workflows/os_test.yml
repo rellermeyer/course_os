@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update &&
-          sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
+          sudo apt-get install build-essential python3 wget texinfo zlib1g-dev -y
 
       - name: Build Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'

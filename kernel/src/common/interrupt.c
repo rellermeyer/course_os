@@ -7,7 +7,7 @@
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
     // allocate space for the IVR at the high vector location.
-    vm2_allocate_kernel_page(kernell1PageTable, HIGH_VECTOR_LOCATION, true);
+    vm2_allocate_kernel_page(kernell1PageTable, HIGH_VECTOR_LOCATION, true, 0);
 
 	/* Primary Vector Table */
 	mmio_write(HIGH_VECTOR_LOCATION + 0x00, BRANCH_INSTRUCTION);
@@ -301,7 +301,7 @@ void enable_interrupt(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            return;
+            FATAL("invalid interrupt mask");
     }
 }
 
@@ -322,7 +322,7 @@ void disable_interrupt(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            return;
+            FATAL("invalid interrupt mask");
     }
 }
 
@@ -347,7 +347,7 @@ int disable_interrupt_save(InterruptType mask) {
             break;
         default:
             /** should never happen **/
-            return -1;
+            FATAL("invalid interrupt mask");
     }
     return cpsr;
 }

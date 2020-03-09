@@ -284,7 +284,7 @@ size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes);
 /// or null if unsuccesfull. The physical location of this page is determined by the pmm.
 /// Since this allocates a 4kb page, it has to go through l2 pagetables. It will create the right
 /// l2 pagetables as it needs. You can make the allocated page executable with the last parameter.
-void * vm2_allocate_kernel_page(struct L1PageTable * l1pt, size_t virtual, bool executable);
+void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool executable, bool remap);
 
 /// Should be called after updating a pagetable.
 void vm2_flush_caches();
@@ -330,7 +330,8 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 
 #define PAGE_SIZE (4 * Kibibyte)
 
-
-
+// aligns an address to the *next* boundary of size n.
+// only works where n is a power of 2
+#define ALIGN(address, n) ((((size_t)(address) + (size_t)(n) - 1) & ~((size_t)(n) - 1)));
 
 #endif
