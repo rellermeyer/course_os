@@ -25,9 +25,8 @@ static inline size_t l2pt_base_address(size_t address) {
     return address >> 12u;
 }
 
-// TODO: More descriptive name
 // Finds the location of an l2pt given an l1pt coarse entry.
-static inline struct L2PageTable * l2pt_in_l1 (L1PagetableEntry * l1ptEntry){
+static inline struct L2PageTable * find_l2pt (L1PagetableEntry * l1ptEntry){
     if(l1ptEntry->coarse.type == 1) {
         return (struct L2PageTable *) PHYS2VIRT(l1ptEntry->coarse.base_address << 10u);
     } else {
@@ -134,7 +133,7 @@ void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool ex
             struct Page * page = pmm_allocate_page();
             // There already is a coarse pagetable
             if(l2 == NULL) {
-                l2 = l2pt_in_l1(l1Entry);
+                l2 = find_l2pt(l1Entry);
             }
             union L2PagetableEntry * l2Entry = &l2->entries[l2pt_index(virtual)];
 
