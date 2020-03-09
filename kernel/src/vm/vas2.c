@@ -14,11 +14,7 @@ struct vas2 * create_vas() {
 }
 
 
-void switch_to_vas(struct vas2 * vas) {
+void switch_to_vas(struct vas2 * vas) {}
 
-}
-
-void free_vas() {
-
-}
+void free_vas() {}
 
