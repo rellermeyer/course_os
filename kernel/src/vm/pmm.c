@@ -88,8 +88,6 @@ struct MemorySliceInfo * pmm_new_sliceinfo_slice() {
 
 struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) {
 
-    // TODO: think about changing SLICEINFO_PER_SLICE to 512 instead of 682. This adds quite some memory overhead
-    // TODO: but makes the division and multiplication below a lot faster. (or even unnecessary as it can be replaced with a single logical AND)
     const int bucketsize = (SLICEINFO_PER_SLICE * sizeof(union MemorySlice));
 
     // Take the address of the slice and determine in which bucket it falls.
