@@ -8,21 +8,21 @@
 
 /// Permissions for mapping a page
 enum Access {
-    KernelRO, // kernel ro, user no access
-    KernelRW, // kernel r/w, user no access
+    KernelRO,   // kernel ro, user no access
+    KernelRW,   // kernel rw, user no access
 
-    // Everything below this are accessible for the kernel and the user.
-    UserRO, // kernel r/w, user ro
-    UserRW, // kernel r/w user r/w
+    // Everything below this is accessible for the kernel and the user.
+
+    UserRO,     // kernel rw, user ro
+    UserRW,     // kernel rw, user rw
 };
 
 struct PagePermission {
-    enum Access access;
-    bool executable;
+    enum Access access; // Access permissions for this page as specified above
+    bool executable;    // If the Page should be executable or not
 };
 
 /// A L1PagetableEntry is an entry in the top level pagetable.
-/// There is only one L1 pagetable and it is always located at address 0x4000.
 /// Relevant manual section: http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf
 /// * 6.1
 /// * 6.5 (memory access control)
@@ -159,7 +159,10 @@ typedef union L1PagetableEntry {
     } section;
 } L1PagetableEntry;
 
-///
+/// An L2PagetableEntry is an entry inside the L2Pagetable.
+/// A single entry can address 4KiB of memory.
+/// You shouldn't need to make any entries manually as you can use the [vm2_allocate_page] function to allocate space
+/// for you.
 typedef union L2PagetableEntry{
     uint32_t entry;
     struct {
@@ -280,8 +283,7 @@ struct L2PageTable {
     L2PagetableEntry entries[0x100];
 };
 
-/// Should be called early, initiliazes everything vm2 needs
-/// Actually enables the MMU and switches the kernel to higher half
+/// Should be called early, initializes everything vm2 needs
 void vm2_start();
 
 /// Takes an L1PageTableEntry containing a physical address (in .*.base_address) and maps it to a physical addres.
@@ -295,10 +297,12 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEn
 /// same n megabytes in which some mmio is located. Returns the virtual address.
 size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes);
 
-/// Maps a new 4kb page with kernel permissions at a virtual address. Returns a reference to this page
-/// or null if unsuccesfull. The physical location of this page is determined by the pmm.
-/// Since this allocates a 4kb page, it has to go through l2 pagetables. It will create the right
-/// l2 pagetables as it needs. You can make the allocated page executable with the last parameter.
+/// Maps a new 4KiB page with kernel permissions at a virtual address. Returns a reference to this page
+/// or NULL if unsuccessful. The physical location of this page is determined by the [PMM](pmm.c).
+/// Since this allocates a 4KiB page, it has to go through L2Pagetables. It will create the right
+/// L2 pagetables as it needs. You can make the allocated page executable with the second to last parameter.
+/// If you want to keep track of your allocated L2Pagetables you can pass a double pointer to `created_l2pt`
+/// And the function will return the pointer to the allocated L2Pagetable in there (or NULL if no allocation happened).
 void *vm2_allocate_page(struct L1PageTable *l1pt, size_t virtual, bool remap, struct PagePermission perms,
                         struct L2PageTable **created_l2pt);
 
@@ -357,11 +361,12 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 
 #define PAGE_SIZE (4 * Kibibyte)
 
+/*
+ * general purpose useful macros
+ */
 
-// general purpose useful macros
-
-// aligns an address to the *next* boundary of size n.
-// only works where n is a power of 2
+/// aligns an address to the *next* boundary of size n.
+/// only works where n is a power of 2
 #define ALIGN(address, n) ((((size_t)(address) + (size_t)(n) - 1) & ~((size_t)(n) - 1)));
 
 /// The purpose of the Data Synchronization Barrier operation is to ensure that

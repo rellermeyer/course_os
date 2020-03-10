@@ -10,7 +10,6 @@
 // data is always a null. Therefore a pointer to a Qstr is *always* also a valid null
 // terminated string.
 
-
 typedef struct Qstr {
     char * data;
     size_t length;

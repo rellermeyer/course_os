@@ -4,13 +4,28 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/// We have made a special allocator to keep track of all the ASIDs used and to determine if we would need to flush
+/// the caches upon a context switch. This should greatly reduce the amount of cache flushes needed and optimizes
+/// the usage of ASIDs.
+///
+/// Designed by:
+/// Victor Roest            <victor@xirion.net>
+///
+/// Implemented by:
+/// Jonathan Donszelmann    <jonabent@gmail.com>
+/// Victor Roest            <victor@xirion.next>
+
+
 /// Terminology
 /// * asid: Hardware process id used for the pagetable cache.
 /// * cache_iteration: Which iteration of the cache we are on, determines if we should flush the cache on a process switch or not.
 /// * asid_descriptor: A pair of above two numbers.
 
+/// Each ASID Descriptor has 2 fields:
+/// asid: the actual ASID used for this process.
+/// cache_iteration: On which iteration of the cache we are (used to determine if a cache flush is needed).
 struct ASIDDescriptor {
-    uint8_t tlb_cache_id;
+    uint8_t asid;
     uint8_t cache_iteration;
 };
 
@@ -44,4 +59,5 @@ bool asid_check_and_update(struct ASIDDescriptor* desc);
  * @param id the ASID to set.
  */
 void asid_set(uint8_t id);
+
 #endif

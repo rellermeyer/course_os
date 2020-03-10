@@ -23,6 +23,7 @@ BoardType detect_boardtype() {
 }
 
 // TODO: detect hardware info.
+// Such as: CPU and RAM.
 void init_hardwareinfo() {
     hardware_info = (HardwareInfo){
         .cpuType = ARM1176,

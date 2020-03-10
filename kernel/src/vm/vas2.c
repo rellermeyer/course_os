@@ -22,10 +22,10 @@ struct vas2 * create_vas() {
 
 void switch_to_vas(struct vas2 * vas) {
     if(asid_check_and_update(&vas->tlbDescriptor)) {
-        vm2_flush_caches_of_ASID(vas->tlbDescriptor.tlb_cache_id);
+        vm2_flush_caches_of_ASID(vas->tlbDescriptor.asid);
     }
 
-    asid_set(vas->tlbDescriptor.tlb_cache_id);
+    asid_set(vas->tlbDescriptor.asid);
 
     vm2_set_user_pagetable(vas->l1PageTable);
 }
