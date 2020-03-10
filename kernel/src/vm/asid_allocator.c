@@ -19,7 +19,7 @@ struct ASIDDescriptor asid_request_descriptor() {
 
     struct ASIDDescriptor res = (struct ASIDDescriptor) {
         .cache_iteration = cache_iteration,
-        .tlb_cache_id = tlb_cache_id,
+        .asid = tlb_cache_id,
     };
 
     return res;
@@ -27,8 +27,8 @@ struct ASIDDescriptor asid_request_descriptor() {
 
 // TODO: Ensure atomicity
 bool asid_check_and_update(struct ASIDDescriptor* desc) {
-    if(desc->cache_iteration != allocated_ids[desc->tlb_cache_id]) {
-        desc->cache_iteration = ++(allocated_ids[desc->tlb_cache_id]);
+    if(desc->cache_iteration != allocated_ids[desc->asid]) {
+        desc->cache_iteration = ++(allocated_ids[desc->asid]);
         return true;
     }
 

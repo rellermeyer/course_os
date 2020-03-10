@@ -1,6 +1,7 @@
 
 .global _Reset
 
+// Actual entrypoint of the Kernel.
 _Reset:
     // Disable other cores
     mrc p15, #0, r1, c0, c0, #5

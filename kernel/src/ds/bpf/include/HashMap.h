@@ -4,6 +4,7 @@
  * Generic non-thread safe hash map implementation.
  *
  * Copyright (c) 2019 Facebook
+ * Copyright (c) 2020 Jonathan Dönszelmann and Victor Roest (Changed for integration in course_os)
  */
 #ifndef __LIBBPF_HASHMAP_H
 #define __LIBBPF_HASHMAP_H

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <interrupt.h>
 
+// Warning: This method is O(n) and is thus quite slow on long lists.
 size_t listlength(struct MemorySliceInfo * start) {
     if (start == NULL) {
         return 0;
@@ -16,8 +17,13 @@ size_t listlength(struct MemorySliceInfo * start) {
     return count;
 }
 
-TEST_CREATE(test_memoryinfo_size, {
+TEST_CREATE(test_pmm_constants, {
     ASSERT_EQ(sizeof(struct MemorySliceInfo), 16);
+    ASSERT_EQ(sizeof(union MemorySlice) / sizeof(struct MemorySliceInfo), SLICEINFO_PER_SLICE);
+    ASSERT_EQ(sizeof(union MemorySlice) / sizeof(struct L1PageTable), 1);
+    ASSERT_EQ(sizeof(union MemorySlice) / sizeof(struct L2PageTable), L2TABLES_PER_SLICE);
+    ASSERT_EQ(sizeof(union MemorySlice) / sizeof(struct Page), PAGES_PER_SLICE);
+    ASSERT_EQ(sizeof(struct Page), PAGE_SIZE);
 })
 
 TEST_CREATE(test_allocate_pt, {

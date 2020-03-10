@@ -4,7 +4,7 @@
  * Generic non-thread safe hash map implementation.
  *
  * Copyright (c) 2019 Facebook
- * Copyright (c) 2020 Jonathan Dönszelmann and Victor Roest
+ * Copyright (c) 2020 Jonathan Dönszelmann and Victor Roest (Changed for use in course_os)
  */
 
 

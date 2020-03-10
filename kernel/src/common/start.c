@@ -25,8 +25,9 @@
 #include <chipset.h>
 #include <vm2.h>
 
-// This start is what u-boot calls. It's just a wrapper around setting up the
-// virtual memory for the kernel.
+/// Entrypoint for the C part of the kernel.
+/// This function is called by the assembly located in [startup.s].
+/// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
 void start(uint32_t *p_bootargs) {
 
     // Before this point, all code has to be hardware independent.
@@ -47,6 +48,7 @@ void start(uint32_t *p_bootargs) {
     // Even though we already enabled the mmu in startup.s to
     // create a higher half kernel. The pagetable created there
     // was temporary and has to be replaced here.
+    // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
     vm2_start();
 
