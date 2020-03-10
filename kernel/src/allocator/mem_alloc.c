@@ -39,7 +39,7 @@ void init_heap() {
     heap_end = ALIGN(heap_end, PAGE_SIZE);
     size_t heap_start = heap_end;
 
-    while(heap_end < (heap_start + HEAP_INIT_SIZE)) {
+    while(heap_end < (heap_start + HEAP_INIT_SIZE + PAGE_SIZE)) {
         if (vm2_allocate_page(kernell1PageTable, heap_end, false, (struct PagePermission) {
                 .access = KernelRW,
                 .executable = false

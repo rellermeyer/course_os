@@ -105,12 +105,7 @@ struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) 
     // slice for a bucket sits in the *last* slice of the previous bucket.
     // However, for the first bucket, the bucketinfo slice is actually the
     // *first* slice in the bucket
-    size_t correction;
-    if (bucketindex == 0) {
-        correction = 0;
-    } else {
-        correction = 1;
-    }
+    size_t correction = bucketindex == 0 ? 0 : 1;
 
     // Multiply by blocksize again (NOTE: this is so we round down! The division and multiplication DO NOT CANCEL OUT)
     // Subtract two as the bucket is actually the last page of the previous bucket.
@@ -161,6 +156,7 @@ struct L1PageTable * pmm_allocate_l1_pagetable() {
     // Put it on the allocated stack
     push_to_ll(&physicalMemoryManager.allocated, sliceinfo);
 
+    // Pre-zero the L1PageTable
     memset(&sliceinfo->slice->l1pt, 0, sizeof(struct L1PageTable));
     
     return &sliceinfo->slice->l1pt;
@@ -179,7 +175,7 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
         sliceinfo->filled |= (1u << index);
 
         // If it is filled
-        if(sliceinfo->filled == 0xffff) {
+        if(sliceinfo->filled == 0xff) {
             // Remove from the partial free list
             // We can ignore the return value here as we already got it.
             pop_from_ll(&physicalMemoryManager.l2ptPartialFree);
@@ -219,8 +215,8 @@ struct Page * pmm_allocate_page() {
 
         sliceinfo->filled |= (1u << index);
 
-        // If it is filled
-        if(sliceinfo->filled == 0xf) {
+        // If it is filled (2 pages)
+        if(sliceinfo->filled == 0b11) {
             // Remove from the partial free list
             // We can ignore the return value here as we already got it.
             pop_from_ll(&physicalMemoryManager.pagePartialFree);
@@ -251,7 +247,7 @@ void pmm_free_page(struct Page * p) {
     // works cuz rounding (we think, might just work because random luck)
     struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *) p);
 
-    if (info->filled == 0xf) {
+    if (info->filled == 0b11) {
         remove_element_ll(&physicalMemoryManager.allocated, info);
     } else {
         remove_element_ll(&physicalMemoryManager.pagePartialFree, info);
@@ -265,7 +261,7 @@ void pmm_free_page(struct Page * p) {
     info->filled &= ~(1u << index_in_slice);
 
     // if there was only one l2pt in this slice, put it on unallocated
-    if(info->filled == 00) {
+    if(info->filled == 0x0) {
         push_to_ll(&physicalMemoryManager.unused, info);
     } else {
         push_to_ll(&physicalMemoryManager.pagePartialFree, info);
@@ -276,7 +272,7 @@ void pmm_free_l2_pagetable(struct L2PageTable * pt) {
     // works cuz rounding (we think, might just work because random luck)
     struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *) pt);
 
-    if (info->filled == 0xffff) {
+    if (info->filled == 0xff) {
         remove_element_ll(&physicalMemoryManager.allocated, info);
     } else {
         remove_element_ll(&physicalMemoryManager.l2ptPartialFree, info);
@@ -296,7 +292,6 @@ void pmm_free_l2_pagetable(struct L2PageTable * pt) {
         push_to_ll(&physicalMemoryManager.l2ptPartialFree, info);
     }
 }
-
 
 void push_to_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry) {
     if (*head != NULL) {

@@ -17,9 +17,6 @@ struct vas2 * create_vas() {
         .pages = vpa_create(VAS2_INITIAL_PAGE_LIST_CAPACITY),
     };
 
-    // Copy the upper half of the kernelPageTable to any other page table.
-    memcpy(newvas->l1PageTable, &kernell1PageTable->entries[0x800], sizeof(struct L1PageTable) / 2);
-
     return newvas;
 }
 
@@ -30,7 +27,7 @@ void switch_to_vas(struct vas2 * vas) {
 
     asid_set(vas->tlbDescriptor.tlb_cache_id);
 
-    vm2_set_current_pagetable(vas->l1PageTable);
+    vm2_set_user_pagetable(vas->l1PageTable);
 }
 
 void free_vas(struct vas2 * vas) {

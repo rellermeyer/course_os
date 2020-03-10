@@ -8,12 +8,6 @@ _Reset:
     cmp r1, #0
     bne loop
 
-    // Move the interrupt vector tables to 0x80000000
-    ldr r0, =0xE000ED08
-    ldr r1, =0x80000000
-    str r1, [r0]
-
-
     ldr sp, =EARLY_KERNEL_STACK_TOP // Set the kernel/SVC stack
     push {r0-r11}
 
@@ -53,7 +47,10 @@ _Reset:
     mcr p15, 0, r0, c2, c0, 0 // Table 0
     mcr p15, 0, r0, c2, c0, 1 // Table 1
 
+    // infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf#page=193
+    // Set up that we use half sized page tables (one for kernel one for userspace)
     eor r0, r0, r0            // Zero r0
+    ADD r0, #1                // Set N to 1 meaning we are using pagetables of 8KiB in size.
     mcr p15, 0, r0, c2, c0, 2 // Enable page walks on both page tables.
 
     mrc p15, 0, r3, c1, c0, 0

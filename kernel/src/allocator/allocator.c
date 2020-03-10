@@ -180,7 +180,7 @@ void heap_free(heap_t *heap, void *p) {
 
 // these are left here to implement contraction / expansion
 uint32_t expand(heap_t *heap, uint32_t sz) {
-    TRACE("[MEM DEBUG] Trying to expand");
+    WARN("[MEM DEBUG] Trying to expand");
     return 0; // fail for now
 }
 
