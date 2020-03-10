@@ -9,11 +9,14 @@ It is targeted to run on the raspberry pi zero, b+ and 2.
 # Building
 
 ## Toolchain
-To build the c toolchain for arm, and qemu version 4.20, run
+
+To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
+
+To build the c toolchain for ARM, and `qemu-system-arm` version 4.20, run
 ```
 make requirements
 ```     
-from the root project directory. We build qemu from source as this gives us better support
+from the root project directory. We build `qemu-system-arm` from source as this gives us better support
 for attaching debuggers. Any up to date version of `qemu-system-arm` should work and if you already have this installed 
 through your package manager, just running 
 ```
@@ -60,6 +63,8 @@ gdb -ex "target remote localhost:1234" -ex "symbol-file kernel/build/kernel.sym"
 ## Opening the project in clion
 
 To open this project in clion, you can simply create a new `c` project with the supplied `CMakeLists.txt` file. This file can *not* be used to actually run the kernel but it does give clion the right instructions to make code completion etc. work. 
+
+
 
 # Copyright
 
