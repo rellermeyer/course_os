@@ -1,7 +1,67 @@
-course_os
-=========
+![course_os test suite](https://github.com/rellermeyer/course_os/workflows/course_os%20test%20suite/badge.svg)
 
-CS 439 course OS
+# Course OS
+
+This is a 'toy' kernel created by students from multiple universities. 
+Currently it is mainly developed by students of the TU Delft. 
+It is targeted to run on the raspberry pi zero, b+ and 2. 
+
+# Building
+
+## Toolchain
+To build the c toolchain for arm, and qemu version 4.20, run
+```
+make requirements
+```     
+from the root project directory. We build qemu from source as this gives us better support
+for attaching debuggers. Any up to date version of `qemu-system-arm` should work and if you already have this installed 
+through your package manager, just running 
+```
+make toolchain
+```
+should be sufficient.
+
+## Running
+
+After you built the toolchain, the kernel can be ran with 
+```
+make run
+``` 
+from the root project directory, or from the `kernel` directory.
+
+## Running tests
+
+To test the entire kernel, run 
+
+```
+make test
+```
+from the root project directory, or from the `kernel` directory.
+
+
+## Debugging
+
+To debug the kernel, you have to perform two steps. First you have to build and start the kernel with
+```
+make debug
+```
+
+from the `kernel` directory. This prepares qemu so it waits for a debugger to be attached.
+
+now, if you have `clion` you can run the supplied run configuration called `debug` which attaches a debugger, loads the sourcemap and runs the kernel. Now you can create breakpoints from within clion.
+
+If however you don't have `clion`, or want to use gdb from a terminal, one can run the following command:
+```bash
+gdb -ex "target remote localhost:1234" -ex "symbol-file kernel/build/kernel.sym"
+```
+  
+# Editors
+
+## Opening the project in clion
+
+To open this project in clion, you can simply create a new `c` project with the supplied `CMakeLists.txt` file. This file can *not* be used to actually run the kernel but it does give clion the right instructions to make code completion etc. work. 
+
+# Copyright
 
 Copyright (c) 2015, <OWNER>
  All rights reserved.
