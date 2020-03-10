@@ -59,7 +59,7 @@ If however you don't have either of those IDEs, or want to use gdb from a termin
 gdb -ex "target remote localhost:1234" -ex "symbol-file kernel/build/kernel.sym"
 ```
   
-# Creating test
+# Creating tests
 
 To create tests for the kernel, please read [this](kernel/src/test/README.md) file.  
 
