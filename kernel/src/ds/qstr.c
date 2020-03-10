@@ -27,7 +27,7 @@ void qstr_free(Qstr* qstr) {
 static inline bool __eq(Qstr * left, Qstr * right, bool fake) {
     // Hash function from http://www.cse.yorku.ca/~oz/hash.html (djb2)
     char * rightstr;
-    if(!fake){
+    if(!fake) {
         if (left->hash != 0 && right->hash != 0 && left->hash != right->hash) {
             return false;
         }

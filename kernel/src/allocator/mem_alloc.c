@@ -1,4 +1,4 @@
-#include "klibc.h"
+#include <stdio.h>
 #include <allocator.h>
 #include <string.h>
 #include <vm2.h>
@@ -6,26 +6,16 @@
 heap_t * allocator;
 size_t heap_end;
 
-/*
- * The kernel heap is organized in blocks. Each block has a header and a
- * footer each a 4 byte integer, at the beginning and end of the block.
- * The header and footer both specify the size of the block in question.
- * Used blocks are indicated by the heap header and the heap footer being
- * negative.
- *
- * To allocate a block, we start at the first block and walk through each
- * one, finding the first free block large enough to support a header,
- * footer, and the size requested.
- *
- * To free a block, we do a bunch of merging stuff to check to see if we
- * should merge with the blocks on the left or right of us, respectively.
- */
-
+/// Initializes the heap by asking for HEAP_INIT_SIZE of pages, and putting the heap datastructure there.
+/// After the heap is initialized [kmalloc] and related functions can be used.
 void init_heap() {
     heap_end = KERNEL_HEAP_BASE;
 
     // Allocate space for the heap_t struct. is too large but at least big enough.
-    void * ret = vm2_allocate_kernel_page(kernell1PageTable, KERNEL_HEAP_BASE, false, 0);
+    void * ret = vm2_allocate_page(kernell1PageTable, KERNEL_HEAP_BASE, false, (struct PagePermission) {
+            .access = KernelRW,
+            .executable = false
+    }, NULL);
     if (ret == NULL) {
         FATAL("Couldn't allocate page for the kernel heap");
     }
@@ -50,7 +40,10 @@ void init_heap() {
     size_t heap_start = heap_end;
 
     while(heap_end < (heap_start + HEAP_INIT_SIZE)) {
-        if (vm2_allocate_kernel_page(kernell1PageTable, heap_end, false, 0) == NULL) {
+        if (vm2_allocate_page(kernell1PageTable, heap_end, false, (struct PagePermission) {
+                .access = KernelRW,
+                .executable = false
+        }, NULL) == NULL) {
             FATAL("Allocation of the kernel heap went wrong!");
         }
 
@@ -65,22 +58,27 @@ void init_heap() {
     INFO("Heap successfully initialized.");
 }
 
+/// Internal wrapper around heap_alloc. Should only be indirectly used through kmalloc/krealloc/kcalloc/kfree
 void *allocate(uint32_t size) {
     return heap_alloc(allocator, size);
 }
 
+/// Internal wrapper around heap_free. Should only be indirectly used through kmalloc/krealloc/kcalloc/kfree
 void deallocate(void *ptr) {
     return heap_free(allocator, ptr);
 }
 
+/// Internal function to get the size of an allocation. Should only be indirectly used through kmalloc/krealloc/kcalloc/kfree
 uint32_t allocation_size(void* ptr) {
     return get_alloc_size(ptr);
 }
 
+/// Internal function to get the global allocator. Should only be indirectly used through kmalloc/krealloc/kcalloc/kfree
 heap_t * mem_get_allocator(){
     return allocator;
 }
 
+/// Internal function to get the size of the heap. Should only be indirectly used through kmalloc/krealloc/kcalloc/kfree
 uint32_t mem_get_heap_size(){
     return allocator->end - allocator->start;
 }

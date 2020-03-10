@@ -5,11 +5,11 @@
 #include <stdbool.h>
 
 /// Terminology
-/// * tlb_cache_id: Hardware process id used for the pagetable cache.
+/// * asid: Hardware process id used for the pagetable cache.
 /// * cache_iteration: Which iteration of the cache we are on, determines if we should flush the cache on a process switch or not.
-/// * tlb_descriptor: A pair of above two numbers.
+/// * asid_descriptor: A pair of above two numbers.
 
-struct TLBDescriptor {
+struct ASIDDescriptor {
     uint8_t tlb_cache_id;
     uint8_t cache_iteration;
 };
@@ -26,7 +26,7 @@ bool tlb_everything_allocated;
  * If [tlb_everything_allocated] is false, you don't have to flush caches.
  * @returns a TLBDescriptor
  */
-struct TLBDescriptor request_tlb_descriptor();
+struct ASIDDescriptor asid_request_descriptor();
 
 /**
  * Updates and checks a tlb_descriptor.
@@ -37,7 +37,11 @@ struct TLBDescriptor request_tlb_descriptor();
  * @param desc the tlb_descriptor to check.
  * @returns whether you should flush caches or not.
  */
-bool check_and_update(struct TLBDescriptor* desc);
+bool asid_check_and_update(struct ASIDDescriptor* desc);
 
-
+/**
+ * Sets a specific ASID for the current core.
+ * @param id the ASID to set.
+ */
+void asid_set(uint8_t id);
 #endif

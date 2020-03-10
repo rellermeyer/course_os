@@ -1,6 +1,7 @@
 #include <pmm.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /// Private functions
 // Returns the index of the first zero from the LSB
@@ -143,7 +144,6 @@ void pmm_free_l1_pagetable(struct L1PageTable * pt) {
 
     // Since it's the first thing on the unused list, make prev null.
     sliceinfo->prev = NULL;
-
 }
 
 struct L1PageTable * pmm_allocate_l1_pagetable() {
@@ -161,6 +161,8 @@ struct L1PageTable * pmm_allocate_l1_pagetable() {
     // Put it on the allocated stack
     push_to_ll(&physicalMemoryManager.allocated, sliceinfo);
 
+    memset(&sliceinfo->slice->l1pt, 0, sizeof(struct L1PageTable));
+    
     return &sliceinfo->slice->l1pt;
 }
 
@@ -186,6 +188,7 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
             push_to_ll(&physicalMemoryManager.allocated, sliceinfo);
         }
 
+        memset(newl2pt, 0, sizeof(struct L2PageTable));
         return newl2pt;
     } else {
         struct MemorySliceInfo * sliceinfo = pop_from_ll(&physicalMemoryManager.unused);
@@ -197,7 +200,9 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
         // Put it on the partially allocated list
         push_to_ll(&physicalMemoryManager.l2ptPartialFree, sliceinfo);
 
-        return &sliceinfo->slice->l2pt[0];
+        struct L2PageTable * newl2pt = &sliceinfo->slice->l2pt[0];
+        memset(newl2pt, 0, sizeof(struct L2PageTable));
+        return newl2pt;
     }
 }
 
@@ -224,6 +229,7 @@ struct Page * pmm_allocate_page() {
             push_to_ll(&physicalMemoryManager.allocated, sliceinfo);
         }
 
+        memset(newpage, 0, sizeof(struct Page));
         return newpage;
     } else {
         struct MemorySliceInfo * sliceinfo = pop_from_ll(&physicalMemoryManager.unused);
@@ -235,7 +241,9 @@ struct Page * pmm_allocate_page() {
         // Put it on the partially allocated list
         push_to_ll(&physicalMemoryManager.pagePartialFree, sliceinfo);
 
-        return &sliceinfo->slice->page[0];
+        struct Page * newpage = &sliceinfo->slice->page[0];
+        memset(newpage, 0, sizeof(struct Page));
+        return newpage;
     }
 }
 

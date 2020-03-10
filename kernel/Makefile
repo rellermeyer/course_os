@@ -17,6 +17,7 @@ BUILDDIR = build
 # every directory named `include` will have it's contents autoincluded
 INCLUDEDIR = include
 TEST_MAIN_FILE = $(SOURCEDIR)/test/test.c
+CPU = cortex-a7
 
 # =================== End Configuration ===================
 
@@ -48,17 +49,17 @@ build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 debug: build | builddir
-		${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu arm1176 -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
+		${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
 
 start_debug: build | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"

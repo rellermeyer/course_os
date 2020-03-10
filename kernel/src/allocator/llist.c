@@ -21,19 +21,20 @@ void add_node(bin_t *bin, node_t* node) {
     }
 
     if (current == NULL) { // we reached the end of the list
-        // FIXME: previous could be null
+        if(previous == NULL) {
+            FATAL("BUG: previous shouldn't be null, this is probably a bug!");
+        }
+
         previous->next = node;
         node->prev = previous;
-    }
-    else {
+    } else {
         if (previous != NULL) { // middle of list, connect all links!
             node->next = current;
             previous->next = node;
 
             node->prev = previous;
             current->prev = node;
-        }
-        else { // head is the only element
+        } else { // head is the only element
             node->next = bin->head;
             bin->head->prev = node;
             bin->head = node;

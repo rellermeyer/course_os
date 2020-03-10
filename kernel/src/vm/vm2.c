@@ -75,6 +75,20 @@ void vm2_flush_caches() {
     :: "r"(0x0));
 }
 
+// http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf#page=219
+void vm2_flush_caches_of_ASID(uint8_t id) {
+    asm volatile (
+    "mcr p15, 0, %0, c8, c7, 2" // Invalidate TLB Entry on ASID Match
+    :: "r" (id));
+}
+
+void vm2_set_current_pagetable(struct L1PageTable * l1) {
+    // FIXME: Determine if we want split tables or a single one
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf#page=360
+    asm volatile ("MCR p15, 0, %0, c2, c0, 0\n"                 // Set Translation base address 0
+                  "MCR p15, 0, %0, c2, c0, 1" :: "r" (l1));     // Set Translation base address 1
+}
+
 // Starts the actual MMU after this function we live in Virtual Memory
 void vm2_start() {
     size_t available_RAM;
@@ -107,14 +121,15 @@ void vm2_start() {
         }, KERNEL_VIRTUAL_OFFSET + i, true);
     }
 
-    pmm_init(KERNEL_PMM_BASE, KERNEL_VIRTUAL_OFFSET + available_RAM);
+    pmm_init(KERNEL_PMM_BASE, PMM_TOP);
 
 
     vm2_flush_caches();
     mmu_started = true;
 }
 
-void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool executable, bool remap) {
+void *vm2_allocate_page(struct L1PageTable *l1pt, size_t virtual, bool remap, struct PagePermission perms,
+                        struct L2PageTable **created_l2pt) {
     L1PagetableEntry * l1Entry = &l1pt->entries[l1pt_index(virtual)];
     struct L2PageTable * l2 = NULL;
 
@@ -128,6 +143,12 @@ void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool ex
                     .base_address = ((size_t)VIRT2PHYS((size_t)l2)) >> 10u,
                 },
             };
+
+            // Return the allocated l2pt
+            if(created_l2pt != NULL){
+                *created_l2pt = l2;
+            }
+
             /** Fallthrough **/
         case 1:;
             struct Page * page = pmm_allocate_page();
@@ -143,13 +164,45 @@ void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool ex
                 TRACE("[MEM DEBUG] Remapping l2 page located at 0x%x", virtual);
             }
 
+            // Set up perms correctly
+            int accessPerms = 0;
+            int accessExtended = 0;
+            bool global = false;
+
+            switch (perms.access) {
+                case KernelRW:
+                    accessPerms = 0b01;
+                    accessExtended = 0;
+                    global = true;
+                    break;
+                case KernelRO:
+                    accessPerms = 0b01;
+                    accessExtended = 1;
+                    global = true;
+                    break;
+                case UserRO:
+                    accessPerms = 0b10;
+                    accessExtended = 0;
+                    global = false;
+                    break;
+                case UserRW:
+                    accessPerms = 0b11;
+                    accessExtended = 0;
+                    global = false;
+                    break;
+                default:
+                    WARN("[MEM DEBUG] No access permissions specified, falling back to No access ");
+                    break;
+            }
+
             *l2Entry = (union L2PagetableEntry) {
                 .smallpage = {
-                    .type = 2 + !executable,
+                    .type = 2 + !perms.executable,
                     .bufferable = 0,
                     .cachable = 0,
-                    .accessPermissions = 1,
-                    .accessExtended = 0,
+                    .notglobal = !global,
+                    .accessPermissions = accessPerms,
+                    .accessExtended = accessExtended,
                     .base_address = l2pt_base_address(((size_t)VIRT2PHYS(page))),
                 },
             };
@@ -158,9 +211,15 @@ void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool ex
                 vm2_flush_caches();
             }
 
+            // make sure that if we didn't allocate a new pt, we set created_l2pt it to null
+            if(created_l2pt != NULL && *created_l2pt != NULL){
+                *created_l2pt = NULL;
+            }
+
             return page;
         default:
             // This is a (super)section and we can't make it a coarse pagetable. Error.
+            WARN("[MEM DEBUG] L1 Entry is a section or super section, can't map a page there");
             return NULL;
     }
 }
@@ -186,6 +245,3 @@ size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes) {
 
     return mmio_current_top;
 }
-
-
-
