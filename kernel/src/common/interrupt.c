@@ -211,9 +211,9 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
     WARN("DFSR: 0x%x", dfsr);
 
 
-    #ifdef ENABLE_TESTS
-        FATAL("Data abort is disallowed in tests");
-    #endif
+#ifdef ENABLE_TESTS
+    FATAL("Data abort is disallowed in tests");
+#endif
 }
 
 void reserved_handler(void)

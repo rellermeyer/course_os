@@ -272,7 +272,7 @@ typedef union L2PagetableEntry{
 
 /// The representation of an L1Pagetable
 struct L1PageTable {
-    L1PagetableEntry entries[0x1000];
+    L1PagetableEntry entries[0x800];
 };
 
 /// The representation of an L1Pagetable
@@ -309,7 +309,7 @@ void vm2_flush_caches();
 void vm2_flush_caches_of_ASID(uint8_t id);
 
 /// Enables a given l1 pagetable on the MMU.
-void vm2_set_current_pagetable(struct L1PageTable * l1);
+void vm2_set_user_pagetable(struct L1PageTable * l1);
 
 /// The kernel's L1 Pagetable.
 struct L1PageTable * kernell1PageTable;

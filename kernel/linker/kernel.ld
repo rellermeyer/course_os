@@ -18,17 +18,17 @@ SECTIONS
 
     __KERNEL_BASE = .;
     .text : AT(ADDR(.text) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/boot.o */stacks.o) .text)
+        *(EXCLUDE_FILE (*/startup.o */stacks.o) .text)
         *(.rodata*)
     }
 
     .data : AT(ADDR(.data) - __KERNEL_VIRTUAL_OFFSET){
-        *(EXCLUDE_FILE (*/boot.o */stacks.o) .data)
+        *(EXCLUDE_FILE (*/startup.o) .data)
      }
 
     .bss : AT(ADDR(.bss) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/boot.o */stacks.o) COMMON)
-        *(EXCLUDE_FILE (*/boot.o) .bss)
+        *(EXCLUDE_FILE (*/startup.o) COMMON)
+        *(EXCLUDE_FILE (*/startup.o) .bss)
     }
 
     /*make kernel top megabyte aligned*/

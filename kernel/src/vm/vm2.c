@@ -50,7 +50,7 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt, union L1PagetableEn
 
     kernell1PageTable->entries[l1pt_index(virtual)] = entry;
 
-    if (remap) {
+    if (remap && remapped) {
         // TODO: partial flush
         vm2_flush_caches();
     }
@@ -82,11 +82,9 @@ void vm2_flush_caches_of_ASID(uint8_t id) {
     :: "r" (id));
 }
 
-void vm2_set_current_pagetable(struct L1PageTable * l1) {
-    // FIXME: Determine if we want split tables or a single one
+void vm2_set_user_pagetable(struct L1PageTable * l1) {
     // http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf#page=360
-    asm volatile ("MCR p15, 0, %0, c2, c0, 0\n"                 // Set Translation base address 0
-                  "MCR p15, 0, %0, c2, c0, 1" :: "r" (l1));     // Set Translation base address 1
+    asm volatile ("MCR p15, 0, %0, c2, c0, 0\n" :: "r" (l1));     // Set Translation base address 0
 }
 
 // Starts the actual MMU after this function we live in Virtual Memory
@@ -123,8 +121,10 @@ void vm2_start() {
 
     pmm_init(KERNEL_PMM_BASE, PMM_TOP);
 
+    vm2_set_user_pagetable(NULL);
 
     vm2_flush_caches();
+
     mmu_started = true;
 }
 

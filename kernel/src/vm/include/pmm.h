@@ -50,8 +50,6 @@
 #include "vm2.h"
 
 
-#define SLICEINFO_PER_SLICE 1024
-
 /// The type of a 16kib Slice
 enum MemoryType {
     L1PageTable,
@@ -72,9 +70,9 @@ struct MemorySliceInfo {
         uint32_t entry;
         struct {
             enum MemoryType type: 2;
-            uint32_t filled: 16;
+            uint32_t filled: 8;
             /// Filler bits
-            uint32_t unused: 14;
+            uint32_t unused: 22;
         };
     };
 
@@ -84,16 +82,21 @@ struct MemorySliceInfo {
     union MemorySlice * slice;
 };
 
-/// A Memory slice of 16KB, that's also 16kb aligned.
-/// A slice of 16kb can fit one of three things:
-///     * 4   physical pages of 4kb
-///     * 1   l1 pagetable of 16kb
-///     * 16  l2 pagetabke of 1kb
-///     * 682 (rounded down) MemorySliceInfo structs indexing other pages
+
+#define SLICEINFO_PER_SLICE 512
+#define L2TABLES_PER_SLICE 8
+#define PAGES_PER_SLICE 2
+
+/// A Memory slice of 8KB, that's also 8kb aligned.
+/// A slice of 8kb can fit one of three things:
+///     * 2   physical pages of 4kb
+///     * 1   l1 pagetable of 8kb
+///     * 8   l2 pagetabke of 1kb
+///     * 512 MemorySliceInfo structs indexing other pages
 union MemorySlice {
     struct L1PageTable l1pt;
-    struct Page page[4];
-    struct L2PageTable l2pt[16];
+    struct Page page[PAGES_PER_SLICE];
+    struct L2PageTable l2pt[L2TABLES_PER_SLICE];
     // The sliceinfo array (bucketinfo) that contains the information of all Memoryslices in the next bucket.
     struct MemorySliceInfo bucketinfo[SLICEINFO_PER_SLICE];
 };
