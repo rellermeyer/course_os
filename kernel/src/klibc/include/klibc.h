@@ -80,7 +80,11 @@ unsigned int rand();
 #else
 #define INFO(...)
 #endif
-#define WARN(format, ...)   kprintf("\e[38;5;208m[WARN] " format "\e[0m\n", ##__VA_ARGS__)
+#if ENABLE_TESTS
+#define WARN(format, ...)  kprintf("\e[38;5;208m[WARN] \e[38;5;208m%s:%i\e[38;5;208m" format "\e[0m\n", __FILE__, __LINE__, ##__VA_ARGS__); panic()
+#else
+#define WARN(format, ...)  kprintf("\e[38;5;208m[WARN] " format "\e[0m\n", ##__VA_ARGS__)
+#endif
 
 
 #define FATAL(format, ...) kprintf("\e[38;5;160m[FATAL] \e[38;5;208m%s:%i\e[38;5;160m " format "\e[0m\n", __FILE__, __LINE__, ##__VA_ARGS__); panic()

@@ -41,7 +41,6 @@
 
 // TODO: Excluded regions. (for mmio for example)
 // TODO: detect memory size.
-#define PMM_TOP 0x10000000 // 256 MiB and less than all Peripheral bases
 
 #ifndef PMM_H
 #define PMM_H
@@ -130,7 +129,5 @@ struct L2PageTable * pmm_allocate_l2_pagetable();
 void pmm_free_l2_pagetable(struct L2PageTable * pt);
 struct Page * pmm_allocate_page();
 void pmm_free_page(struct Page * p);
-
-
 
 #endif

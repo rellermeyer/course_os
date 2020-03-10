@@ -6,6 +6,21 @@
 #include <stdbool.h>
 
 
+/// Permissions for mapping a page
+enum Access {
+    KernelRO, // kernel ro, user no access
+    KernelRW, // kernel r/w, user no access
+
+    // Everything below this are accessible for the kernel and the user.
+    UserRO, // kernel r/w, user ro
+    UserRW, // kernel r/w user r/w
+};
+
+struct PagePermission {
+    enum Access access;
+    bool executable;
+};
+
 /// A L1PagetableEntry is an entry in the top level pagetable.
 /// There is only one L1 pagetable and it is always located at address 0x4000.
 /// Relevant manual section: http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf
@@ -14,7 +29,7 @@
 /// * 6.11.1 (entry layout)
 /// * 6.13 (control registers)
 /// * 6.10 (page faults and aborts)
-typedef union L1PagetableEntry{
+typedef union L1PagetableEntry {
     uint32_t entry;
     /// A coarse l1pt entry means an l1pt entry that points to an l2pt.
     /// The other possibility is a (super)section, where the l1pt maps a
@@ -284,12 +299,19 @@ size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes);
 /// or null if unsuccesfull. The physical location of this page is determined by the pmm.
 /// Since this allocates a 4kb page, it has to go through l2 pagetables. It will create the right
 /// l2 pagetables as it needs. You can make the allocated page executable with the last parameter.
-void *vm2_allocate_kernel_page(struct L1PageTable *l1pt, size_t virtual, bool executable, bool remap);
+void *vm2_allocate_page(struct L1PageTable *l1pt, size_t virtual, bool remap, struct PagePermission perms,
+                        struct L2PageTable **created_l2pt);
 
 /// Should be called after updating a pagetable.
 void vm2_flush_caches();
 
-///
+/// Flushes the caches associated with an ASID.
+void vm2_flush_caches_of_ASID(uint8_t id);
+
+/// Enables a given l1 pagetable on the MMU.
+void vm2_set_current_pagetable(struct L1PageTable * l1);
+
+/// The kernel's L1 Pagetable.
 struct L1PageTable * kernell1PageTable;
 
 /// From the `kernel.ld` linker file. These are not arrays but this is how you refer to the pointers by the linker script.
@@ -309,6 +331,11 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 
 /// Location of the Kernel's Physical Memory Manager's Info structs. Can grow to a max of 16MiB when using 4GiB RAM.
 #define KERNEL_PMM_BASE         KERNEL_VIRTUAL_END
+// TODO: This changes per chipset and we either need to detect that or
+// TODO: (the actual solution) support excluded regions in the pmm
+// If we write above this range (0x3f000000) on a bcm2836 we enter the peripheral
+// DMA region and are thus setting all kinds of registers. This kills qemu :)
+#define PMM_TOP                 (KERNEL_VIRTUAL_OFFSET + 0x3f000000)
 
 // Location of the vector table in memory table.
 // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0552a/BABIFJFG.html
@@ -330,8 +357,16 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 
 #define PAGE_SIZE (4 * Kibibyte)
 
+
+// general purpose useful macros
+
 // aligns an address to the *next* boundary of size n.
 // only works where n is a power of 2
 #define ALIGN(address, n) ((((size_t)(address) + (size_t)(n) - 1) & ~((size_t)(n) - 1)));
+
+/// The purpose of the Data Synchronization Barrier operation is to ensure that
+/// all outstanding explicit memory transactions complete before any following instructions begin.
+/// This ensures that data in memory is up to date before the processor executes any more instructions.
+#define DATA_SYNC_BARRIER() asm volatile ("eor r0, r0, r0\nmcr p15, 0, r0, c7, c10, 4");
 
 #endif

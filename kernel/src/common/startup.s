@@ -50,8 +50,11 @@ _Reset:
 
     ldr r0, =0x4000
     // Give the pagetable addr to the MMU
-    mcr p15, 0, r0, c2, c0, 0
-    mcr p15, 0, r0, c2, c0, 1
+    mcr p15, 0, r0, c2, c0, 0 // Table 0
+    mcr p15, 0, r0, c2, c0, 1 // Table 1
+
+    eor r0, r0, r0            // Zero r0
+    mcr p15, 0, r0, c2, c0, 2 // Enable page walks on both page tables.
 
     mrc p15, 0, r3, c1, c0, 0
     orr r3, #0x800000
