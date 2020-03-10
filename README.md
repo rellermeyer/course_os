@@ -8,6 +8,8 @@ It is targeted to run on the raspberry pi zero, b+ and 2.
 
 # Building
 
+[Build parameters](kernel/README.md)
+
 ## Toolchain
 
 To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
@@ -58,6 +60,10 @@ If however you don't have `clion`, or want to use gdb from a terminal, one can r
 gdb -ex "target remote localhost:1234" -ex "symbol-file kernel/build/kernel.sym"
 ```
   
+# Creating test
+
+To create tests for the kernel, please read [this](kernel/src/test/README.md) file.  
+
 # Editors
 
 ## Opening the project in clion
