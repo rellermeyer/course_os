@@ -1,0 +1,24 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "make test",
+            "detail": "Runs the course_os test suite",
+            "type": "shell",
+            "command": "make test",
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run_debug",
+            "detail": "Runs qemu with gdbserver",
+            "type": "shell",
+            "command": "make -C kernel debug",
+        }
+    ]
+}
