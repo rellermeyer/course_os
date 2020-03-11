@@ -9,7 +9,7 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 
 # variables to define in the preprocessor.
 MEMORY = 1G
-DEFINITIONS = MEM_DEBUG LOG_LEVEL=1
+DEFINITIONS = MEM_DEBUG LOG_LEVEL=4
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build

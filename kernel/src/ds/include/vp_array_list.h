@@ -33,3 +33,4 @@ void vpa_resize(VPArrayList * list, uint32_t new_size, FreeFunc freeFunc);
 void * vpa_remove(VPArrayList * list, size_t index);
 
 #endif
+
