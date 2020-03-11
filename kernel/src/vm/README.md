@@ -7,7 +7,7 @@ The virtual memory implemention consists of the following parts:
 * [Virtual Address Space Manager (VAS)](include/vas2.h)
 * [Generic Virtual Memory Manager (VM)](include/vm2.h)
 
-
+### Initialization
 The entry point for the virtual memory functionality is the [vm2_start()](vm2.c#L91) method.
 It will first map all the physical to the 2 to 3GB region (only the first MiB of this was mapped by [startup.s](../common/startup.s)).
 Afterwards it will remove the identity mapping done by that same file. After that is done the kernel is fully higher half.
@@ -17,8 +17,8 @@ This function will then use the address space provided to build op all the struc
 physical page allocation. A general overview of how this is done and the methods available can be 
 found in its [header](include/pmm.h).
 
-And finally after the PMM has been initialized it will clear the pointer to the user pagetable (which was temporarily set).
-
+And finally after the PMM has been initialized it will clear the pointer to the user pagetable (which was temporarily set);
+flush the caches and return.
 
 ## Memory map
 
