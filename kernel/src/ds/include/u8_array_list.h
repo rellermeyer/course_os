@@ -1,7 +1,3 @@
-//
-// Created by victor on 2/21/20.
-//
-
 #ifndef U8ARRAY_LIST_H
 #define U8ARRAY_LIST_H
 

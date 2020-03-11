@@ -1,6 +1,3 @@
-//
-// Created by victor on 2/21/20.
-//
 #include <vp_array_list.h>
 #include <stdlib.h>
 #include <math.h>

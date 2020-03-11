@@ -8,15 +8,17 @@
  *
  *  A bit of background:
  *  - The ARM architecture has 7 modes of operation:
- * 	+ USR - user mode
- *	+ FIQ - processing "fast" interrupts
- *	+ IRQ - processing "normal" interrupts
- *	+ SVC - proctected mode for OS
- *	+ UND - processing an undefined instruction exception
- *	+ SYS - also protecteed mode for OS --if anyone wants to clarify, feel free--
- *	These modes can be entered or exited by modifying the CPSR (status register)
+ *  + USR - User mode
+ *  + FIQ - processing "fast" interrupts
+ *  + IRQ - processing "normal" interrupts
+ *  + SVC - Supervisor/Kernel mode
+ *  + UND - processing an undefined instruction exception
+ *  + SYS - Privileged mode but retains the registers of the user mode, used for handling interrupts in a faster way.
+ *  These modes can be entered or exited by modifying the CPSR (status register)
  *
- *  exceptions (e.g. software interrupts, system calls, etc.), Interrupts (IRQ, FIQ)
+ *  All modes have their own stack which can be found in [stacks.s](stacks.s]
+ *
+ *  Exceptions (e.g. software interrupts, system calls, etc.), Interrupts (IRQ, FIQ)
  *  trigger the core to switch to an appropriate mode and the pc to jump to a
  *  preset address (somewhere in the vector table) for a branch instruction to the
  *  proper handler.
@@ -95,8 +97,8 @@ void SemihostingCall(enum SemihostingSWI mode);
 void SemihostingOSExit(uint8_t code) __attribute__ ((noreturn));;
 
 typedef enum {
-    IRQ,		// (this is bit 0x8 on the CPSR)
-    FIQ,		// (this is bit 0x4 on the CPSR)
+    IRQ,        // (this is bit 0x8 on the CPSR)
+    FIQ,        // (this is bit 0x4 on the CPSR)
     BOTH
 } InterruptType;
 

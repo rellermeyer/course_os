@@ -18,6 +18,7 @@ build/
 /cmake-build-*/
 
 # Generated docs
+/docs/
 /html/
 /latex/
 /course_os_docs.pdf
