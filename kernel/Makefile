@@ -9,9 +9,8 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 
 # variables to define in the preprocessor.
 MEMORY = 1G
-DEFINITIONS = MEM_DEBUG
+DEFINITIONS = MEM_DEBUG LOG_LEVEL=1
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
-KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have it's contents autoincluded
