@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <string.h>
-#include <stdarg.h>
+#include "../../../kernel/src/klibc//include/stdarg.h"
 #include <wchar.h>
 #include <inttypes.h>
 #include <math.h>
