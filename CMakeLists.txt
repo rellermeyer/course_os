@@ -8,10 +8,25 @@ cmake_minimum_required(VERSION 3.6)
 
 project(course_os)
 
-file(GLOB kernel_sources ./kernel/*.c ./kernel/**/*.c)
+set(CMAKE_SYSTEM_NAME linux)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_C_COMPILER ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/arm-none-eabi/bin/arm-none-eabi-gcc)
+set(CMAKE_C_LINK_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/arm-none-eabi/bin/arm-none-eabi-ld)
+
+file(GLOB_RECURSE kernel_sources ./kernel/src/*.c ./kernel/src/**/*.c)
+file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./kernel/src/**/include)
 
 set(SOURCE_FILES ${kernel_sources})
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+
+add_compile_definitions(ENABLE_TESTS MEM_DEBUG)
+
 add_executable(course_os ${SOURCE_FILES})
 
-include_directories(kernel/include)
+message(${kernel_include})
+
+include_directories(
+    ${kernel_include}
+)
+

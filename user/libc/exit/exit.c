@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <stdint.h>
+#include "../../../kernel/src/klibc//include/stdint.h"
 #include "libc.h"
 #include "atomic.h"
 #include "syscall.h"

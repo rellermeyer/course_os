@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
+#include "../../kernel/src/klibc//include/stdint.h"
 
 typedef uint16_t Elf32_Half;
 typedef uint16_t Elf64_Half;

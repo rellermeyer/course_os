@@ -1,12 +1,14 @@
-all: toolchain u-boot kernel
+all: requirements kernel
 
 toolchain:
 	cd ./toolchain && ./build.sh
 .PHONY: toolchain
 
-u-boot:
-	$(MAKE) -C u-boot
-.PHONY: u-boot
+qemu:
+	cd ./qemu && ./build.sh
+.PHONY: qemu
+
+requirements: toolchain qemu
 
 libc:
 	$(MAKE) -C user/libc
@@ -17,20 +19,18 @@ kernel: libc
 .PHONY: kernel
 
 clean:
-	$(MAKE) -C u-boot clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user/libc clean
 	$(MAKE) -C user/hello clean
 .PHONY: clean
 
-build: u-boot kernel
-.PHONY: build
+build:
+	@$(MAKE) -C ./kernel build
 
-run: build
+run:
 	@$(MAKE) -C ./kernel run
-.PHONY: run
 
-test: build
+test:
 	@$(MAKE) -C ./kernel test
 
 docs:
