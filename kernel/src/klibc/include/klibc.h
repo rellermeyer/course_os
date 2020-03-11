@@ -62,23 +62,37 @@ uint32_t kmcheck();
 
 unsigned int rand();
 
-#define LOG_LEVEL 4
+#define UNUSED1(z) (void)(z)
+#define UNUSED2(y,z) UNUSED1(y),UNUSED1(z)
+#define UNUSED3(x,y,z) UNUSED1(x),UNUSED2(y,z)
+#define UNUSED4(b,x,y,z) UNUSED2(b,x),UNUSED2(y,z)
+#define UNUSED5(a,b,x,y,z) UNUSED2(a,b),UNUSED3(x,y,z)
+
+#define VA_NUM_ARGS_IMPL(_1,_2,_3,_4,_5, N,...) N
+#define VA_NUM_ARGS(...) VA_NUM_ARGS_IMPL(__VA_ARGS__, 5, 4, 3, 2, 1)
+
+#define ALL_UNUSED_IMPL_(nargs) UNUSED ## nargs
+#define ALL_UNUSED_IMPL(nargs) ALL_UNUSED_IMPL_(nargs)
+#define ALL_UNUSED(...) ALL_UNUSED_IMPL( VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__ )
+
+
+/// Log level is defined in the Makefile
 
 #if LOG_LEVEL > 3
 #define TRACE(format, ...)  kprintf("\e[90m[TRACE] " format "\e[0m\n", ##__VA_ARGS__)
 #else
-#define TRACE(...)
+#define TRACE(...) ALL_UNUSED(__VA_ARGS__)
 #endif
 
 #if LOG_LEVEL > 2
 #define DEBUG(format, ...)  kprintf("[DEBUG] \e[92m%s:%i\e[0m " format "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
-#define DEBUG(...)
+#define DEBUG(...) ALL_UNUSED(__VA_ARGS__)
 #endif
 #if LOG_LEVEL > 1
 #define INFO(format, ...)   kprintf("\e[96m[INFO]\e[0m " format "\n", ##__VA_ARGS__)
 #else
-#define INFO(...)
+#define INFO(...) ALL_UNUSED(__VA_ARGS__)
 #endif
 #if ENABLE_TESTS
 #define WARN(format, ...)  kprintf("\e[38;5;208m[WARN] \e[38;5;208m%s:%i\e[38;5;208m" format "\e[0m\n", __FILE__, __LINE__, ##__VA_ARGS__); panic()
