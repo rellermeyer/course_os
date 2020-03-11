@@ -15,14 +15,25 @@ jobs:
             path: toolchain
             key: toolchain
 
+      - name: Cache Qemu
+        id: cache-qemu
+        uses: actions/cache@v1
+        with:
+            path: qemu/qemu
+            key: qemu
+
       - name: Install Dependencies
         run: |
           sudo apt-get update &&
-          sudo apt-get install build-essential qemu-system-arm python3 wget texinfo zlib1g-dev -y
+          sudo apt-get install build-essential python3 wget texinfo zlib1g-dev -y
 
-      - name: Install Toolchain
-        #if: steps.cache-toolchain.outputs.cache-hit != 'true'
+      - name: Build Toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: rm -rf toolchain/arm-none-eabi/ && make toolchain
+
+      - name: Build Qemu
+        if: steps.cache-qemu.outputs.cache-hit != 'true'
+        run: rm -rf qemu/qemu* && make qemu
 
       - name: Compile
         run: make build

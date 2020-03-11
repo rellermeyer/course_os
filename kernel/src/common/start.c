@@ -18,24 +18,17 @@
 
 #include <stdint.h>
 #include <interrupt.h>
-#include <argparse.h>
-#include <mmap.h>
-#include <process.h>
 #include <klibc.h>
-#include <vm.h>
-#include <scheduler.h>
 #include <mem_alloc.h>
 #include <test.h>
 #include <hardwareinfo.h>
 #include <chipset.h>
-#include <timer.h>
-#include <interruptold.h>
+#include <vm2.h>
 
-// This start is what u-boot calls. It's just a wrapper around setting up the
-// virtual memory for the kernel.
+/// Entrypoint for the C part of the kernel.
+/// This function is called by the assembly located in [startup.s].
+/// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
 void start(uint32_t *p_bootargs) {
-    prepare_pagetable();
-
 
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
@@ -45,41 +38,37 @@ void start(uint32_t *p_bootargs) {
     // Initialize the chipset and enable uart
     init_chipset();
 
+    INFO("Started chipset specific handlers");
+
+    // just cosmetic (and for debugging)
     print_hardwareinfo();
+    detect_boardtype();
 
-    kprintf("Enabling MMU...\n");
-    vm_init();
-    kprintf("Initialized VM datastructures.\n");
+    // start proper virtual and physical memory management.
+    // Even though we already enabled the mmu in startup.s to
+    // create a higher half kernel. The pagetable created there
+    // was temporary and has to be replaced here.
+    // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
+    INFO("Initializing the physical and virtual memory managers.");
+    vm2_start();
 
-    // Paging and virtual memory is initialized. This code jumps us to start2.
-    mmap(p_bootargs);
-}
-
-// This start is what starts the kernel. Note that virtual memory is enabled
-// at this point (And running, also, in the kernel's VAS).
-void start2(uint32_t *p_bootargs) {
-
+    INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
     init_vector_table();
 
+    INFO("Setting up heap");
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
 
+    // Splash screen
     splash();
-
 
     // Turn on interrupts
     enable_interrupt(BOTH);
 
-    // Call the chipset again to do post-interrupt-enable initialization
+    // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-    process_init();
-
-    // FIXME: temporary
-    sched_init();
-
-    kprintf("bootargs: 0x%x\n", p_bootargs);
 
 #ifndef ENABLE_TESTS
 //    argparse_process(p_bootargs);
@@ -90,18 +79,7 @@ void start2(uint32_t *p_bootargs) {
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
 #endif
-    kprintf("done parsing atag list\n");
 
-    //init_kheap(31 * 0x100000);
-    //init_uheap(0x100000);
-
-    //initialize pcb table and PID
-    /* init_all_processes(); */
-    //print_process_state(0);
-    //run_process_tests();
-    //print_PID();
-    // init_q();
-    //common();
 
     // TODO:
     //  * Mount vfs
@@ -110,6 +88,6 @@ void start2(uint32_t *p_bootargs) {
 
     asm volatile("cpsie i");
 
-    kprintf("End of start method.\n");
+    INFO("End of boot sequence.\n");
     SLEEP;
 }

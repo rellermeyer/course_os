@@ -1,8 +1,14 @@
-all: toolchain kernel
+all: requirements kernel
 
 toolchain:
 	cd ./toolchain && ./build.sh
 .PHONY: toolchain
+
+qemu:
+	cd ./qemu && ./build.sh
+.PHONY: qemu
+
+requirements: toolchain qemu
 
 libc:
 	$(MAKE) -C user/libc

@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+#define BCM2836_REGISTERS_PHYSICAL_BASE     0x40000000
+#define BCM2836_PERIPHERALS_PHYSICAL_BASE   0x3F000000
+
 // Starts at memory address 0x4000_0000
 struct BCM2836Registers {
     uint32_t ControlRegister;
@@ -72,43 +75,34 @@ struct BCM2836Registers {
     uint32_t Core3Mailbox3ReadClear;
 };
 
-
-
-
-
-
-
-
 enum InterruptSource {
     // nCNTPSIRQ : Secure physical timer event
-    PHYSICAL_SECURE_TIMER       = (1 << 0),
+    PHYSICAL_SECURE_TIMER       = (1u << 0u),
 
     // nCNTPNSIRQ : Non-secure physical timer event
-    PHYSICAL_NONSECURE_TIMER    = (1 << 1),
+    PHYSICAL_NONSECURE_TIMER    = (1u << 1u),
 
     // nCNTHPIRQ: Physical Timer for use in Hypervisor mode.
-    PHYSICAL_HYPERVISOR_TIMER   = (1 << 2),
+    PHYSICAL_HYPERVISOR_TIMER   = (1u << 2u),
 
     // nCNTVIRQ: Virtual Timer for use in Non-secure PL1 modes.
-    VIRTUAL_NONSECURE_TIMER     = (1 << 3),
+    VIRTUAL_NONSECURE_TIMER     = (1u << 3u),
 
-    MAILBOX_0                   = (1 << 4),
-    MAILBOX_1                   = (1 << 5),
-    MAILBOX_2                   = (1 << 6),
-    MAILBOX_3                   = (1 << 7),
+    MAILBOX_0                   = (1u << 4u),
+    MAILBOX_1                   = (1u << 5u),
+    MAILBOX_2                   = (1u << 6u),
+    MAILBOX_3                   = (1u << 7u),
 
-    GPU                         = (1 << 8),
-    PMU                         = (1 << 9),
+    GPU                         = (1u << 8u),
+    PMU                         = (1u << 9u),
 
-    AXI                         = (1 << 10),
-    LOCAL_TIMER                 = (1 << 11),
+    AXI                         = (1u << 10u),
+    LOCAL_TIMER                 = (1u << 11u),
 };
-
-volatile struct BCM2836Registers * bcm2836_registers_base;
 
 void bcm2836_init();
 
-
-extern const size_t BCM2836_peripheral_base;
+volatile struct BCM2836Registers * bcm2836_registers_base;
+size_t bcm2836_peripheral_base;
 
 #endif

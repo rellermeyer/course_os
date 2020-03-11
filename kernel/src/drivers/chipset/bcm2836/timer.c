@@ -1,6 +1,6 @@
 #include <bcm2836.h>
 #include <stdio.h>
-#include <mmap.h>
+#include <mmio.h>
 #include <chipset.h>
 
 inline static uint32_t get_frequency() {
@@ -41,14 +41,12 @@ void bcm2836_timer_init() {
 
     uint32_t freq = get_frequency();
 
-    kprintf("control frequency: %i\n", freq);
+    TRACE("control frequency: %i", freq);
     // 1 (milli)second timer
-    write_interrupt_count_value(freq);
-
-    kprintf("value: %i\n", read_interrupt_count_value());
-    kprintf("value: %i\n", read_interrupt_count_value());
+    write_interrupt_count_value(freq * 100);
 
     // when the register reaches the count value set above, interrupt.
+    // TODO: Enable timer
 //    mmio_write(&bcm2836_registers_base->Core0TimersInterruptControl, VIRTUAL_NONSECURE_TIMER);
 
     // Enable timer interrupts.
