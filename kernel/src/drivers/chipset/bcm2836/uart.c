@@ -80,10 +80,10 @@ volatile BCM2836UartInterface * BCM2836_UART2_ADDRESS;
 volatile BCM2836UartInterface * BCM2836_UART3_ADDRESS;
 
 void bcm2836_uart_init() {
-    BCM2836_UART0_ADDRESS = (volatile BCM2836UartInterface *)(BCM2836_peripheral_base + 0x201000);
-    BCM2836_UART1_ADDRESS = (volatile BCM2836UartInterface *)(BCM2836_peripheral_base + 0x202000);
-    BCM2836_UART2_ADDRESS = (volatile BCM2836UartInterface *)(BCM2836_peripheral_base + 0x203000);
-    BCM2836_UART3_ADDRESS = (volatile BCM2836UartInterface *)(BCM2836_peripheral_base + 0x204000);
+    BCM2836_UART0_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x201000);
+    BCM2836_UART1_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x202000);
+    BCM2836_UART2_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x203000);
+    BCM2836_UART3_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x204000);
 }
 
 void uart_write_byte(volatile BCM2836UartInterface * interface, volatile uint8_t value) {
@@ -91,6 +91,7 @@ void uart_write_byte(volatile BCM2836UartInterface * interface, volatile uint8_t
 //        asm volatile ("nop");
 //    }
     interface->DR = (uint32_t)value;
+
 }
 
 void bcm2836_uart_putc(char c, int uartchannel) {

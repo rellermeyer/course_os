@@ -1,5 +1,6 @@
 #include <hardwareinfo.h>
 #include <stdio.h>
+#include <interrupt.h>
 
 static HardwareInfo hardware_info;
 
@@ -7,24 +8,26 @@ BoardType detect_boardtype() {
     uint32_t reg;
 
     // read system register
-    asm volatile ("mrc p15,0,r0,c0,c0,0" : "=r" (reg));
+    asm ("mrc p15,0,%0,c0,c0,0" : "=r" (reg));
 
-    uint32_t type = (reg >> 4) & 0xFFF;
+    uint32_t type = (reg >> 4u) & 0xFFFu;
+
     switch (type) {
         case 0xB76:
             return RaspberryPiZero; // bcm2835
         case 0xC07:
             return RaspBerryPiTwo; // bcm2836
         default:
-            panic();
+            FATAL("Unknown boardtype");
     }
 }
 
 // TODO: detect hardware info.
+// Such as: CPU and RAM.
 void init_hardwareinfo() {
     hardware_info = (HardwareInfo){
         .cpuType = ARM1176,
-        .boardType = RaspBerryPiTwo,
+        .boardType = detect_boardtype(),
     };
 }
 

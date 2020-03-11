@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <test.h>
 
 U8ArrayList * u8a_create(uint32_t initial_cap) {
     U8ArrayList * list = kmalloc(sizeof(U8ArrayList));
@@ -39,7 +40,7 @@ void u8a_set(U8ArrayList * list, uint32_t index, uint8_t data) {
 uint32_t u8a_push(U8ArrayList * list, uint8_t data) {
 
     if(list->capacity == 0 || list->length >= list->capacity - 1) {
-        uint32_t new_size = max((list->capacity + (list->capacity >> 2)), list->capacity + 2);
+        uint32_t new_size = max((list->capacity + (list->capacity >> 2u)), list->capacity + 2);
 
         assert(new_size > list->capacity)
 
@@ -47,6 +48,7 @@ uint32_t u8a_push(U8ArrayList * list, uint8_t data) {
 
         list->array = krealloc(list->array, list->capacity * sizeof(uint8_t));
     }
+
     list->array[list->length++] = data;
 
     return list->length;

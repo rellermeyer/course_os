@@ -71,6 +71,7 @@ int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
 }
 
 // args must already have been started
+// TODO: properly stop at buflen. Otherwise there is a buffer overflow.
 int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
     if (buflen == 0)
         return 0;

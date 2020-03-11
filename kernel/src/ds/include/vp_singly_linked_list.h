@@ -4,6 +4,8 @@
 
 #include <ds.h>
 
+//TODO: Docs
+
 struct VPSinglyLinkedListLink {
     struct VPSinglyLinkedListLink * next;
     void * data;
@@ -38,5 +40,5 @@ bool vpsll_contains(VPSinglyLinkedList * lst, void * value, CompareFunc compf);
 
 size_t vpsll_length(VPSinglyLinkedList * lst);
 
-#define VPSLL_FOREACH(lst, i) for (VPSinglyLinkedListIterator i = vpslli_create(lst); !vpslli_empty(i); vpslli_next(&i))
+#define VPSLL_FOREACH(lst, i) for (VPSinglyLinkedListIterator i = vpslli_create(lst); !vpslli_empty(i); vpslli_next(&(i)))
 #endif
