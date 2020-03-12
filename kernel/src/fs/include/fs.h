@@ -5,9 +5,9 @@
 struct Vfs;
 enum VfsErr;
 
-#include <path.h>
 #include <file.h>
 #include <inode.h>
+#include <path.h>
 #include <vfs.h>
 
 #endif

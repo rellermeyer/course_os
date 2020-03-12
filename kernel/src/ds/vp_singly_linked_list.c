@@ -1,6 +1,6 @@
-#include <vp_singly_linked_list.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <vp_singly_linked_list.h>
 
 VPSinglyLinkedList * vpsll_create() {
     VPSinglyLinkedList * res = kmalloc(sizeof(VPSinglyLinkedList));
@@ -15,9 +15,7 @@ void vpsll_free(VPSinglyLinkedList * lst, FreeFunc freef) {
     while (curr != NULL) {
         struct VPSinglyLinkedListLink * last = curr;
         curr = curr->next;
-        if (freef != NULL) {
-            freef(last->data);
-        }
+        if (freef != NULL) { freef(last->data); }
         kfree(last);
     }
     kfree(lst);
@@ -34,7 +32,6 @@ void vpsll_push(VPSinglyLinkedList * lst, void * data) {
 }
 
 void * vpsll_pop(VPSinglyLinkedList * lst) {
-
     struct VPSinglyLinkedListLink * oldhead = lst->head;
     void * contents = oldhead->data;
 
@@ -49,7 +46,6 @@ void * vpsll_pop(VPSinglyLinkedList * lst) {
 
 // Remove the first item for which compf returns true.
 void * vpsll_remove(VPSinglyLinkedList * lst, void * data, CompareFunc compf) {
-
     struct VPSinglyLinkedListLink * prev = NULL;
     VPSLL_FOREACH(lst, i) {
         if (compf(i->data, data)) {
@@ -69,14 +65,11 @@ void * vpsll_remove(VPSinglyLinkedList * lst, void * data, CompareFunc compf) {
     return NULL;
 }
 
-inline static struct VPSinglyLinkedListLink * __link_at_index(VPSinglyLinkedList * lst, size_t index) {
-    if(index > lst->length) {
-        return NULL;
-    }
+inline static struct VPSinglyLinkedListLink * __link_at_index(VPSinglyLinkedList * lst,
+                                                              size_t index) {
+    if (index > lst->length) { return NULL; }
     VPSLL_FOREACH(lst, i) {
-        if (index-- == 0) {
-            return i;
-        }
+        if (index-- == 0) { return i; }
     }
 
     return NULL;
@@ -89,9 +82,7 @@ void * vpsll_get(VPSinglyLinkedList * lst, size_t index) {
 // returns the old value to free
 void * vpsll_set(VPSinglyLinkedList * lst, size_t index, void * value) {
     struct VPSinglyLinkedListLink * link = __link_at_index(lst, index);
-    if (link == NULL) {
-        return NULL;
-    }
+    if (link == NULL) { return NULL; }
 
     void * old = link->data;
     link->data = value;
@@ -102,9 +93,7 @@ void * vpsll_set(VPSinglyLinkedList * lst, size_t index, void * value) {
 // Returns if the compf returns true for any item in the list (compared with the value).
 bool vpsll_contains(VPSinglyLinkedList * lst, void * value, CompareFunc compf) {
     VPSLL_FOREACH(lst, i) {
-        if(compf(i->data, value)) {
-            return true;
-        }
+        if (compf(i->data, value)) { return true; }
     }
     return false;
 }

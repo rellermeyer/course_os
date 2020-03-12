@@ -1,9 +1,9 @@
 #ifndef VAS_2_H
 #define VAS_2_H
 
+#include <asid_allocator.h>
 #include <vm2.h>
 #include <vp_array_list.h>
-#include <asid_allocator.h>
 
 #define VAS2_INITIAL_PAGE_LIST_CAPACITY 10
 

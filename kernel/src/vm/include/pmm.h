@@ -15,26 +15,31 @@
 ///
 /// This allocator has been made specifically for 32 bit ARM cpus.
 /// This means it can *not* be used on x86 without adaptation.
-/// It relies on addresses being 32 bits long and being aligned to boundaries to save (a lot) of space.
+/// It relies on addresses being 32 bits long and being aligned to boundaries to save (a lot) of
+/// space.
 ///
 /// ## Overhead
-/// Since this allocator also has to store some datastructures in itself, it obviously has some overhead.
-/// This overhead is 16kb for every 512 pages of size 16kb allocated. For 64 bit systems this ovehead would be larger.
+/// Since this allocator also has to store some datastructures in itself, it obviously has some
+/// overhead. This overhead is 16kb for every 512 pages of size 16kb allocated. For 64 bit systems
+/// this ovehead would be larger.
 ///
 /// ## Time complexity
-/// All operations performed on this allocator are O(1). They are in no way dependent on the size of memory.
-/// With the exception of one method: The initialization of the allocator will loop once through all of physical memory
-/// in increments of 16kb.
+/// All operations performed on this allocator are O(1). They are in no way dependent on the size of
+/// memory. With the exception of one method: The initialization of the allocator will loop once
+/// through all of physical memory in increments of 16kb.
 ///
 /// ## Definitions
 ///
 /// In this code and the comments, we refer to the following things:
 /// * (memory)slice A 16kb area of physical ram
 /// * page          A 4 kb area of physical ram (used for virtual user memory).
-/// * sliceinfo     A 12 byte element in the allocators datastructures, describing a single 16kb block
-/// * bucket        A piece of memory that can be referred to by a single 16kb page full of sliceinfo structs.
+/// * sliceinfo     A 12 byte element in the allocators datastructures, describing a single 16kb
+/// block
+/// * bucket        A piece of memory that can be referred to by a single 16kb page full of
+/// sliceinfo structs.
 ///                 The size of a bucket is therefore 16kb * 682b which is just over 10.5 megabytes
-/// * bucketinfo    A slice containing an array of sliceinfo structs describing the contents of a bucket.
+/// * bucketinfo    A slice containing an array of sliceinfo structs describing the contents of a
+/// bucket.
 
 // TODO: Excluded regions. (for mmio for example)
 // TODO: detect memory size.
@@ -42,8 +47,9 @@
 #ifndef PMM_H
 #define PMM_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
 #include "vm2.h"
 
 
@@ -70,14 +76,14 @@ struct MemorySliceInfo {
         uint32_t entry;
         struct {
             /// The type of the memory this SliceInfo is describing.
-            enum MemoryType type: 2;
+            enum MemoryType type : 2;
 
-            /// To determine how full this slice is if it describes a list of structures of less than 8KiB.
-            /// This is a BitVector where 1 means allocated and 0 means free.
-            uint32_t filled: 8;
+            /// To determine how full this slice is if it describes a list of structures of less
+            /// than 8KiB. This is a BitVector where 1 means allocated and 0 means free.
+            uint32_t filled : 8;
 
             /// Unused bits
-            uint32_t unused: 22;
+            uint32_t unused : 22;
         };
     };
 
@@ -90,9 +96,9 @@ struct MemorySliceInfo {
 };
 
 
-#define SLICEINFO_PER_SLICE 512 // sizeof(union MemorySlice) / sizeof(struct MemorySliceInfo)
-#define L2TABLES_PER_SLICE  8   // sizeof(union MemorySlice) / sizeof(struct L2PageTable)
-#define PAGES_PER_SLICE     2   // sizeof(union MemorySlice) / sizeof(struct Page)
+#define SLICEINFO_PER_SLICE 512  // sizeof(union MemorySlice) / sizeof(struct MemorySliceInfo)
+#define L2TABLES_PER_SLICE  8    // sizeof(union MemorySlice) / sizeof(struct L2PageTable)
+#define PAGES_PER_SLICE     2    // sizeof(union MemorySlice) / sizeof(struct Page)
 
 /// A Memory slice of 8KB, that's also 8kb aligned.
 /// A slice of 8kb can fit one of three things:
@@ -104,11 +110,13 @@ union MemorySlice {
     struct L1PageTable l1pt;
     struct Page page[PAGES_PER_SLICE];
     struct L2PageTable l2pt[L2TABLES_PER_SLICE];
-    // The sliceinfo array (bucketinfo) that contains the information of all Memoryslices in the next bucket.
+    // The sliceinfo array (bucketinfo) that contains the information of all Memoryslices in the
+    // next bucket.
     struct MemorySliceInfo bucketinfo[SLICEINFO_PER_SLICE];
 };
 
-/// The main data struct for the PhysicalMemoryManager (PMM). This struct gets created when calling [pmm_init].
+/// The main data struct for the PhysicalMemoryManager (PMM). This struct gets created when calling
+/// [pmm_init].
 struct PhysicalMemoryManager {
     /// Two linked lists of unused and allocated slices, referred to by their SliceInfos.
     struct MemorySliceInfo * unused;
@@ -146,9 +154,9 @@ void pmm_init(size_t start, size_t end);
 struct MemorySliceInfo * pmm_new_sliceinfo_slice();
 
 /**
- * This function uses pointer arithmetic to determine the associated [MemorySliceInfo] for a [MemorySlice].
- * Despite the fact that we store the allocated pages in a linked list this function is O(1) due to aforementioned,
- * pointer arithmetic.
+ * This function uses pointer arithmetic to determine the associated [MemorySliceInfo] for a
+ * [MemorySlice]. Despite the fact that we store the allocated pages in a linked list this function
+ * is O(1) due to aforementioned, pointer arithmetic.
  * @param slice The slice to get the sliceinfo for.
  * @return The [MemorySliceInfo] pointer for the given [MemorySlice].
  */

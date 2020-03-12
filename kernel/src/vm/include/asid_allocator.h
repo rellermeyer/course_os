@@ -1,12 +1,12 @@
 #ifndef TLB_CACHE_ID_ALLOCATOR
 #define TLB_CACHE_ID_ALLOCATOR
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-/// We have made a special allocator to keep track of all the ASIDs used and to determine if we would need to flush
-/// the caches upon a context switch. This should greatly reduce the amount of cache flushes needed and optimizes
-/// the usage of ASIDs.
+/// We have made a special allocator to keep track of all the ASIDs used and to determine if we
+/// would need to flush the caches upon a context switch. This should greatly reduce the amount of
+/// cache flushes needed and optimizes the usage of ASIDs.
 ///
 /// Designed by:
 /// Victor Roest            <victor@xirion.net>
@@ -18,12 +18,14 @@
 
 /// Terminology
 /// * asid: Hardware process id used for the pagetable cache.
-/// * cache_iteration: Which iteration of the cache we are on, determines if we should flush the cache on a process switch or not.
+/// * cache_iteration: Which iteration of the cache we are on, determines if we should flush the
+/// cache on a process switch or not.
 /// * asid_descriptor: A pair of above two numbers.
 
 /// Each ASID Descriptor has 2 fields:
 /// asid: the actual ASID used for this process.
-/// cache_iteration: On which iteration of the cache we are (used to determine if a cache flush is needed).
+/// cache_iteration: On which iteration of the cache we are (used to determine if a cache flush is
+/// needed).
 struct ASIDDescriptor {
     uint8_t asid;
     uint8_t cache_iteration;
@@ -52,7 +54,7 @@ struct ASIDDescriptor asid_request_descriptor();
  * @param desc the tlb_descriptor to check.
  * @returns whether you should flush caches or not.
  */
-bool asid_check_and_update(struct ASIDDescriptor* desc);
+bool asid_check_and_update(struct ASIDDescriptor * desc);
 
 /**
  * Sets a specific ASID for the current core.

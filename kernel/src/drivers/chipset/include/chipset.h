@@ -1,8 +1,8 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 void init_chipset();
 void uart_putc(char c, int channel);
@@ -15,14 +15,14 @@ typedef void (*UartCallback)(char c);
 typedef void (*InterruptCallback)();
 
 enum ChipsetState {
-    UNINITIALIZED       = 0,
-    INITIALIZED         = 1,
-    LATE_INITIALIZED    = 2,
+    UNINITIALIZED = 0,
+    INITIALIZED = 1,
+    LATE_INITIALIZED = 2,
 };
 
 typedef struct ChipsetInterface {
     /// Timer Functions
-    //TODO: time/duration struct of some sort (Go-like).
+    // TODO: time/duration struct of some sort (Go-like).
     TimerHandle (*schedule_timer_periodic)(TimerCallback callback, uint32_t ms);
     TimerHandle (*schedule_timer_once)(TimerCallback callback, uint32_t ms);
 

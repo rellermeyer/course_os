@@ -1,8 +1,8 @@
 #ifndef QSTR_H
 #define QSTR_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // A Qstr or quickstring, is a string which stores it's length,
 // and on first compare calculates and stores its hash to speed up
