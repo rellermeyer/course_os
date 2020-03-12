@@ -1,18 +1,14 @@
-#include <test.h>
+#include <interrupt.h>
 #include <pmm.h>
 #include <string.h>
-#include <interrupt.h>
+#include <test.h>
 
 // Warning: This method is O(n) and is thus quite slow on long lists.
 size_t listlength(struct MemorySliceInfo * start) {
-    if (start == NULL) {
-        return 0;
-    }
+    if (start == NULL) { return 0; }
 
     size_t count = 1;
-    for (; start->next != NULL; start = start->next) {
-        count++;
-    }
+    for (; start->next != NULL; start = start->next) { count++; }
 
     return count;
 }
@@ -32,7 +28,8 @@ TEST_CREATE(test_allocate_pt, {
 
     struct L1PageTable * pt = pmm_allocate_l1_pagetable();
 
-    // Just try to overwrite everything a few times so if something breaks we'll hopefully see in the next tests.
+    // Just try to overwrite everything a few times so if something breaks we'll hopefully see in
+    // the next tests.
     memset(pt, 0, 1024 * 16);
     memset(pt, 1, 1024 * 16);
 
@@ -73,9 +70,7 @@ TEST_CREATE(test_allocate_many_pt, {
     pmm_free_l1_pagetable(pt);
 
 
-    for (int i = 0; i < amount; i++) {
-        pmm_free_l1_pagetable(pages[i]);
-    }
+    for (int i = 0; i < amount; i++) { pmm_free_l1_pagetable(pages[i]); }
 
 
     ASSERT_NOT_NULL(physicalMemoryManager.unused);
@@ -87,7 +82,7 @@ TEST_CREATE(test_allocate_many_pt, {
 TEST_CREATE(test_get_sliceinfo, {
     struct L1PageTable * pt = pmm_allocate_l1_pagetable();
 
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *) pt);
+    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
 
     ASSERT_EQ(&info->slice->l1pt, pt);
 
@@ -103,13 +98,13 @@ TEST_CREATE(test_doubly_linked_sliceinfo, {
         i++;
         ASSERT_EQ(curr->next->prev, curr);
         curr = curr->next;
-    }   while(curr->next != NULL);
+    } while (curr->next != NULL);
 
-    ASSERT_EQ(i, length-1);
+    ASSERT_EQ(i, length - 1);
 })
 
-//TODO: test_allocate_page
-//TODO: test_allocate_l2pt
+// TODO: test_allocate_page
+// TODO: test_allocate_l2pt
 
 size_t first_free(uint16_t filled);
 

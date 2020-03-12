@@ -1,6 +1,6 @@
 #include <pmm.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /// Private functions
@@ -34,12 +34,12 @@ void pmm_init(size_t start, size_t end) {
 
     // Now make a pmm with one sliceinfo in the allocated array.
     physicalMemoryManager = (struct PhysicalMemoryManager){
-            .start = start,
-            .end = end,
-            .l2ptPartialFree = NULL,
-            .pagePartialFree = NULL,
-            .allocated = firstinfo,
-            .unused = NULL,
+        .start = start,
+        .end = end,
+        .l2ptPartialFree = NULL,
+        .pagePartialFree = NULL,
+        .allocated = firstinfo,
+        .unused = NULL,
     };
 
     // the infoindex is 1 since we just allocated the 0th one above^^^
@@ -48,9 +48,10 @@ void pmm_init(size_t start, size_t end) {
 
 
     // Go through all memory and index it with sliceinfo structs.
-    // We start 1 Memoryslice after `start` because we already allocated the first one at the start of this function.
-    for (union MemorySlice* i = ((union MemorySlice *)start + 1); i < ((union MemorySlice *)end); i ++) {
-
+    // We start 1 Memoryslice after `start` because we already allocated the first one at the start
+    // of this function.
+    for (union MemorySlice * i = ((union MemorySlice *)start + 1); i < ((union MemorySlice *)end);
+         i++) {
         struct MemorySliceInfo * currentsliceinfo = &currentslice->bucketinfo[infoindex];
 
         // make this sliceinfo struct point to the right slice
@@ -63,8 +64,8 @@ void pmm_init(size_t start, size_t end) {
         infoindex++;
 
         if (infoindex >= SLICEINFO_PER_SLICE) {
-            // We can now do this as we already made at least one new sliceinfo struct on the unused list
-            // Which we can use for this.
+            // We can now do this as we already made at least one new sliceinfo struct on the unused
+            // list Which we can use for this.
             currentslice = pmm_new_sliceinfo_slice()->slice;
             infoindex = 0;
         }
@@ -87,7 +88,6 @@ struct MemorySliceInfo * pmm_new_sliceinfo_slice() {
 }
 
 struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) {
-
     const int bucketsize = (SLICEINFO_PER_SLICE * sizeof(union MemorySlice));
 
     // Take the address of the slice and determine in which bucket it falls.
@@ -105,9 +105,12 @@ struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) 
     // *first* slice in the bucket
     size_t correction = bucketindex == 0 ? 0 : 1;
 
-    // Multiply by blocksize again (NOTE: this is so we round down! The division and multiplication DO NOT CANCEL OUT)
-    // Subtract two as the bucket is actually the last page of the previous bucket.
-    union MemorySlice * bucketinfo = ((union MemorySlice *)(physicalMemoryManager.start + bucketindex * bucketsize)) - correction;
+    // Multiply by blocksize again (NOTE: this is so we round down! The division and multiplication
+    // DO NOT CANCEL OUT) Subtract two as the bucket is actually the last page of the previous
+    // bucket.
+    union MemorySlice * bucketinfo =
+        ((union MemorySlice *)(physicalMemoryManager.start + bucketindex * bucketsize)) -
+        correction;
 
     // The first non-information slice in a bucket is always the slice after the information slice.
     // Except for the first bucket.
@@ -123,12 +126,9 @@ struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) 
 }
 
 void pmm_free_l1_pagetable(struct L1PageTable * pt) {
+    if (pt == NULL) { return; }
 
-    if (pt == NULL) {
-        return;
-    }
-
-    struct MemorySliceInfo * sliceinfo = pmm_get_sliceinfo_for_slice((union MemorySlice *) pt);
+    struct MemorySliceInfo * sliceinfo = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
 
     remove_element_ll(&physicalMemoryManager.allocated, sliceinfo);
 
@@ -140,10 +140,7 @@ void pmm_free_l1_pagetable(struct L1PageTable * pt) {
 }
 
 struct L1PageTable * pmm_allocate_l1_pagetable() {
-
-    if(physicalMemoryManager.unused == NULL) {
-        return NULL;
-    }
+    if (physicalMemoryManager.unused == NULL) { return NULL; }
 
     // Take a slice from the unused list.
     struct MemorySliceInfo * sliceinfo = pop_from_ll(&physicalMemoryManager.unused);
@@ -156,14 +153,13 @@ struct L1PageTable * pmm_allocate_l1_pagetable() {
 
     // Pre-zero the L1PageTable
     memset(&sliceinfo->slice->l1pt, 0, sizeof(struct L1PageTable));
-    
+
     return &sliceinfo->slice->l1pt;
 }
 
 struct L2PageTable * pmm_allocate_l2_pagetable() {
     // First test if there's a partial allocated l2 pagetable
     if (physicalMemoryManager.l2ptPartialFree != NULL) {
-
         struct MemorySliceInfo * sliceinfo = physicalMemoryManager.l2ptPartialFree;
 
         uint32_t index = first_free(sliceinfo->filled);
@@ -173,7 +169,7 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
         sliceinfo->filled |= (1u << index);
 
         // If it is filled
-        if(sliceinfo->filled == 0xff) {
+        if (sliceinfo->filled == 0xff) {
             // Remove from the partial free list
             // We can ignore the return value here as we already got it.
             pop_from_ll(&physicalMemoryManager.l2ptPartialFree);
@@ -186,7 +182,7 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
         return newl2pt;
     } else {
         struct MemorySliceInfo * sliceinfo = pop_from_ll(&physicalMemoryManager.unused);
-        
+
         // Change it's type to typeinfo
         sliceinfo->type = L2PageTable;
         sliceinfo->filled = 1;
@@ -203,7 +199,6 @@ struct L2PageTable * pmm_allocate_l2_pagetable() {
 struct Page * pmm_allocate_page() {
     // First test if there's a partial allocated page page
     if (physicalMemoryManager.pagePartialFree != NULL) {
-
         struct MemorySliceInfo * sliceinfo = physicalMemoryManager.pagePartialFree;
 
         uint32_t index = first_free(sliceinfo->filled);
@@ -214,7 +209,7 @@ struct Page * pmm_allocate_page() {
         sliceinfo->filled |= (1u << index);
 
         // If it is filled (2 pages)
-        if(sliceinfo->filled == 0b11) {
+        if (sliceinfo->filled == 0b11) {
             // Remove from the partial free list
             // We can ignore the return value here as we already got it.
             pop_from_ll(&physicalMemoryManager.pagePartialFree);
@@ -243,7 +238,7 @@ struct Page * pmm_allocate_page() {
 
 void pmm_free_page(struct Page * p) {
     // works cuz rounding (we think, might just work because random luck)
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *) p);
+    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)p);
 
     if (info->filled == 0b11) {
         remove_element_ll(&physicalMemoryManager.allocated, info);
@@ -259,7 +254,7 @@ void pmm_free_page(struct Page * p) {
     info->filled &= ~(1u << index_in_slice);
 
     // if there was only one l2pt in this slice, put it on unallocated
-    if(info->filled == 0x0) {
+    if (info->filled == 0x0) {
         push_to_ll(&physicalMemoryManager.unused, info);
     } else {
         push_to_ll(&physicalMemoryManager.pagePartialFree, info);
@@ -268,7 +263,7 @@ void pmm_free_page(struct Page * p) {
 
 void pmm_free_l2_pagetable(struct L2PageTable * pt) {
     // works cuz rounding (we think, might just work because random luck)
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *) pt);
+    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
 
     if (info->filled == 0xff) {
         remove_element_ll(&physicalMemoryManager.allocated, info);
@@ -284,7 +279,7 @@ void pmm_free_l2_pagetable(struct L2PageTable * pt) {
     info->filled &= ~(1u << index_in_slice);
 
     // if there was only one l2pt in this slice, put it on unallocated
-    if(info->filled == 00) {
+    if (info->filled == 00) {
         push_to_ll(&physicalMemoryManager.unused, info);
     } else {
         push_to_ll(&physicalMemoryManager.l2ptPartialFree, info);
@@ -292,9 +287,7 @@ void pmm_free_l2_pagetable(struct L2PageTable * pt) {
 }
 
 void push_to_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry) {
-    if (*head != NULL) {
-        (*head)->prev = entry;
-    }
+    if (*head != NULL) { (*head)->prev = entry; }
     entry->next = *head;
     *head = entry;
 }
@@ -302,9 +295,7 @@ void push_to_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry) 
 struct MemorySliceInfo * pop_from_ll(struct MemorySliceInfo ** head) {
     struct MemorySliceInfo * top = *head;
     *head = (*head)->next;
-    if(*head != NULL){
-        (*head)->prev = NULL;
-    }
+    if (*head != NULL) { (*head)->prev = NULL; }
 
     top->next = NULL;
     top->prev = NULL;
@@ -313,9 +304,7 @@ struct MemorySliceInfo * pop_from_ll(struct MemorySliceInfo ** head) {
 }
 
 void remove_element_ll(struct MemorySliceInfo ** head, struct MemorySliceInfo * entry) {
-    if (entry->next != NULL) {
-        entry->next->prev = entry->prev;
-    }
+    if (entry->next != NULL) { entry->next->prev = entry->prev; }
 
     if (entry->prev != NULL) {
         entry->prev->next = entry->next;
@@ -332,5 +321,3 @@ size_t first_free(uint16_t filled) {
     // 32 because clz on arm counts from the 32nd aka most significant bit.
     return 32u - __builtin_clz(filled & (uint16_t)(-filled)) - 1u;
 }
-
-

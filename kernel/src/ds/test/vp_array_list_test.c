@@ -1,7 +1,7 @@
 #ifndef VP_ARRAYLIST_H
 #define VP_ARRAYLIST_H
-#include <stdint.h>
 #include <ds.h>
+#include <stdint.h>
 
 
 typedef struct VPArrayList {

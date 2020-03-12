@@ -1,16 +1,9 @@
 #ifndef HARDWAREINFO_H
 #define HARDWAREINFO_H
 
-typedef enum CpuType {
-    ARM1176,
-    CortexA7
-} CpuType;
+typedef enum CpuType { ARM1176, CortexA7 } CpuType;
 
-typedef enum BoardType {
-    VersatilePB,
-    RaspberryPiZero,
-    RaspBerryPiTwo
-} BoardType;
+typedef enum BoardType { VersatilePB, RaspberryPiZero, RaspBerryPiTwo } BoardType;
 
 
 // TODO: memory size?

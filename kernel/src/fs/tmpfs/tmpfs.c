@@ -1,12 +1,12 @@
 #include <inode.h>
-#include <tmpfs.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <vfs.h>
-#include <u8_array_list.h>
-#include <vp_array_list.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <tmpfs.h>
+#include <u8_array_list.h>
+#include <vfs.h>
+#include <vp_array_list.h>
 
 VfsErr tmpfs_init(Vfs * vfs) {
     return vfs_register(vfs, FS_TMPFS);
@@ -18,11 +18,11 @@ TmpfsInode * create_tmpfs_root(Vfs * vfs) {
     DirEntry * entry = create_direntry(name, NULL);
 
 
-    Inode * root = (Inode *) kmalloc(1 * sizeof(TmpfsInode));
+    Inode * root = (Inode *)kmalloc(1 * sizeof(TmpfsInode));
 
     *root = create_inode_base(vfs, DIRECTORY, FS_TMPFS, entry);
 
-    TmpfsInode * t_root = (TmpfsInode *) root;
+    TmpfsInode * t_root = (TmpfsInode *)root;
 
     t_root->data.direntries = vpa_create(TMPFS_DEFAULT_DIR_ALLOC_SIZE);
 
@@ -33,16 +33,14 @@ TmpfsInode * create_tmpfs_root(Vfs * vfs) {
     vfs->tail = root;
     root->next = NULL;
 
-    return (TmpfsInode *) root;
+    return (TmpfsInode *)root;
 }
 
 void add_entry_to_directory(DirEntry * parent, DirEntry * child, enum VfsErr * err) {
-    TmpfsInode * parent_inode = (TmpfsInode *) parent->inode;
+    TmpfsInode * parent_inode = (TmpfsInode *)parent->inode;
 
     if (parent_inode->base.inode_type != DIRECTORY) {
-        if(err != NULL && *err == OK) {
-            *err =  ERR_NOT_DIR;
-        }
+        if (err != NULL && *err == OK) { *err = ERR_NOT_DIR; }
         return;
     }
 
@@ -55,44 +53,38 @@ Inode * tmpfs_create_dir(DirEntry * parent, DirEntry * entry, enum VfsErr * err)
 
     TmpfsInode * inode = kmalloc(1 * sizeof(TmpfsInode));
 
-    if (inode == NULL){
-        if(*err != OK) {
-            *err = ERR_ALLOC_FAILED;
-        }
+    if (inode == NULL) {
+        if (*err != OK) { *err = ERR_ALLOC_FAILED; }
         return NULL;
     }
 
-    *inode = (TmpfsInode) {
-            .base = create_inode_base(vfs, DIRECTORY, FS_TMPFS, entry),
-            .data.direntries = vpa_create(TMPFS_DEFAULT_DIR_ALLOC_SIZE),
+    *inode = (TmpfsInode){
+        .base = create_inode_base(vfs, DIRECTORY, FS_TMPFS, entry),
+        .data.direntries = vpa_create(TMPFS_DEFAULT_DIR_ALLOC_SIZE),
     };
 
     entry->inode = (Inode *)inode;
 
     add_entry_to_directory(parent, entry, err);
-    if (*err != OK) {
-        return NULL;
-    }
+    if (*err != OK) { return NULL; }
 
 
     vfs_add_inode(vfs, (Inode *)inode);
 
-    return (Inode *) inode;
+    return (Inode *)inode;
 }
 
-Inode * tmpfs_create_file( DirEntry * parent, DirEntry * entry, enum VfsErr * err) {
+Inode * tmpfs_create_file(DirEntry * parent, DirEntry * entry, enum VfsErr * err) {
     Vfs * vfs = parent->inode->vfs;
 
     TmpfsInode * inode = kmalloc(1 * sizeof(TmpfsInode));
 
-    if (inode == NULL){
-        if(*err != OK) {
-            *err = ERR_ALLOC_FAILED;
-        }
+    if (inode == NULL) {
+        if (*err != OK) { *err = ERR_ALLOC_FAILED; }
         return NULL;
     }
 
-    *inode = (TmpfsInode) {
+    *inode = (TmpfsInode){
         .base = create_inode_base(vfs, FILE, FS_TMPFS, entry),
         .data.filedata = u8a_create(TMPFS_DEFAULT_FILE_ALLOC_SIZE),
     };
@@ -100,21 +92,17 @@ Inode * tmpfs_create_file( DirEntry * parent, DirEntry * entry, enum VfsErr * er
     entry->inode = (Inode *)inode;
 
     add_entry_to_directory(parent, entry, err);
-    if (*err != OK) {
-        return NULL;
-    }
+    if (*err != OK) { return NULL; }
 
     vfs_add_inode(vfs, (Inode *)inode);
 
-    return (Inode *) inode;
+    return (Inode *)inode;
 }
 
 File * tmpfs_open_file(Inode * inode, enum VfsErr * err) {
-    File * file = (File *) kmalloc(sizeof(File));
-    if (file == NULL){
-        if(*err != OK) {
-            *err = ERR_ALLOC_FAILED;
-        }
+    File * file = (File *)kmalloc(sizeof(File));
+    if (file == NULL) {
+        if (*err != OK) { *err = ERR_ALLOC_FAILED; }
         return NULL;
     }
 
@@ -130,7 +118,7 @@ File * tmpfs_open_file(Inode * inode, enum VfsErr * err) {
 void tmpfs_close_file(File * file, enum VfsErr * err) {
     Inode * inode = file->dentry->inode;
     --inode->refcount;
-    if(inode->should_delete && inode->refcount <= 0) {
+    if (inode->should_delete && inode->refcount <= 0) {
         inode->fs_identifier->operations->remove_file(file->dentry, err);
     }
 
@@ -138,7 +126,7 @@ void tmpfs_close_file(File * file, enum VfsErr * err) {
 }
 
 size_t tmpfs_read_file(File * fp, uint8_t * buf, size_t count, enum VfsErr * err) {
-    TmpfsInode * inode = (TmpfsInode *) fp->dentry->inode;
+    TmpfsInode * inode = (TmpfsInode *)fp->dentry->inode;
     U8ArrayList * array = inode->data.filedata;
 
     uint8_t * bpos = array->array + fp->file_position;
@@ -152,7 +140,7 @@ size_t tmpfs_read_file(File * fp, uint8_t * buf, size_t count, enum VfsErr * err
 
 
 size_t tmpfs_write_file(File * fp, uint8_t * buf, size_t count, enum VfsErr * err) {
-    TmpfsInode * inode = (TmpfsInode *) fp->dentry->inode;
+    TmpfsInode * inode = (TmpfsInode *)fp->dentry->inode;
     U8ArrayList * array = inode->data.filedata;
 
     u8a_resize(array, array->capacity + count);
@@ -166,20 +154,18 @@ size_t tmpfs_write_file(File * fp, uint8_t * buf, size_t count, enum VfsErr * er
     return count;
 }
 
-void tmpfs_remove_file (DirEntry * entry, enum VfsErr * err) {
+void tmpfs_remove_file(DirEntry * entry, enum VfsErr * err) {}
 
-}
-
-VPArrayList * tmpfs_list_dir (DirEntry * entry, enum VfsErr * err) {
-    TmpfsInode * inode  = (TmpfsInode *)entry->inode;
+VPArrayList * tmpfs_list_dir(DirEntry * entry, enum VfsErr * err) {
+    TmpfsInode * inode = (TmpfsInode *)entry->inode;
     return inode->data.direntries;
 }
 
-void tmpfs_free_inode (Inode * inode) {
-    TmpfsInode * tmpfsInode = (TmpfsInode *) inode;
-    if(tmpfsInode->base.inode_type == FILE) {
+void tmpfs_free_inode(Inode * inode) {
+    TmpfsInode * tmpfsInode = (TmpfsInode *)inode;
+    if (tmpfsInode->base.inode_type == FILE) {
         u8a_free(tmpfsInode->data.filedata);
-    } else if(tmpfsInode->base.inode_type == DIRECTORY) {
+    } else if (tmpfsInode->base.inode_type == DIRECTORY) {
         vpa_free(tmpfsInode->data.direntries, NULL);
     }
 

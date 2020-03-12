@@ -4,8 +4,8 @@
 
 #include <stdint.h>
 
-#define BCM2836_REGISTERS_PHYSICAL_BASE     0x40000000
-#define BCM2836_PERIPHERALS_PHYSICAL_BASE   0x3F000000
+#define BCM2836_REGISTERS_PHYSICAL_BASE   0x40000000
+#define BCM2836_PERIPHERALS_PHYSICAL_BASE 0x3F000000
 
 // Starts at memory address 0x4000_0000
 struct BCM2836Registers {
@@ -19,7 +19,7 @@ struct BCM2836Registers {
     uint32_t CoreTimerAccessLS32Bits;
     uint32_t CoreTimerAccessMS32Bits;
     uint32_t LocalInterupts0Routing;
-    uint32_t __LocalInterupts8Routing __attribute__ ((deprecated)); // Deprecated
+    uint32_t __LocalInterupts8Routing __attribute__((deprecated));  // Deprecated
     uint32_t AxiOutstandingCounters;
     uint32_t AxiOutstandingIRQ;
     uint32_t LocalTimerControlAndStatus;
@@ -77,27 +77,27 @@ struct BCM2836Registers {
 
 enum InterruptSource {
     // nCNTPSIRQ : Secure physical timer event
-    PHYSICAL_SECURE_TIMER       = (1u << 0u),
+    PHYSICAL_SECURE_TIMER = (1u << 0u),
 
     // nCNTPNSIRQ : Non-secure physical timer event
-    PHYSICAL_NONSECURE_TIMER    = (1u << 1u),
+    PHYSICAL_NONSECURE_TIMER = (1u << 1u),
 
     // nCNTHPIRQ: Physical Timer for use in Hypervisor mode.
-    PHYSICAL_HYPERVISOR_TIMER   = (1u << 2u),
+    PHYSICAL_HYPERVISOR_TIMER = (1u << 2u),
 
     // nCNTVIRQ: Virtual Timer for use in Non-secure PL1 modes.
-    VIRTUAL_NONSECURE_TIMER     = (1u << 3u),
+    VIRTUAL_NONSECURE_TIMER = (1u << 3u),
 
-    MAILBOX_0                   = (1u << 4u),
-    MAILBOX_1                   = (1u << 5u),
-    MAILBOX_2                   = (1u << 6u),
-    MAILBOX_3                   = (1u << 7u),
+    MAILBOX_0 = (1u << 4u),
+    MAILBOX_1 = (1u << 5u),
+    MAILBOX_2 = (1u << 6u),
+    MAILBOX_3 = (1u << 7u),
 
-    GPU                         = (1u << 8u),
-    PMU                         = (1u << 9u),
+    GPU = (1u << 8u),
+    PMU = (1u << 9u),
 
-    AXI                         = (1u << 10u),
-    LOCAL_TIMER                 = (1u << 11u),
+    AXI = (1u << 10u),
+    LOCAL_TIMER = (1u << 11u),
 };
 
 void bcm2836_init();

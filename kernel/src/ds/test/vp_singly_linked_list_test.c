@@ -1,5 +1,5 @@
-#include <test.h>
 #include <ds.h>
+#include <test.h>
 
 
 TEST_CREATE(test_create_ll, {
@@ -7,15 +7,11 @@ TEST_CREATE(test_create_ll, {
 
     uint32_t num = 10;
 
-    for (uint32_t i = 0; i < num; i++) {
-        vpsll_push(lst, (void *)i);
-    }
+    for (uint32_t i = 0; i < num; i++) { vpsll_push(lst, (void *)i); }
 
     ASSERT_EQ(vpsll_length(lst), num);
 
-    for (int32_t i = num - 1; i >= 0; i--) {
-        ASSERT_EQ((int32_t)vpsll_pop(lst), i);
-    }
+    for (int32_t i = num - 1; i >= 0; i--) { ASSERT_EQ((int32_t)vpsll_pop(lst), i); }
 
     vpsll_free(lst, NULL);
 })
@@ -26,9 +22,7 @@ TEST_CREATE(test_iter_ll, {
 
     uint32_t num = 10;
 
-    for (uint32_t i = 0; i < num; i++) {
-        vpsll_push(lst, (void *)i);
-    }
+    for (uint32_t i = 0; i < num; i++) { vpsll_push(lst, (void *)i); }
 
     ASSERT_EQ(vpsll_length(lst), num);
 
@@ -45,16 +39,12 @@ TEST_CREATE(test_get_ll, {
 
     uint32_t num = 10;
 
-    for (uint32_t i = 0; i < num; i++) {
-        vpsll_push(lst, (void *)i);
-    }
+    for (uint32_t i = 0; i < num; i++) { vpsll_push(lst, (void *)i); }
 
     ASSERT_EQ(vpsll_length(lst), num);
 
     isize_t index = 0;
-    for (isize_t i = num - 1; i >= 0; i--)  {
-        ASSERT_EQ((isize_t)vpsll_get(lst, index++), i);
-    }
+    for (isize_t i = num - 1; i >= 0; i--) { ASSERT_EQ((isize_t)vpsll_get(lst, index++), i); }
 
     vpsll_free(lst, NULL);
 })
@@ -137,7 +127,7 @@ TEST_CREATE(test_vpsll_set, {
     vpsll_push(lst, &c);
 
     vpsll_set(lst, 1, &f);
-    ASSERT_EQ(vpsll_get(lst,1), &f);
+    ASSERT_EQ(vpsll_get(lst, 1), &f);
     ASSERT_EQ(vpsll_length(lst), 3);
 
     vpsll_free(lst, NULL);

@@ -36,4 +36,4 @@ uint32_t u8a_push_string(U8ArrayList * arr, char * data);
 // Creates a new u8a with the same contents as another one.
 U8ArrayList * u8a_clone(U8ArrayList * arr);
 
-#endif //U8ARRAY_LIST_H
+#endif  // U8ARRAY_LIST_H

@@ -1,17 +1,16 @@
-#include <stdint.h>
+#include <chipset.h>
+#include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
+#include <stdint.h>
 #include <test.h>
-#include <hardwareinfo.h>
-#include <chipset.h>
 #include <vm2.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
-void start(uint32_t *p_bootargs) {
-
+void start(uint32_t * p_bootargs) {
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.

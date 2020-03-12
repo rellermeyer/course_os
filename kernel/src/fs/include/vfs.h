@@ -1,25 +1,32 @@
 #ifndef VFS_H
 #define VFS_H
 
-#include <stdint.h>
 #include <fs.h>
+#include <stdint.h>
 #include <vp_array_list.h>
 
 struct InodeOperations;
 struct inode;
 
 typedef struct FsOperations {
-
     /// Inode ops
     // allocates a new Inode and returns this newly made Inode.
-    struct Inode * (*create_file) (struct DirEntry * parent, struct DirEntry * child, enum VfsErr * err);
-    struct Inode * (*create_dir) (struct DirEntry * parent, struct DirEntry * child, enum VfsErr * err);
-    void (*remove_dir) (struct DirEntry * entry, enum VfsErr * err);
-    VPArrayList * (*list_dir) (struct DirEntry * entry, enum VfsErr * err);
-    void (*move) (struct Inode * oldDir, struct DirEntry * oldDirEntry, struct Inode * newDir, struct DirEntry * newDirEntry, enum VfsErr * err);
-    void (*remove_file) (struct DirEntry * entry, enum VfsErr * err);
+    struct Inode * (*create_file)(struct DirEntry * parent,
+                                  struct DirEntry * child,
+                                  enum VfsErr * err);
+    struct Inode * (*create_dir)(struct DirEntry * parent,
+                                 struct DirEntry * child,
+                                 enum VfsErr * err);
+    void (*remove_dir)(struct DirEntry * entry, enum VfsErr * err);
+    VPArrayList * (*list_dir)(struct DirEntry * entry, enum VfsErr * err);
+    void (*move)(struct Inode * oldDir,
+                 struct DirEntry * oldDirEntry,
+                 struct Inode * newDir,
+                 struct DirEntry * newDirEntry,
+                 enum VfsErr * err);
+    void (*remove_file)(struct DirEntry * entry, enum VfsErr * err);
 
-    void (*free_inode) (struct Inode * inode);
+    void (*free_inode)(struct Inode * inode);
 
 
     /// File ops
@@ -38,7 +45,7 @@ typedef struct FsIdentifier {
 typedef struct Vfs {
     uint32_t filesystems_size;
     uint32_t filesystems_filled;
-    const FsIdentifier ** filesystems; // TODO: change to vpa?
+    const FsIdentifier ** filesystems;  // TODO: change to vpa?
 
     // Inodes start at the head and are added at the tail end.
     // The linked list starts at head.
@@ -46,7 +53,7 @@ typedef struct Vfs {
     struct Inode * tail;
 } Vfs;
 
-typedef enum VfsErr{
+typedef enum VfsErr {
     OK,
     ERR_NOT_DIR,
     ERR_EXISTS,
