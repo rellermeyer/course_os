@@ -1,3 +1,4 @@
 # Sources
 *.c     text diff=c
 *.h     text diff=c
+*.h     linguist-language=C
