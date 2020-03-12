@@ -50,8 +50,8 @@ void create_heap(heap_t * heap, uint32_t start);
 
 void * heap_alloc(heap_t * heap, uint32_t size);
 void heap_free(heap_t * heap, void * p);
-uint32_t expand(heap_t * heap, uint32_t sz);
-void contract(heap_t * heap, uint32_t sz);
+uint32_t expand(heap_t * heap);
+void contract(heap_t * heap);
 
 uint32_t get_bin_index(uint32_t sz);
 void create_foot(node_t * head);

@@ -306,7 +306,7 @@ bool vm2_l1_map_physical_to_virtual(struct L1PageTable * pt,
 /// the same n megabytes in which some mmio is located. Returns the virtual address.
 size_t vm2_map_peripheral(size_t physical, size_t n_mebibytes);
 
-/// Maps a new 4KiB page with kernel permissions at a virtual address. Returns a reference to this
+/// Maps a new 4KiB page at a virtual address. Returns a reference to this
 /// page or NULL if unsuccessful. The physical location of this page is determined by the
 /// [PMM](pmm.c). Since this allocates a 4KiB page, it has to go through L2Pagetables. It will
 /// create the right L2 pagetables as it needs. You can make the allocated page executable with the
@@ -318,6 +318,15 @@ void * vm2_allocate_page(struct L1PageTable * l1pt,
                          bool remap,
                          struct PagePermission perms,
                          struct L2PageTable ** created_l2pt);
+
+/// Frees a 4KiB page at a virtual address. The address does not need to be aligned. If the address
+/// is not aligned, the aligned 4KiB page the address lies in is freed.
+/// TODO: Does not yet free l2 pagetables when they become empty after enough pages are freed. For
+/// TODO: processes this is never necessary as their pagetables are freed whenever the process
+/// stops. For
+/// TODO: the kernel it might be necessary.
+/// Automatically unmaps the page from the l1pt it was in.
+void vm2_free_page(struct L1PageTable * l1pt, size_t virtual);
 
 /// Should be called after updating a pagetable.
 void vm2_flush_caches();
