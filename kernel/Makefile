@@ -8,7 +8,7 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
-MEMORY = 512M
+MEMORY = 1G
 LOG_LEVEL ?= 4
 DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
