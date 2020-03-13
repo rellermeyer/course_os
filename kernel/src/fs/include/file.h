@@ -5,6 +5,8 @@
 #include <vp_array_list.h>
 #include <path.h>
 
+#include "path.h"
+
 struct FsOperations;
 
 typedef struct File {
