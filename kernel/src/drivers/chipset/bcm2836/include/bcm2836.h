@@ -5,13 +5,15 @@
 
 #include <stdint.h>
 
+#define BCM2836_REGISTERS_PHYSICAL_BASE   0x40000000
+#define BCM2836_PERIPHERALS_PHYSICAL_BASE 0x3F000000
+
 /*
  * Implementation of chipset driver interface for BCM2836
  */
 
 // Starts at memory address 0x4000_0000
-typedef struct BCM2836Registers
-{
+typedef struct BCM2836Registers {
     uint32_t ControlRegister;
     uint32_t __unused1;
     uint32_t CoreTimerPrescaler;
@@ -22,7 +24,7 @@ typedef struct BCM2836Registers
     uint32_t CoreTimerAccessLS32Bits;
     uint32_t CoreTimerAccessMS32Bits;
     uint32_t LocalInterupts0Routing;
-    uint32_t __LocalInterupts8Routing __attribute__((deprecated));
+    uint32_t __LocalInterupts8Routing __attribute__((deprecated));  // Deprecated
     uint32_t AxiOutstandingCounters;
     uint32_t AxiOutstandingIRQ;
     uint32_t LocalTimerControlAndStatus;
@@ -76,11 +78,9 @@ typedef struct BCM2836Registers
     uint32_t Core3Mailbox1ReadClear;
     uint32_t Core3Mailbox2ReadClear;
     uint32_t Core3Mailbox3ReadClear;
-}
-BCM2836Registers;
+} BCM2836Registers;
 
-enum InterruptSource
-{
+enum InterruptSource {
     // nCNTPSIRQ : Secure physical timer event
     PHYSICAL_SECURE_TIMER     = (1 << 0),
 
@@ -109,8 +109,7 @@ volatile BCM2836Registers* bcm2836_registers_base;
 
 void bcm2836_init();
 
-void bcm2836_late_init();
-
+volatile struct BCM2836Registers * bcm2836_registers_base;
 extern const size_t BCM2836_peripheral_base;
 
 #endif

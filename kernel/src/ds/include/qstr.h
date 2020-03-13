@@ -1,15 +1,14 @@
 #ifndef QSTR_H
 #define QSTR_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // A Qstr or quickstring, is a string which stores it's length,
 // and on first compare calculates and stores its hash to speed up
 // further comparisons. Apart from storing the length, the last byte of a Qstr's
 // data is always a null. Therefore a pointer to a Qstr is *always* also a valid null
 // terminated string.
-
 
 typedef struct Qstr {
     char * data;

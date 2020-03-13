@@ -8,14 +8,15 @@ CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
-MEMORY = 128M
-DEFINITIONS = MEM_DEBUG
+MEMORY = 1G
+LOG_LEVEL ?= 4
+DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
-KERNEL_PARAMS = root=/dev/ram mem=$(MEMORY)
 SOURCEDIR = src
 BUILDDIR = build
-# every directory named `include` will have its contents autoincluded
+# every directory named `include` will have it's contents autoincluded
 INCLUDEDIR = include
+CPU = cortex-a7
 
 # =================== End Configuration ===================
 
@@ -24,8 +25,8 @@ CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
 LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
-MKIMAGE:=$(CURDIR)/../u-boot/u-boot-$(UBOOT_VERSION)/tools/mkimage
 GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
+QEMU := $(CURDIR)/../${QEMU}
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
 C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
@@ -48,17 +49,27 @@ build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu cortex-a7 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu cortex-a7 -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
+
+debug: build | builddir
+		${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
+
+start_debug: build | builddir
+	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
+	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
+	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
+
+
 
 # Begin Pi Make
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
