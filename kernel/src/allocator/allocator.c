@@ -4,6 +4,7 @@
 #include <allocator.h>
 #include <stdio.h>
 #include <test.h>
+#include <vm2.h>
 
 int offset = sizeof(uint32_t) * 2;
 uint32_t overhead = sizeof(footer_t) + sizeof(node_t);
@@ -89,10 +90,10 @@ void * heap_alloc(heap_t * heap, uint32_t size) {
     // ==========================================
     node_t * wild = get_wilderness(heap);
     if (wild->size < MIN_WILDERNESS) {
-        int success = expand(heap, 0x1000);
+        int success = expand(heap);
         if (success == 0) { return NULL; }
     } else if (wild->size > MAX_WILDERNESS) {
-        contract(heap, 0x1000);
+        contract(heap);
     }
     // ==========================================
 
@@ -173,12 +174,25 @@ void heap_free(heap_t * heap, void * p) {
 
 
 // these are left here to implement contraction / expansion
-uint32_t expand(heap_t * heap, uint32_t sz) {
-    WARN("[MEM DEBUG] Trying to expand");
-    return 0;  // fail for now
+uint32_t expand(heap_t * heap) {
+    if (vm2_allocate_page(kernell1PageTable,
+                          heap->end,
+                          false,
+                          (struct PagePermission){.access = KernelRW, .executable = false},
+                          NULL) == NULL) {
+        // Pointer is NULL so error
+        return 0;
+    } else {
+        // Pointer is non-bn
+        heap->end += PAGE_SIZE;
+        return 1;
+    }
 }
 
-void contract(heap_t * heap, uint32_t sz) {}
+void contract(heap_t * heap) {
+    heap->end -= PAGE_SIZE;
+    vm2_free_page(kernell1PageTable, heap->end);
+}
 
 // ========================================================
 // this function is the hashing function that converts
