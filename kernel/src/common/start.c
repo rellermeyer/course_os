@@ -10,7 +10,7 @@
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
-void start(uint32_t * p_bootargs) {
+void start(uint32_t * p_bootargs, size_t memory_size) {
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.
@@ -19,6 +19,7 @@ void start(uint32_t * p_bootargs) {
     // Initialize the chipset and enable uart
     init_chipset();
 
+    INFO("Detected memory size: 0x%x Bytes", memory_size);
     INFO("Started chipset specific handlers");
 
     // just cosmetic (and for debugging)

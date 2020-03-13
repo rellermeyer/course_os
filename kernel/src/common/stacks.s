@@ -17,32 +17,32 @@
 .global stacks
 stacks:
    // FIQ Stack
-    MSR CPSR_c, #Mode_FIQ // Switch to FIQ Mode
-    LDR sp, =FIQ_STACK_TOP // Set the FIQ stack pointer
+    msr CPSR_c, #Mode_FIQ // Switch to FIQ Mode
+    ldr sp, =FIQ_STACK_TOP // Set the FIQ stack pointer
 
     // IRQ Stack
-    MSR CPSR_c, #Mode_IRQ
-    LDR sp, =IRQ_STACK_TOP
+    msr CPSR_c, #Mode_IRQ
+    ldr sp, =IRQ_STACK_TOP
 
     // MON Stack
-    MSR CPSR_c, #Mode_MON
-    LDR sp, =MON_STACK_TOP
+    msr CPSR_c, #Mode_MON
+    ldr sp, =MON_STACK_TOP
 
     // ABT Stack
-    MSR CPSR_c, #Mode_ABT
-    LDR sp, =ABT_STACK_TOP
+    msr CPSR_c, #Mode_ABT
+    ldr sp, =ABT_STACK_TOP
 
     // UND Stack
-    MSR CPSR_c, #Mode_UND
-    LDR sp, =UND_STACK_TOP
+    msr CPSR_c, #Mode_UND
+    ldr sp, =UND_STACK_TOP
 
     // SYS Stack
-    MSR CPSR_c, #Mode_SYS
-    LDR sp, =SYS_STACK_TOP
+    msr CPSR_c, #Mode_SYS
+    ldr sp, =SYS_STACK_TOP
 
     // Switch back SVC/Kernel
-    MSR CPSR_c, #Mode_SVC
-    ADD fp, sp, #0 // ???
+    msr CPSR_c, #Mode_SVC
+    add fp, sp, #0 // ???
 
     bx lr
 

@@ -10,8 +10,10 @@ SECTIONS
     .boot : {
         */startup.o (.text)
         */startup.o (.data)
-        */stacks.o (.text)
         */startup.o (.bss)
+        */stacks.o (.text)
+        */memory.o (.text)
+        */memory.o (.data)
     }
     __BOOT_END = .;
     . += __KERNEL_VIRTUAL_OFFSET;

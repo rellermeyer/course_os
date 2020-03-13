@@ -1,6 +1,5 @@
 #include <bcm2836.h>
 #include <chipset.h>
-#include <interrupt.h>
 #include <limits.h>
 
 /*
