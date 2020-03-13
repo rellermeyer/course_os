@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-void* kmalloc(uint32_t size);
-void* kmalloc_aligned(uint32_t size, uint32_t alignment);
-void kfree(void* ptr);
-void *krealloc(void *ptr, uint32_t size);
-void *kcalloc(size_t n, size_t size);
+void * kmalloc(uint32_t size);
+void * kmalloc_aligned(uint32_t size, uint32_t alignment);
+void kfree(void * ptr);
+void * krealloc(void * ptr, uint32_t size);
+void * kcalloc(size_t n, size_t size);
 
 /**
  * umalloc allocates memory on the user heap
@@ -16,7 +16,7 @@ void *kcalloc(size_t n, size_t size);
  * @param  uint32_t size
  * @return returns a pointer to the allocated block of memory
  */
-void* umalloc(uint32_t size); //does user level malloc work
+void * umalloc(uint32_t size);  // does user level malloc work
 
 /**
  * ualigned alloc allocates memory on the user heap
@@ -27,7 +27,7 @@ void* umalloc(uint32_t size); //does user level malloc work
  * @return returns a pointer to the allocated block of memory
  * 		   that is a multiple of the specified allignement
  */
-void* ualigned_alloc(uint32_t size, uint32_t alignment); //does user level aligned_alloc work
+void * ualigned_alloc(uint32_t size, uint32_t alignment);  // does user level aligned_alloc work
 
 /**
  * free's an allocated block of memory on the heap
@@ -36,8 +36,7 @@ void* ualigned_alloc(uint32_t size, uint32_t alignment); //does user level align
  * @param  void* ptr
  * @return nothing returned
  */
-void  ufree(void*); //does user level free work
-
+void ufree(void *);  // does user level free work
 
 
 #endif

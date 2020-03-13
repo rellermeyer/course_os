@@ -17,11 +17,14 @@ echo "
 
 #include <stdio.h>
 #include <interrupt.h>
+#include <test.h>
+
+size_t global_counter = 0;
 
 " >> "$DIR/test.c"
 
 #TESTFNS=$(grep -hr --include "*.c" -oP "(?<=TEST_CREATE\()(.*)(?=,)")
-TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)")
+TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)" | sort -R)
 
 for FNNAME in $TESTFNS
 do
@@ -40,7 +43,7 @@ done
 
 # shellcheck disable=SC2028
 echo "
-  kprintf(\"TESTS COMPLETE. Passed %i tests\n\", "$len");
+  kprintf(\"TESTS COMPLETE. Passed %i tests\n\", $len);
   SemihostingCall(ApplicationExit);
 }
 #endif

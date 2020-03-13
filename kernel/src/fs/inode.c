@@ -1,12 +1,15 @@
+#include <fs.h>
 #include <inode.h>
-#include <vfs.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fs.h>
+#include <vfs.h>
 uint32_t cnt = 0;
 
-Inode create_inode_base(Vfs * vfs, InodeType type, const struct FsIdentifier * fs, DirEntry* dirEntry) {
-    return (Inode) {
+Inode create_inode_base(Vfs * vfs,
+                        InodeType type,
+                        const struct FsIdentifier * fs,
+                        DirEntry * dirEntry) {
+    return (Inode){
         .refcount = 0,
         .id = ++cnt,
         .inode_type = type,

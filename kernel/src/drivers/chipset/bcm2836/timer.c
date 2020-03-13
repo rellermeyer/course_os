@@ -1,4 +1,3 @@
-#include <timer.h>
 #include <bcm2836.h>
 #include <chipset.h>
 #include <stdint.h>

@@ -1,13 +1,19 @@
-#include <stdio.h>
 #include <chipset.h>
+#include <stdio.h>
 #include <string.h>
 
 static char lower_case_digits[16] = "0123456789abcdef";
 static char upper_case_digits[16] = "0123456789ABCDEF";
 
 // base is between 2 and 16, inclusive
-int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
-              int padding, char pad_char, int is_uppercase) {
+int print_int(char * buf,
+              int buflen,
+              int val,
+              int base,
+              int is_unsigned,
+              int padding,
+              char pad_char,
+              int is_uppercase) {
     int max_len = buflen;
     int orig_max_len = max_len;
     int negate = 0;
@@ -17,14 +23,12 @@ int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
     }
     unsigned int temp = val;
 
-    if (max_len == 0)
-        return orig_max_len - max_len;
+    if (max_len == 0) return orig_max_len - max_len;
     if (negate) {
         *buf = '-';
         buf++;
         max_len--;
-        if (max_len == 0)
-            return orig_max_len - max_len;
+        if (max_len == 0) return orig_max_len - max_len;
     }
 
     char tmp_buf[64];
@@ -46,8 +50,7 @@ int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
             *buf = pad_char;
             buf++;
             max_len--;
-            if (max_len == 0)
-                return orig_max_len;
+            if (max_len == 0) return orig_max_len;
         }
     }
 
@@ -56,24 +59,22 @@ int print_int(char *buf, int buflen, int val, int base, int is_unsigned,
         *buf = tmp_buf[i];
         buf++;
         max_len--;
-        if (max_len == 0)
-            return orig_max_len;
+        if (max_len == 0) return orig_max_len;
     }
     if (ndigits == 0 && padding <= 0) {
         *buf = '0';
         buf++;
         max_len--;
-        if (max_len == 0)
-            return orig_max_len;
+        if (max_len == 0) return orig_max_len;
     }
 
     return orig_max_len - max_len;
 }
 
 // args must already have been started
-int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
-    if (buflen == 0)
-        return 0;
+// TODO: properly stop at buflen. Otherwise there is a buffer overflow.
+int os_vsnprintf(char * buf, int buflen, const char * str_buf, va_list args) {
+    if (buflen == 0) return 0;
     buflen--;
     if (buflen == 0) {
         buf[0] = 0;
@@ -81,15 +82,15 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
     }
     int nwritten = 0;
     int t_arg;
-    char *str_arg;
+    char * str_arg;
     int padding = -1;
     char pad_char = 0;
     while (*str_buf != '\0') {
         int n = 0;
         if (*str_buf == '%') {
             str_buf++;
-            // This label is where we go after we've read an option.
-            reread_switch:;
+        // This label is where we go after we've read an option.
+        reread_switch:;
             switch (*str_buf) {
                 case '0':
                     // Zero-padding... Read all the numbers.
@@ -126,12 +127,10 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
                     n = 1;
                     break;
                 case 's':
-                    str_arg = va_arg(args, char*);
+                    str_arg = va_arg(args, char *);
                     strncpy(buf, str_arg, buflen);
                     n = strlen(str_arg);
-                    if (n > buflen) {
-                        n = buflen;
-                    }
+                    if (n > buflen) { n = buflen; }
                     break;
                 case '%':
                     *buf = '%';
@@ -148,7 +147,7 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
         buflen -= n;
         nwritten += n;
         if (buflen <= 0) {
-            //Return!
+            // Return!
             break;
         }
         str_buf++;
@@ -159,7 +158,7 @@ int os_vsnprintf(char *buf, int buflen, const char *str_buf, va_list args) {
     return nwritten;
 }
 
-int os_snprintf(char *buf, int buflen, const char *fmt, ...) {
+int os_snprintf(char * buf, int buflen, const char * fmt, ...) {
     va_list args;
     va_start(args, fmt);
     int n = os_vsnprintf(buf, buflen, fmt, args);
@@ -167,14 +166,14 @@ int os_snprintf(char *buf, int buflen, const char *fmt, ...) {
     return n;
 }
 
-void puts(const char *s) {
+void puts(const char * s) {
     while (*s != '\0') {
         chipset.uart_putc(*s, 0);
         s++;
     }
 }
 
-int kprintf(const char *str_buf, ...) {
+int kprintf(const char * str_buf, ...) {
     va_list args;
     va_start(args, str_buf);
     char buf[256];

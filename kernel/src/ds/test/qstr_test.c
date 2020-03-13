@@ -1,6 +1,6 @@
-#include <test.h>
-#include <qstr.h>
 #include <math.h>
+#include <qstr.h>
+#include <test.h>
 
 TEST_CREATE(test_compare_nonequal_length, {
     Qstr a = qstr_from_null_terminated_string("test");
@@ -66,7 +66,7 @@ TEST_CREATE(test_compare_various, {
 TEST_CREATE(test_hash, {
     Qstr a = qstr_from_null_terminated_string("toast");
     Qstr b = qstr_from_null_terminated_string("toast");
-    
+
     qstr_eq(&b, &a);
 
     a.hash = 0;
@@ -85,4 +85,3 @@ TEST_CREATE(test_hash, {
 
     ASSERT_EQ(o, n);
 })
-

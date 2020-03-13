@@ -1,6 +1,7 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /*
@@ -8,6 +9,7 @@
  */
 
 void init_chipset();
+void uart_putc(char c, int channel);
 
 // A timer handle is an identifier for a timer so it can be descheduled later.
 // These handles must be unique.
@@ -16,8 +18,7 @@ typedef void (*TimerCallback)();
 
 typedef void (*UartCallback)(char c);
 
-typedef struct ChipsetInterface
-{
+typedef struct ChipsetInterface {
     /// Timer Functions
     TimerHandle (*schedule_timer_periodic)(TimerCallback callback, uint32_t ms);
     TimerHandle (*schedule_timer_once)(TimerCallback callback, uint32_t ms);
@@ -43,8 +44,7 @@ typedef struct ChipsetInterface
     // Called for every chipset after interrupts and dynamic memory has been enabled
     // So the chipset can do some more initialization.
     void (*late_init)();
-}
-ChipsetInterface;
+} ChipsetInterface;
 
 ChipsetInterface chipset;
 
