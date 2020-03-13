@@ -108,8 +108,9 @@ enum InterruptSource {
 volatile BCM2836Registers* bcm2836_registers_base;
 
 void bcm2836_init();
+void bcm2836_late_init();
 
 volatile struct BCM2836Registers * bcm2836_registers_base;
-extern const size_t BCM2836_peripheral_base;
+size_t bcm2836_peripheral_base;
 
 #endif

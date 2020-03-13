@@ -26,8 +26,7 @@ typedef volatile struct BCM2836UartInterface
     const uint32_t MIS;         // Masked Interrupt Status Register
     uint32_t ICR;               // Interrupt Clear Register
     uint32_t DMACR;             // DMA Control Register
-}
-BCM2836UartInterface;
+} BCM2836UartInterface;
 
 void bcm2836_uart_init();
 

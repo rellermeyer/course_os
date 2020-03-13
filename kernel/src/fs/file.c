@@ -1,7 +1,6 @@
 #include <fs.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <vp_array_list.h>
 
 
