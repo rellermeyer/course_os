@@ -2,7 +2,7 @@
 #define COURSE_OS_PROCESS_H
 
 #include <vp_array_list.h>
-#include <vm.h>
+#include <vm2.h>
 
 #define MAX_PROCESS_PRIORITY 20
 #define DEFAULT_PROCESS_PRIORITY 10

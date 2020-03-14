@@ -2,6 +2,7 @@
 #include <chipset.h>
 #include <interrupt.h>
 #include <limits.h>
+#include <klibc.h>
 
 /*
 // raspberry pi zero, 1, b+ etc
@@ -106,7 +107,7 @@ void bcm2836_uart_putc(char c, int uartchannel) {
         case 3:
             return uart_write_byte(BCM2836_UART3_ADDRESS, c);
         default:
-            __unreachable();
+            panic();
     }
 }
 
