@@ -1,11 +1,10 @@
-#include <uart.h>
 #include <bcm2836.h>
 #include <chipset.h>
 #include <interrupt.h>
 #include <klibc.h>
 #include <limits.h>
 #include <stdint.h>
-#include <limits.h>
+#include <uart.h>
 
 /*
 // raspberry pi zero, 1, b+ etc
@@ -54,17 +53,16 @@ volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x101f3
 // (CR)
 //#define CTSEn  ()    // CTS Hardware Control Enable
 
-static BCM2836UartInterface* BCM2836_UART0_ADDRESS;
-static BCM2836UartInterface* BCM2836_UART1_ADDRESS;
-static BCM2836UartInterface* BCM2836_UART2_ADDRESS;
-static BCM2836UartInterface* BCM2836_UART3_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART0_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART1_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART2_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART3_ADDRESS;
 
-void bcm2836_uart_init()
-{
-    BCM2836_UART0_ADDRESS = (BCM2836UartInterface*)(bcm2836_peripheral_base + 0x201000);
-    BCM2836_UART1_ADDRESS = (BCM2836UartInterface*)(bcm2836_peripheral_base + 0x202000);
-    BCM2836_UART2_ADDRESS = (BCM2836UartInterface*)(bcm2836_peripheral_base + 0x203000);
-    BCM2836_UART3_ADDRESS = (BCM2836UartInterface*)(bcm2836_peripheral_base + 0x204000);
+void bcm2836_uart_init() {
+    BCM2836_UART0_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x201000);
+    BCM2836_UART1_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x202000);
+    BCM2836_UART2_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x203000);
+    BCM2836_UART3_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x204000);
 }
 
 void uart_write_byte(volatile BCM2836UartInterface * interface, volatile uint8_t value) {
@@ -78,11 +76,16 @@ void bcm2836_uart_putc(char c, int uartchannel) {
     if (uartchannel >= 4) { uartchannel = 0; }
 
     switch (uartchannel) {
-        case 0: return uart_write_byte(BCM2836_UART0_ADDRESS, c);
-        case 1: return uart_write_byte(BCM2836_UART1_ADDRESS, c);
-        case 2: return uart_write_byte(BCM2836_UART2_ADDRESS, c);
-        case 3: return uart_write_byte(BCM2836_UART3_ADDRESS, c);
-        default: panic();
+        case 0:
+            return uart_write_byte(BCM2836_UART0_ADDRESS, c);
+        case 1:
+            return uart_write_byte(BCM2836_UART1_ADDRESS, c);
+        case 2:
+            return uart_write_byte(BCM2836_UART2_ADDRESS, c);
+        case 3:
+            return uart_write_byte(BCM2836_UART3_ADDRESS, c);
+        default:
+            panic();
     }
 }
 

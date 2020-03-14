@@ -82,30 +82,30 @@ typedef struct BCM2836Registers {
 
 enum InterruptSource {
     // nCNTPSIRQ : Secure physical timer event
-    PHYSICAL_SECURE_TIMER     = (1 << 0),
+    PHYSICAL_SECURE_TIMER = (1 << 0),
 
     // nCNTPNSIRQ : Non-secure physical timer event
-    PHYSICAL_NONSECURE_TIMER  = (1 << 1),
+    PHYSICAL_NONSECURE_TIMER = (1 << 1),
 
     // nCNTHPIRQ: Physical Timer for use in Hypervisor mode.
     PHYSICAL_HYPERVISOR_TIMER = (1 << 2),
 
     // nCNTVIRQ: Virtual Timer for use in Non-secure PL1 modes.
-    VIRTUAL_NONSECURE_TIMER   = (1 << 3),
+    VIRTUAL_NONSECURE_TIMER = (1 << 3),
 
-    MAILBOX_0                 = (1 << 4),
-    MAILBOX_1                 = (1 << 5),
-    MAILBOX_2                 = (1 << 6),
-    MAILBOX_3                 = (1 << 7),
+    MAILBOX_0 = (1 << 4),
+    MAILBOX_1 = (1 << 5),
+    MAILBOX_2 = (1 << 6),
+    MAILBOX_3 = (1 << 7),
 
-    GPU                       = (1 << 8),
-    PMU                       = (1 << 9),
+    GPU = (1 << 8),
+    PMU = (1 << 9),
 
-    AXI                       = (1 << 10),
-    LOCAL_TIMER               = (1 << 11),
+    AXI = (1 << 10),
+    LOCAL_TIMER = (1 << 11),
 };
 
-volatile BCM2836Registers* bcm2836_registers_base;
+volatile BCM2836Registers * bcm2836_registers_base;
 
 void bcm2836_init();
 void bcm2836_late_init();
