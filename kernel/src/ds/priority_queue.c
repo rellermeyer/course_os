@@ -1,17 +1,17 @@
-#include <stdlib.h>
-#include <priority_queue.h>
 #include <math.h>
+#include <priority_queue.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define AMORITIZED_CONSTANT 2
-#define DEFAULT_COUNT 10
+#define DEFAULT_COUNT       10
 
 void __prq_shift_up(prq_handle * queue, int idx);
 void __prq_shift_down(prq_handle * queue, int idx);
 
 void __prq_shift_up(prq_handle * queue, int idx) {
     prq_node ** heap = queue->heap;
-    prq_node * node, *parent;
+    prq_node *node, *parent;
     while (heap[idx]->priority < heap[idx / 2]->priority && idx > 1) {
         node = heap[idx];
         parent = heap[idx / 2];
@@ -24,20 +24,18 @@ void __prq_shift_up(prq_handle * queue, int idx) {
 }
 
 void __prq_shift_down(prq_handle * queue, int idx) {
-    int cidx;        //index for child
+    int cidx;  // index for child
     prq_node ** heap = queue->heap;
-    prq_node * node, *child;
+    prq_node *node, *child;
     for (;;) {
         cidx = idx * 2;
         if (cidx > queue->count) {
-            break;   //it has no child
+            break;  // it has no child
         }
         if (cidx < queue->count) {
-            if (heap[cidx]->priority > heap[cidx + 1]->priority) {
-                ++cidx;
-            }
+            if (heap[cidx]->priority > heap[cidx + 1]->priority) { ++cidx; }
         }
-        //swap if necessary
+        // swap if necessary
         if (heap[cidx]->priority < heap[idx]->priority) {
             node = heap[cidx];
             child = heap[idx];
@@ -57,35 +55,29 @@ prq_node * prq_create_node() {
 }
 
 void prq_free_node(prq_node * node) {
-    if (node) {
-        kfree(node);
-    }
+    if (node) { kfree(node); }
 }
 
 prq_node * prq_peek(prq_handle * queue) {
     if (queue) {
-        if (queue->count > 0) {
-            return queue->heap[1];
-        }
+        if (queue->count > 0) { return queue->heap[1]; }
     }
 
     return 0;
 }
 
 int prq_count(prq_handle * queue) {
-    if (queue) {
-        return queue->count;
-    }
+    if (queue) { return queue->count; }
 
     return 0;
 }
 
 void __prq_amoritize(prq_handle * queue) {
     int new_heap_size = queue->heap_size * AMORITIZED_CONSTANT;
-    prq_node** new_heap = (prq_node**) kmalloc(
-            sizeof(prq_node*) * new_heap_size);
-    memcpy((uint32_t *) queue->heap, (uint32_t *) new_heap,
-            (size_t) queue->heap_size * sizeof(prq_node*));
+    prq_node ** new_heap = (prq_node **)kmalloc(sizeof(prq_node *) * new_heap_size);
+    memcpy((uint32_t *)queue->heap,
+           (uint32_t *)new_heap,
+           (size_t)queue->heap_size * sizeof(prq_node *));
     kfree(queue->heap);
     queue->heap = new_heap;
     queue->heap_size = new_heap_size;
@@ -97,21 +89,15 @@ void prq_enqueue(prq_handle * queue, prq_node * node) {
     heap[index] = node;
     ++queue->count;
     __prq_shift_up(queue, index);
-    if (queue->count + 1 == queue->heap_size) {
-        __prq_amoritize(queue);
-    }
+    if (queue->count + 1 == queue->heap_size) { __prq_amoritize(queue); }
 }
 
 void prq_remove(prq_handle * queue, prq_node * node) {
-    if (!queue->count) {
-        return;
-    }
+    if (!queue->count) { return; }
     prq_node ** heap = queue->heap;
     prq_node * end = heap[queue->count];
     int index = (end->index = node->index);
-    if (index == -1) {
-        return;
-    }
+    if (index == -1) { return; }
     node->index = -1;
     heap[index] = end;
     heap[queue->count + 1] = 0;
@@ -122,9 +108,7 @@ void prq_remove(prq_handle * queue, prq_node * node) {
 }
 
 prq_node * prq_dequeue(prq_handle * queue) {
-    if (!queue->count) {
-        return 0;
-    }
+    if (!queue->count) { return 0; }
     prq_node ** heap = queue->heap;
     prq_node * top = heap[1];
     prq_node * end = heap[queue->count];
@@ -139,10 +123,10 @@ prq_node * prq_dequeue(prq_handle * queue) {
 
 prq_handle * prq_create_fixed(int n) {
     n = max(1, n);
-    prq_handle * queue = (prq_handle*) kmalloc(sizeof(prq_handle));
+    prq_handle * queue = (prq_handle *)kmalloc(sizeof(prq_handle));
     queue->count = 0;
     queue->heap_size = n + 1;
-    queue->heap = (prq_node**) kmalloc(sizeof(prq_node*) * queue->heap_size);
+    queue->heap = (prq_node **)kmalloc(sizeof(prq_node *) * queue->heap_size);
     return queue;
 }
 

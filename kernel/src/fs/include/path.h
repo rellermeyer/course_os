@@ -2,9 +2,9 @@
 #ifndef PATH_H
 #define PATH_H
 
+#include <stdbool.h>
 #include <u8_array_list.h>
 #include <vp_array_list.h>
-#include <stdbool.h>
 
 struct Vfs;
 enum VfsErr;
@@ -14,7 +14,7 @@ typedef U8ArrayList Path;
 const Path ROOT_PATH;
 
 // Parse the path and return the direntry which corresponds with the path.
-struct DirEntry *path_get_direntry(struct Vfs *vfs, Path *path, enum VfsErr *err);
+struct DirEntry * path_get_direntry(struct Vfs * vfs, Path * path, enum VfsErr * err);
 
 // Duplicates a path.
 Path * path_clone(Path * path);
@@ -94,6 +94,6 @@ bool path_parsed_equal(Path * a, Path * b);
 void path_print(Path * path);
 
 // Checks if a path has an associated DirEntry
-bool path_exists(struct Vfs *vfs, Path *path);
+bool path_exists(struct Vfs * vfs, Path * path);
 
 #endif

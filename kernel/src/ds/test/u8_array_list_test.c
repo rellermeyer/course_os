@@ -6,9 +6,7 @@ TEST_CREATE(u8a_push_get_pop_test, {
     uint32_t length = 30;
 
     U8ArrayList * arr = u8a_create(1);
-    for (int i = 0; i < length; i++){
-        u8a_push(arr, i % 0xff);
-    }
+    for (int i = 0; i < length; i++) { u8a_push(arr, i % 0xff); }
 
     ASSERT_EQ(arr->length, length);
     ASSERT_GTEQ(arr->capacity, length);
@@ -21,9 +19,7 @@ TEST_CREATE(u8a_push_get_pop_test, {
     ASSERT_EQ(arr->length, length);
     ASSERT_GTEQ(arr->capacity, length);
 
-    for (int i = length - 1; i >= 0; i--){
-        ASSERT_EQ(u8a_pop(arr), i % 0xff);
-    }
+    for (int i = length - 1; i >= 0; i--) { ASSERT_EQ(u8a_pop(arr), i % 0xff); }
 
     ASSERT_EQ(arr->length, 0);
     ASSERT_LT(arr->capacity, length);
@@ -33,23 +29,17 @@ TEST_CREATE(u8a_push_get_pop_test, {
 
 TEST_CREATE(u8a_push_set_pop_test, {
     U8ArrayList * arr = u8a_create(1);
-    for (int i = 0; i < 1000; i++){
-        u8a_push(arr, i % 0xff);
-    }
+    for (int i = 0; i < 1000; i++) { u8a_push(arr, i % 0xff); }
 
     ASSERT_EQ(arr->length, 1000);
     ASSERT_GTEQ(arr->capacity, 1000);
 
-    for (int i = 0; i < 1000; i++) {
-        u8a_set(arr, i, 42);
-    }
+    for (int i = 0; i < 1000; i++) { u8a_set(arr, i, 42); }
 
     ASSERT_EQ(arr->length, 1000);
     ASSERT_GTEQ(arr->capacity, 1000);
 
-    for (int i = 999; i >= 0; i--){
-        ASSERT_EQ(u8a_pop(arr), 42);
-    }
+    for (int i = 999; i >= 0; i--) { ASSERT_EQ(u8a_pop(arr), 42); }
 
     ASSERT_EQ(arr->length, 0);
     ASSERT_LT(arr->capacity, 1000);
@@ -59,7 +49,7 @@ TEST_CREATE(u8a_push_set_pop_test, {
 
 TEST_CREATE(u8a_resize_test, {
     U8ArrayList * list = u8a_create(8);
-    ASSERT_EQ(list->length,0);
+    ASSERT_EQ(list->length, 0);
     ASSERT_EQ(list->capacity, 8);
 
     u8a_resize(list, 4);
@@ -67,7 +57,6 @@ TEST_CREATE(u8a_resize_test, {
     ASSERT_EQ(list->capacity, 4);
 
     u8a_free(list);
-
 })
 
 TEST_CREATE(u8a_push_string_test, {
@@ -119,5 +108,4 @@ TEST_CREATE(u8a_clone_test, {
 
     u8a_free(list);
     u8a_free(list2);
-
 })

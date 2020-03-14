@@ -1,13 +1,12 @@
 #include <test.h>
-#include <vfs.h>
 #include <tmpfs.h>
+#include <vfs.h>
 
 TEST_CREATE(test_create_vfs, {
     Vfs * test_vfs = vfs_create();
     ASSERT_NOT_NULL(test_vfs);
     vfs_free(test_vfs);
 })
-
 
 
 TEST_CREATE(test_get_root, {

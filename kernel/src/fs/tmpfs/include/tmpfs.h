@@ -2,9 +2,9 @@
 #ifndef TMPFS_H
 #define TMPFS_H
 
-#include <vfs.h>
 #include <stdint.h>
 #include <u8_array_list.h>
+#include <vfs.h>
 #include <vp_array_list.h>
 
 const static int TMPFS_DEFAULT_FILE_ALLOC_SIZE = 16;
@@ -14,7 +14,7 @@ typedef struct {
     Inode base;
 
     union {
-        U8ArrayList * filedata; // if it's a file
+        U8ArrayList * filedata;    // if it's a file
         VPArrayList * direntries;  // if it's a directory
     } data;
 } TmpfsInode;

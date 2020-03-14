@@ -16,34 +16,31 @@
  * Notes:  The following were adapted directly from musl-libc:
  *               memcmp, memset, strcmp, strchrnul, strcpy, strlen, strtok
  ********************************************************************/
+#include <mem_alloc.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
-#include <stdio.h>
-#include <mem_alloc.h>
-
-//FIXME: decouple
+// FIXME: decouple
 #include <interrupt.h>
 
 #define LOWER_CASE 0
 #define UPPER_CASE 1
-#define NO_CASE 2
+#define NO_CASE    2
 
 // Helpers for MUSL String functions
-#define UCHAR_MAX 0xFF
-#define ALIGN (sizeof(os_size_t))
-#define ONES ((os_size_t)-1/UCHAR_MAX)
-#define HIGHS (ONES * (UCHAR_MAX/2+1))
+#define UCHAR_MAX  0xFF
+#define ALIGN      (sizeof(os_size_t))
+#define ONES       ((os_size_t)-1 / UCHAR_MAX)
+#define HIGHS      (ONES * (UCHAR_MAX / 2 + 1))
 #define HASZERO(x) (((x)-ONES) & (~(x)) & HIGHS)
 
-/*4-17-15: - Prakash
- * panic() added
- - Currrently states the panic and stalls the machine
- */
-void panic() {
+// Currrently states the panic and stalls the machine or exits iff run within qemu with semihosting
+// enabled.
+void inline panic() {
     disable_interrupt(BOTH);
-    kprintf("Kernel panic!\n");
+    WARN("Kernel panic!\n");
     kprintf("\n     )                        (                     \n");
     kprintf("  ( /(                   (    )\\ )                  \n");
     kprintf("  )\\()) (  (           ( )\\  (()/(   )      (       \n");
@@ -51,58 +48,55 @@ void panic() {
     kprintf("|_ ((_)((_|()\\  )\\ ) /((_)   (_)) )(_)) )\\ |(_) )\\  \n");
     kprintf("| |/ (_))  ((_)_(_/((_))| |  | _ ((_)_ _(_/((_)((_) \n");
     kprintf("  ' </ -_)| '_| ' \\)) -_) |  |  _/ _` | ' \\)) / _|  \n");
-    kprintf(" _|\\_\\___||_| |_||_|\\___|_|  |_| \\__,_|_||_||_\\__|  ");
-    SemihostingCall(OSSpecific);
+    kprintf(" _|\\_\\___||_| |_||_|\\___|_|  |_| \\__,_|_||_||_\\__|\n");
+
+    SemihostingOSExit(-1);
     SLEEP;
-    __builtin_unreachable();
 }
 
 void splash() {
-
-//    kprintf("\n\n");
-//    kprintf("\t ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗ ███████╗\n");
-//    kprintf("\t██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝\n");
-//    kprintf("\t██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗\n");
-//    kprintf("\t██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║\n");
-//    kprintf("\t╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝██████║\n\n");
-//
+    //    kprintf("\n\n");
+    //    kprintf("\t ██████╗ ██████╗ ██╗   ██╗██████╗ ███████╗███████╗ ██████╗  ██████╗\n");
+    //    kprintf("\t██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝\n");
+    //    kprintf("\t██║     ██║   ██║██║   ██║██████╔╝███████╗█████╗  ██║   ██║███████╗\n");
+    //    kprintf("\t██║     ██║   ██║██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║╚════██║\n");
+    //    kprintf("\t╚██████╗╚██████╔╝╚██████╔╝██║  ██║███████║███████╗╚██████╔╝██████║\n\n");
+    //
     kprintf("\n\n");
-    kprintf("\t ██████╗██╗   ██╗██████╗ ███████╗███████╗██████╗    ██████╗ ███████╗\n");
+    kprintf("\t ██████╗██╗   ██╗██████╗ ███████╗███████╗██████╗    ██████╗  ██████╗\n");
     kprintf("\t██╔════╝██║   ██║██╔══██╗██╔════╝██╔════╝██╔═══██╗ ██╔═══██╗██╔════╝\n");
     kprintf("\t██║     ██║   ██║██████╔╝███████╗█████╗  ██║   ██║ ██║   ██║███████╗\n");
     kprintf("\t██║     ██║   ██║██╔══██╗╚════██║██╔══╝  ██║   ██║ ██║   ██║╚════██║\n");
-    kprintf("\t╚██████╗╚██████╔╝██║  ██║███████║███████╗██████╔╝  ╚██████╔╝██████║\n\n");
+    kprintf("\t╚██████╗╚██████╔╝██║  ██║███████║███████╗██████╔╝  ╚██████╔╝██████║\n\n\n");
 }
 
 /*4-17-15: - Prakash
  _assert_fail() added
  - This is a helper function for the assert() macro
  */
-int _assert_fail(char *_file, unsigned int _line, char *_func) {
-    kprintf("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
-    panic();
+int _assert_fail(char * _file, unsigned int _line, char * _func) {
+    FATAL("ASSERT FAILURE: %s:%u: %s\n", _file, _line, _func);
     return 1;
 }
-
 
 
 /* Returns a pointer to the first instance of c in s, like indexOf().
  If c is not found, then return a pointer to the NULL character at
  the end of String s.
  */
-char *__strchrnul(char *s, char c) {
+char * __strchrnul(char * s, char c) {
     os_size_t *w, k;
 
-    if (!c)
-        return (char *) s + strlen(s);
+    if (!c) return (char *)s + strlen(s);
 
-    for (; (uintptr_t) s % ALIGN; s++)
-        if (!*s || *(unsigned char *) s == c)
-            return (char *) s;
+    for (; (uintptr_t)s % ALIGN; s++)
+        if (!*s || *(unsigned char *)s == c) return (char *)s;
     k = ONES * c;
-    for (w = (void *) s; !HASZERO(*w) && !HASZERO(*w ^ k); w++);
-    for (s = (void *) w; *s && *(unsigned char *) s != c; s++);
-    return (char *) s;
+    for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w ^ k); w++)
+        ;
+    for (s = (void *)w; *s && *(unsigned char *)s != c; s++)
+        ;
+    return (char *)s;
 }
 
 /* A re-entrant function that returns a substring of s. The substring starts
@@ -110,13 +104,11 @@ char *__strchrnul(char *s, char c) {
  delimiter characters (indicated by sep). The substring ends at the next
  delimeter character (indicated by sep).
  */
-char *os_strtok(char *s, char *sep) {
-    static char *p;
-    if (!s && !(s = p))
-        return NULL;
+char * os_strtok(char * s, char * sep) {
+    static char * p;
+    if (!s && !(s = p)) return NULL;
     s += os_strspn(s, sep);
-    if (!*s)
-        return p = 0;
+    if (!*s) return p = 0;
     p = s + os_strcspn(s, sep);
     if (*p)
         *p++ = 0;
@@ -128,8 +120,8 @@ char *os_strtok(char *s, char *sep) {
 /* Returns the length of the initial segment of s that only includes
  the characters in c.
  */
-os_size_t os_strspn(char *s, char *accept) {
-    char c = s[0]; // The character in s being checked
+os_size_t os_strspn(char * s, char * accept) {
+    char c = s[0];  // The character in s being checked
     int length = 0;
 
     // Check each character in s
@@ -139,9 +131,7 @@ os_size_t os_strspn(char *s, char *accept) {
         // Check against each character in accept
         int i;
         for (i = 0; i < strlen(accept); i++) {
-            if (c == accept[i]) {
-                ok = true;
-            }
+            if (c == accept[i]) { ok = true; }
         }
 
         if (ok == true) {
@@ -159,8 +149,8 @@ os_size_t os_strspn(char *s, char *accept) {
 /* Returns the length of the initial segment of s that does not contain
  any characters in string c.
  */
-os_size_t os_strcspn(char *s, char *reject) {
-    char c = s[0]; // The character in s being checked
+os_size_t os_strcspn(char * s, char * reject) {
+    char c = s[0];  // The character in s being checked
     int length = 0;
 
     // Check each character in s
@@ -168,9 +158,7 @@ os_size_t os_strcspn(char *s, char *reject) {
         // Check against each character in reject
         int i;
         for (i = 0; i < strlen(reject); i++) {
-            if (c == reject[i]) {
-                return length;
-            }
+            if (c == reject[i]) { return length; }
         }
 
         // If c did not match any reject characters, continue
@@ -182,9 +170,8 @@ os_size_t os_strcspn(char *s, char *reject) {
 
 // Return string converted to int form, or 0 if not applicable
 // Necessary comments provided in atof() (next function)
-int katoi(char *string) {
-    if (!string)
-        return 0;
+int katoi(char * string) {
+    if (!string) return 0;
 
     int integer = 0;
     int sign = 1;
@@ -208,20 +195,19 @@ int katoi(char *string) {
 }
 
 // Return string converted to double form, or 0 if not applicable
-double katof(char *string) {
-    if (!string)
-        return 0.0;
+double katof(char * string) {
+    if (!string) return 0.0;
 
-    double integer = 0.0; // before decimal
-    double fraction = 0.0; // after decimal
-    int sign = 1; // positive or negative?
-    int divisor = 1; // used to push fraction past decimal point
-    bool after_decimal = false; // decimal point reached?
+    double integer = 0.0;        // before decimal
+    double fraction = 0.0;       // after decimal
+    int sign = 1;                // positive or negative?
+    int divisor = 1;             // used to push fraction past decimal point
+    bool after_decimal = false;  // decimal point reached?
 
     // Check if string includes sign (including a "+")
     if (*string == '-') {
         sign = -1;
-        string++; // progress to next char
+        string++;  // progress to next char
     } else if (*string == '+') {
         string++;
     }
@@ -229,19 +215,18 @@ double katof(char *string) {
     while (*string != '\0') {
         if (*string >= '0' && *string <= '9') {
             if (after_decimal) {
-                fraction *= 10; // progress to next position in integer
-                fraction += (*string - '0'); // add integer form of current number in string
+                fraction *= 10;               // progress to next position in integer
+                fraction += (*string - '0');  // add integer form of current number in string
                 divisor *= 10;
             } else {
-                integer *= 10; // progress to next position in integer
-                integer += (*string - '0'); // add integer form of current number in string
+                integer *= 10;               // progress to next position in integer
+                integer += (*string - '0');  // add integer form of current number in string
             }
         } else if (*string == '.') {
-            if (after_decimal)
-                return 0.0; // more than one '.'
+            if (after_decimal) return 0.0;  // more than one '.'
             after_decimal = true;
         } else {
-            return 0.0; // current char in string is not a number or '.'
+            return 0.0;  // current char in string is not a number or '.'
         }
         string++;
     }
@@ -249,64 +234,64 @@ double katof(char *string) {
 }
 
 // Return string converted to long int form, or 0 if not applicable
-long int katol(char *string) {
-    return (long int) katoi(string);
+long int katol(char * string) {
+    return (long int)katoi(string);
 }
 
 /*
 // Same a
-#include "../../old/include/klibc.h"s katof, but makes endptr point to the string which comes after the number
-double kstrtod(const char *string, char **endptr)
+#include "../../old/include/klibc.h"s katof, but makes endptr point to the string which comes after
+the number double kstrtod(const char *string, char **endptr)
 {
-	if (!string)
-		return 0.0;
+    if (!string)
+        return 0.0;
 
-	double integer = 0.0;
-	double fraction = 0.0;
-	int sign = 1;
-	int divisor = 1;
-	Boolean after_decimal = FALSE;
-	Boolean result_found = FALSE;
-	double result = 0.0;
+    double integer = 0.0;
+    double fraction = 0.0;
+    int sign = 1;
+    int divisor = 1;
+    Boolean after_decimal = FALSE;
+    Boolean result_found = FALSE;
+    double result = 0.0;
 
-	if (*string == '-')
-	{
-		sign = -1;
-		string++;
-	}
-	else if (*string == '+')
-		string++;
+    if (*string == '-')
+    {
+        sign = -1;
+        string++;
+    }
+    else if (*string == '+')
+        string++;
 }
 
 while (!result_found)
 {
-	if (*string >= '0' && *string <= '9')
-	{
-		if (after_decimal)
-		{
-			fraction *= 10;
-			fraction += (*string - '0');
-			divisor *= 10;
-		}
-		else
-		{
-			integer *= 10;
-			integer += (*string - '0');
-		}
-		string++;
-	}
-	else if (*string == '.')
-	{
-		if (after_decimal)
-		return 0.0;
-		after_decimal = true;
-		string++;
-	}
-	else
-	{
-		result = sign * (integer + (fraction/divisor));
-		result_found = true;
-	}
+    if (*string >= '0' && *string <= '9')
+    {
+        if (after_decimal)
+        {
+            fraction *= 10;
+            fraction += (*string - '0');
+            divisor *= 10;
+        }
+        else
+        {
+            integer *= 10;
+            integer += (*string - '0');
+        }
+        string++;
+    }
+    else if (*string == '.')
+    {
+        if (after_decimal)
+        return 0.0;
+        after_decimal = true;
+        string++;
+    }
+    else
+    {
+        result = sign * (integer + (fraction/divisor));
+        result_found = true;
+    }
 }
 
 *endptr = string;
@@ -315,10 +300,9 @@ return result;
 }
 */
 
-//Same as katol, but makes endptr point to the string which comes after the number
-long int kstrtol(char *string, char **endptr) {
-    if (!string)
-        return 0;
+// Same as katol, but makes endptr point to the string which comes after the number
+long int kstrtol(char * string, char ** endptr) {
+    if (!string) return 0;
 
     long int integer = 0;
     long int result = 0;
@@ -342,7 +326,7 @@ long int kstrtol(char *string, char **endptr) {
             result_found = true;
         }
     }
-    *endptr = (char *) string;
+    *endptr = (char *)string;
 
     return result;
 }
@@ -352,7 +336,6 @@ long int kstrtol(char *string, char **endptr) {
 uint32_t km_size() {
     return mem_get_heap_size();
 }
-
 
 
 unsigned int rand() {

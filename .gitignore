@@ -1,49 +1,64 @@
-#these were not originally apart of the repo -- appeared after build
-/kernel/kernel.bin
-/kernel/flash.bin
-/kernel/boot-commands
-/kernel/card.sd
-/kernel/src/test/test.c
-/toolchain/target/
-/u-boot/u-boot-*
+# Build files
+kernel/kernel.bin
+kernel/flash.bin
+kernel/boot-commands
+kernel/card.sd
+kernel/src/test/test.c
+
+# Toolchain dir, but not the build script
+/toolchain/
+!/toolchain/build.sh
+
+# Qemu dir, again without its buildscript
 /qemu/
 !/qemu/build.sh
+
+# Generic build dirs
 build/
 /cmake-build-*/
+
+# Generated docs
+/docs/
 /html/
 /latex/
 /course_os_docs.pdf
 
+# Editor specific
 .settings/
 .cproject
 .project
 /.idea/
+!/.idea/runConfigurations
 /.vscode/
-
-#always exclude these from being pushed
-*.o
-*.img
-*.map
-*.elf
-*.bin
+!/.idea/settings.json
 *~
 *.swp
-/user/hello/hello
-/user/hello/hello1
-/user/hello/hello2
-/user/libc/libc.a
-
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 *.un~
 Session.vim
 .netrwhist
 
+# CCLS files
+.ccls-cache/
+compile_commands.json
+
+# Binary files
+*.o
+*.img
+*.map
+*.elf
+*.bin
+/user/hello/hello
+/user/hello/hello1
+/user/hello/hello2
+/user/libc/libc.a
+
+# Floobits (CLion collabrative editing plugin)
 .floo
 .flooignore
 
-uboot-commands.ubt
-
+# Misc
 NOTES
 /server.PID
 compile_commands.json
