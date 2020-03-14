@@ -1,8 +1,7 @@
 #include <test.h>
 #include <stdio.h>
 #include <thread.h>
-
-#include "../include/process.h"
+#include <process.h>
 
 TEST_CREATE(test_process_smoke, {
     Process *process = create_process((void *) 63, NULL);

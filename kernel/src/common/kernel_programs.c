@@ -7,7 +7,7 @@ void kernel_one() {
     ); */
     kprintf("Starting kernel program one.\n");
 
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < 100; i++) {
         kprintf("Hello #%i from program one.\n", i);
     }
 
@@ -21,7 +21,7 @@ void kernel_two() {
     );
     kprintf("Starting kernel program two.\n");
 
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < 100; i++) {
         kprintf("Hello #%i from program two.\n", i);
     }
 

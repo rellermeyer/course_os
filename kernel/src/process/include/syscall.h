@@ -6,6 +6,4 @@
 #define SYSCAL_CLOSE 3
 #define SYSCAL_WRITE 4
 
-
-
 #endif

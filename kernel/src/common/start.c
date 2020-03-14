@@ -7,8 +7,7 @@
 #include <stdint.h>
 #include <vm2.h>
 #include <test.h>
-
-#include "../process/scheduler/include/scheduler.h"
+#include <scheduler.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].

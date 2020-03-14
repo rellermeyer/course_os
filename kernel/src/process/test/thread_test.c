@@ -1,6 +1,5 @@
 #include <test.h>
 #include <stdio.h>
-
 #include <thread.h>
 
 TEST_CREATE(test_thread_smoke, {

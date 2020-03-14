@@ -3,9 +3,8 @@
 #include <vp_array_list.h>
 #include <stdlib.h>
 #include <vas2.h>
-
-#include "./include/process.h"
-#include "./include/thread.h"
+#include <process.h>
+#include <thread.h>
 
 /**
  * Create a new process.

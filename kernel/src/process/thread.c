@@ -1,11 +1,8 @@
 #include <stdlib.h>
-
-#include "./include/thread.h"
-#include "./include/process.h"
-#include "./include/registers.h"
-#include "./include/asm_helper.h"
-
-#include "../../../../user/libc/arch/arm/syscall_arch.h"
+#include <thread.h>
+#include <process.h>
+#include <registers.h>
+#include <asm_helper.h>
 
 /**
  * Create a new thread.
