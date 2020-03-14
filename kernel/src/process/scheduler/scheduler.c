@@ -10,6 +10,15 @@ Scheduler *create_scheduler() {
     return scheduler;
 }
 
+void enable_scheduler(Scheduler *scheduler) {
+    kprintf("Starting scheduler..\n");
+    load_thread(scheduler->current_thread);
+}
+
+void add_process_to_scheduler(Scheduler *scheduler, Process *process) {
+    scheduler->current_thread = vpa_get(process->threads, 0);
+}
+
 void free_scheduler(Scheduler *scheduler) {
     kfree(scheduler);
 }

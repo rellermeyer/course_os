@@ -23,13 +23,15 @@
 #include <process.h>
 #include <klibc.h>
 #include <vm.h>
-#include <scheduler.h>
 #include <mem_alloc.h>
 #include <test.h>
 #include <hardwareinfo.h>
 #include <chipset.h>
 #include <timer.h>
 #include <interruptold.h>
+#include <kernel_programs.h>
+
+#include "../process/scheduler/include/scheduler.h"
 
 // This start is what u-boot calls. It's just a wrapper around setting up the
 // virtual memory for the kernel.
@@ -74,10 +76,7 @@ void start2(uint32_t *p_bootargs) {
     // Call the chipset again to do post-interrupt-enable initialization
     chipset.late_init();
 
-    process_init();
-
-    // FIXME: temporary
-    sched_init();
+    Scheduler *scheduler = create_scheduler();
 
     kprintf("bootargs: 0x%x\n", p_bootargs);
 
@@ -102,6 +101,14 @@ void start2(uint32_t *p_bootargs) {
     //print_PID();
     // init_q();
     //common();
+
+    Process *process1 = create_process(kernel_one, NULL);
+    Process *process2 = create_process(kernel_two, NULL);
+    add_process_to_scheduler(scheduler, process1);
+    add_process_to_scheduler(scheduler, process2);
+
+    enable_scheduler(scheduler);
+    free_scheduler(scheduler);
 
     // TODO:
     //  * Mount vfs

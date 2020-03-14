@@ -46,3 +46,4 @@ uboot-commands.ubt
 
 NOTES
 /server.PID
+compile_commands.json

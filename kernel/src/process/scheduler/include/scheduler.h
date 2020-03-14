@@ -8,6 +8,8 @@ typedef struct Scheduler {
 } Scheduler;
 
 Scheduler *create_scheduler();
+void enable_scheduler(Scheduler *scheduler);
+void add_process_to_scheduler(Scheduler *scheduler, Process *process);
 void free_scheduler(Scheduler *scheduler);
 
 #endif //COURSE_OS_SCHEDULER_H
