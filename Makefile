@@ -34,6 +34,5 @@ test:
 	@$(MAKE) -C ./kernel test
 
 docs:
-	doxygen doxyfile
-	$(MAKE) -C latex pdf
-	mv ./latex/refman.pdf course_os_docs.pdf
+	doxygen Doxyfile
+	xdg-open docs/index.html
