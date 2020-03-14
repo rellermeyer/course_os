@@ -14,7 +14,7 @@ ChipsetInterface chipset = {
 };
 
 void init_chipset() {
-    HardwareInfo* info = get_hardwareinfo();
+    HardwareInfo * info = get_hardwareinfo();
 
     memset(&chipset, 0, sizeof(ChipsetInterface));
 
@@ -28,7 +28,7 @@ void init_chipset() {
     }
 
     for (size_t i = 0; i < sizeof(ChipsetInterface) / sizeof(uint32_t); i++) {
-        if (((uint32_t **) &chipset)[i] == NULL) {
+        if (((uint32_t **)&chipset)[i] == NULL) {
             FATAL("Chipset did not satisfy the required interface. Missing field %i\n", i);
         }
     }
