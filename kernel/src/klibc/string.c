@@ -68,3 +68,16 @@ bool starts_with(char * s1, char * s2) {
     if (strncmp(s1, s2, strlen(s2)) == 0) { return true; }
     return false;
 }
+
+int memcmp(const void *s1, const void *s2, size_t n) {
+  unsigned char const *t1 = s1;
+  unsigned char const *t2 = s2;
+
+  while (n--) {
+    if (*t1 != *t2) return (int)*t1 - (int)*t2;
+    t1++;
+    t2++;
+  }
+
+  return 0;
+}
