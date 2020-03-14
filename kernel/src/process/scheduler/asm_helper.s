@@ -37,20 +37,8 @@ switch_context:
     push {r1}
     ldr r1, [r0, #0]
     push {r1}
-    // cps #16
 
-    pop {r0}
-    pop {r1}
-    pop {r2}
-    pop {r3}
-    pop {r4}
-    pop {r5}
-    pop {r6}
-    pop {r7}
-    pop {r8}
-    pop {r9}
-    pop {r10}
-    pop {r11}
-    pop {r12}
-    pop {r14}
-    pop {pc}
+//    msr CPSR_c, #0x10
+
+    pop {r0-r12}
+    pop {r14-pc}

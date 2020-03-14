@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include "syscall.h"
+
+#include "syscallhandler.h"
 
 #define SYS_exit 100
 

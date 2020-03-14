@@ -1,8 +1,9 @@
 #include <stdlib.h>
+
 #include "../../../kernel/src/klibc//include/stdint.h"
-#include "libc.h"
 #include "atomic.h"
-#include "syscall.h"
+#include "libc.h"
+#include "syscallhandler.h"
 
 static void dummy()
 {

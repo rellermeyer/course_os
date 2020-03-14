@@ -2,6 +2,7 @@
 #include <interrupt.h>
 #include <mmio.h>
 #include <stdio.h>
+#include <syscallhandler.h>
 #include <vm2.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
@@ -77,7 +78,7 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+    size_t callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
     asm volatile("MOV %0, r0" : "=r"(r0)::);
@@ -85,7 +86,8 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
 
-    kprintf("SOFTWARE INTERRUPT HANDLER\n");
+    DEBUG("SYSCALL");
+
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
@@ -96,85 +98,9 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     kprintf("arg3=%d\n", r3);
     kprintf("\n");
 
-    // System Call Handler
-    switch (callNumber) {
-        case SYSCALL_EXIT:
-            // TODO: remove current process from scheduler
-            for (;;)
-                ;
-            break;
-        case SYSCALL_DUMMY:
-            return 0L;
-            break;
+    handle_syscall(callNumber, r0, r1, r2, r3);
 
-        // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
-        case SYSCALL_CREATE:
-            kprintf("Create system call called!\n");
-            return -1;
-
-            //		return (long) kcreate((char*) r0, r1, 0);
-        case SYSCALL_DELETE:
-            kprintf("Delete system call called!\n");
-            return -1;
-
-            //		return (long) kdelete((char*) r0, 1);
-        case SYSCALL_OPEN:
-            kprintf("Open system call called!\n");
-            return -1;
-
-            //		return (long) kopen((char*) r0, r1);
-        case SYSCALL_MKDIR:
-            kprintf("Mkdir system call called!\n");
-            return -1;
-
-            //		return (long) kcreate((char*) r0, 'w', 1);
-        case SYSCALL_READ:
-            kprintf("Read system call called!\n");
-            return -1;
-
-            //		return (long) kread(r0, (void*) r1, r2);
-        case SYSCALL_WRITE:
-            kprintf("Write system call called!\n");
-            return -1;
-
-            //		return (long) kwrite(r0, (void*) r1, r2);
-        case SYSCALL_CLOSE:
-            kprintf("Close system call called!\n");
-            return -1;
-
-            //		return (long) kclose(r0);
-        case SYSCALL_SEEK:
-            kprintf("Seek system call called!\n");
-            return -1;
-
-            //		return (long) kseek(r0, r1);
-        case SYSCALL_COPY:
-            kprintf("Copy system call called!\n");
-            return -1;
-
-            //		return (long) kcopy((char*) r0, (char*) r1, r2);
-        case SYSCALL_LS:
-            kprintf("Ls system call called!\n");
-            return -1;
-            //		return (long) kls((char*) r0);
-        case SYSCALL_SET_PERM:
-            kprintf("Set permission system call called!\n");
-            kprintf("Yet to be implemented\n");
-            return -1;
-        case SYSCALL_MEM_MAP:
-            kprintf("Memory map system call called!\n");
-            kprintf("Yet to be implemented\n");
-            return -1;
-
-        case SYSCALL_PRINTF:
-            kprintf("Printf system call called!\n");
-
-            kprintf((const char *)r0);
-            return 0L;
-        default:
-            kprintf("That wasn't a syscall you knob!\n");
-            return -1L;
-    }
+    return 0;
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {

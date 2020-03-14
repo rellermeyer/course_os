@@ -36,30 +36,6 @@
 
 #define BRANCH_INSTRUCTION 0xe59ff018  // ldr pc, pc+offset (where offset is 0x20 bytes)
 
-// System Call Types
-// TODO: maybe make enum?
-#define SYSCALL_CREATE        0
-#define SYSCALL_SWITCH        1
-#define SYSCALL_DELETE        2
-#define SYSCALL_OPEN          3
-#define SYSCALL_READ          4
-#define SYSCALL_WRITE         5
-#define SYSCALL_CLOSE         6
-#define SYSCALL_SET_PERM      7
-#define SYSCALL_MEM_MAP       8
-#define SYSCALL_SEEK          9
-#define SYSCALL_MKDIR         10
-#define SYSCALL_COPY          11
-#define SYSCALL_LS            12
-#define SYSCALL_MALLOC        13
-#define SYSCALL_ALIGNED_ALLOC 14
-#define SYSCALL_FREE          15
-#define SYSCALL_PRINTF        16
-#define SYSCALL_DUMMY         99
-#define SYSCALL_EXIT          80
-#define SYSCALL_WRITEV        101
-#define SYSCALL_PAUSE         102
-
 void init_vector_table(void);
 
 // vector table handlers, should be loaded at 0x00 in this order!
