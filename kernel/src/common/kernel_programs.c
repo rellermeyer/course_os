@@ -15,10 +15,10 @@ void kernel_one() {
 }
 
 void kernel_two() {
-    /** asm volatile(
+    asm volatile(
         "mov %r7, $4 \n" \
         "swi $0 \n"
-    ); */
+    );
     kprintf("Starting kernel program two.\n");
 
     for (size_t i = 0; i < 1000; i++) {

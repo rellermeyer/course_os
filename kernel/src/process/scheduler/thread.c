@@ -15,8 +15,16 @@ Thread *create_thread(void *entry, Process *process) {
     thread->registers = (struct Registers){0};
 
     // TODO: allocate proper pages.
-    thread->registers.SP = (size_t) kmalloc(128);
+    size_t stack_size = 128;
+    uint8_t * stack_base = (uint8_t *) kmalloc(stack_size);
+
+    thread->registers.SP = (size_t)(stack_base + stack_size);
     thread->registers.PC = (size_t) entry;
+    // TODO: this makes returning from the thread main routine exit the thread
+//    thread->registers.LR = exit;
+
+    INFO("ENTRY: 0x%x", entry);
+    INFO("SP: 0x%x", thread->registers.SP );
 
     return thread;
 }
@@ -95,7 +103,11 @@ void load_thread(Thread *thread) {
     //     "r15"
     // ); **/
 
-    switch_context(thread->registers);
+    asm volatile (
+        "mov r0, %0\n"
+        "b switch_context"
+        :: "r"(&thread->registers)
+    );
 
     // asm("mov r0, %0" :: "r"(thread->registers.R0));
     // asm("mov r1, %0" :: "r"(thread->registers.R1));
