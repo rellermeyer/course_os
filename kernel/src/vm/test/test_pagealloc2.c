@@ -48,11 +48,11 @@ TEST_CREATE(test_allocate_many_pt, {
     size_t total = listlength(physicalMemoryManager.unused);
     size_t totalallocated = listlength(physicalMemoryManager.allocated);
 
-    const size_t amount = 1026;
+    const size_t amount = 520;
 
     struct L1PageTable * pages[amount];
 
-    for (int i = 0; i < amount; i++) {
+    for (size_t i = 0; i < amount; i++) {
         pages[i] = pmm_allocate_l1_pagetable();
         ASSERT_NOT_NULL(pages[i]);
         ASSERT_EQ(listlength(physicalMemoryManager.unused), total - (i + 1u));

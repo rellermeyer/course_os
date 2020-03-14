@@ -133,6 +133,27 @@ void vm2_start() {
     mmu_started = true;
 }
 
+void vm2_free_page(struct L1PageTable * l1pt, size_t virtual) {
+    // TODO: Maybe delete underlying L2? (It has bad time complexity for now, we don't).
+
+    L1PagetableEntry * l1Entry = &l1pt->entries[l1pt_index(virtual)];
+    if (l1Entry->section.type == 1) {
+        struct L2PageTable * l2 = find_l2pt(l1Entry);
+        union L2PagetableEntry * l2Entry = &l2->entries[l2pt_index(virtual)];
+
+        struct Page * page_address =
+            (struct Page *)VIRT2PHYS(l2Entry->smallpage.base_address << 12u);
+        pmm_free_page(page_address);
+
+        l2Entry->entry = 0;
+
+        // TODO: Partial cache flushes
+        vm2_flush_caches();
+    } else {
+        WARN("Invalid section type, can't free non-page");
+    }
+}
+
 void * vm2_allocate_page(struct L1PageTable * l1pt,
                          size_t virtual,
                          bool remap,
