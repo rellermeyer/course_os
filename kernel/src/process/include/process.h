@@ -3,6 +3,7 @@
 
 #include <vp_array_list.h>
 #include <vas2.h>
+#include <elf.h>
 
 #define MAX_PROCESS_PRIORITY 20
 #define DEFAULT_PROCESS_PRIORITY 10
@@ -16,7 +17,7 @@ typedef struct Process {
     struct Process *parent;
 } Process;
 
-Process *create_process(void *entry, Process *parent);
+Process *create_process(Elf *entry, Process *parent);
 void free_process(Process *process);
 
 #endif //COURSE_OS_PROCESS_H

@@ -175,7 +175,9 @@ void * vm2_allocate_page(struct L1PageTable * l1pt,
             };
 
             // Return the allocated l2pt
-            if (created_l2pt != NULL) { *created_l2pt = l2; }
+            if (created_l2pt != NULL) { 
+                *created_l2pt = l2; 
+            }
 
             /** Fallthrough **/
         case 1:;

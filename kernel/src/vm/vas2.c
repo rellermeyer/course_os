@@ -27,7 +27,7 @@ void switch_to_vas(struct vas2 * vas) {
 
     asid_set(vas->tlbDescriptor.asid);
 
-    vm2_set_user_pagetable(vas->l1PageTable);
+    vm2_set_user_pagetable((void *) VIRT2PHYS((size_t) vas->l1PageTable));
 }
 
 void free_vas(struct vas2 * vas) {
@@ -47,6 +47,7 @@ void allocate_page(struct vas2 * vas, size_t address, bool executable) {
 
     void * page = vm2_allocate_page(vas->l1PageTable, address, false, perms, &l2pt);
 
+    // TODO: L2pt is _always_ NULL
     if (l2pt != NULL) { vpa_push(vas->l2tables, l2pt); }
 
     vpa_push(vas->pages, page);

@@ -8,6 +8,8 @@
 #include <vm2.h>
 #include <test.h>
 #include <scheduler.h>
+#include <elf.h>
+#include <elf_files.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -64,10 +66,11 @@ void start(uint32_t * p_bootargs) {
     SemihostingCall(OSSpecific);
 #endif
 
+    Elf *elf = elf_decode(swi, swi_len);
 
-    Process *process1 = create_process(kernel_one, NULL);
-    Process *process2 = create_process(kernel_two, NULL);
-    add_process_to_scheduler(scheduler, process1);
+    // Process *process1 = create_process(kernel_one, NULL);
+    Process *process2 = create_process(elf, NULL);
+    // add_process_to_scheduler(scheduler, process1);
     add_process_to_scheduler(scheduler, process2);
 
     enable_scheduler(scheduler);

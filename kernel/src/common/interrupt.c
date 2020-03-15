@@ -86,18 +86,6 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
 
-    DEBUG("SYSCALL");
-
-
-    // Print out syscall # for debug purposes
-    kprintf("Syscall #: ");
-    kprintf("%d\n", callNumber);
-    kprintf("arg0=%d\n", r0);
-    kprintf("arg1=%d\n", r1);
-    kprintf("arg2=%d\n", r2);
-    kprintf("arg3=%d\n", r3);
-    kprintf("\n");
-
     handle_syscall(callNumber, r0, r1, r2, r3);
 
     return 0;

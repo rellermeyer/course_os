@@ -16,8 +16,8 @@ Thread *create_thread(void *entry, Process *process) {
 
     // Allocate stack.
     size_t stack_end = 0x80000000 - (PAGE_SIZE * thread->process->threads->length);
-    allocate_page(thread->process->vas, stack_end, false);
-    thread->registers.SP = stack_end + PAGE_SIZE - 1;
+    allocate_page(thread->process->vas, stack_end - PAGE_SIZE, false);
+    thread->registers.SP = stack_end - 1;
 
     // Set instruction pointer.
     thread->registers.PC = (size_t) entry;

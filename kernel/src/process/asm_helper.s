@@ -39,10 +39,8 @@ switch_context:
     ldr r1, [r0, #0]
     push {r1}
 
-    // TODO: Enter user space
+    // TODO: Enter user mode
     // cps #16
-    // Or:
-    // msr CPSR_c, #0x10
 
     // Load all register states.
     // Loading the PC register effectively jumps into the user program
