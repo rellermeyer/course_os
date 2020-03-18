@@ -76,7 +76,7 @@ uint32_t allocation_size(void * ptr) {
     return get_alloc_size(ptr);
 }
 
-/// Internal function to get the global allocator. Should only be indirectly used through
+/// Internal function to get the global oldlocator. Should only be indirectly used through
 /// kmalloc/krealloc/kcalloc/kfree
 heap_t * mem_get_allocator() {
     return allocator;

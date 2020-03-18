@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="course_os"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/laura/Documents/course_os"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/laura/Documents/course_os"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="course_os">
+				<Option output="/home/laura/Documents/course_os/course_os" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/laura/Documents/course_os"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DENABLE_TESTS"/>
+					<Add option="-DMEM_DEBUG"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/allocator/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/allocator/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/common/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2835"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2835/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2836"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2836/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/mmci"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/mmci/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/klibc/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/klibc/include/bits"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/test/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/vm/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/vm/test"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 course_os"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="course_os/fast">
+				<Option output="/home/laura/Documents/course_os/course_os" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/laura/Documents/course_os"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DENABLE_TESTS"/>
+					<Add option="-DMEM_DEBUG"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/allocator/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/allocator/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/common/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2835"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2835/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2836"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/bcm2836/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/chipset/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/mmci"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/drivers/mmci/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/bpf/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/ds/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/fs/tmpfs/test"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/klibc/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/klibc/include/bits"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/test/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/vm/include"/>
+					<Add directory="/home/laura/Documents/course_os/./kernel/src/vm/test"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 course_os/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/laura/Documents/course_os"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/laura/Documents/course_os/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/allocator/allocator.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/allocator/llist.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/allocator/mem_alloc.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/allocator/test/test_allocator.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/common/hardwareinfo.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/common/interrupt.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/common/start.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/chipset/bcm2835/bcm2835.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/chipset/bcm2836/bcm2836.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/chipset/bcm2836/timer.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/chipset/bcm2836/uart.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/chipset/chipset.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/drivers/mmci/mmci.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/bpf/HashMap.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/bpf/test/hashmap_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/priority_queue.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/qstr.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/test/priority_queue_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/test/qstr_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/test/u8_array_list_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/test/vp_array_list_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/test/vp_singly_linked_list_test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/u8_array_list.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/vp_array_list.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/ds/vp_singly_linked_list.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/file.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/inode.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/path.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/test/test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/test/test_path.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/tmpfs/test/test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/tmpfs/tmpfs.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/fs/vfs.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/klibc/alloc.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/klibc/klibc.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/klibc/mem.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/klibc/printf.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/klibc/string.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/test/test.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/asid_allocator.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/pmm.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/test/test_asid.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/test/test_pagealloc2.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/test/test_vm2.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/vas2.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/kernel/src/vm/vm2.c">
+			<Option target="course_os"/>
+		</Unit>
+		<Unit filename="/home/laura/Documents/course_os/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
