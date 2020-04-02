@@ -9,6 +9,7 @@ typedef struct ScheduledTimer {
     uint64_t scheduled_count;
     TimerHandle handle;
     TimerCallback callback;
+    uint32_t periodic_delay;
 } ScheduledTimer;
 
 typedef union LittleEndianUint64 {
@@ -19,8 +20,10 @@ typedef union LittleEndianUint64 {
     };
 } LittleEndianUint64;
 
+static prq_handle * scheduled_timers;
+
 /*
- * Gives the frequency of the counter in kHz
+ * Gives the frequency of the counter in Hz
  */
 static inline uint32_t get_frequency() {
     uint32_t val;
@@ -28,8 +31,6 @@ static inline uint32_t get_frequency() {
     asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
     return val;
 }
-
-static prq_handle * scheduled_timers;
 
 static inline void unmask_and_enable_timer() {
     // Disable output mask, enable timer
@@ -52,29 +53,24 @@ static inline uint64_t get_phy_count() {
     return val.dword;
 }
 
-/*
-static inline int32_t get_phy_timer_val()
-{
+static inline int32_t get_phy_timer_val() {
     int32_t val;
     // Read CNTP_TVAL
-    asm volatile ("mrc p15, 0, %0, c14, c2, 0" : "=r"(val));
+    asm volatile("mrc p15, 0, %0, c14, c2, 0" : "=r"(val));
     return val;
 }
 
-static inline void set_phy_timer_val(int32_t val)
-{
+static inline void set_phy_timer_val(int32_t val) {
     // Write CNTP_TVAL
-    asm volatile ("mcr p15, 0, %0, c14, c2, 0" :: "r"(val));
+    asm volatile("mcr p15, 0, %0, c14, c2, 0" ::"r"(val));
 }
 
-static inline uint64_t get_phy_timer_cmp_val()
-{
+static inline uint64_t get_phy_timer_cmp_val() {
     LittleEndianUint64 val;
     // Read CNTP_CVAL
-    asm volatile ("mrrc p15, 2, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
+    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
     return val.dword;
 }
-*/
 
 static inline void set_phy_timer_cmp_val(uint64_t val) {
     const LittleEndianUint64 le_val = (LittleEndianUint64)val;
@@ -89,13 +85,14 @@ static inline ScheduledTimer * get_prq_node_data(prq_node * node) {
 
 void bcm2836_timer_init() {
     const uint32_t freq = get_frequency();
-    kprintf("System counter frequency: %u kHz\n", freq / 1000);
+    INFO("System counter frequency: %u kHz\n", freq / 1000);
 
     bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 
     // Init priority queue
     scheduled_timers = prq_create();
 
+    // Initially there are no timers set yet, so the interrupt is masked
     mask_and_enable_timer();
 }
 
@@ -108,12 +105,27 @@ void timer_handle_interrupt() {
     prq_node * next_timer_node = prq_peek(scheduled_timers);
     while (next_timer_node != NULL &&
            get_prq_node_data(next_timer_node)->scheduled_count <= current_count) {
+
         prq_dequeue(scheduled_timers);
-        ScheduledTimer * next_timer = get_prq_node_data(next_timer_node);
+        ScheduledTimer * const next_timer = get_prq_node_data(next_timer_node);
 
         next_timer->callback();
-        kfree(next_timer);
-        prq_free_node(next_timer_node);
+
+        // If the timer is not periodic, it is removed
+        if (next_timer->periodic_delay == 0) {
+            kfree(next_timer);
+            prq_free_node(next_timer_node);
+        }
+        // If the timer is periodic, it is updated and added to the queue again
+        else {
+            // TODO: Avoid duplicating code in `schedule_timer`
+            const uint64_t scheduled_count = next_timer->scheduled_count;
+            next_timer->scheduled_count = scheduled_count + next_timer->periodic_delay;
+            assert(scheduled_count <= INT32_MAX);
+            next_timer_node->priority = INT32_MAX - scheduled_count;
+
+            prq_enqueue(scheduled_timers, next_timer_node);
+        }
 
         next_timer_node = prq_peek(scheduled_timers);
     }
@@ -128,37 +140,66 @@ void timer_handle_interrupt() {
     }
 }
 
-// TODO: Handle possibility of two timers getting scheduled for the same time (counter value), PRQ
-// needs support
+// TODO: Handle possibility of two timers getting scheduled for the same time (counter value)
+// PRQ needs support first
 
 /*
  * This implementation may execute timers out of order if their delay is very small
  */
-TimerHandle bcm2836_schedule_timer_once(TimerCallback callback, uint32_t delay_ms) {
-    volatile const uint64_t scheduled_count = get_phy_count() + (get_frequency() / 1000) * delay_ms;
+static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
+    assert(callback != NULL);
+    assert(delay_ms > 0);
 
-    ScheduledTimer * new_timer = (ScheduledTimer *)kmalloc(sizeof(ScheduledTimer));
-    prq_node * new_timer_node = prq_create_node();
+    const uint64_t count_offset = (get_frequency() / 1000) * delay_ms;
+    volatile const uint64_t scheduled_count = get_phy_count() + count_offset;
+
+    ScheduledTimer * const new_timer = kmalloc(sizeof(ScheduledTimer));
+    prq_node * const new_timer_node = prq_create_node();
 
     new_timer->scheduled_count = scheduled_count;
     new_timer->callback = callback;
+    assert(sizeof(TimerHandle) >= sizeof(prq_node *));
     new_timer->handle = (TimerHandle)new_timer_node;
+    // 0 means the timer is not periodic
+    new_timer->periodic_delay = periodic ? count_offset : 0;
     // TODO: Find better way of doing this
-    new_timer_node->priority = UINT64_MAX - scheduled_count;
+    assert(scheduled_count <= INT32_MAX);
+    new_timer_node->priority = INT32_MAX - scheduled_count;
     new_timer_node->data = new_timer;
 
     prq_enqueue(scheduled_timers, new_timer_node);
 
     set_phy_timer_cmp_val(get_prq_node_data(prq_peek(scheduled_timers))->scheduled_count);
 
+    // Unmask interrupt if not already so
     unmask_and_enable_timer();
 
     return new_timer->handle;
 }
 
-TimerHandle bcm2836_schedule_timer_periodic(TimerCallback callback, uint32_t delay_ms) {
-    // TEMP
-    return 0;
+TimerHandle bcm2836_schedule_timer_once(TimerCallback callback, uint32_t delay_ms) {
+    return schedule_timer(callback, delay_ms, false);
 }
 
-void bcm2836_deschedule_timer(TimerHandle handle) {}
+TimerHandle bcm2836_schedule_timer_periodic(TimerCallback callback, uint32_t delay_ms) {
+    return schedule_timer(callback, delay_ms, true);
+}
+
+void bcm2836_deschedule_timer(TimerHandle handle) {
+    assert(sizeof(prq_node *) >= sizeof(TimerHandle));
+    prq_node * const timer_node = (prq_node *)handle;
+
+    prq_remove(scheduled_timers, timer_node);
+    kfree(get_prq_node_data(timer_node));
+    prq_free_node(timer_node);
+
+    prq_node * const next_timer_node = prq_peek(scheduled_timers);
+    // If there are no more scheduled timers in queue, mask interrupts until one is added again
+    if (next_timer_node == NULL) {
+        mask_and_enable_timer();
+    }
+    // If there still are, set compare val to next one
+    else {
+        set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
+    }
+}
