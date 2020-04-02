@@ -1,3 +1,4 @@
+#include <klibc.h>
 #include <math.h>
 #include <priority_queue.h>
 #include <stdlib.h>
@@ -12,7 +13,7 @@ void __prq_shift_down(prq_handle * queue, int idx);
 void __prq_shift_up(prq_handle * queue, int idx) {
     prq_node ** heap = queue->heap;
     prq_node *node, *parent;
-    while (heap[idx]->priority < heap[idx / 2]->priority && idx > 1) {
+    while (idx > 1 && heap[idx]->priority < heap[idx / 2]->priority) {
         node = heap[idx];
         parent = heap[idx / 2];
         parent->index = idx;
