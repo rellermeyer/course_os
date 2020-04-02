@@ -4,7 +4,9 @@ include $(CURDIR)/../config.mk
 
 # TODO should we have "-nostdinc"?
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
+CFLAGS += -pipe -std=gnu99 -ffreestanding \
+	-Wall -Werror -Wno-error=unused-function -Wno-error=unused-label -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=unused-local-typedefs \
+	-g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
