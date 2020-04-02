@@ -9,7 +9,6 @@ void init_heap();
 void * allocate(uint32_t size);
 void deallocate(void * ptr);
 
-heap_t * mem_get_allocator();
 uint32_t mem_get_heap_size();
 
 // get size of allocated blocks
