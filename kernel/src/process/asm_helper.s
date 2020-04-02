@@ -1,5 +1,5 @@
 .text
-    .global switch_context
+    .global switch_context, store_context
 
 switch_context:
     // Set the CPSR register.
@@ -8,6 +8,8 @@ switch_context:
     // Load the stack pointer.
     ldr sp, [r0, #52]
     // Push all other registers on the stack.
+    ldr r1, [r0, #64]
+    push {r1}
     ldr r1, [r0, #60]
     push {r1}
     ldr r1, [r0, #56]
@@ -44,5 +46,9 @@ switch_context:
 
     // Load all register states.
     // Loading the PC register effectively jumps into the user program
-    pop {r0-r12}
-    pop {r14-pc}
+    ldm sp!,{R0-R12,r14-pc}^
+
+store_context:
+    // TODO: somehow make sure to store the context, without overriding unstored registers.
+    // The registers probably have been overriden just by calling this function.
+    mov pc, lr

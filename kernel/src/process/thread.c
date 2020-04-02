@@ -21,6 +21,7 @@ Thread *create_thread(void *entry, Process *process) {
 
     // Set instruction pointer.
     thread->registers.PC = (size_t) entry;
+    thread->registers.CPSR = 0x16;
 
     // TODO: this makes returning from the thread main routine exit the thread
 //    thread->registers.LR = exit;
@@ -33,12 +34,17 @@ Thread *create_thread(void *entry, Process *process) {
  * Will never return.
  */
 void load_thread(Thread *thread) {
-    DEBUG("SWITCHING THREAD");
-
     switch_to_vas(thread->process->vas);
     switch_context(&thread->registers);
 
     __builtin_unreachable();
+}
+
+/**
+ * Store thread execution context into memory.
+ */
+void store_thread(Thread *thread) {
+    store_context(&thread->registers);
 }
 
 /**

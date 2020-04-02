@@ -18,6 +18,7 @@ typedef struct Thread {
 
 Thread *create_thread(void *entry, Process *process);
 void load_thread(Thread *thread);
+void store_thread(Thread *thread);
 void free_thread(Thread *thread);
 
 #endif //COURSE_OS_THREAD_H

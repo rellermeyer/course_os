@@ -9,6 +9,9 @@ typedef struct Scheduler {
 
 Scheduler *create_scheduler();
 void enable_scheduler(Scheduler *scheduler);
+Scheduler *get_scheduler();
+void schedule_in(Scheduler *scheduler);
+void schedule_out(Scheduler *scheduler);
 void add_process_to_scheduler(Scheduler *scheduler, Process *process);
 void free_scheduler(Scheduler *scheduler);
 
