@@ -16,7 +16,7 @@ DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build
-# every directory named `include` will have it's contents autoincluded
+# every directory named `include` will have its contents autoincluded
 INCLUDEDIR = include
 CPU = cortex-a7
 
