@@ -1,3 +1,4 @@
+#include <timer.h>
 #include <bcm2836.h>
 #include <chipset.h>
 #include <priority_queue.h>
@@ -19,6 +20,18 @@ typedef union LittleEndianUint64 {
         uint32_t high_word;
     };
 } LittleEndianUint64;
+
+// Internal implementation functions
+static uint32_t get_frequency();
+static void unmask_and_enable_timer();
+static void mask_and_enable_timer();
+static uint64_t get_phy_count();
+static int32_t get_phy_timer_val();
+static void set_phy_timer_val(int32_t);
+static uint64_t get_phy_timer_cmp_val();
+static void set_phy_timer_cmp_val(uint64_t);
+static ScheduledTimer * get_prq_node_data(prq_node *);
+static TimerHandle schedule_timer(TimerCallback, uint32_t, bool);
 
 static prq_handle * scheduled_timers;
 
@@ -81,7 +94,6 @@ static inline void set_phy_timer_cmp_val(uint64_t val) {
 static inline ScheduledTimer * get_prq_node_data(prq_node * node) {
     return (ScheduledTimer *)node->data;
 }
-
 
 void bcm2836_timer_init() {
     const uint32_t freq = get_frequency();
