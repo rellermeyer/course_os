@@ -258,7 +258,7 @@ void * alloc_buddy(size_t request) {
     return NULL;
 }
 
-void free(void *ptr) {
+void free_buddy(void *ptr) {
     size_t bucket, i;
 
     /*

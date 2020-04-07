@@ -62,5 +62,5 @@ static size_t bucket_for_request(size_t request);
 static int lower_bucket_limit(size_t bucket);
 
 void * alloc_buddy(size_t request);
-void free(void *ptr);
+void free_buddy(void *ptr);
 #endif
