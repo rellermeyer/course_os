@@ -156,9 +156,6 @@ void timer_handle_interrupt() {
     bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 }
 
-// TODO: Handle possibility of two timers getting scheduled for the same time (counter value)
-// PRQ needs support first
-
 static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
     assert(callback != NULL);
     assert(delay_ms > 0);
