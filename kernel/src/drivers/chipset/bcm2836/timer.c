@@ -96,10 +96,11 @@ void bcm2836_timer_init() {
     mask_and_enable_timer();
 }
 
-// TODO: Handle possibility of timer scheduling functions or interrupt handler being interrupted
-
 void timer_handle_interrupt() {
     volatile const uint64_t current_count = get_phy_count();
+
+    // Begin of critical section, disable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = 0;
 
     // Process all timers that are not in the future, if any
     prq_node * next_timer_node = prq_peek(scheduled_timers);
@@ -122,7 +123,7 @@ void timer_handle_interrupt() {
             const uint64_t scheduled_count = next_timer->scheduled_count;
             next_timer->scheduled_count = scheduled_count + next_timer->periodic_delay;
             assert(scheduled_count <= INT32_MAX);
-            next_timer_node->priority = INT32_MAX - scheduled_count;
+            next_timer_node->priority = scheduled_count;
 
             prq_enqueue(scheduled_timers, next_timer_node);
         }
@@ -138,14 +139,14 @@ void timer_handle_interrupt() {
     else {
         set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
     }
+
+    // End of critical section, re-enable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 }
 
 // TODO: Handle possibility of two timers getting scheduled for the same time (counter value)
 // PRQ needs support first
 
-/*
- * This implementation may execute timers out of order if their delay is very small
- */
 static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
     assert(callback != NULL);
     assert(delay_ms > 0);
@@ -164,8 +165,11 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
     new_timer->periodic_delay = periodic ? count_offset : 0;
     // TODO: Find better way of doing this
     assert(scheduled_count <= INT32_MAX);
-    new_timer_node->priority = INT32_MAX - scheduled_count;
+    new_timer_node->priority = scheduled_count;
     new_timer_node->data = new_timer;
+
+    // Begin of critical section, disable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = 0;
 
     prq_enqueue(scheduled_timers, new_timer_node);
 
@@ -173,6 +177,9 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
 
     // Unmask interrupt if not already so
     unmask_and_enable_timer();
+
+    // End of critical section, re-enable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 
     return new_timer->handle;
 }
