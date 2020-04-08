@@ -128,11 +128,8 @@ void buddy_status(buddy_alloc_t* buddy) {
 
 // Finds size of an allocation
 unsigned int get_alloc_size(void* ptr) {
-    for ( int order = MIN_ORDER; order < MAX_ORDER; order++ ) {
-        //TODO: Find size for a given allocation
-    }
-}
 
+}
 
 // Initialize a buddy allocator
 buddy_alloc_t* buddy_init(uintptr_t address, size_t size) {
