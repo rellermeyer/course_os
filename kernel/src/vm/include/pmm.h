@@ -1,4 +1,4 @@
-/// This page oldlocator was completely designed and implemented by
+/// This page allocator was completely designed and implemented by
 /// Jonathan Donszelmann    <jonabent@gmail.com>
 /// Victor Roest            <victor@xirion.next>
 ///
@@ -11,21 +11,21 @@
 /// All pages are aligned to their own size (i.e. The 8KiB pages are 8K algined)
 ///
 /// It stores all datastructures it uses in the same pages it allocates,
-/// and can therefore be used without any existing oldlocator allocating it's space.
+/// and can therefore be used without any existing allocator allocating it's space.
 ///
-/// This oldlocator has been made specifically for 32 bit ARM cpus.
+/// This allocator has been made specifically for 32 bit ARM cpus.
 /// This means it can *not* be used on x86 without adaptation.
 /// It relies on addresses being 32 bits long and being aligned to boundaries to save (a lot) of
 /// space.
 ///
 /// ## Overhead
-/// Since this oldlocator also has to store some datastructures in itself, it obviously has some
+/// Since this allocator also has to store some datastructures in itself, it obviously has some
 /// overhead. This overhead is 16kb for every 512 pages of size 16kb allocated. For 64 bit systems
 /// this ovehead would be larger.
 ///
 /// ## Time complexity
-/// All operations performed on this oldlocator are O(1). They are in no way dependent on the size of
-/// memory. With the exception of one method: The initialization of the oldlocator will loop once
+/// All operations performed on this allocator are O(1). They are in no way dependent on the size of
+/// memory. With the exception of one method: The initialization of the allocator will loop once
 /// through all of physical memory in increments of 16kb.
 ///
 /// ## Definitions
