@@ -1,6 +1,6 @@
 /**
  * buddy system page frame allocator
- * modified from :
+ * modified from :https://github.com/block8437/buddyalloc
  */
 
 #include <allocator.h>
