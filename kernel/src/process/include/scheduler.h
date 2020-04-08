@@ -4,15 +4,15 @@
 #include <thread.h>
 
 typedef struct Scheduler {
-    Thread *current_thread;
+    Thread * current_thread;
 } Scheduler;
 
-Scheduler *create_scheduler();
-void enable_scheduler(Scheduler *scheduler);
-Scheduler *get_scheduler();
-void schedule_in(Scheduler *scheduler);
-void schedule_out(Scheduler *scheduler);
-void add_process_to_scheduler(Scheduler *scheduler, Process *process);
-void free_scheduler(Scheduler *scheduler);
+Scheduler * create_scheduler();
+void enable_scheduler(Scheduler * scheduler);
+Scheduler * get_scheduler();
+void schedule_task(Scheduler * scheduler);
+void add_process_to_scheduler(Scheduler * scheduler, Process * process);
+Thread * get_thread(Scheduler * scheduler);
+void free_scheduler(Scheduler * scheduler);
 
-#endif //COURSE_OS_SCHEDULER_H
+#endif  // COURSE_OS_SCHEDULER_H

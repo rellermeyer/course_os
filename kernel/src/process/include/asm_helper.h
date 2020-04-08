@@ -3,7 +3,6 @@
 
 #include "./registers.h"
 
-void switch_context(Registers *registers);
-void store_context(Registers *registers);
+void switch_context(Registers * registers);
 
-#endif //COURSE_OS_ASM_HELPER_H
+#endif  // COURSE_OS_ASM_HELPER_H

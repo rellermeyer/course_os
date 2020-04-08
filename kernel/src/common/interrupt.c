@@ -1,8 +1,11 @@
 #include <chipset.h>
 #include <interrupt.h>
+#include <interrupt_asm.h>
 #include <mmio.h>
+#include <scheduler.h>
 #include <stdio.h>
 #include <syscallhandler.h>
+#include <thread.h>
 #include <vm2.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
@@ -77,18 +80,18 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    size_t callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+void swi_handler(void * registers) {
+    Scheduler * scheduler = get_scheduler();
+    Thread * thread = get_thread(scheduler);
+    set_registers(thread, registers);
 
-    asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r0" : "=r"(r0)::);
-    asm volatile("MOV %0, r1" : "=r"(r1)::);
-    asm volatile("MOV %0, r2" : "=r"(r2)::);
-    asm volatile("MOV %0, r3" : "=r"(r3)::);
+    handle_syscall(thread->registers.R7,
+                   thread->registers.R0,
+                   thread->registers.R1,
+                   thread->registers.R2,
+                   thread->registers.R3);
 
-    handle_syscall(callNumber, r0, r1, r2, r3);
-
-    return 0;
+    schedule_task(scheduler);
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {
