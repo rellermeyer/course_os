@@ -194,7 +194,7 @@ void __attribute__((always_inline)) inline SemihostingOSExit(uint8_t code) {
 
 /* enable IRQ and/or FIQ */
 void enable_interrupt(InterruptType mask) {
-    INFO("Enabling interrupts with mask %i", mask);
+    INFO("Enabling interrupts with mask 0x%x", mask);
 
     // enable interrupt on the core
     switch (mask) {
@@ -215,7 +215,7 @@ void enable_interrupt(InterruptType mask) {
 
 /* disable IRQ and/or FIQ */
 void disable_interrupt(InterruptType mask) {
-    INFO("Disabling interrupts with mask %i", mask);
+    INFO("Disabling interrupts with mask 0x%x", mask);
 
     // disable interrupts on the core
     switch (mask) {
@@ -236,7 +236,7 @@ void disable_interrupt(InterruptType mask) {
 
 /* disable IRQ and/or FIQ, but also return a copy of the CPSR */
 int disable_interrupt_save(InterruptType mask) {
-    INFO("Disabling interrupts (save) with mask %i", mask);
+    INFO("Disabling interrupts (save) with mask 0x%x", mask);
 
     /* get a copy of the current process status register */
     int cpsr;

@@ -1,8 +1,10 @@
 #include <bcm2836.h>
 #include <chipset.h>
 #include <interrupt.h>
-#include <limits.h>
 #include <klibc.h>
+#include <limits.h>
+#include <stdint.h>
+#include <uart.h>
 
 /*
 // raspberry pi zero, 1, b+ etc
@@ -51,40 +53,16 @@ volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x101f3
 // (CR)
 //#define CTSEn  ()    // CTS Hardware Control Enable
 
-
-// http://infocenter.arm.com/help/topic/com.arm.doc.ddi0183f/DDI0183.pdf
-// Section 3.2: Summary of registers
-// https://balau82.wordpress.com/2010/11/30/emulating-arm-pl011-serial-ports/
-// This struct is memory mappend. I call them registers but they all live in memory.
-typedef volatile struct BCM2836UartInterface {
-    uint32_t DR;              // Data Register
-    uint32_t RSR_ECR;         // Receive Status Register / Error Clear Register
-    uint8_t reserved1[0x10];  // Reserved
-    const uint32_t FR;        // Flag Register
-    uint8_t reserved2[0x4];   // Reserved
-    uint32_t LPR;             // IrDA low power counter Register
-    uint32_t IBRD;            // Integer Baud Rate Register
-    uint32_t FBRD;            // Fractional Baud Rate Register
-    uint32_t LCR_H;           // Line Control Register
-    uint32_t CR;              // Control Register
-    uint32_t IFLS;            // Interrupt FIFO Level Select Register
-    uint32_t IMSC;            // Interrupt Mask Set/Clear Register
-    const uint32_t RIS;       // Raw Interrupt Status Register
-    const uint32_t MIS;       // Masked Interrupt Status Register
-    uint32_t ICR;             // Interrupt Clear Register
-    uint32_t DMACR;           // DMA Control Register
-} BCM2836UartInterface;
-
-volatile BCM2836UartInterface * BCM2836_UART0_ADDRESS;
-volatile BCM2836UartInterface * BCM2836_UART1_ADDRESS;
-volatile BCM2836UartInterface * BCM2836_UART2_ADDRESS;
-volatile BCM2836UartInterface * BCM2836_UART3_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART0_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART1_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART2_ADDRESS;
+static BCM2836UartInterface * BCM2836_UART3_ADDRESS;
 
 void bcm2836_uart_init() {
-    BCM2836_UART0_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x201000);
-    BCM2836_UART1_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x202000);
-    BCM2836_UART2_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x203000);
-    BCM2836_UART3_ADDRESS = (volatile BCM2836UartInterface *)(bcm2836_peripheral_base + 0x204000);
+    BCM2836_UART0_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x201000);
+    BCM2836_UART1_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x202000);
+    BCM2836_UART2_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x203000);
+    BCM2836_UART3_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x204000);
 }
 
 void uart_write_byte(volatile BCM2836UartInterface * interface, volatile uint8_t value) {
