@@ -1,17 +1,42 @@
+///
+
+
+#ifndef ALLOCATOR_H
+#define ALLOCATOR_H
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 
-#define MIN_ORDER 2
-#define MAX_ORDER 10
+#define HEAP_SIZE ((size_t)((1 << 20) + sizeof(buddy_allocator)))
+
+#define MIN_ORDER 4
+#define MAX_ORDER 21
 
 typedef struct {
     size_t base;
     size_t free_lists[MAX_ORDER - MIN_ORDER];
-} buddy_alloc_t;
 
-buddy_alloc_t* buddy_init(size_t address, size_t size);
-void* buddy_alloc(buddy_alloc_t* buddy, size_t size);
-void buddy_dealloc(buddy_alloc_t* buddy, size_t address, size_t size);
-void buddy_add_free_item(buddy_alloc_t* buddy, size_t address, size_t order, bool new);
-unsigned int get_alloc_size(void* ptr);
+#ifdef MEM_DEBUG
+    size_t bytes_allocated;
+#endif
+} buddy_allocator;
+
+typedef buddy_allocator heap_t;
+
+typedef struct {
+    size_t size;
+} buddy_allocation_header;
+
+typedef struct {
+    buddy_allocation_header header;
+    uint8_t allocation[];
+} buddy_allocation;
+
+buddy_allocator * buddy_init(buddy_allocator *address, size_t size);
+void* buddy_alloc(buddy_allocator * buddy, size_t size);
+void buddy_dealloc(buddy_allocator * buddy, size_t address);
+size_t get_alloc_size(size_t address);
+void buddy_status(buddy_allocator * buddy);
+
+#endif

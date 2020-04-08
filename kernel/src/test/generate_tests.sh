@@ -6,6 +6,8 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+exit 0
+
 # clear the file
 echo -n "" > "$DIR/test.c"
 
@@ -18,6 +20,7 @@ echo "
 #include <stdio.h>
 #include <interrupt.h>
 #include <test.h>
+#include <allocator.h>
 
 size_t global_counter = 0;
 
@@ -43,6 +46,7 @@ done
 
 # shellcheck disable=SC2028
 echo "
+    buddy_status(mem_get_allocator());
   kprintf(\"TESTS COMPLETE. Passed %i tests\n\", $len);
   SemihostingCall(ApplicationExit);
 }

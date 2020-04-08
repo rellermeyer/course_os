@@ -12,7 +12,7 @@
 #define __NEED_uint64_t
 
 #define __NEED_intptr_t
-#define __NEED_uintptr_t
+#define __NEED_size_t
 
 #define __NEED_intmax_t
 #define __NEED_uintmax_t

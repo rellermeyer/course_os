@@ -12,6 +12,7 @@ MEMORY = 1G
 LOG_LEVEL ?= 4
 DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
+DEFINITIONS += ENABLE_TESTS
 SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have it's contents autoincluded
