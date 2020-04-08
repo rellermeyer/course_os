@@ -18,7 +18,6 @@ TEST_CREATE(test_timer_cb_called, {
     bcm2836_schedule_timer_once(test_callback_1, 50);
     DEBUG("If the test gets stuck here, the timer callback was never called");
     while (callback_count_1 != 1);
-    PASS();
 })
 
 TEST_CREATE(test_timer_cancel, {
@@ -36,7 +35,6 @@ TEST_CREATE(test_timer_periodic_cb_called, {
     DEBUG("If the test gets stuck here, the timer callback was not called the required number of times");
     while (callback_count_1 != 10);
     bcm2836_deschedule_timer(handle);
-    PASS();
 })
 
 TEST_CREATE(test_timer_order, {
@@ -49,5 +47,4 @@ TEST_CREATE(test_timer_order, {
     while (callback_count_1 != 1);
     ASSERT_EQ(callback_count_2, 0);
     while (callback_count_2 != 1);
-    PASS();
 })
