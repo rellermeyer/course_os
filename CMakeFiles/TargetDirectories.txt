@@ -1,3 +1,0 @@
-/home/laura/Documents/course_os/CMakeFiles/rebuild_cache.dir
-/home/laura/Documents/course_os/CMakeFiles/course_os.dir
-/home/laura/Documents/course_os/CMakeFiles/edit_cache.dir
