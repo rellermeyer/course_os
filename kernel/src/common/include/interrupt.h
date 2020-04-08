@@ -95,7 +95,6 @@ enum SemihostingSWI {
 void SemihostingCall(enum SemihostingSWI mode);
 
 void SemihostingOSExit(uint8_t code) __attribute__((noreturn));
-;
 
 typedef enum {
     IRQ,  // (this is bit 0x8 on the CPSR)

@@ -4,7 +4,9 @@ include $(CURDIR)/../config.mk
 
 # TODO should we have "-nostdinc"?
 # Flags to give to the c compiler
-CFLAGS += -pipe -std=gnu99 -ffreestanding -Wall -Werror -g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
+CFLAGS += -pipe -std=gnu99 -ffreestanding \
+	-Wall -Werror -Wno-error=unused-function -Wno-error=unused-label -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=unused-local-typedefs \
+	-g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
 #PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
@@ -14,9 +16,8 @@ DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build
-# every directory named `include` will have it's contents autoincluded
+# every directory named `include` will have its contents autoincluded
 INCLUDEDIR = include
-TEST_MAIN_FILE = $(SOURCEDIR)/test/test.c
 CPU = cortex-a7
 
 # =================== End Configuration ===================
@@ -30,7 +31,8 @@ GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 QEMU := $(CURDIR)/../${QEMU}
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
-C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(TEST_MAIN_FILE)
+C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
+C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(C_GEN_SOURCE_FILES)
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
 
@@ -40,7 +42,7 @@ S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
 
-INCLUDEDIRS :=  $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
+INCLUDEDIRS := $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
@@ -49,7 +51,7 @@ build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
 test: build | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build | builddir
 	# nographic to turn off the gui
@@ -73,21 +75,22 @@ $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 
 # Begin Pi Make
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
-	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $(C_OBJECT_FILES) -o $@
+	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $^ -o $@
 
 $(BUILDDIR)/kernelPi.img: $(BUILDDIR)/kernelPi.elf | builddir
 	$(OBJCOPY) $< -O binary $@
 # End Pi Make
 
 builddir:
-	mkdir -p $(BUILDDIR)
+	@mkdir -p $(BUILDDIR)
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@mkdir -p $(shell dirname $@)
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(TEST_MAIN_FILE): dummy
+$(SOURCEDIR)/test/test.c: dummy | builddir
+	@echo Generating tests
 	@$(SOURCEDIR)/test/generate_tests.sh
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
