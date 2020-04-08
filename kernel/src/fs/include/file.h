@@ -2,7 +2,7 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <fs.h>
+#include <path.h>
 #include <vp_array_list.h>
 
 #include "path.h"

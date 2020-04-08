@@ -1,65 +1,221 @@
+#include <timer.h>
 #include <bcm2836.h>
 #include <chipset.h>
-#include <mmio.h>
+#include <priority_queue.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-inline static uint32_t get_frequency() {
+typedef struct ScheduledTimer {
+    uint64_t scheduled_count;
+    TimerHandle handle;
+    TimerCallback callback;
+    uint32_t periodic_delay;
+} ScheduledTimer;
+
+typedef union LittleEndianUint64 {
+    uint64_t dword;
+    struct {
+        uint32_t low_word;
+        uint32_t high_word;
+    };
+} LittleEndianUint64;
+
+// Internal implementation functions
+static uint32_t get_frequency();
+static void unmask_and_enable_timer();
+static void mask_and_enable_timer();
+static uint64_t get_phy_count();
+static int32_t get_phy_timer_val();
+static void set_phy_timer_val(int32_t);
+static uint64_t get_phy_timer_cmp_val();
+static void set_phy_timer_cmp_val(uint64_t);
+static ScheduledTimer * get_prq_node_data(prq_node *);
+static TimerHandle schedule_timer(TimerCallback, uint32_t, bool);
+
+static prq_handle * scheduled_timers;
+
+/*
+ * Gives the frequency of the counter in Hz
+ */
+static inline uint32_t get_frequency() {
     uint32_t val;
+    // Read CNTFRQ
     asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
     return val;
 }
 
-void write_interrupt_count_value(uint32_t val) {
-    asm volatile("mcr p15, 0, %0, c14, c3, 0" ::"r"(val));
+static inline void unmask_and_enable_timer() {
+    // Disable output mask, enable timer
+    static const uint32_t cntp_ctl = 0b01;
+    // Write CNTP_CTL
+    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(cntp_ctl));
 }
 
-uint32_t read_interrupt_count_value() {
-    uint32_t val;
-    asm volatile("mrc p15, 0, %0, c14, c3, 0" : "=r"(val));
+static inline void mask_and_enable_timer() {
+    // Enable output mask, enable timer
+    static const uint32_t cntp_ctl = 0b11;
+    // Write CNTP_CTL
+    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(cntp_ctl));
+}
+
+static inline uint64_t get_phy_count() {
+    LittleEndianUint64 val;
+    // Read CNTPCT
+    asm volatile("mrrc p15, 0, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
+    return val.dword;
+}
+
+static inline int32_t get_phy_timer_val() {
+    int32_t val;
+    // Read CNTP_TVAL
+    asm volatile("mrc p15, 0, %0, c14, c2, 0" : "=r"(val));
     return val;
 }
 
+static inline void set_phy_timer_val(int32_t val) {
+    // Write CNTP_TVAL
+    asm volatile("mcr p15, 0, %0, c14, c2, 0" ::"r"(val));
+}
 
-// https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
-// Page ~ 117
-struct IRQ_registers {
-    uint32_t irq_basic_pending;
-    uint32_t irq_gpu1_pending;
-    uint32_t irq_gpu2_pending;
-    uint32_t fiq_control;
-    uint32_t irq_gpu1_enable;   // Interrupt enable register 1 (GPU)
-    uint32_t irq_gpu2_enable;   // Interrupt enable register 2 (GPU)
-    uint32_t irq_basic_enable;  // Base enable register (ARM/CPU)
-    uint32_t irq_gpu1_disable;
-    uint32_t irq_gpu2_disable;
-    uint32_t irq_basic_disable;
-};
+static inline uint64_t get_phy_timer_cmp_val() {
+    LittleEndianUint64 val;
+    // Read CNTP_CVAL
+    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
+    return val.dword;
+}
 
+static inline void set_phy_timer_cmp_val(uint64_t val) {
+    const LittleEndianUint64 le_val = (LittleEndianUint64)val;
+    // Write CNTP_CVAL
+    asm volatile("mcrr p15, 2, %0, %1, c14" ::"r"(le_val.low_word), "r"(le_val.high_word));
+}
+
+static inline ScheduledTimer * get_prq_node_data(prq_node * node) {
+    return (ScheduledTimer *)node->data;
+}
 
 void bcm2836_timer_init() {
-    uint32_t freq = get_frequency();
+    const uint32_t freq = get_frequency();
+    INFO("System counter frequency: %u kHz\n", freq / 1000);
 
-    TRACE("control frequency: %i", freq);
-    // 1 (milli)second timer
-    write_interrupt_count_value(freq * 100);
+    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 
-    // when the register reaches the count value set above, interrupt.
-    // TODO: Enable timer
-    //    mmio_write(&bcm2836_registers_base->Core0TimersInterruptControl, VIRTUAL_NONSECURE_TIMER);
+    // Init priority queue
+    scheduled_timers = prq_create();
 
-    // Enable timer interrupts.
-    uint32_t cntv_ctl = 1;
-    asm volatile("mcr p15, 0, %0, c14, c3, 1" ::"r"(cntv_ctl));
-
-    bcm2836_registers_base->PerformanceMonitorRoutingSet = 0xf;
+    // Initially there are no timers set yet, so the interrupt is masked
+    mask_and_enable_timer();
 }
 
-TimerHandle bcm2836_schedule_timer_periodic(TimerCallback callback, uint32_t ms) {
-    return 0;
+void timer_handle_interrupt() {
+    volatile const uint64_t current_count = get_phy_count();
+
+    // Begin of critical section, disable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = 0;
+
+    // Process all timers that are not in the future, if any
+    prq_node * next_timer_node = prq_peek(scheduled_timers);
+    while (next_timer_node != NULL &&
+           get_prq_node_data(next_timer_node)->scheduled_count <= current_count) {
+
+        prq_dequeue(scheduled_timers);
+        ScheduledTimer * const next_timer = get_prq_node_data(next_timer_node);
+
+        next_timer->callback();
+
+        // If the timer is not periodic, it is removed
+        if (next_timer->periodic_delay == 0) {
+            kfree(next_timer);
+            prq_free_node(next_timer_node);
+        }
+        // If the timer is periodic, it is updated and added to the queue again
+        else {
+            // TODO: Avoid duplicating code in `schedule_timer`
+            const uint64_t scheduled_count = next_timer->scheduled_count;
+            next_timer->scheduled_count = scheduled_count + next_timer->periodic_delay;
+            assert(scheduled_count <= INT32_MAX);
+            next_timer_node->priority = scheduled_count;
+
+            prq_enqueue(scheduled_timers, next_timer_node);
+        }
+
+        next_timer_node = prq_peek(scheduled_timers);
+    }
+
+    // If there are no more scheduled timers in queue, mask interrupts until one is added again
+    if (next_timer_node == NULL) {
+        mask_and_enable_timer();
+    }
+    // If there still are, set compare val to next one
+    else {
+        set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
+    }
+
+    // End of critical section, re-enable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 }
 
-TimerHandle bcm2836_schedule_timer_once(TimerCallback callback, uint32_t ms) {
-    return 0;
+static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
+    assert(callback != NULL);
+    assert(delay_ms > 0);
+
+    const uint64_t count_offset = (get_frequency() / 1000) * delay_ms;
+    volatile const uint64_t scheduled_count = get_phy_count() + count_offset;
+
+    ScheduledTimer * const new_timer = kmalloc(sizeof(ScheduledTimer));
+    prq_node * const new_timer_node = prq_create_node();
+
+    new_timer->scheduled_count = scheduled_count;
+    new_timer->callback = callback;
+    assert(sizeof(TimerHandle) >= sizeof(prq_node *));
+    new_timer->handle = (TimerHandle)new_timer_node;
+    // 0 means the timer is not periodic
+    new_timer->periodic_delay = periodic ? count_offset : 0;
+    // TODO: Find better way of doing this
+    assert(scheduled_count <= INT32_MAX);
+    new_timer_node->priority = scheduled_count;
+    new_timer_node->data = new_timer;
+
+    // Begin of critical section, disable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = 0;
+
+    prq_enqueue(scheduled_timers, new_timer_node);
+
+    set_phy_timer_cmp_val(get_prq_node_data(prq_peek(scheduled_timers))->scheduled_count);
+
+    // Unmask interrupt if not already so
+    unmask_and_enable_timer();
+
+    // End of critical section, re-enable timer interrupts
+    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+
+    return new_timer->handle;
 }
 
-void bcm2836_deschedule_timer(TimerHandle handle) {}
+TimerHandle bcm2836_schedule_timer_once(TimerCallback callback, uint32_t delay_ms) {
+    return schedule_timer(callback, delay_ms, false);
+}
+
+TimerHandle bcm2836_schedule_timer_periodic(TimerCallback callback, uint32_t delay_ms) {
+    return schedule_timer(callback, delay_ms, true);
+}
+
+void bcm2836_deschedule_timer(TimerHandle handle) {
+    assert(sizeof(prq_node *) >= sizeof(TimerHandle));
+    prq_node * const timer_node = (prq_node *)handle;
+
+    prq_remove(scheduled_timers, timer_node);
+    kfree(get_prq_node_data(timer_node));
+    prq_free_node(timer_node);
+
+    prq_node * const next_timer_node = prq_peek(scheduled_timers);
+    // If there are no more scheduled timers in queue, mask interrupts until one is added again
+    if (next_timer_node == NULL) {
+        mask_and_enable_timer();
+    }
+    // If there still are, set compare val to next one
+    else {
+        set_phy_timer_cmp_val(get_prq_node_data(next_timer_node)->scheduled_count);
+    }
+}
