@@ -3,11 +3,11 @@
 #include <string.h>
 #include <vm2.h>
 
-heap_t * allocator;
+buddy_alloc_t * allocator;
+size_t allocator_size;
 size_t heap_end;
 
-/// Initializes the heap by asking for HEAP_INIT_SIZE of pages, and putting the heap datastructure
-/// there. After the heap is initialized [kmalloc] and related functions can be used.
+
 void init_heap() {
     heap_end = KERNEL_HEAP_BASE;
 
@@ -19,26 +19,14 @@ void init_heap() {
                                    NULL);
     if (ret == NULL) { FATAL("Couldn't allocate page for the kernel heap"); }
 
-    heap_t * heap = (heap_t *)KERNEL_HEAP_BASE;
+    buddy_alloc_t * heap = (buddy_alloc_t * )KERNEL_HEAP_BASE;
 
-    memset(heap, 0, sizeof(heap_t));
+    memset(heap, 0, sizeof(buddy_alloc_t));
 
-    heap_end += sizeof(heap_t);
+    heap_end += sizeof(buddy_alloc_t);
 
-
-    for (int i = 0; i < BIN_COUNT; i++) {
-        heap->bins[i] = (bin_t *)heap_end;
-        memset(heap->bins[0], 0, sizeof(bin_t));
-        heap_end += sizeof(bin_t);
-    }
-
-    assert(KERNEL_HEAP_BASE + sizeof(heap_t) + BIN_COUNT * sizeof(bin_t) == heap_end);
-
-    // current heap end.
-    heap_end = ALIGN(heap_end, PAGE_SIZE);
     size_t heap_start = heap_end;
-
-    while (heap_end < (heap_start + HEAP_INIT_SIZE)) {
+    while (heap_end < (heap_start + allocator_size)) {
         if (vm2_allocate_page(kernell1PageTable,
                               heap_end,
                               false,
@@ -50,9 +38,9 @@ void init_heap() {
         heap_end += PAGE_SIZE;
     }
 
-    assert(heap_end >= (heap_start + HEAP_INIT_SIZE));
+    assert(heap_end >= (heap_start + allocator_size));
 
-    create_heap(heap, heap_start);
+    buddy_init(allocator, allocator_size);
     allocator = heap;
 
     INFO("Heap successfully initialized.");
@@ -61,13 +49,7 @@ void init_heap() {
 /// Internal wrapper around heap_alloc. Should only be indirectly used through
 /// kmalloc/krealloc/kcalloc/kfree
 void * allocate(uint32_t size) {
-    return alloc_buddy(allocator, size);
-}
-
-/// Internal wrapper around heap_free. Should only be indirectly used through
-/// kmalloc/krealloc/kcalloc/kfree
-void deallocate(void * ptr) {
-    return free_buddy(allocator, ptr);
+    return buddy_alloc(allocator, size);
 }
 
 /// Internal function to get the size of an allocation. Should only be indirectly used through
@@ -76,14 +58,20 @@ uint32_t allocation_size(void * ptr) {
     return get_alloc_size(ptr);
 }
 
+/// Internal wrapper around heap_free. Should only be indirectly used through
+/// kmalloc/krealloc/kcalloc/kfree
+void deallocate(void * ptr) {
+    return buddy_dealloc(allocator, ptr, allocation_size(ptr));
+}
+
 /// Internal function to get the global oldlocator. Should only be indirectly used through
 /// kmalloc/krealloc/kcalloc/kfree
-heap_t * mem_get_allocator() {
+buddy_alloc_t *  mem_get_allocator() {
     return allocator;
 }
 
 /// Internal function to get the size of the heap. Should only be indirectly used through
 /// kmalloc/krealloc/kcalloc/kfree
 uint32_t mem_get_heap_size() {
-    return allocator->end - allocator->start;
+    return allocator_size;
 }
