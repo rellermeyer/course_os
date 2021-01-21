@@ -132,7 +132,7 @@ struct PhysicalMemoryManager {
     size_t end;
 };
 
-struct PhysicalMemoryManager physicalMemoryManager;
+__attribute__((__common__))  struct PhysicalMemoryManager physicalMemoryManager;
 
 // Allocator specific operations
 

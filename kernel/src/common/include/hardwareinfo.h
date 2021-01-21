@@ -12,9 +12,12 @@ typedef struct HardwareInfo {
     BoardType boardType;
 } HardwareInfo;
 
+// Initialize the global hardware info struct. After this is ran, the get_hardwareinfo
+// function can be used to retrieve it.
 void init_hardwareinfo();
 
-// Get a pointer to the hardwareinfo struct.
+// Get a pointer to the hardwareinfo struct. This is a global struct containing information
+// about the cpu type, and board/chipset type. May be expanded to contain more useful info.
 HardwareInfo * get_hardwareinfo();
 void print_hardwareinfo();
 BoardType detect_boardtype();

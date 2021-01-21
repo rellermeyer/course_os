@@ -1,4 +1,6 @@
 include $(CURDIR)/../config.mk
+# NOTE: things with make break if there are folder names in the path from
+# root to the directory with course_os in it which contain spaces.
 
 # ===================== Configuration =====================
 
@@ -6,13 +8,24 @@ include $(CURDIR)/../config.mk
 # Flags to give to the c compiler
 CFLAGS += -pipe -std=gnu99 -ffreestanding \
 	-Wall -Werror -Wno-error=unused-function -Wno-error=unused-label -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=unused-local-typedefs \
-	-g -O0 -mcpu=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
-#PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
+	-g -O0 -mtune=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
+LDFLAGS += -nostartfiles -fcommon -nolibc
+# C flags if building for the real pi. This is mostly untested
+# PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
+# amount of memory the PMM should try to allocate, may or may not match the actual amount of
+# memory in the system. Stuff will crash if this number is more than the actual amount of
+# memory. TODO: autodetect this at boot
 MEMORY = 1G
 LOG_LEVEL ?= 4
+
+# Available options:
+# * Any custom definition you'd like to have enabled
+# * MEM_DEBUG - Compiles in part of the code that will print debug information about memory management
+# * LOG_LEVEL (number between 0 and 4)
 DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
+
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build
@@ -22,13 +35,13 @@ CPU = cortex-a7
 
 # =================== End Configuration ===================
 
-TOOLCHAIN_PATH:=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
-CC:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
-AS:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
-LD:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
-OBJCOPY:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
-GDB:=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
-QEMU := $(CURDIR)/../${QEMU}
+TOOLCHAIN_PATH=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
+CC=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
+AS=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
+LD=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
+OBJCOPY=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
+GDB=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
+QEMU ?= $(CURDIR)/../${QEMU}
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
 C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
@@ -67,13 +80,13 @@ start_debug: build | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
-	$(LD) -T linker/kernel.ld -nostartfiles -Wl,-Map,kernel.map $^ -o $@
+	$(LD) -T linker/kernel.ld $(LDFLAGS) -Wl,-Map,kernel.map $^ -o $@
 	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
 	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
 
 
-
 # Begin Pi Make
+# (aka, building for a real pi. TODO: This is mostly untested)
 $(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
 	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $^ -o $@
 

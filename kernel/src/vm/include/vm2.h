@@ -338,7 +338,7 @@ void vm2_flush_caches_of_ASID(uint8_t id);
 void vm2_set_user_pagetable(struct L1PageTable * l1);
 
 /// The kernel's L1 Pagetable.
-struct L1PageTable * kernell1PageTable;
+extern struct L1PageTable * kernell1PageTable;
 
 /// From the `kernel.ld` linker file. These are not arrays but this is how you refer to the pointers
 /// by the linker script.

@@ -13,6 +13,8 @@ ChipsetInterface chipset = {
     .uart_putc = uart_putc_stub  // Stub putc
 };
 
+// init_chipset requests hardware info, and based on it loads the right chipset. Currently only the
+// pi two (with the bcm2836) is supported here.
 void init_chipset() {
     HardwareInfo * info = get_hardwareinfo();
 
