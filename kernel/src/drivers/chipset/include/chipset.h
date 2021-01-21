@@ -46,6 +46,6 @@ typedef struct ChipsetInterface {
     void (*late_init)();
 } ChipsetInterface;
 
-ChipsetInterface chipset;
+extern ChipsetInterface chipset;
 
 #endif

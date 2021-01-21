@@ -11,7 +11,7 @@ enum VfsErr;
 
 typedef U8ArrayList Path;
 
-const Path ROOT_PATH;
+extern const Path ROOT_PATH;
 
 // Parse the path and return the direntry which corresponds with the path.
 struct DirEntry * path_get_direntry(struct Vfs * vfs, Path * path, enum VfsErr * err);
