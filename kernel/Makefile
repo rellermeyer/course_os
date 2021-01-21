@@ -41,7 +41,7 @@ AS=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
 LD=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 OBJCOPY=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 GDB=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
-QEMU ?= $(CURDIR)/../${QEMU}
+QEMU ?= $(CURDIR)/../qemu/qemu/bin/qemu-system-arm
 
 DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
 C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
