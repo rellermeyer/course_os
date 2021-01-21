@@ -25,6 +25,6 @@ VfsErr tmpfs_init(Vfs * vfs);
 // Creates a tmpfs root dir on the vfs;
 TmpfsInode * create_tmpfs_root(Vfs * vfs);
 
-const FsOperations tmpfs_inode_ops;
-const struct FsIdentifier * FS_TMPFS;
+extern const FsOperations tmpfs_inode_ops;
+extern const struct FsIdentifier * FS_TMPFS;
 #endif

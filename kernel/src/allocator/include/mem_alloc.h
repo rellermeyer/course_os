@@ -16,6 +16,6 @@ uint32_t mem_get_heap_size();
 uint32_t allocation_size(void * ptr);
 uint32_t proc_blocksize(void * ptr);
 
-size_t heap_end;
+extern size_t heap_end;
 
 #endif

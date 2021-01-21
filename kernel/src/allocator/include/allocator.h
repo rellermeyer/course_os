@@ -44,7 +44,7 @@ typedef struct {
 #endif
 } heap_t;
 
-uint32_t overhead;
+extern uint32_t overhead;
 
 void create_heap(heap_t * heap, uint32_t start);
 

@@ -32,7 +32,7 @@ struct ASIDDescriptor {
 };
 
 /// Is set to true whenever all tlb_cache_ids are used up.
-bool tlb_everything_allocated;
+extern bool tlb_everything_allocated;
 
 /**
  * Requests a tlb_descriptor.

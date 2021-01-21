@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QEMU_VERSION=4.2.0
+QEMU_VERSION=5.2.0
 
 {
 	if [ ! -e qemu-${QEMU_VERSION}.tar.bz2 ]; then

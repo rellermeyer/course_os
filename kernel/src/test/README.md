@@ -7,6 +7,9 @@ To run tests, run
 make test
 ```
 
+If you are sitting here, thinking: the way this test framework works is one enormous hack: yes it is. Unfortunately that's how it is in 
+operating systems. The testing framework depends on  the kernel booting, because how else could we run any code? Testing complex 
+interactions in the kernel is very hard as test may use resources of the kernel itself. My advice: deal with it.
 
 ## Creating tests.
 
