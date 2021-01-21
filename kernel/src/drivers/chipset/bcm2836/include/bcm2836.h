@@ -105,12 +105,11 @@ enum InterruptSource {
     LOCAL_TIMER = (1 << 11),
 };
 
-volatile BCM2836Registers * bcm2836_registers_base;
 
 void bcm2836_init();
 void bcm2836_late_init();
 
-volatile struct BCM2836Registers * bcm2836_registers_base;
-size_t bcm2836_peripheral_base;
+__attribute__((__common__)) volatile struct BCM2836Registers * bcm2836_registers_base;
+__attribute__((__common__)) size_t bcm2836_peripheral_base;
 
 #endif
