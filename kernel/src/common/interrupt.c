@@ -1,7 +1,11 @@
 #include <chipset.h>
 #include <interrupt.h>
+#include <interrupt_asm.h>
 #include <mmio.h>
+#include <scheduler.h>
 #include <stdio.h>
+#include <syscallhandler.h>
+#include <thread.h>
 #include <vm2.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
@@ -76,105 +80,18 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+void swi_handler(void * registers) {
+    Scheduler * scheduler = get_scheduler();
+    Thread * thread = get_thread(scheduler);
+    set_registers(thread, registers);
 
-    asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r0" : "=r"(r0)::);
-    asm volatile("MOV %0, r1" : "=r"(r1)::);
-    asm volatile("MOV %0, r2" : "=r"(r2)::);
-    asm volatile("MOV %0, r3" : "=r"(r3)::);
+    handle_syscall(thread->registers.R7,
+                   thread->registers.R0,
+                   thread->registers.R1,
+                   thread->registers.R2,
+                   thread->registers.R3);
 
-    kprintf("SOFTWARE INTERRUPT HANDLER\n");
-
-    // Print out syscall # for debug purposes
-    kprintf("Syscall #: ");
-    kprintf("%d\n", callNumber);
-    kprintf("arg0=%d\n", r0);
-    kprintf("arg1=%d\n", r1);
-    kprintf("arg2=%d\n", r2);
-    kprintf("arg3=%d\n", r3);
-    kprintf("\n");
-
-    // System Call Handler
-    switch (callNumber) {
-        case SYSCALL_EXIT:
-            // TODO: remove current process from scheduler
-            for (;;)
-                ;
-            break;
-        case SYSCALL_DUMMY:
-            return 0L;
-            break;
-
-        // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
-        case SYSCALL_CREATE:
-            kprintf("Create system call called!\n");
-            return -1;
-
-            //		return (long) kcreate((char*) r0, r1, 0);
-        case SYSCALL_DELETE:
-            kprintf("Delete system call called!\n");
-            return -1;
-
-            //		return (long) kdelete((char*) r0, 1);
-        case SYSCALL_OPEN:
-            kprintf("Open system call called!\n");
-            return -1;
-
-            //		return (long) kopen((char*) r0, r1);
-        case SYSCALL_MKDIR:
-            kprintf("Mkdir system call called!\n");
-            return -1;
-
-            //		return (long) kcreate((char*) r0, 'w', 1);
-        case SYSCALL_READ:
-            kprintf("Read system call called!\n");
-            return -1;
-
-            //		return (long) kread(r0, (void*) r1, r2);
-        case SYSCALL_WRITE:
-            kprintf("Write system call called!\n");
-            return -1;
-
-            //		return (long) kwrite(r0, (void*) r1, r2);
-        case SYSCALL_CLOSE:
-            kprintf("Close system call called!\n");
-            return -1;
-
-            //		return (long) kclose(r0);
-        case SYSCALL_SEEK:
-            kprintf("Seek system call called!\n");
-            return -1;
-
-            //		return (long) kseek(r0, r1);
-        case SYSCALL_COPY:
-            kprintf("Copy system call called!\n");
-            return -1;
-
-            //		return (long) kcopy((char*) r0, (char*) r1, r2);
-        case SYSCALL_LS:
-            kprintf("Ls system call called!\n");
-            return -1;
-            //		return (long) kls((char*) r0);
-        case SYSCALL_SET_PERM:
-            kprintf("Set permission system call called!\n");
-            kprintf("Yet to be implemented\n");
-            return -1;
-        case SYSCALL_MEM_MAP:
-            kprintf("Memory map system call called!\n");
-            kprintf("Yet to be implemented\n");
-            return -1;
-
-        case SYSCALL_PRINTF:
-            kprintf("Printf system call called!\n");
-
-            kprintf((const char *)r0);
-            return 0L;
-        default:
-            kprintf("That wasn't a syscall you knob!\n");
-            return -1L;
-    }
+    schedule_task(scheduler);
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {

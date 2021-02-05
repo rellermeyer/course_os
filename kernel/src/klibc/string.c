@@ -42,7 +42,6 @@ uint32_t strcmp(char * s1, char * s2) {
     }
 }
 
-
 uint32_t strncmp(char * s1, char * s2, size_t n) {
     while (n && *s1 && (*s1 == *s2)) {
         ++s1;
@@ -63,8 +62,25 @@ uint32_t strlen(char * str) {
     return 0;
 }
 
-
 bool starts_with(char * s1, char * s2) {
     if (strncmp(s1, s2, strlen(s2)) == 0) { return true; }
     return false;
+}
+
+/*
+ * Implementation taken from FreeBSD under BSD-3-Clause license.
+ *
+ * Copyright (c) 1990, 1993
+ *     The Regents of the University of California.  All rights reserved.
+ */
+int memcmp(const void *s1, const void *s2, size_t n) {
+    if (n != 0) {
+        const unsigned char *p1 = s1, *p2 = s2;
+
+        do {
+            if (*p1++ != *p2++)
+                return (*--p1 - *--p2);
+        } while (--n != 0);
+    }
+    return (0);
 }

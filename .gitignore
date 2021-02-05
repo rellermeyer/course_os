@@ -30,6 +30,7 @@ build/
 /.idea/
 !/.idea/runConfigurations
 /.vscode/
+!/.idea/settings.json
 *~
 *.swp
 [._]*.s[a-w][a-z]
@@ -60,4 +61,5 @@ compile_commands.json
 # Misc
 NOTES
 /server.PID
-
+compile_commands.json
+user/swi/swi

@@ -12,6 +12,6 @@
             "cwd": "${workspaceRoot}",
             // "preLaunchTask": "run_debug",
             "valuesFormatting": "prettyPrinters"
-        },
+        }
     ]
 }

@@ -2,10 +2,14 @@
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
+#include <kernel_programs.h>
 #include <mem_alloc.h>
 #include <stdint.h>
-#include <test.h>
 #include <vm2.h>
+#include <test.h>
+#include <scheduler.h>
+#include <elf.h>
+#include <elf_files.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -50,6 +54,7 @@ void start(uint32_t * p_bootargs) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+    Scheduler *scheduler = create_scheduler();
 
 #ifndef ENABLE_TESTS
 //    argparse_process(p_bootargs);
@@ -61,6 +66,15 @@ void start(uint32_t * p_bootargs) {
     SemihostingCall(OSSpecific);
 #endif
 
+    Elf *elf = elf_decode(swi, swi_len);
+
+    // Process *process1 = create_process(kernel_one, NULL);
+    Process *process2 = create_process(elf, NULL);
+    // add_process_to_scheduler(scheduler, process1);
+    add_process_to_scheduler(scheduler, process2);
+
+    enable_scheduler(scheduler);
+    free_scheduler(scheduler);
 
     // TODO:
     //  * Mount vfs

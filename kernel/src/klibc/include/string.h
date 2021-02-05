@@ -1,4 +1,3 @@
-
 #ifndef STRING_H
 #define STRING_H
 
@@ -15,5 +14,6 @@ void * memcpy(void * dest, void * src, size_t count);
 void * memset(void * dest, uint32_t val, size_t count);
 uint16_t * memsetw(uint16_t * dest, uint16_t val, size_t count);
 void * memmove(void * dest, const void * src, size_t n);
+int memcmp(const void *s1, const void *s2, size_t n);
 
 #endif
