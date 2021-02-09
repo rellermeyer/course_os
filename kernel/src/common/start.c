@@ -32,7 +32,7 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // was temporary and has to be replaced here.
     // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
-    vm2_start();
+    vm2_start(memory_size);
 
     INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
