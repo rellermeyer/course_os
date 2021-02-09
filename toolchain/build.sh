@@ -2,19 +2,13 @@
 
 PREFIX=$(pwd)/arm-none-eabi
 TARGET=$(pwd)/target
-#TARGET=/tmp/course_os/target
 URL=ftp://ftp.gnu.org/gnu
 
 # toolchain
-GCC_VERSION=9.2.0
-BINUTILS_VERSION=2.34
-NEWLIB_VERSION=3.1.0
-GDB_VERSION=9.1
+GCC_VERSION="${GCC_VERSION:-9.2.0}"
+BINUTILS_VERSION="${BINUTILS_VERSION:-2.34}"
+GDB_VERSION="${GDB_VERSION:-9.1}"
 GDB_EXT_VERSION=${GDB_VERSION}
-
-if [ -e "${PREFIX}" ]; then
-	exit 0;
-fi
 
 rm -rf "${TARGET}"
 
@@ -37,10 +31,6 @@ if [ ! -e binutils-${BINUTILS_VERSION}.tar.bz2 ]; then
 	wget ${URL}/binutils/binutils-${BINUTILS_VERSION}.tar.bz2 || exit 1;
 fi
 
-if [ ! -e newlib-${NEWLIB_VERSION}.tar.gz ]; then
-	wget ftp://sources.redhat.com/pub/newlib/newlib-${NEWLIB_VERSION}.tar.gz || exit 1;
-fi
-
 cd "${TARGET}/src"
 
 
@@ -55,10 +45,6 @@ fi
 
 if [ ! -d "${TARGET}/src/binutils-${BINUTILS_VERSION}" ]; then
 	tar xf ../orig/binutils-${BINUTILS_VERSION}.tar.bz2 || exit 1;
-fi
-
-if [ ! -d "${TARGET}/src/newlib-${NEWLIB_VERSION}" ]; then
-	tar xf ../orig/newlib-${NEWLIB_VERSION}.tar.gz || exit 1;
 fi
 
 
@@ -94,25 +80,9 @@ cd "${TARGET}/build/gcc-${GCC_VERSION}"
 	--with-system-zlib \
 	--enable-languages="c" \
 	--without-docdir \
-	--with-newlib \
-	--with-headers=../../src/newlib-${NEWLIB_VERSION}/newlib/libc/include || exit 1;
+	--disable-libssp \
+	|| exit 1;
 make all-gcc && make install-gcc || exit 1;
-
-mkdir -p "${TARGET}/build/newlib-${NEWLIB_VERSION}"
-cd "${TARGET}/build/newlib-${NEWLIB_VERSION}"
-../../src/newlib-${NEWLIB_VERSION}/configure \
-	--target=arm-none-eabi \
-	--prefix="${PREFIX}" \
-	--enable-interwork \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --disable-nls \
-        --enable-newlib-io-c99-formats \
-        --enable-newlib-io-long-long \
-        --disable-newlib-multithread \
-        --disable-newlib-supplied-syscalls \
-	--enable-multilib || exit 1;
-make all && make install || exit 1;
 
 cd "${TARGET}/build/gcc-${GCC_VERSION}"
 make all install || exit 1;

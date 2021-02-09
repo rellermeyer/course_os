@@ -32,3 +32,21 @@ TEST_CREATE(test_calloc, {
 
     kfree(test);
 })
+
+TEST_CREATE(test_expand_heap, {
+    uint32_t initial_end = heap->end;
+
+    expand(heap);
+
+    ASSERT_EQ(heap->end, initial_end + 0x1000);
+
+    uint8_t * yolo = (void *)(heap->end - 300);
+    uint8_t prev = *yolo;
+    *yolo = 42;
+    ASSERT_EQ(*yolo, 42);
+    *yolo = prev;
+
+    contract(heap);
+
+    ASSERT_EQ(heap->end, initial_end);
+})

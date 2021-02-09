@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="debug" type="CLion_Remote" remoteCommand="localhost:1234" symbolFile="$PROJECT_DIR$/kernel/build/kernel.sym" sysroot="">
+  <configuration default="false" name="debug" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile">
+    <makefile filename="$PROJECT_DIR$/kernel/Makefile" target="debug" workingDirectory="" arguments="">
+      <envs />
+    </makefile>
     <method v="2" />
   </configuration>
 </component>

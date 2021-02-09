@@ -40,7 +40,7 @@
 // enabled.
 void inline panic() {
     disable_interrupt(BOTH);
-    WARN("Kernel panic!\n");
+    kprintf("Kernel panic!\n");
     kprintf("\n     )                        (                     \n");
     kprintf("  ( /(                   (    )\\ )                  \n");
     kprintf("  )\\()) (  (           ( )\\  (()/(   )      (       \n");
