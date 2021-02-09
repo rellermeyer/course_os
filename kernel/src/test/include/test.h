@@ -12,7 +12,7 @@
 // Only compile test definitions if enabled
 #ifdef ENABLE_TESTS
 
-size_t global_counter;
+__attribute__((__common__)) size_t global_counter;
 
     #define DEBUG_COUNT kprintf("[DEBUG COUNT] %s:%i %i\n", __FILE__, __LINE__, global_counter++);
 
