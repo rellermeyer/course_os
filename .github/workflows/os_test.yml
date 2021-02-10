@@ -12,14 +12,14 @@ jobs:
         id: cache-toolchain
         uses: actions/cache@v1
         with:
-            path: toolchain
+            path: src/toolchain
             key: toolchain
 
       - name: Cache Qemu
         id: cache-qemu
         uses: actions/cache@v1
         with:
-            path: qemu/qemu
+            path: src/qemu/qemu
             key: qemu
 
       - name: Install Dependencies
@@ -29,11 +29,11 @@ jobs:
 
       - name: Build Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: rm -rf toolchain/arm-none-eabi/ && make toolchain
+        run: rm -rf src/toolchain/arm-none-eabi/ && make src/toolchain
 
       - name: Build Qemu
         if: steps.cache-qemu.outputs.cache-hit != 'true'
-        run: rm -rf qemu/qemu* && make qemu
+        run: rm -rf src/qemu/qemu* && make src/qemu
 
       - name: Compile
         run: make build
