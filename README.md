@@ -10,6 +10,20 @@ It is targeted to run on the raspberry pi zero, b+ and 2.
 
 [Build parameters](kernel/README.md)
 
+## Docker
+One option to run the project is to make use of the [Docker](https://www.docker.com/) image. To do so you first need to download Docker and Docker Compose for your operating system, after which you can run the follow commands to build and start the container:
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+After this you can choose to either open the shell to the container by running:
+```bash
+docker-compose run raspberry
+```
+You can find the directory with the built kernel at:`/var/lib/docker/course_os_kernel/_data`
+
 ## Toolchain
 To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
 
