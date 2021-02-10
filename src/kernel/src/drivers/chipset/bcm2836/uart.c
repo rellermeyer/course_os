@@ -1,8 +1,6 @@
 #include <bcm2836.h>
 #include <chipset.h>
-#include <interrupt.h>
 #include <klibc.h>
-#include <limits.h>
 #include <stdint.h>
 #include <uart.h>
 
