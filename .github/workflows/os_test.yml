@@ -16,14 +16,14 @@ jobs:
         id: cache-toolchain
         uses: actions/cache@v1
         with:
-            path: toolchain
+            path: src/toolchain
             key: toolchain
 
       - name: Cache Qemu
         id: cache-qemu
         uses: actions/cache@v1
         with:
-            path: qemu/qemu
+            path: src/qemu/qemu
             key: qemu
 
       - name: Install Dependencies
