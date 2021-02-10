@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="attach debugger" type="CLion_Remote" remoteCommand="localhost:1234" symbolFile="$PROJECT_DIR$/src/kernel/build/kernel.sym" sysroot="">
+    <method v="2" />
+  </configuration>
+</component>
