@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: echo * && rm -rf toolchain/arm-none-eabi/ && make toolchain
+        run: rm -rf toolchain/arm-none-eabi/ && make toolchain
 
       - name: Build Qemu
         if: steps.cache-qemu.outputs.cache-hit != 'true'
