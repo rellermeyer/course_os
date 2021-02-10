@@ -6,6 +6,8 @@ services:
     image: rellermeyer/course_os:1.0
     volumes:
       - kernel:/work/kernel/build
+    ports:
+      - "1234"
 
 volumes:
   kernel:

@@ -2,6 +2,10 @@ name: course_os test suite
 
 on: [push]
 
+defaults:
+  run:
+     working-directory: src
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,14 +16,14 @@ jobs:
         id: cache-toolchain
         uses: actions/cache@v1
         with:
-            path: src/toolchain
+            path: toolchain
             key: toolchain
 
       - name: Cache Qemu
         id: cache-qemu
         uses: actions/cache@v1
         with:
-            path: src/qemu/qemu
+            path: qemu/qemu
             key: qemu
 
       - name: Install Dependencies
@@ -29,11 +33,11 @@ jobs:
 
       - name: Build Toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: rm -rf src/toolchain/arm-none-eabi/ && make src/toolchain
+        run: echo * && rm -rf toolchain/arm-none-eabi/ && make toolchain
 
       - name: Build Qemu
         if: steps.cache-qemu.outputs.cache-hit != 'true'
-        run: rm -rf src/qemu/qemu* && make src/qemu
+        run: rm -rf qemu/qemu* && make qemu
 
       - name: Compile
         run: make build
