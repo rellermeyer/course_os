@@ -34,7 +34,7 @@ INCLUDEDIR = include
 CPU = cortex-a7
 
 # Seeds the random order in which tests are run.
-TESTS_SEED = $(date '+%s')
+TESTS_SEED = $(shell date '+%s')
 
 # =================== End Configuration ===================
 
