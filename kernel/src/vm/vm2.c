@@ -123,7 +123,7 @@ void vm2_start(size_t detected_size) {
                                        true);
     }
 
-    pmm_init(KERNEL_PMM_BASE, PMM_TOP);
+    pmm_init(KERNEL_PMM_BASE, KERNEL_VIRTUAL_OFFSET + detected_size);
 
     vm2_set_user_pagetable(NULL);
 

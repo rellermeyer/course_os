@@ -1,7 +1,10 @@
+#include <bcm2836.h>
+#include <hardwareinfo.h>
 #include <pmm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <constants.h>
 
 /// Private functions
 // Returns the index of the first zero from the LSB
@@ -46,7 +49,16 @@ void pmm_init(size_t start, size_t end) {
     size_t infoindex = 1;
     union MemorySlice * currentslice = firstslice;
 
+    size_t peripherals_base;
 
+    switch (get_hardwareinfo()->boardType) {
+        case RaspBerryPiTwo:
+            peripherals_base = BCM2836_PERIPHERALS_PHYSICAL_BASE;
+            break;
+        default:
+            FATAL("Board not implemented");
+    }
+    
     // Go through all memory and index it with sliceinfo structs.
     // We start 1 Memoryslice after `start` because we already allocated the first one at the start
     // of this function.
@@ -54,11 +66,22 @@ void pmm_init(size_t start, size_t end) {
          i++) {
         struct MemorySliceInfo * currentsliceinfo = &currentslice->bucketinfo[infoindex];
 
+        
+
+
         // make this sliceinfo struct point to the right slice
         currentsliceinfo->slice = i;
 
-        // Add the sliceinfo to the unused list
-        push_to_ll(&physicalMemoryManager.unused, currentsliceinfo);
+	// Add 21 MiB because RPi 2 & Zero has regular  16 MiB peripherals region, but RPi 2 also has 4 MiB region after
+        if (((size_t)i - 0x80000000) >= peripherals_base &&
+            ((size_t)i - 0x80000000) < peripherals_base + Mebibyte*21) {
+            // The slice is in the MMIO region, should not be used so put it in the
+            // allocated list permanently
+            push_to_ll(&physicalMemoryManager.allocated, currentsliceinfo);
+        } else {
+            // Add the sliceinfo to the unused list
+            push_to_ll(&physicalMemoryManager.unused, currentsliceinfo);
+        }
 
         // continue to the next sliceinfo
         infoindex++;
