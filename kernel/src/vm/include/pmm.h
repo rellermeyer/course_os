@@ -41,9 +41,6 @@
 /// * bucketinfo    A slice containing an array of sliceinfo structs describing the contents of a
 /// bucket.
 
-// TODO: Excluded regions. (for mmio for example)
-// TODO: detect memory size.
-
 #ifndef PMM_H
 #define PMM_H
 
