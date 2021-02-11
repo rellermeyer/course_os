@@ -29,8 +29,8 @@ void bcm2836_init() {
     chipset.late_init = &bcm2836_late_init;
 
     bcm2836_registers_base =
-        (struct BCM2836Registers *)vm2_map_peripheral(BCM2836_REGISTERS_PHYSICAL_BASE, 1);
-    bcm2836_peripheral_base = vm2_map_peripheral(BCM2836_PERIPHERALS_PHYSICAL_BASE, 4);
+        (struct BCM2836Registers *)vm2_map_peripheral(BCM2836_REGISTERS_PHYSICAL_BASE, 4);
+    bcm2836_peripheral_base = vm2_map_peripheral(BCM2836_PERIPHERALS_PHYSICAL_BASE, 16);
 
     bcm2836_uart_init();
 }
