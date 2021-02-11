@@ -31,6 +31,7 @@ size_t global_counter = 0;
 
 " >> "$DIR/test.c"
 
+echo "Seed used for test order randomization: $1"
 #TESTFNS=$(grep -hr --include "*.c" -oP "(?<=TEST_CREATE\()(.*)(?=,)")
 TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)" | sort -R --random-source=<(get_seeded_random $1))
 
