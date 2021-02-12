@@ -1,6 +1,8 @@
 #ifndef HARDWAREINFO_H
 #define HARDWAREINFO_H
 
+#include <stdint.h>
+
 typedef enum CpuType { ARM1176, CortexA7 } CpuType;
 
 typedef enum BoardType { VersatilePB, RaspberryPiZero, RaspBerryPiTwo } BoardType;
@@ -10,6 +12,7 @@ typedef enum BoardType { VersatilePB, RaspberryPiZero, RaspBerryPiTwo } BoardTyp
 typedef struct HardwareInfo {
     CpuType cpuType;
     BoardType boardType;
+    size_t peripheral_base_address;
 } HardwareInfo;
 
 // Initialize the global hardware info struct. After this is ran, the get_hardwareinfo
