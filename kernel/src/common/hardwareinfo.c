@@ -1,7 +1,9 @@
 #include <bcm2836.h>
+#include <constants.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <stdio.h>
+#include <vm2.h>
 
 static HardwareInfo hardware_info;
 
@@ -28,9 +30,11 @@ BoardType detect_boardtype() {
 void init_hardwareinfo() {
     BoardType boardType = detect_boardtype();
     size_t peripheral_base_address;
+    size_t peripheral_region_size;
     switch (boardType) {
         case RaspBerryPiTwo:
             peripheral_base_address = BCM2836_PERIPHERALS_PHYSICAL_BASE;
+            peripheral_region_size = 21 * Mebibyte;
             break;
         default:
             FATAL("Peripheral address for board type not implemented");
@@ -38,7 +42,8 @@ void init_hardwareinfo() {
     hardware_info = (HardwareInfo){
         .cpuType = ARM1176,
         .boardType = boardType,
-	.peripheral_base_address = peripheral_base_address,
+        .peripheral_base_address = peripheral_base_address,
+	.peripheral_region_size = peripheral_region_size,
     };
 }
 
@@ -71,4 +76,9 @@ void print_hardwareinfo() {
     }
 
     kprintf("==============================================\n");
+}
+
+bool address_in_reserved_region(size_t address) {
+  return ((address - KERNEL_VIRTUAL_OFFSET) >= get_hardwareinfo()->peripheral_base_address &&
+	  (address - KERNEL_VIRTUAL_OFFSET) < get_hardwareinfo()->peripheral_base_address + get_hardwareinfo()->peripheral_region_size);
 }

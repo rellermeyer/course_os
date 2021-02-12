@@ -63,8 +63,7 @@ void pmm_init(size_t start, size_t end) {
         currentsliceinfo->slice = i;
 
 	// Add 21 MiB because RPi 2 & Zero has regular  16 MiB peripherals region, but RPi 2 also has 4 MiB region after
-        if (((size_t)i - 0x80000000) >= get_hardwareinfo()->peripheral_base_address &&
-            ((size_t)i - 0x80000000) < get_hardwareinfo()->peripheral_base_address + Mebibyte*21) {
+        if (address_in_reserved_region((size_t)i)) {
             // The slice is in the MMIO region, should not be used so put it in the
             // allocated list permanently
             push_to_ll(&physicalMemoryManager.allocated, currentsliceinfo);
