@@ -7,9 +7,11 @@
 # https://www.gnu.org/software/coreutils/manual/html_node/Random-sources.html
 get_seeded_random()
 {
-  seed="$1"
-  openssl enc -aes-256-ctr -pass pass:"$seed" -nosalt \
-    </dev/zero 2>/dev/null
+    RANDOM=$1
+    while true
+    do
+	echo "$RANDOM"
+    done
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
