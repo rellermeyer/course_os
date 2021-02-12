@@ -60,8 +60,6 @@ void pmm_init(size_t start, size_t end) {
         // make this sliceinfo struct point to the right slice
         currentsliceinfo->slice = i;
 
-        // Add 21 MiB because RPi 2 & Zero has regular  16 MiB peripherals region, but RPi 2 also
-        // has 4 MiB region after
         if (address_in_reserved_region((size_t)i)) {
             // Mark slice as reserved for MMIO
             currentsliceinfo->reserved = 1;
