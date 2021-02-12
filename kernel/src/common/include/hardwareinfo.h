@@ -1,6 +1,7 @@
 #ifndef HARDWAREINFO_H
 #define HARDWAREINFO_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef enum CpuType { ARM1176, CortexA7 } CpuType;
@@ -13,6 +14,7 @@ typedef struct HardwareInfo {
     CpuType cpuType;
     BoardType boardType;
     size_t peripheral_base_address;
+    size_t peripheral_region_size;
 } HardwareInfo;
 
 // Initialize the global hardware info struct. After this is ran, the get_hardwareinfo
@@ -24,5 +26,8 @@ void init_hardwareinfo();
 HardwareInfo * get_hardwareinfo();
 void print_hardwareinfo();
 BoardType detect_boardtype();
+
+// Checks whether given address is in area occupied by MMIO
+bool address_in_reserved_region(size_t address);
 
 #endif
