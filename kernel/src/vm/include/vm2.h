@@ -360,11 +360,6 @@ extern const size_t __KERNEL_VIRTUAL_OFFSET[];
 /// Location of the Kernel's Physical Memory Manager's Info structs. Can grow to a max of 16MiB when
 /// using 4GiB RAM.
 #define KERNEL_PMM_BASE KERNEL_VIRTUAL_END
-// TODO: This changes per chipset and we either need to detect that or
-// TODO: (the actual solution) support excluded regions in the pmm
-// If we write above this range (0x3f000000) on a bcm2836 we enter the peripheral
-// DMA region and are thus setting all kinds of registers. This kills qemu :)
-#define PMM_TOP (KERNEL_VIRTUAL_OFFSET + 0x3f000000)
 
 // Location of the vector table in memory table.
 // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0552a/BABIFJFG.html
