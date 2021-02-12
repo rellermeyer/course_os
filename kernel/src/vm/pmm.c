@@ -1,9 +1,9 @@
+#include <constants.h>
 #include <hardwareinfo.h>
 #include <pmm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <constants.h>
 
 /// Private functions
 // Returns the index of the first zero from the LSB
@@ -48,7 +48,7 @@ void pmm_init(size_t start, size_t end) {
     size_t infoindex = 1;
     union MemorySlice * currentslice = firstslice;
 
-    
+
     // Go through all memory and index it with sliceinfo structs.
     // We start 1 Memoryslice after `start` because we already allocated the first one at the start
     // of this function.
@@ -56,14 +56,15 @@ void pmm_init(size_t start, size_t end) {
          i++) {
         struct MemorySliceInfo * currentsliceinfo = &currentslice->bucketinfo[infoindex];
 
-        
-
 
         // make this sliceinfo struct point to the right slice
         currentsliceinfo->slice = i;
 
-	// Add 21 MiB because RPi 2 & Zero has regular  16 MiB peripherals region, but RPi 2 also has 4 MiB region after
+        // Add 21 MiB because RPi 2 & Zero has regular  16 MiB peripherals region, but RPi 2 also
+        // has 4 MiB region after
         if (address_in_reserved_region((size_t)i)) {
+            // Mark slice as reserved for MMIO
+            currentsliceinfo->reserved = 1;
             // The slice is in the MMIO region, should not be used so put it in the
             // allocated list permanently
             push_to_ll(&physicalMemoryManager.allocated, currentsliceinfo);
@@ -141,6 +142,11 @@ void pmm_free_l1_pagetable(struct L1PageTable * pt) {
     if (pt == NULL) { return; }
 
     struct MemorySliceInfo * sliceinfo = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
+
+    if (sliceinfo->reserved) {
+        WARN("Attempted to free reserved slice");
+        return;
+    }
 
     remove_element_ll(&physicalMemoryManager.allocated, sliceinfo);
 
@@ -252,6 +258,11 @@ void pmm_free_page(struct Page * p) {
     // works cuz rounding (we think, might just work because random luck)
     struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)p);
 
+    if (info->reserved) {
+        WARN("Attempted to free reserved slice");
+        return;
+    }
+
     if (info->filled == 0b11) {
         remove_element_ll(&physicalMemoryManager.allocated, info);
     } else {
@@ -276,6 +287,11 @@ void pmm_free_page(struct Page * p) {
 void pmm_free_l2_pagetable(struct L2PageTable * pt) {
     // works cuz rounding (we think, might just work because random luck)
     struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
+
+    if (info->reserved) {
+        WARN("Attempted to free reserved slice");
+        return;
+    }
 
     if (info->filled == 0xff) {
         remove_element_ll(&physicalMemoryManager.allocated, info);

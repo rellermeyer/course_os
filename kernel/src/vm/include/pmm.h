@@ -79,8 +79,11 @@ struct MemorySliceInfo {
             /// than 8KiB. This is a BitVector where 1 means allocated and 0 means free.
             uint32_t filled : 8;
 
+            // Indicates this memory slice should not be deallocated. Is part of MMIO.
+            uint32_t reserved : 1;
+
             /// Unused bits
-            uint32_t unused : 22;
+            uint32_t unused : 21;
         };
     };
 
@@ -129,7 +132,7 @@ struct PhysicalMemoryManager {
     size_t end;
 };
 
-__attribute__((__common__))  struct PhysicalMemoryManager physicalMemoryManager;
+__attribute__((__common__)) struct PhysicalMemoryManager physicalMemoryManager;
 
 // Allocator specific operations
 
