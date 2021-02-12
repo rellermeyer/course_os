@@ -1,3 +1,4 @@
+#include <bcm2836.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <stdio.h>
@@ -25,9 +26,19 @@ BoardType detect_boardtype() {
 // TODO: detect hardware info.
 // Such as: CPU and RAM size.
 void init_hardwareinfo() {
+    BoardType boardType = detect_boardtype();
+    size_t peripheral_base_address;
+    switch (boardType) {
+        case RaspBerryPiTwo:
+            peripheral_base_address = BCM2836_PERIPHERALS_PHYSICAL_BASE;
+            break;
+        default:
+            FATAL("Peripheral address for board type not implemented");
+    }
     hardware_info = (HardwareInfo){
         .cpuType = ARM1176,
-        .boardType = detect_boardtype(),
+        .boardType = boardType,
+	.peripheral_base_address = peripheral_base_address,
     };
 }
 
