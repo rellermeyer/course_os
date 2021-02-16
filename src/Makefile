@@ -31,6 +31,10 @@ build: toolchain
 run: toolchain
 	@$(MAKE) -C ./kernel run
 
+.PHONY: debug
+debug: toolchain
+	@$(MAKE) -C ./kernel debug
+
 .PHONY: test
 test: toolchain
 	@$(MAKE) -C ./kernel test

@@ -1,4 +1,6 @@
 include $(CURDIR)/../config.mk
+.PHONY: all
+all: configure_toolchain
 # NOTE: things with make break if there are folder names in the path from
 # root to the directory with course_os in it which contain spaces.
 
@@ -7,8 +9,8 @@ include $(CURDIR)/../config.mk
 # TODO should we have "-nostdinc"?
 # Flags to give to the c compiler
 CFLAGS += -pipe -std=gnu99 -ffreestanding \
-	-Wall -Werror -Wno-error=unused-function -Wno-error=unused-label -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=unused-local-typedefs \
-	-g -O0 -mtune=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
+    -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=unused-local-typedefs \
+    -g -O0 -mtune=arm1176jzf-s -march=armv6zk -mfpu=vfp -fpic
 LDFLAGS += -nostartfiles -fcommon -nolibc
 # C flags if building for the real pi. This is mostly untested
 # PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
@@ -34,7 +36,6 @@ INCLUDEDIR = include
 CPU = cortex-a7
 
 # =================== End Configuration ===================
-
 TOOLCHAIN_PATH=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
 AS=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-as
@@ -59,31 +60,60 @@ INCLUDEDIRS := $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(
 CFLAGS += $(foreach dir, $(INCLUDEDIRS), -I./$(dir))
 CFLAGS += $(foreach def, $(DEFINITIONS), -D$(def))
 
-build:  $(BUILDDIR)/kernel.elf | builddir
+.PHONY: configure_toolchain
+configure_toolchain:
+ifneq (, $(shell which "${BARE_METAL_TUPLE}-gcc" 2> /dev/null))
+CC := $(shell which ${BARE_METAL_TUPLE}-gcc)
+AS := $(shell which ${BARE_METAL_TUPLE}-as)
+LD := $(shell which ${BARE_METAL_TUPLE}-gcc)
+OBJCOPY := $(shell which ${BARE_METAL_TUPLE}-objcopy)
+else
+ifeq ("$(wildcard $(CC))","")
+	@echo "Installing toolchain"
+	cd "${CURDIR}/../toolchain"; sh build.sh
+endif
+endif
+
+.PHONY: configure_qemu
+configure_qemu: 
+ifneq (, $(shell which qemu-system-arm 2> /dev/null))
+QEMU := $(shell which qemu-system-arm 2> /dev/null)
+else 
+ifeq ("$(wildcard $(QEMU))", "")
+	@echo "Installing qemu"
+	cd ${CURDIR}/../qemu; ./build.sh
+endif
+endif
+
+.PHONY: configure
+configure: configure_qemu configure_toolchain
+	@echo "Configuring tools"
+	
+
+build:  $(BUILDDIR)/kernel.elf configure | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
 
-test: build | builddir
+test: build configure | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
 	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
-run: build | builddir
+run: build configure | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
 	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
-debug: build | builddir
-		${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
+debug: build configure | builddir
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
 
-start_debug: build | builddir
+start_debug: build  configure | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
 	$(LD) -T linker/kernel.ld $(LDFLAGS) -Wl,-Map,kernel.map $^ -o $@
 	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
 	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
-
 
 # Begin Pi Make
 # (aka, building for a real pi. TODO: This is mostly untested)
@@ -109,9 +139,10 @@ $(SOURCEDIR)/test/test.c: dummy | builddir
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
 # so make knows that when it changed it should recompile.
-$(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy | builddir
+$(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy configure_toolchain | builddir
 	@mkdir -p $(shell dirname $@)
 	@echo Compiling $<
+	@echo ${CC}
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

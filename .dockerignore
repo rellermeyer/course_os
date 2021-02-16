@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.vscode
+
+src/toolchain/
+src/qemu/
+!src/toolchain/build.sh
+src/build/
+!src/build/build.sh
+src/docs/
+src/html/
+src/latex
+src/course_os_docs.pdf
+
