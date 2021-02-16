@@ -9,6 +9,6 @@ EXPOSE 1234
 
 # Since we installed the toolchain from the repositories we don't need
 # to install them separately. So we can just fake 'em.
-RUN touch toolchain/indicator
+RUN mkdir -p toolchain && touch toolchain/indicator
 RUN make build
 VOLUME build /work/kernel/build

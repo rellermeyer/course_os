@@ -10,7 +10,7 @@ get_seeded_random()
     RANDOM=$1
     while true
     do
-	echo "$RANDOM"
+	echo "$RANDOM" || exit
     done
 }
 
