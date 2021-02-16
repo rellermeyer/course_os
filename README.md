@@ -10,6 +10,27 @@ It is targeted to run on the raspberry pi zero, b+ and 2.
 
 [Build parameters](kernel/README.md)
 
+## Docker
+One option to run the project is to make use of the [Docker](https://www.docker.com/) image. To do so you first need to download Docker and Docker Compose for your operating system, after which you can run the follow commands to build and start the container:
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+After this you can choose to open the shell to the container by running:
+```bash
+docker-compose run raspberry
+```
+After that you can follow the instructions starting at [Running](#running)
+
+You can find the directory with the built kernel at:`/var/lib/docker/course_os_kernel/_data`
+To run the kernel you can use the command:
+```base
+qemu-system-arm -kernel kernel.elf -m 1G -serial stdio -monitor none -M raspi2 -cpu cortex-a7 -nographic -append "-load 0x410000 0x14000" -semihosting
+```
+
+
 ## Toolchain
 To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
 
@@ -89,4 +110,3 @@ rm -rf Debug
 ```
 
 Now Vim and CCLS will correctly know how to index the project.
-

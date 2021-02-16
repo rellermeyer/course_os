@@ -1,27 +1,28 @@
 # Build files
-kernel/kernel.bin
-kernel/flash.bin
-kernel/boot-commands
-kernel/card.sd
-kernel/src/test/test.c
+src/kernel/kernel.bin
+src/kernel/flash.bin
+src/kernel/boot-commands
+src/kernel/card.sd
+src/kernel/src/test/test.c
+src/kernel/build
 
 # Toolchain dir, but not the build script
-/toolchain/
-!/toolchain/build.sh
+src/toolchain/
+!src/toolchain/build.sh
 
 # Qemu dir, again without its buildscript
-/qemu/
-!/qemu/build.sh
+src/qemu/
+!src/qemu/build.sh
 
 # Generic build dirs
-build/
+src/build
 /cmake-build-*/
 
 # Generated docs
-/docs/
-/html/
-/latex/
-/course_os_docs.pdf
+src/docs/
+src/html/
+src/latex/
+src/course_os_docs.pdf
 
 # Editor specific
 .settings/
@@ -60,4 +61,5 @@ compile_commands.json
 # Misc
 NOTES
 /server.PID
-
+*~
+#*
