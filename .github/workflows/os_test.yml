@@ -8,7 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - run: |
-          docker build -t course_os .
-          docker run course_os make test
+        
+      - name: build
+        run: docker build -t course_os .
+        
+      - name: test
+        run: docker run course_os make test
