@@ -12,7 +12,6 @@ The [makefile](Makefile) in this directory contains a number of configuration op
 | BUILDDIR | The name of the directory containing object files and binaries |
 | INCLUDEDIR | Any directory in SOURCEDIR with this name, will be globally included in every c file. This means they can be included with `#include <something.h>` instead of `#include "something.h"`. |
 | TEST_MAIN_FILE | The name of the file generated to contain all [tests](src/test/README.md). | 
-| TESTS_SEED | The seed used to randomize the order in which the tests are run. |
 | CPU | The cpu type emulated by qemu. Supported cpu types are the `arm1176` and `cortex-a7`|
 
 
