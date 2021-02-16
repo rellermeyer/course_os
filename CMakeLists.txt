@@ -13,8 +13,8 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_C_COMPILER ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/arm-none-eabi/bin/arm-none-eabi-gcc)
 set(CMAKE_C_LINK_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/arm-none-eabi/bin/arm-none-eabi-ld)
 
-file(GLOB_RECURSE kernel_sources ./kernel/src/*.c ./kernel/src/**/*.c)
-file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./kernel/src/**/include)
+file(GLOB_RECURSE kernel_sources ./src/kernel/src/*.c ./src/kernel/src/**/*.c)
+file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./src/kernel/src/**/include)
 
 set(SOURCE_FILES ${kernel_sources})
 
