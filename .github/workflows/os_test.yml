@@ -2,45 +2,15 @@ name: course_os test suite
 
 on: [push]
 
-defaults:
-  run:
-     working-directory: src
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Cache Toolchain
-        id: cache-toolchain
-        uses: actions/cache@v1
-        with:
-            path: src/toolchain
-            key: toolchain
-
-      - name: Cache Qemu
-        id: cache-qemu
-        uses: actions/cache@v1
-        with:
-            path: src/qemu/qemu
-            key: qemu
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install build-essential python3 wget texinfo zlib1g-dev ninja-build -y
-
-      - name: Build Toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: rm -rf toolchain/arm-none-eabi/ && make toolchain
-
-      - name: Build Qemu
-        if: steps.cache-qemu.outputs.cache-hit != 'true'
-        run: rm -rf qemu/qemu* && make qemu
-
-      - name: Compile
-        run: make build
-
-      - name: Test
-        run: make test
+        
+      - name: build
+        run: docker build -t course_os .
+        
+      - name: test
+        run: docker run course_os make test
