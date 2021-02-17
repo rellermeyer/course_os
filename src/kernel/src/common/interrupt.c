@@ -46,6 +46,7 @@ void reset_handler(void) {
     _Reset();
 }
 
+
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     size_t spsr, lr;
 
@@ -76,7 +77,35 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
+void __attribute__((interrupt("SWI"))) save_context(void) {
+    // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
+
+    asm volatile("STM     sp,{R0-lr}^             ; Dump user registers above R13 ");
+    asm volatile("MRS     R0, SPSR                ; Pick up the user status");
+    asm volatile("STMDB   sp, {R0, lr}            ; and dump with return address below.");
+
+    return software_interrupt_handler();
+}
+
+void load_context(void) {
+    // Pointer to to be loaded PCB should be stored in R12
+
+    // Load new PCB
+    asm volatile("LDR     sp, [R12], #4           ; Load next PCB pointer");
+    asm volatile("CMP     sp, #0                  ; If it is zero, it is invalid");
+
+    // Restore State (if valid)
+    asm volatile("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.");
+    asm volatile("MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
+                 "be restored when returning from interrupt) (csxf necessary ?)");
+    asm volatile("LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers");
+
+    // Reset PC
+    // asm volatile("NOP                             "); // Not sure why this is here
+    asm volatile("MOVSNE pc, lr                   ; return PC");
+}
+
+long software_interrupt_handler(void) {
     int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
