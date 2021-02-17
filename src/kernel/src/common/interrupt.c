@@ -80,25 +80,23 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 void __attribute__((interrupt("SWI"))) switch_context(void) {
     // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
     // TODO: Extend this to the complete program state
-    asm volatile("STM     sp,{R0-lr}^             ; Dump user registers above R13 ");
-    asm volatile("MRS     R0, SPSR                ; Pick up the user status");
-    asm volatile("STMDB   sp, {R0, lr}            ; and dump with return address below.");
+    asm("STM     sp,{R0-lr}^             ; Dump user registers above R13\n"
+        "MRS     R0, SPSR                ; Pick up the user status\n"
+        "STMDB   sp, {R0, lr}            ; and dump with return address below.\n");
 
     return software_interrupt_handler();
 
     // Load new PCB [pointer should be in R12]
-    asm volatile("LDR     sp, [R12], #4           ; Load next PCB pointer");
-    asm volatile("CMP     sp, #0                  ; If it is zero, it is invalid");
+    asm("LDR     sp, [R12], #4           ; Load next PCB pointer\n"
+        "CMP     sp, #0                  ; If it is zero, it is invalid\n");
 
     // Restore State (if valid)
-    asm volatile("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.");
-    asm volatile("MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
-                 "be restored when returning from interrupt) (csxf necessary ?)");
-    asm volatile("LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers");
-
-    // Reset PC
-    // asm volatile("NOP                             "); // Not sure why this is here
-    asm volatile("MOVSNE pc, lr                   ; return PC");
+    asm("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.\n"
+        "MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
+        "be restored when returning from interrupt) (csxf necessary ?)\n"
+        "LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers\n"
+        // asm volatile("NOP                             "); // Not sure why this is here
+        "MOVSNE pc, lr                   ; return PC\n");
 }
 
 long software_interrupt_handler(void) {
