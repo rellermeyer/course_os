@@ -77,20 +77,16 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-void __attribute__((interrupt("SWI"))) save_context(void) {
+void __attribute__((interrupt("SWI"))) switch_context(void) {
     // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
-
+    // TODO: Extend this to the complete program state
     asm volatile("STM     sp,{R0-lr}^             ; Dump user registers above R13 ");
     asm volatile("MRS     R0, SPSR                ; Pick up the user status");
     asm volatile("STMDB   sp, {R0, lr}            ; and dump with return address below.");
 
     return software_interrupt_handler();
-}
 
-void load_context(void) {
-    // Pointer to to be loaded PCB should be stored in R12
-
-    // Load new PCB
+    // Load new PCB [pointer should be in R12]
     asm volatile("LDR     sp, [R12], #4           ; Load next PCB pointer");
     asm volatile("CMP     sp, #0                  ; If it is zero, it is invalid");
 
