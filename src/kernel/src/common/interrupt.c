@@ -79,7 +79,7 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 
 void __attribute__((interrupt("SWI"))) switch_context(void) {
     // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
-    // TODO: Extend this to the complete program state
+    // TODO: Extend this to the complete execution state
     asm("STM     sp,{R0-lr}^             ; Dump user registers above R13\n"
         "MRS     R0, SPSR                ; Pick up the user status\n"
         "STMDB   sp, {R0, lr}            ; and dump with return address below.\n");
@@ -93,7 +93,7 @@ void __attribute__((interrupt("SWI"))) switch_context(void) {
     // Restore State (if valid)
     asm("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.\n"
         "MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
-        "be restored when returning from interrupt) (csxf necessary ?)\n"
+        "be restored when returning from interrupt) (csxf means, set all the bits ?)\n"
         "LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers\n"
         // asm volatile("NOP                             "); // Not sure why this is here
         "MOVSNE pc, lr                   ; return PC\n");
