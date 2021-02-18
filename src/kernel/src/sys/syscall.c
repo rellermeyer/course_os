@@ -45,6 +45,7 @@ int syscall(long sys, ...) {
 			r0 = va_arg(args, int);
 			r1 = va_arg(args, int);
 			r2 = va_arg(args, int);
+            // TODO: r3 is overwritten (same problem as in interrupt.c)
 			r3 = va_arg(args, int);
 			asm("MOV r7, %0":: "r" (sys));
 			asm("MOV r0, %0":: "r" (r0));
@@ -52,6 +53,10 @@ int syscall(long sys, ...) {
 			asm("MOV r2, %0":: "r" (r2));
 			asm("MOV r3, %0":: "r" (r3));
 			asm("SWI 0x0");
+            // also calling:
+            // syscall (0, 1, 2, 3, 4);
+            // in start.c results in kernel panic,
+            // but calling the instructions above works fine?
             break;
         default:
             break;

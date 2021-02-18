@@ -79,6 +79,37 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
 
+    /*
+        TODO:
+        The code below is disassembled as:
+        mov     r3, #0
+        str     r3, [r11, #-32] ; 0xffffffe0
+        mov     r3, #0
+        str     r3, [r11, #-36] ; 0xffffffdc
+        mov     r3, #0
+        str     r3, [r11, #-40] ; 0xffffffd8
+        mov     r3, #0
+        str     r3, [r11, #-44] ; 0xffffffd4
+        mov     r3, #0
+        str     r3, [r11, #-48] ; 0xffffffd0
+        mov     r3, r7
+        str     r3, [r11, #-32] ; 0xffffffe0
+        mov     r3, r0
+        str     r3, [r11, #-36] ; 0xffffffdc
+        mov     r3, r1
+        str     r3, [r11, #-40] ; 0xffffffd8
+        mov     r3, r2
+        str     r3, [r11, #-44] ; 0xffffffd4
+    --> mov     r3, r3
+        str     r3, [r11, #-48] ; 0xffffffd0
+        ldr     r3, [pc, #960]  ; 0x8000f9a8 <software_interrupt_handler+1060>
+        add     r3, pc, r3
+        mov     r0, r3
+        bl      0x8000e8d4 <kprintf>
+
+        Because of that, the value in r3 is overwritten and the last move sets it equal to r2
+
+    */
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
     asm volatile("MOV %0, r0" : "=r"(r0)::);
     asm volatile("MOV %0, r1" : "=r"(r1)::);
