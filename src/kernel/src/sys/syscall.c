@@ -70,6 +70,8 @@ int syscall(int sys, ...) {
 
                 works fine.
             */
+            // this kprintf call fixes the kernel panic ???
+            kprintf("");
             break;
         default:
             break;
