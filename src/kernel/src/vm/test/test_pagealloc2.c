@@ -119,7 +119,7 @@ TEST_CREATE(test_first_free, {
     ASSERT_EQ(first_free(0b111111), 6);
 })
 
-TEST_CREATE(test_slice_invalid, {
+TEST_CREATE(test_slice_reserved, {
     size_t address = get_hardwareinfo()->peripheral_base_address + KERNEL_VIRTUAL_OFFSET;
     union MemorySlice * slice =  (union MemorySlice*) address;
     struct MemorySliceInfo * sliceinfo = NULL;
