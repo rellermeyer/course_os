@@ -2,7 +2,7 @@
 #include "stdio.h"
 
 // if error, return -1
-int syscall(long sys, ...) {
+int syscall(int sys, ...) {
     va_list args;
     va_start(args, sys);
 
@@ -53,10 +53,23 @@ int syscall(long sys, ...) {
 			asm("MOV r2, %0":: "r" (r2));
 			asm("MOV r3, %0":: "r" (r3));
 			asm("SWI 0x0");
-            // also calling:
-            // syscall (0, 1, 2, 3, 4);
-            // in start.c results in kernel panic,
-            // but calling the instructions above works fine?
+            /*
+                for some reason calling:
+                syscall(2, 1, 2, 3, 4);
+
+                causes a kernel panic
+
+                But executing the code instead (which does the same thing):
+                int sys = 2, r0 = 1, r1 = 2, r2 = 3, r3 = 4;
+                asm("MOV r7, %0":: "r" (sys));
+                asm("MOV r0, %0":: "r" (r0));
+                asm("MOV r1, %0":: "r" (r1));
+                asm("MOV r2, %0":: "r" (r2));
+                asm("MOV r3, %0":: "r" (r3));
+                asm("SWI 0x0");
+
+                works fine.
+            */
             break;
         default:
             break;

@@ -1,6 +1,6 @@
 #define SYS_fork 57
 #define SYS_kill 62
-#define SYS_dummy 0
+#define SYS_dummy 2
 #define SYS_exit 100 
 #define SYS_timer_create 222
 #define SYS_timer_settime 223
@@ -10,7 +10,7 @@
 
 #include <stdarg.h>
 
-int syscall(long, ...);
+int syscall(int, ...);
 
 int _ksys_create_process(); // only used by the kernel to create the first processes
 int sys_fork();
