@@ -35,6 +35,9 @@ BUILDDIR = build
 INCLUDEDIR = include
 CPU = cortex-a7
 
+# Seeds the random order in which tests are run.
+TESTS_SEED = $(shell date '+%s')
+
 # =================== End Configuration ===================
 TOOLCHAIN_PATH=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
@@ -134,7 +137,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 
 $(SOURCEDIR)/test/test.c: dummy | builddir
 	@echo Generating tests
-	@$(SOURCEDIR)/test/generate_tests.sh
+	@$(SOURCEDIR)/test/generate_tests.sh $(TESTS_SEED)
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
