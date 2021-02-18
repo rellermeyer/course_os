@@ -35,16 +35,16 @@ cd "${TARGET}/src"
 
 
 if [ ! -d "${TARGET}/src/gcc-${GCC_VERSION}" ]; then
-   tar xf ../orig/gcc-${GCC_VERSION}.tar.gz || exit 1;
+   tar xvf ../orig/gcc-${GCC_VERSION}.tar.gz || exit 1;
 
 fi
 
 if [ ! -d "${TARGET}/src/gdb-${GDB_EXT_VERSION}" ]; then
-	tar xf ../orig/gdb-${GDB_EXT_VERSION}.tar.gz || exit 1;
+	tar xvf ../orig/gdb-${GDB_EXT_VERSION}.tar.gz || exit 1;
 fi
 
 if [ ! -d "${TARGET}/src/binutils-${BINUTILS_VERSION}" ]; then
-	tar xf ../orig/binutils-${BINUTILS_VERSION}.tar.bz2 || exit 1;
+	tar xvf ../orig/binutils-${BINUTILS_VERSION}.tar.bz2 || exit 1;
 fi
 
 
