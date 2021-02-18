@@ -95,6 +95,12 @@ struct MemorySliceInfo {
     union MemorySlice * slice;
 };
 
+enum SLICE_INFO_ERRNO {
+    SI_SUCCESS = 0,
+    SI_RESERVED_MMIO_MEMORY = 4,
+    SI_NOT_FOUND = -1,
+};
+
 
 #define SLICEINFO_PER_SLICE 512  // sizeof(union MemorySlice) / sizeof(struct MemorySliceInfo)
 #define L2TABLES_PER_SLICE  8    // sizeof(union MemorySlice) / sizeof(struct L2PageTable)
@@ -160,7 +166,7 @@ struct MemorySliceInfo * pmm_new_sliceinfo_slice();
  * @param slice The slice to get the sliceinfo for.
  * @return The [MemorySliceInfo] pointer for the given [MemorySlice].
  */
-struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice);
+enum SLICE_INFO_ERRNO pmm_get_sliceinfo_for_slice(union MemorySlice * slice, struct MemorySliceInfo ** slice_info);
 
 
 /**
