@@ -4,6 +4,16 @@
 # the makefile will run this file automatically while building,
 # so all tests are automatically executed.
 
+# https://www.gnu.org/software/coreutils/manual/html_node/Random-sources.html
+get_seeded_random()
+{
+    RANDOM=$1
+    while true
+    do
+	echo "$RANDOM" || exit
+    done
+}
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # clear the file
@@ -23,8 +33,9 @@ size_t global_counter = 0;
 
 " >> "$DIR/test.c"
 
+echo "Seed used for test order randomization: $1"
 #TESTFNS=$(grep -hr --include "*.c" -oP "(?<=TEST_CREATE\()(.*)(?=,)")
-TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)" | sort -R)
+TESTFNS=$(grep -hr --include "*.c" -vP "^\s*\/\/.+" | grep -oP "(?<=TEST_CREATE\()(.*)(?=,)" | sort -R --random-source=<(get_seeded_random $1))
 
 for FNNAME in $TESTFNS
 do
