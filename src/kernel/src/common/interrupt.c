@@ -84,7 +84,7 @@ void __attribute__((interrupt("SWI"))) switch_context(void) {
         "MRS     R0, SPSR                ; Pick up the user status\n"
         "STMDB   sp, {R0, lr}            ; and dump with return address below.\n");
 
-    return software_interrupt_handler();
+    software_interrupt_handler();
 
     // Load new PCB [pointer should be in R12]
     asm("LDR     sp, [R12], #4           ; Load next PCB pointer\n"
