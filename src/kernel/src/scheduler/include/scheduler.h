@@ -7,9 +7,9 @@
 
 void init_scheduler();
 
+void sleep(int id, int sleepTime);
 void remove(int id);
-void add(ProcessControlBlock*);
 
-void* callback();  // should pick the next process to run and set the callback again
+void* getNext();  // should pick the next process to run and set the callback again
 
 #endif  // ! SCHEDULER_H
