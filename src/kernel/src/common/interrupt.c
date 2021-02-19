@@ -79,7 +79,7 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long syscall_handler(void) {
-    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0k;
+    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0k;
     ExecutionState * es;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
@@ -93,10 +93,10 @@ long syscall_handler(void) {
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
-    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
+    kprintf("arg3=%d\n", es);
     kprintf("\n");
 
     // System Call Handler
