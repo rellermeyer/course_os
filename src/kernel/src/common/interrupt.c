@@ -3,6 +3,7 @@
 #include <mmio.h>
 #include <stdio.h>
 #include <vm2.h>
+#include <sched.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
@@ -77,36 +78,15 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-void __attribute__((interrupt("SWI"))) switch_context(void) {
-    // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
-    // TODO: Extend this to the complete execution state
-    asm("STM     sp,{R0-lr}^             ; Dump user registers above R13\n"
-        "MRS     R0, SPSR                ; Pick up the user status\n"
-        "STMDB   sp, {R0, lr}            ; and dump with return address below.\n");
-
-    return software_interrupt_handler();
-
-    // Load new PCB [pointer should be in R12]
-    asm("LDR     sp, [R12], #4           ; Load next PCB pointer\n"
-        "CMP     sp, #0                  ; If it is zero, it is invalid\n");
-
-    // Restore State (if valid)
-    asm("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.\n"
-        "MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
-        "be restored when returning from interrupt) (csxf means, set all the bits ?)\n"
-        "LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers\n"
-        // asm volatile("NOP                             "); // Not sure why this is here
-        "MOVSNE pc, lr                   ; return PC\n");
-}
-
-long software_interrupt_handler(void) {
-    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+long syscall_handler(void) {
+    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0k;
+    ExecutionState * es;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r0" : "=r"(r0)::);
     asm volatile("MOV %0, r1" : "=r"(r1)::);
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
+    asm volatile("MOV %0, r0" : "=r"(es)::);
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
@@ -198,6 +178,13 @@ long software_interrupt_handler(void) {
             kprintf("That wasn't a syscall you knob!\n");
             return -1L;
     }
+}
+
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
+    asm volatile ("mov r0, lr");       // Return address as argument 1
+    asm volatile ("bl _save_state"); // Call save_context subroutine
+
+    return syscall_handler();
 }
 
 void __attribute__((interrupt("ABORT"))) prefetch_abort_handler(void) {

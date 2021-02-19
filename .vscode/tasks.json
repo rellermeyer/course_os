@@ -18,7 +18,7 @@
             "label": "run_debug",
             "detail": "Runs qemu with gdbserver",
             "type": "shell",
-            "command": "make -C kernel debug",
+            "command": "cd src/kernel && make debug",
         }
     ]
 }
