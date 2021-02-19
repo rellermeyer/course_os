@@ -14,6 +14,7 @@ int idCounter;
 
 void init_scheduler() {
     chipset.schedule_timer_periodic(void * /*fill with proper callback*/, TIME_SLICE_MS);
+    // TODO how to deal with empty/initial queue???
 }
 
 void sleep(int id, int sleepTime) 
@@ -27,8 +28,10 @@ void sleep(int id, int sleepTime)
 }
 
 void remove(int id) {
-    if (removePCBNode(id, queue) != nullptr) return;
-    removePCBNode(id, sleepQueue);
+    if (removePCBNode(id, sleepQueue) != nullptr) return;
+    if (removePCBNode(id, queue) == nullptr) return;
+    // TODO how to deal with empty/initial queue???
+    // queue = new ProcessControlBlock {next = this, prev = this}
 }
 
 void * getNext() {
@@ -38,6 +41,8 @@ void * getNext() {
         addPCBNodeAfter(queue, removePCBNode(i));
     }
 
+    // TODO how to deal with empty/initial queue???
+    if (queue == nullptr) return nullptr;
     queue = queue->next;
     return queue;
 }
