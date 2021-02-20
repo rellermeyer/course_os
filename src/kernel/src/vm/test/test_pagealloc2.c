@@ -2,6 +2,7 @@
 #include <pmm.h>
 #include <string.h>
 #include <test.h>
+#include <hardwareinfo.h>
 
 // Warning: This method is O(n) and is thus quite slow on long lists.
 size_t listlength(struct MemorySliceInfo * start) {
@@ -82,7 +83,9 @@ TEST_CREATE(test_allocate_many_pt, {
 TEST_CREATE(test_get_sliceinfo, {
     struct L1PageTable * pt = pmm_allocate_l1_pagetable();
 
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
+    struct MemorySliceInfo * info = NULL;
+
+    pmm_get_sliceinfo_for_slice((union MemorySlice *)pt, &info);
 
     ASSERT_EQ(&info->slice->l1pt, pt);
 
@@ -115,3 +118,10 @@ TEST_CREATE(test_first_free, {
     ASSERT_EQ(first_free(0b111101), 1);
     ASSERT_EQ(first_free(0b111111), 6);
 })
+
+TEST_CREATE(test_slice_reserved, {
+    size_t address = get_hardwareinfo()->peripheral_base_address + KERNEL_VIRTUAL_OFFSET;
+    union MemorySlice * slice =  (union MemorySlice*) address;
+    struct MemorySliceInfo * sliceinfo = NULL;
+    ASSERT_EQ(pmm_get_sliceinfo_for_slice(slice, &sliceinfo), SI_RESERVED_MMIO_MEMORY);
+});

@@ -1,3 +1,5 @@
+#include <constants.h>
+#include <hardwareinfo.h>
 #include <pmm.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,11 +56,20 @@ void pmm_init(size_t start, size_t end) {
          i++) {
         struct MemorySliceInfo * currentsliceinfo = &currentslice->bucketinfo[infoindex];
 
+
         // make this sliceinfo struct point to the right slice
         currentsliceinfo->slice = i;
 
-        // Add the sliceinfo to the unused list
-        push_to_ll(&physicalMemoryManager.unused, currentsliceinfo);
+        if (address_in_reserved_region((size_t)i)) {
+            // Mark slice as reserved for MMIO
+            currentsliceinfo->reserved = 1;
+            // The slice is in the MMIO region, should not be used so put it in the
+            // allocated list permanently
+            push_to_ll(&physicalMemoryManager.allocated, currentsliceinfo);
+        } else {
+            // Add the sliceinfo to the unused list
+            push_to_ll(&physicalMemoryManager.unused, currentsliceinfo);
+        }
 
         // continue to the next sliceinfo
         infoindex++;
@@ -87,7 +98,7 @@ struct MemorySliceInfo * pmm_new_sliceinfo_slice() {
     return sliceinfo;
 }
 
-struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) {
+enum SLICE_INFO_ERRNO pmm_get_sliceinfo_for_slice(union MemorySlice * slice, struct MemorySliceInfo ** slice_info) {
     const int bucketsize = (SLICEINFO_PER_SLICE * sizeof(union MemorySlice));
 
     // Take the address of the slice and determine in which bucket it falls.
@@ -122,13 +133,25 @@ struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice) 
 
     struct MemorySliceInfo * info = &bucketinfo->bucketinfo[index];
 
-    return info;
+
+    // TODO - Return error if requested memory is out of range
+    if(info->reserved==1){
+      return SI_RESERVED_MMIO_MEMORY;
+    }
+
+    *slice_info = info;
+
+    return SI_SUCCESS;
 }
 
 void pmm_free_l1_pagetable(struct L1PageTable * pt) {
     if (pt == NULL) { return; }
 
-    struct MemorySliceInfo * sliceinfo = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
+    struct MemorySliceInfo * sliceinfo = NULL;
+    
+    if(pmm_get_sliceinfo_for_slice((union MemorySlice *)pt, &sliceinfo)!=SI_SUCCESS){
+      FATAL("Attempted to free invalid slice");
+    }
 
     remove_element_ll(&physicalMemoryManager.allocated, sliceinfo);
 
@@ -238,51 +261,59 @@ struct Page * pmm_allocate_page() {
 
 void pmm_free_page(struct Page * p) {
     // works cuz rounding (we think, might just work because random luck)
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)p);
+    struct MemorySliceInfo * sliceinfo = NULL;
+    
+    if(pmm_get_sliceinfo_for_slice((union MemorySlice *)p, &sliceinfo)!=SI_SUCCESS){
+      FATAL("Attempted to free invalid slice");
+    }
 
-    if (info->filled == 0b11) {
-        remove_element_ll(&physicalMemoryManager.allocated, info);
+    if (sliceinfo->filled == 0b11) {
+        remove_element_ll(&physicalMemoryManager.allocated, sliceinfo);
     } else {
-        remove_element_ll(&physicalMemoryManager.pagePartialFree, info);
+        remove_element_ll(&physicalMemoryManager.pagePartialFree, sliceinfo);
     }
 
     // compute which subelement we are
-    size_t offset_from_slice_start = ((size_t)p - (size_t)info->slice);
+    size_t offset_from_slice_start = ((size_t)p - (size_t)sliceinfo->slice);
     size_t index_in_slice = offset_from_slice_start / sizeof(struct Page);
 
     // correctly clear the bit from filled
-    info->filled &= ~(1u << index_in_slice);
+    sliceinfo->filled &= ~(1u << index_in_slice);
 
     // if there was only one l2pt in this slice, put it on unallocated
-    if (info->filled == 0x0) {
-        push_to_ll(&physicalMemoryManager.unused, info);
+    if (sliceinfo->filled == 0x0) {
+        push_to_ll(&physicalMemoryManager.unused, sliceinfo);
     } else {
-        push_to_ll(&physicalMemoryManager.pagePartialFree, info);
+        push_to_ll(&physicalMemoryManager.pagePartialFree, sliceinfo);
     }
 }
 
 void pmm_free_l2_pagetable(struct L2PageTable * pt) {
     // works cuz rounding (we think, might just work because random luck)
-    struct MemorySliceInfo * info = pmm_get_sliceinfo_for_slice((union MemorySlice *)pt);
+    struct MemorySliceInfo * sliceinfo = NULL;
+    
+    if(pmm_get_sliceinfo_for_slice((union MemorySlice *)pt, &sliceinfo)!=SI_SUCCESS){
+      FATAL("Attempted to free invalid slice");
+    }
 
-    if (info->filled == 0xff) {
-        remove_element_ll(&physicalMemoryManager.allocated, info);
+    if (sliceinfo->filled == 0xff) {
+        remove_element_ll(&physicalMemoryManager.allocated, sliceinfo);
     } else {
-        remove_element_ll(&physicalMemoryManager.l2ptPartialFree, info);
+        remove_element_ll(&physicalMemoryManager.l2ptPartialFree, sliceinfo);
     }
 
     // compute which subelement we are
-    size_t offset_from_slice_start = ((size_t)pt - (size_t)info->slice);
+    size_t offset_from_slice_start = ((size_t)pt - (size_t)sliceinfo->slice);
     size_t index_in_slice = offset_from_slice_start / sizeof(struct L2PageTable);
 
     // correctly clear the bit from filled
-    info->filled &= ~(1u << index_in_slice);
+    sliceinfo->filled &= ~(1u << index_in_slice);
 
     // if there was only one l2pt in this slice, put it on unallocated
-    if (info->filled == 00) {
-        push_to_ll(&physicalMemoryManager.unused, info);
+    if (sliceinfo->filled == 00) {
+        push_to_ll(&physicalMemoryManager.unused, sliceinfo);
     } else {
-        push_to_ll(&physicalMemoryManager.l2ptPartialFree, info);
+        push_to_ll(&physicalMemoryManager.l2ptPartialFree, sliceinfo);
     }
 }
 

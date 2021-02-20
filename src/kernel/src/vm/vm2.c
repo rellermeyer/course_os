@@ -89,7 +89,7 @@ void vm2_set_user_pagetable(struct L1PageTable * l1) {
 }
 
 // Starts the actual MMU after this function we live in Virtual Memory
-void vm2_start() {
+void vm2_start(size_t detected_size) {
     size_t available_RAM;
 
     switch (get_hardwareinfo()->boardType) {
@@ -100,8 +100,7 @@ void vm2_start() {
             available_RAM = 1 * Gibibyte;
             break;
         default:
-            // TODO: memory detection? Or just not bother.
-            FATAL("Board type unsupported by VM2\n");
+	  available_RAM = detected_size;
     }
 
     INFO("Using memory size 0x%x", available_RAM);
@@ -124,7 +123,7 @@ void vm2_start() {
                                        true);
     }
 
-    pmm_init(KERNEL_PMM_BASE, PMM_TOP);
+    pmm_init(KERNEL_PMM_BASE, KERNEL_VIRTUAL_OFFSET + detected_size);
 
     vm2_set_user_pagetable(NULL);
 
