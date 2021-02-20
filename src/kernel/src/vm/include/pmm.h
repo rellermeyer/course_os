@@ -41,9 +41,6 @@
 /// * bucketinfo    A slice containing an array of sliceinfo structs describing the contents of a
 /// bucket.
 
-// TODO: Excluded regions. (for mmio for example)
-// TODO: detect memory size.
-
 #ifndef PMM_H
 #define PMM_H
 
@@ -82,8 +79,11 @@ struct MemorySliceInfo {
             /// than 8KiB. This is a BitVector where 1 means allocated and 0 means free.
             uint32_t filled : 8;
 
+            // Indicates this memory slice should not be deallocated. Is part of MMIO.
+            uint32_t reserved : 1;
+
             /// Unused bits
-            uint32_t unused : 22;
+            uint32_t unused : 21;
         };
     };
 
@@ -93,6 +93,12 @@ struct MemorySliceInfo {
 
     /// Pointer to the actual memory this SliceInfo is describing.
     union MemorySlice * slice;
+};
+
+enum SLICE_INFO_ERRNO {
+    SI_SUCCESS = 0,
+    SI_RESERVED_MMIO_MEMORY = 4,
+    SI_NOT_FOUND = -1,
 };
 
 
@@ -132,7 +138,7 @@ struct PhysicalMemoryManager {
     size_t end;
 };
 
-__attribute__((__common__))  struct PhysicalMemoryManager physicalMemoryManager;
+__attribute__((__common__)) struct PhysicalMemoryManager physicalMemoryManager;
 
 // Allocator specific operations
 
@@ -160,7 +166,7 @@ struct MemorySliceInfo * pmm_new_sliceinfo_slice();
  * @param slice The slice to get the sliceinfo for.
  * @return The [MemorySliceInfo] pointer for the given [MemorySlice].
  */
-struct MemorySliceInfo * pmm_get_sliceinfo_for_slice(union MemorySlice * slice);
+enum SLICE_INFO_ERRNO pmm_get_sliceinfo_for_slice(union MemorySlice * slice, struct MemorySliceInfo ** slice_info);
 
 
 /**

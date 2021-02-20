@@ -10,7 +10,12 @@ _Reset:
     bne loop
 
     ldr sp, =EARLY_KERNEL_STACK_TOP // Set the kernel/SVC stack
+
+    // Detect memory size
+    bl detect_memory
+
     push {r0-r11}
+
 
     // Identity map 0x00000000 (the kernel)
     ldr r0, =0x4000
@@ -63,8 +68,12 @@ _Reset:
     ldr sp, =KERNEL_STACK_TOP // Set the kernel/SVC stack
     push {r0-r11}
 
-    // Setup
+    // Setup stacks
     bl stacks
+
+    // Pop everything except r1, which will hold the memory size.
+    pop {r0}
+    pop {r2-r11}
 
     // Jumpt to the start of the kernel
     bl start
