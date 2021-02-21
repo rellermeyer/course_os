@@ -25,4 +25,6 @@ void *memmove(void * dest, const void * src, size_t n);
 int32_t memcmp(const void * s1, const void * s2, size_t n);
 void *memchr(const void *s, int32_t c, size_t n);
 
+VPSinglyLinkedList *ktokenize(const string src, const string* tokens, size_t n);
+
 #endif
