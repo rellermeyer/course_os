@@ -5,6 +5,7 @@ src/kernel/boot-commands
 src/kernel/card.sd
 src/kernel/src/test/test.c
 src/kernel/build
+src/kernel/build/kernel.sym
 
 # Toolchain dir, but not the build script
 src/toolchain/

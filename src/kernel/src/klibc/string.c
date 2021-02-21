@@ -1,27 +1,35 @@
 /**
  * This file implements the string library as defined by the ANSI C99
  * standard for those functions useful for course_os. Currently, the
- * following methods have an implementation together with the size
- * restricted version
+ * following methods have an implementation.
  *
  * - strcpy
+ * - strncpy
  * - strcmp
+ * - strncmp
  * - strcat
+ * - strncat
  * - strchr
  * - strrchr
  * - strstr
  *
  * The following methods have not been implemented:
- * - strcoll, no localization inside the kernel
- * - strxfrm, no localization inside the kernel
-* - strerro, no errno implementation
-  * - strcspn, not a common use case
-  * - strpbrk, not a common use case
-  * - strspn, not a common use case
-  * - strtok, bad API
-  *
-  * - ktokenize, a simpler tokenization implementation
-  **/
+ * - strcoll & strxfrm
+ *   Unneeded since the kernel doesn't have localization
+ * - sterrrno
+ *   Currently, it isn't decided on how to deal errors within the kernel.
+ * - strpbrk, strcspn, strspn
+ *   Not very common functions to use
+ * - strtok,
+ *   Awkward and cumbersome API, instead use the kernel extension
+ *   ktokenize
+ *
+ * Kernel extensions:
+ * - ktokenize
+ *   A simpler tokenizer which gives you a singly linked list with
+ *   all substrings in it. The first element of the list is the
+ *   first element it found.
+ **/
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
