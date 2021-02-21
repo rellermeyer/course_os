@@ -104,6 +104,9 @@ int os_vsnprintf(char * buf, int buflen, const char * str_buf, va_list args) {
                     }
                     goto reread_switch;
                     break;
+                case 'p':
+                    *buf++ = '0';
+                    *buf++ = 'x';
                 case 'X':
                     t_arg = va_arg(args, int);
                     n = print_int(buf, buflen, t_arg, 16, 1, padding, pad_char, 1);
