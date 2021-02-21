@@ -12,11 +12,16 @@ int syscall(int sys, ...) {
     // TODO: the interrupt handler should be able to get the pid from the scheduler?
     switch(sys) {
         case SYS_fork:
-            // TODO: should return (in r0) pid of the (newly-created) child process
+            // TODO: should write the pid of the (newly-created) child process where r0 is pointing
             // (ask the scheduler?) 
 
 			asm("MOV r7, %0":: "r" (sys));
+            int* pid = va_arg(args, int*);
+            asm("MOV r0, %0":: "r"(pid));
+			asm("MOV r7, %0":: "r" (sys));
+            asm("PUSH {lr}"); // need to save the return address to the stack
 			asm("SWI 0x0");
+            asm("POP {lr}"); // pop lr from the stack to return to whoever called syscall()
 
             break;
         case SYS_kill:
@@ -38,6 +43,14 @@ int syscall(int sys, ...) {
 			asm("MOV r7, %0":: "r" (sys));
 			asm("MOV r0, %0":: "r" (r0));
 			asm("SWI 0x0");
+            break;
+
+        case SYS_sleep:
+            // TODO
+            break;
+
+        case SYS_join:
+            // TODO
             break;
         case SYS_dummy:
             // only for testing
