@@ -27,6 +27,8 @@ bool vpslli_empty(VPSinglyLinkedListIterator lsti);
 VPSinglyLinkedList * vpsll_create();
 void vpsll_free(VPSinglyLinkedList * lst, FreeFunc freef);
 void vpsll_push(VPSinglyLinkedList * lst, void * data);
+void vpsll_push_to_back(VPSinglyLinkedList * lst, void * data);
+
 void * vpsll_pop(VPSinglyLinkedList * lst);
 // Remove the first item for which compf returns true.
 void * vpsll_remove(VPSinglyLinkedList * lst, void * data, CompareFunc compf);
@@ -40,6 +42,6 @@ bool vpsll_contains(VPSinglyLinkedList * lst, void * value, CompareFunc compf);
 
 size_t vpsll_length(VPSinglyLinkedList * lst);
 
-#define VPSLL_FOREACH(lst, i) \
+#define VPSLL_FOREACH(lst, i)                                           \
     for (VPSinglyLinkedListIterator i = vpslli_create(lst); !vpslli_empty(i); vpslli_next(&(i)))
 #endif

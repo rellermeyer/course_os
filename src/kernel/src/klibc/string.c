@@ -20,6 +20,7 @@
   * - strspn, not a common use case
   * - strtok, bad API
   *
+  * - ktokenize, a simpler tokenization implementation
   **/
 #include <string.h>
 #include <stdint.h>
@@ -190,4 +191,57 @@ uint32_t strlen(const char * str) {
     // current place minus the start of the
     // string
     return p - str - 1;
+}
+
+/******************************/
+/* course_os specific methods */
+/******************************/
+/**
+ * A simple tokenizer which takes an array of variable length
+ * tokens and a src string. It returns a singly linked list of
+ * all the subdivided strings based on the left-to-right token order.
+ *
+ * Please keep in mind that this method allocates memory, so all memory
+ * that it creates ought to be deallocated manually.
+ */
+VPSinglyLinkedList *ktokenize(const string src, const string* tokens, const size_t n) {
+    VPSinglyLinkedList *lst = vpsll_create();
+    char *cur = (char *) src;
+
+    while (true) {
+        // Find the next occurence of the token in the string
+        uint8_t min = -1;
+        string p = NULL;
+        size_t count = n;
+        int num = 0;
+
+        while (count-- != 0) {
+            string found = strstr(cur, *(tokens + count));
+            int temp = found - cur;
+            if (temp < min) {
+                p = found ;
+                min = temp;
+                num = count;
+            }
+        }
+
+        if (p == NULL) {
+            int length = strlen(cur);
+            char *dst = kmalloc(sizeof(char) * length);
+            strncpy(dst, cur, length);
+            vpsll_push_to_back(lst, dst);
+            break;
+        }
+
+        // If it is found, it is farther than were we began so we can
+        // use that to create memory to store it in and to copy the
+        // data.
+        size_t length = p - cur - 1;
+        char *dst = kmalloc(sizeof(char) * length);
+        strncpy(dst, cur, length);
+        vpsll_push_to_back(lst, dst);
+        cur = p+strlen(*(tokens + num));
+    }
+
+    return lst;
 }
