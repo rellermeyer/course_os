@@ -1,7 +1,6 @@
 #define SYS_fork 57
-//#define SYS_kill 62
-#define SYS_kill 99
-#define SYS_dummy 9
+#define SYS_kill 62
+#define SYS_dummy 99
 #define SYS_exit 100 
 #define SYS_sleep 101
 #define SYS_join 102

@@ -37,20 +37,32 @@ int syscall(int sys, ...) {
 
             break;
         case SYS_exit:
-            // TODO
-
             r0 = va_arg(args, int);
+
             asm("MOV r7, %0":: "r" (sys));
             asm("MOV r0, %0":: "r" (r0));
+            asm("PUSH {lr}"); // need to save the return address to the stack
             asm("SWI 0x0");
+            asm("POP {lr}"); // pop lr from the stack to return to whoever called syscall()
             break;
 
         case SYS_sleep:
-            // TODO
+            r0 = va_arg(args, int);
+
+            asm("MOV r7, %0":: "r" (sys));
+            asm("MOV r0, %0":: "r" (r0));
+            asm("PUSH {lr}"); // need to save the return address to the stack
+            asm("SWI 0x0");
+            asm("POP {lr}"); // pop lr from the stack to return to whoever called syscall()
+
             break;
 
         case SYS_join:
-            // TODO
+            asm("MOV r7, %0":: "r" (sys));
+            asm("PUSH {lr}"); // need to save the return address to the stack
+            asm("SWI 0x0");
+            asm("POP {lr}"); // pop lr from the stack to return to whoever called syscall()
+
             break;
         case SYS_dummy:
             // only for testing
