@@ -10,6 +10,7 @@
  * Gonna store the execution state anyway, so we'll make this the first argument.
  */
 _save_state:
+    // TODO: Check if we're storing PCB in the right orientation (little/big endian), we might be overwriting parts of memory
     // TODO: We might need to switch back to the user address space here
     // General purpose registers + fp (r11) + r12
     stm sp, {r4 - r13}^ // Dump all user(^) registers onto the stack
@@ -25,7 +26,18 @@ _save_state:
     mov r0, sp          // Set pointer to ExecutionState as return value
     bx lr               // Return from subroutine,
 
-// TODO: Generate new PCB
-_generate_context:
+/**
+ * Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
+ */
+_init_state:
+    // TODO: Generate new PCB
+    nop
+    bx lr
+
+/**
+ * Loads and existing PCB, resuming execution of a process
+ */
+_load_state:
+    // TODO: Load existing PCB
     nop
     bx lr

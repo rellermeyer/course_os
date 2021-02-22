@@ -53,10 +53,12 @@ void start(uint32_t * p_bootargs) {
 
 
 #ifndef ENABLE_TESTS
+    // DEBUG
     struct vas2 * vas = create_vas();
     allocate_page(vas, 0x80000000, true);
     switch_to_vas(vas);
     asm("swi 0x0");
+    // DEBUG
 #else
     test_main();
     // If we return, the tests failed.

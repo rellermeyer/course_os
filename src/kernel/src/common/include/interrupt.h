@@ -66,6 +66,7 @@ void init_vector_table(void);
 extern void _Reset();
 
 void reset_handler(void);
+long syscall_handler(void);
 
 void __attribute__((interrupt("UNDEF"))) undef_instruction_handler();  // 0x04
 long __attribute__((interrupt("SWI"))) software_interrupt_handler();   // 0x08
