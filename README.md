@@ -91,7 +91,7 @@ To create tests for the kernel, please read [this](kernel/src/test/README.md) fi
 To open this project in CLion, you can simply create a new `c` project with the supplied `CMakeLists.txt` file.
 This file can *not* be used to actually run the kernel but it does give clion the right instructions to make code completion etc. work.
 
-## Vim + CCLS
+## Emacs/Vim + CCLS
 
 To generate the required `compile_commands.json` so that CCLS correctly index the project. You have to do the following:
 
@@ -109,4 +109,8 @@ Afterwards you can remove the `Debug` folder with:
 rm -rf Debug
 ```
 
-Now Vim and CCLS will correctly know how to index the project.
+Now Emacs/Vim and CCLS will correctly know how to index the project.
+
+## Emacs + GDB
+
+A small lisp script to set the correct GDB command is included in the `.dir-locals.el` file. This will run automatically when you open any file in the project directory. You may receive a prompt related to this. After you start a debug session with `make debug`, you should be able to run the `gdb` command in Emacs and the correct command should already be in the prompt.
