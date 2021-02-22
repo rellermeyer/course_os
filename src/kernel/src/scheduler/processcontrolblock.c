@@ -1,13 +1,14 @@
 #include <processControlBlock.h>
+#include <stdio.h>
 
-void findNode(int id, ProcessControlBlock * list) {
-    for (ProcessControlBlock * i = list; i->next != list && i->next != nullptr; i = i->next)
+ProcessControlBlock * findNode(int id, ProcessControlBlock * list) {
+    for (ProcessControlBlock * i = list; i->next != list && i->next != NULL; i = i->next)
         if (i->id == id) { return i; }
-    return nullptr;
+    return NULL;
 }
 
 void addPCBNodeBefore(ProcessControlBlock * oldNode, ProcessControlBlock * newNode) {
-    if (oldNode->prev != nullptr) {
+    if (oldNode->prev != NULL) {
         oldNode->prev->next = newNode;
         newNode->prev = oldNode->prev;
     }
@@ -16,7 +17,7 @@ void addPCBNodeBefore(ProcessControlBlock * oldNode, ProcessControlBlock * newNo
 }
 
 void addPCBNodeAfter(ProcessControlBlock * oldNode, ProcessControlBlock * newNode) {
-    if (oldNode->next != nullptr) {
+    if (oldNode->next != NULL) {
         oldNode->next->prev = newNode;
         newNode->next = oldNode->next;
     }
@@ -24,22 +25,8 @@ void addPCBNodeAfter(ProcessControlBlock * oldNode, ProcessControlBlock * newNod
     newNode->prev = oldNode;
 }
 
-void addPCBNodeBefore(int * oldNode, ProcessControlBlock * newNode) {
-    addPCBNodeBefore(findNode(id));
-}
-
-void addPCBNodeAfter(int * oldNode, ProcessControlBlock * newNode) {
-    addPCBNodeAfter(findNode(id));
-}
-
-void removePCBNode(ProcessControlBlock * node) {
+ProcessControlBlock * removePCBNode(ProcessControlBlock * node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
-}
-
-ProcessControlBlock * removePCBNode(int id, ProcessControlBlock * list) {
-    ProcessControlBlock * i = findNode(id, list);
-    if (i == nullptrt) return;
-    removePCBNode(i);
-    return i;
+    return node;
 }

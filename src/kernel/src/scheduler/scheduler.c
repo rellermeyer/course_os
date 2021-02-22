@@ -1,6 +1,7 @@
 #include <processControlBlock.h>
 #include <scheduler.h>
 #include <math.h>
+#include <stdio.h>
 
 #define TIME_SLICE_MS       10
 #define MINSLEEPTIME        20
@@ -18,16 +19,17 @@ void init_scheduler() {
 
 void sleep(int id, int sleepTime) 
 {
-    ProcessControlBlock node = removePCBNode(id);
+    ProcessControlBlock * node = findNode(id, queue);
+    removePCBNode(node);
     
-    node.wakeupTime = timer + min(MINSLEEPTIME, sleepTime);
+    node->wakeupTime = timer + min(MINSLEEPTIME, sleepTime);
     ProcessControlBlock * j = sleepQueue;
-    while (j->wakeupTime <= node->wakeupTime && j->next == nullptr) { j = j->next }
+    while (j->wakeupTime <= node->wakeupTime && j->next == NULL) { j = j->next; }
     addPCBNodeAfter(j, node);
 }
 
 void add(ProcessControlBlock * new, bool front) {
-    if (queue == nullptr) {
+    if (queue == NULL) {
         queue = new;
         queue->next = queue;
         queue->prev = queue;
@@ -40,19 +42,20 @@ void add(ProcessControlBlock * new, bool front) {
 }
 
 void remove(int id) {
-    if (removePCBNode(id, queue) != nullptr) return;
-    removePCBNode(id, sleepQueue)
+    if (removePCBNode(findNode(id, queue)) != NULL) return;
+    removePCBNode(findNode(id, sleepQueue));
 }
 
 void * getNext() {
     timer += TIME_SLICE_MS;
 
     for (ProcessControlBlock* i = sleepQueue; i->wakeupTime <= timer; i = i->next) {
-        add(removePCBNode(i), front);
+        removePCBNode(i);
+        add(i, true);
     }
 
     // TODO This might break a lot of stuff
-    if (queue == nullptr) return queue;
+    if (queue == NULL) return queue;
     queue = queue->next;
     return queue;
 }

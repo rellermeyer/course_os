@@ -20,19 +20,15 @@ typedef struct ProcessControlBlock {
     int parent;
     // Runningtime? total? starttime? last time active?
     ExecutionState * executionState;
-    ProcessControlBlock * prev;
-    ProcessControlBlock * next;
+    struct ProcessControlBlock * prev;
+    struct ProcessControlBlock * next;
     int wakeupTime;
 } ProcessControlBlock;
 
-void findNode(int id, ProcessControlBlock * list);
+ProcessControlBlock * findNode(int id, ProcessControlBlock * list);
 
 void addPCBNodeBefore(ProcessControlBlock * oldNode, ProcessControlBlock * newNode);
 void addPCBNodeAfter(ProcessControlBlock * oldNode, ProcessControlBlock * newNode);
-void addPCBNodeBefore(int * oldNode, ProcessControlBlock * newNode);
-void addPCBNodeAfter(int * oldNode, ProcessControlBlock * newNode);
 
-void removePCBNode(ProcessControlBlock *);
-ProcessControlBlock * removePCBNode(int id, ProcessControlBlock * list);
-
+ProcessControlBlock * removePCBNode(ProcessControlBlock *);
 #endif
