@@ -1,6 +1,7 @@
 #include <chipset.h>
 #include <interrupt.h>
 #include <mmio.h>
+#include <sched.h>
 #include <stdio.h>
 #include <vm2.h>
 
@@ -77,46 +78,33 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-void __attribute__((interrupt("SWI"))) switch_context(void) {
-    // Due to C possibly ruining our registers when calling an ISR, we should save them on the stack
-    // TODO: Extend this to the complete execution state
-    asm("STM     sp,{R0-lr}^             ; Dump user registers above R13\n"
-        "MRS     R0, SPSR                ; Pick up the user status\n"
-        "STMDB   sp, {R0, lr}            ; and dump with return address below.\n");
+long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
+    asm volatile("mov r0, lr");      // Return address as argument 1
+    asm volatile("bl _save_state");  // Call save_context subroutine
 
-    software_interrupt_handler();
-
-    // Load new PCB [pointer should be in R12]
-    asm("LDR     sp, [R12], #4           ; Load next PCB pointer\n"
-        "CMP     sp, #0                  ; If it is zero, it is invalid\n");
-
-    // Restore State (if valid)
-    asm("LDMDBNE sp, {R0, lr}            ; Pick up status and return address.\n"
-        "MSRNE   SPSR_cxsf, R0           ; Put to be resttored status in the SPSR (will "
-        "be restored when returning from interrupt) (csxf means, set all the bits ?)\n"
-        "LDMNE   sp, {R0 - lr}^          ; Get the rest of the registers\n"
-        // asm volatile("NOP                             "); // Not sure why this is here
-        "MOVSNE pc, lr                   ; return PC\n");
+    // Now we should switch to the kernel address space (if we're not already in that)
+    return syscall_handler();
 }
 
-long software_interrupt_handler(void) {
-    int callNumber = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0;
+long syscall_handler(void) {
+    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0;
+    ExecutionState * es;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r0" : "=r"(r0)::);
     asm volatile("MOV %0, r1" : "=r"(r1)::);
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
+    asm volatile("MOV %0, r0" : "=r"(es)::);
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
-    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
+    kprintf("arg3=%d\n", es);
     kprintf("\n");
 
     // System Call Handler
@@ -192,7 +180,7 @@ long software_interrupt_handler(void) {
         case SYSCALL_PRINTF:
             kprintf("Printf system call called!\n");
 
-            kprintf((const char *)r0);
+            //            kprintf((const char *)r0);
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
