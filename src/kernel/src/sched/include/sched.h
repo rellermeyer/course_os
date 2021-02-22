@@ -11,11 +11,12 @@
  * ! Throwing an interrupt, however, is not a subroutine. Thus they should be saved, since
  * they can hold any data that might be important to execution.
  *
- * Registers r11-r15 are special registers, and especially important when restoring the state of the process
+ * Registers r11-r15 are special registers, and especially important when restoring the state of the
+ * process
  *
- * r11 - fp - Frame Pointer: Points to the bottom of the current stack; tracks the boundary of the stack
- * r12 is another scratch register (ip - Intra Procedure call register). This might be important to execution
- * r15 - pc - Program Counter: The memory address of the next instruction
+ * r11 - fp - Frame Pointer: Points to the bottom of the current stack; tracks the boundary of the
+ * stack r12 is another scratch register (ip - Intra Procedure call register). This might be
+ * important to execution r15 - pc - Program Counter: The memory address of the next instruction
  * cpsr - Current Program Status Register: Contains all the status flags
  *
  * These registers can be omitted:
@@ -35,10 +36,8 @@
  */
 
 typedef struct {
-    int32_t r4;
-    int32_t r5;
     int32_t r6;
-    union{
+    union {
         int32_t r7;
         int32_t sys;
     };
@@ -54,6 +53,10 @@ typedef struct {
         uint32_t ir;
     };
     union {
+        uint32_t r14;
+        uint32_t lr;
+    };
+    union {
         uint32_t r15;
         uint32_t pc;
     };
@@ -67,8 +70,9 @@ typedef struct {
  */
 typedef struct {
     Registers registers;
-//    struct * vas2 vas;
-//    void * (union vas; l1_page_table);
+    //    struct * vas2 vas;
+    //    void * (union vas; l1_page_table);
     void * l1_page_table;
 } ExecutionState;
 
+void _save_state(void);

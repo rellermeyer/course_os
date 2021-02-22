@@ -79,8 +79,23 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    asm volatile("mov r0, lr");      // Return address as argument 1
-    asm volatile("bl _save_state");  // Call save_context subroutine
+    asm volatile(
+        "// TODO: We might need to switch back to the user address space here \n "
+        "// General purpose registers + fp (r11) + r12\n"
+        "sub r4, #48            // Allocate memory\n"
+        "stm r4!, {r6 - r13}^         // Dump all user(^) registers onto the stack\n"
+
+        "         str r5, [r4, #+4]!           // Put lr onto the stack\n"
+        "    str lr, [r4, #+4]!           // Put pc onto the stack\n"
+
+        "    mrs r12, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)\n"
+        "str r12, [r4, #+4]!          // Put it on the stack\n"
+        "    mrc p15, 0, r12, c2, c0, 0   // Read 32-bit TTBR0 into r12 (l1 page table of the "
+        "calling process)\n"
+        "str r12, [r4, #+4]!          // Put it on the stack\n"
+
+        "    // TODO: This is where we would switch back the kernel address space?\n"
+        "    sub r4, #48            // Set pointer to ExecutionState\n");
 
     // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
@@ -94,7 +109,7 @@ long syscall_handler(void) {
     asm volatile("MOV %0, r1" : "=r"(r1)::);
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
-    asm volatile("MOV %0, r0" : "=r"(es)::);
+    asm volatile("MOV %0, r4" : "=r"(es)::);
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
