@@ -2,11 +2,14 @@
 #include <vas2.h>
 
 /**
- * Registers r4-r10 should be saved, C depends on their values being the same when returning from
+ * Registers r6-r10 should be saved, C depends on their values being the same when returning from
  * a subroutine.
  *
  * r0-r3 are scratch registers: They're used for as arguments to the syscall. Thus we don't need
  * them for the execution state
+ *
+ * r4, r5 are general purpouse registers. These contain the SP, and LR of the user when switching
+ * contexts so keeping these registers is not necessary when resuming, and can thus be omitted.
  *
  * ! Throwing an interrupt, however, is not a subroutine. Thus they should be saved, since
  * they can hold any data that might be important to execution.
@@ -19,14 +22,10 @@
  * important to execution r15 - pc - Program Counter: The memory address of the next instruction
  * cpsr - Current Program Status Register: Contains all the status flags
  *
- * These registers can be omitted:
+ * This register can be omitted:
  * r13 - sp - Stack Pointer: Point to the top of the current stack (of the subroutine). Since this
  *                           struct will be pushed directly onto the stack, and we have to return a
  *                           reference to it, we can deduce where the end of the stack was.
- *
- * r14 - lr - Link Register: Contains the value of the program counter + 4 bytes
- *                           (the next instruction), from where the program branched off.
- *                           ? This should be saved by the syscall upon triggering a SWI ?
  *
  * Note: These names are relative to the process in question. This being intuitive is up for debate
  * Ex. when the process is interrupted. The PC is stored in LP. We thus save the 'current' LP in the
@@ -74,5 +73,3 @@ typedef struct {
     //    void * (union vas; l1_page_table);
     void * l1_page_table;
 } ExecutionState;
-
-void _save_state(void);
