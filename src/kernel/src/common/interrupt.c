@@ -172,7 +172,7 @@ long syscall_handler(void) {
         case SYSCALL_PRINTF:
             kprintf("Printf system call called!\n");
 
-            kprintf((const char *)r0);
+//            kprintf((const char *)r0);
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
@@ -182,8 +182,9 @@ long syscall_handler(void) {
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     asm volatile ("mov r0, lr");       // Return address as argument 1
-    asm volatile ("bl _save_state"); // Call save_context subroutine
+    asm volatile ("bl _save_state");   // Call save_context subroutine
 
+    // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
 }
 
