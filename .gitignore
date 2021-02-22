@@ -31,6 +31,8 @@ src/course_os_docs.pdf
 /.idea/
 !/.idea/runConfigurations
 /.vscode/
+!/.vscode/launch.json
+!/.vscode/tasks.json
 *~
 *.swp
 [._]*.s[a-w][a-z]
