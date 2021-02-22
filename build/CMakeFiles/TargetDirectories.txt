@@ -1,0 +1,3 @@
+/home/zohar/Documents/Study/y2/q3/OS/course_os/build/CMakeFiles/edit_cache.dir
+/home/zohar/Documents/Study/y2/q3/OS/course_os/build/CMakeFiles/rebuild_cache.dir
+/home/zohar/Documents/Study/y2/q3/OS/course_os/build/CMakeFiles/course_os.dir
