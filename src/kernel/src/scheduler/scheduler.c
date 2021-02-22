@@ -13,7 +13,7 @@ int timer = 0;
 int idCounter;
 
 void init_scheduler() {
-    chipset.schedule_timer_periodic(void * /*fill with proper callback*/, TIME_SLICE_MS);
+    //chipset.schedule_timer_periodic(void * /*fill with proper callback*/, TIME_SLICE_MS);
 }
 
 void sleep(int id, int sleepTime) 
@@ -51,8 +51,8 @@ void * getNext() {
         add(removePCBNode(i), front);
     }
 
-    // TODO how to deal with empty/initial queue???
-    while (queue == nullptr) {};
+    // TODO This might break a lot of stuff
+    if (queue == nullptr) return queue;
     queue = queue->next;
     return queue;
 }
