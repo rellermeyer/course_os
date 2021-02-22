@@ -4,29 +4,22 @@
         {
             "name": "(gdb) Attach",
             "type": "cppdbg",
-            "request": "attach",
+            "request": "launch",
             "program": "${workspaceFolder}/src/kernel/build/kernel.sym",
-            "processId": "${command:pickProcess}",
-            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}/src/kernel/",
+            "miDebuggerPath": "${workspaceFolder}/src/toolchain/arm-none-eabi/bin/arm-none-eabi-gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
+                    "ignoreFailures": true,
                 }
-            ]
-        },
-        {
-            "type": "gdb",
-            "request": "attach",
-            "gdbpath": "${workspaceFolder}/toolchain/arm-none-eabi/bin/arm-none-eabi-gdb",
-            "name": "Debug",
-            "executable": "${workspaceFolder}/kernel/build/kernel.sym",
-            "target": ":1234",
-            "remote": true,
-            "cwd": "${workspaceRoot}",
-            // "preLaunchTask": "run_debug",
-            "valuesFormatting": "prettyPrinters"
+            ],
+            "linux": {
+                "MIMode": "gdb",
+                "miDebuggerServerAddress": "localhost:1234",
+            },
+            "preLaunchTask": "run_debug",
         },
     ]
 }
