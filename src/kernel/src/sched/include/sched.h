@@ -75,4 +75,4 @@ typedef struct {
     void * l1_page_table;
 } ExecutionState;
 
-void _save_state(void);
+extern void _save_state(void);

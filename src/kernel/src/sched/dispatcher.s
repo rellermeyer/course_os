@@ -1,40 +1,48 @@
 .data
-    .equ PCB_SIZE, 44
 .text
 .global _save_state
 .global _init_state
 
 /**
- * Saves the context in an ExecutionState at the location of the stack pointer of the calling process
- * Register contents on entry:
- *    
- *    R0 - R3 - parameter registers for the SWI handler, do not need to be saved
+    Saves the context in an ExecutionState at the location of the stack pointer of the calling process
+    Register contents on entry:
+    
+       R0 -> pc in user space, lr from interrupt 'space', argument so does not have to be stored
+       R1, R2 -> Scratch registers, do not have to be stored
+    
+       R4 -> SP_user_mode
+       R5 -> LR_user_mode
+    
+       R7 - R11 - just save
 
- *    R4 -> SP_user_mode
- *    R5 -> LR_user_mode
- *    
- *    R7 - R11 - just save
+       FP -> FP_user_mode
+       LR -> PC_user_mode (Our first argument)
+       SPSR -> CPSR_user_mode
 
- *    FP -> FP_user_mode
- *    LR -> PC_user_mode
- *    SPSR -> CPSR_user_mode
- *
+    It must be noted that a struct in C is interpreted as follows: 
+              the first element in the struct is the first element of te stack.
+              Since the stack is LIFO, we must add all enties in reverse order
  */
 _save_state:
     // TODO: We might need to switch back to the user address space here
-    sub r4, #PCB_SIZE            // Allocate memory
-    stm r4!, {r6 - r13}^         // Dump all user(^) registers onto the stack
+    mov r1, sp                  // Save Interrupt stack in r1
+    mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
 
-    str r5, [r4, #+4]!           // Put lr onto the stack 
-    str lr, [r4, #+4]!           // Put pc onto the stack
+    mrc p15, 0, r2, c2, c0, 0   // Read 32-bit TTBR0 into r12 (l1 page table of the calling process)
+    push {r2}                   // Put it on the stack
     
-    mrs r12, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
-    str r12, [r4, #+4]!          // Put it on the stack
-    mrc p15, 0, r12, c2, c0, 0   // Read 32-bit TTBR0 into r12 (l1 page table of the calling process)
-    str r12, [r4, #+4]!          // Put it on the stack
+    mrs r2, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
+    push {r2}                   // Put it on the stack
+
+    push {r0, r5}               // Push pc and lr on the stack
+    sub sp, #24                 // Make space for registers (6 * 4bytes) (the lowest register has to be at the bottom of the stack)
+    stm sp, {r6 - r13}^         // Dump user(^) registers r6-r12 onto the stack
+
 
     // TODO: This is where we would switch back the kernel address space?
-    sub r4, #PCB_SIZE            // Set pointer to ExecutionState
+    mov r4, sp                   // Save user space stack pointer back to r4
+    mov sp, r1                   // Restore Interrupt stack
+    bx lr                        // Return, remember that r4 is the pointer to the PCB
 
 /**
  * Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
