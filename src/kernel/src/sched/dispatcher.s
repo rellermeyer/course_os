@@ -1,4 +1,5 @@
 .data
+    .equ PCB_SIZE, 44
 .text
 .global _save_state
 .global _init_state
@@ -20,7 +21,7 @@
        SPSR -> CPSR_user_mode
 
     It must be noted that a struct in C is interpreted as follows: 
-              the first element in the struct is the first element of te stack.
+              the first element in the struct is the top element of the stack.
               Since the stack is LIFO, we must add all enties in reverse order
  */
 _save_state:

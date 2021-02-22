@@ -79,10 +79,10 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
-    asm volatile("mov r0, lr");             // Set lr as first argument
-    asm volatile("bl _save_state");         // Call save_state subroutine
-    asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
+    asm volatile("push {r0, r1, r2, r3, lr}");  // Save arguments onto the stack
+    asm volatile("mov r0, lr");                 // Set lr as first argument
+    asm volatile("bl _save_state");             // Call save_state subroutine
+    asm volatile("pop {r0, r1, r2, r3, lr}");   // Restore r0
 
     // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
