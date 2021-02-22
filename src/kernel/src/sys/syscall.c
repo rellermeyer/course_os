@@ -25,16 +25,16 @@ int syscall(int sys, ...) {
 
             break;
         case SYS_kill:
-            // TODO
-
             r0 = va_arg(args, int);
             r1 = va_arg(args, int);
+
             asm("MOV r7, %0":: "r" (sys));
             asm("MOV r0, %0":: "r" (r0));
             asm("MOV r1, %0":: "r" (r1));
-            //asm("MOV r2, %0": "+r" (r2));
-            //asm("MOV r3, %0": "+r" (r3));
+            asm("PUSH {lr}"); // need to save the return address to the stack
             asm("SWI 0x0");
+            asm("POP {lr}"); // pop lr from the stack to return to whoever called syscall()
+
             break;
         case SYS_exit:
             // TODO
