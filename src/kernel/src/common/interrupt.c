@@ -1,9 +1,9 @@
 #include <chipset.h>
 #include <interrupt.h>
 #include <mmio.h>
+#include <sched.h>
 #include <stdio.h>
 #include <vm2.h>
-#include <sched.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
@@ -79,15 +79,15 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    asm volatile ("mov r0, lr");       // Return address as argument 1
-    asm volatile ("bl _save_state");   // Call save_context subroutine
+    asm volatile("mov r0, lr");      // Return address as argument 1
+    asm volatile("bl _save_state");  // Call save_context subroutine
 
     // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
 }
 
 long syscall_handler(void) {
-    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0k;
+    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0;
     ExecutionState * es;
 
     asm volatile("MOV %0, r7" : "=r"(callNumber)::);
@@ -180,7 +180,7 @@ long syscall_handler(void) {
         case SYSCALL_PRINTF:
             kprintf("Printf system call called!\n");
 
-//            kprintf((const char *)r0);
+            //            kprintf((const char *)r0);
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
