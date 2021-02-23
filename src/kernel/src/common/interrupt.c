@@ -80,10 +80,10 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     // (upon entry r4 contains the lr from user space)
-    asm volatile("push {r0, r1, r2, r3, lr}");  // Save arguments onto the stack
+    asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
     asm volatile("mov r0, lr");                 // Set lr as first argument
     asm volatile("bl _save_state");             // Call save_state subroutine
-    asm volatile("pop {r0, r1, r2, r3, lr}");   // Restore r0
+    asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
 
     // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
@@ -93,30 +93,24 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 }
 
 long syscall_handler(void) {
-    // register int reg7 asm("r7");
-    // register int reg0 asm("r0");
-    // register int reg1 asm("r1");
-    // register int reg2 asm("r2");
-    // register int reg3 asm("r3");
-    // int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
-    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0;
-    ExecutionState * es;
-
-    asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r1" : "=r"(r1)::);
-    asm volatile("MOV %0, r2" : "=r"(r2)::);
-    asm volatile("MOV %0, r3" : "=r"(r3)::);
-    asm volatile("MOV %0, r4" : "=r"(es)::);
+    register int reg7 asm("r7");
+    register int reg0 asm("r0");
+    register int reg1 asm("r1");
+    register int reg2 asm("r2");
+    register int reg3 asm("r3");
+    register ExecutionState* es asm("r4");
+    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
+    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
-    kprintf("arg3=%d\n", es);
+    kprintf("es=%d\n", es);
     kprintf("\n");
 
     // System Call Handler
