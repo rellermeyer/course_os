@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <test.h>
 #include <vm2.h>
+#include <vas2.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -52,9 +53,12 @@ void start(uint32_t * p_bootargs) {
 
 
 #ifndef ENABLE_TESTS
-//    argparse_process(p_bootargs);
-//
-// TODO: Start init process
+    // DEBUG
+    struct vas2 * vas = create_vas();
+    allocate_page(vas, 0x80000000, true);
+    switch_to_vas(vas);
+    asm("swi 0x0");
+    // DEBUG
 #else
     test_main();
     // If we return, the tests failed.

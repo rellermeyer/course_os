@@ -18,7 +18,26 @@
             "label": "run_debug",
             "detail": "Runs qemu with gdbserver",
             "type": "shell",
-            "command": "make -C kernel debug",
+            "command": "cd ${workspaceFolder}/src/kernel && make debug",
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "make debug",
+                    "endsPattern": "Configuring tools"
+                }
+            }
         }
     ]
 }
