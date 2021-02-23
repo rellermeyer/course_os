@@ -53,10 +53,6 @@ typedef struct {
         uint32_t ir;
     };
     union {
-        uint32_t r14;
-        uint32_t lr;
-    };
-    union {
         uint32_t r15;
         uint32_t pc;
     };
