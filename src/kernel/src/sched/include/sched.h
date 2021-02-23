@@ -35,6 +35,7 @@
  */
 
 typedef struct {
+    uint32_t cpsr;
     int32_t r6;
     union {
         int32_t r7;
@@ -59,7 +60,6 @@ typedef struct {
         uint32_t r15;
         uint32_t pc;
     };
-    uint32_t cpsr;
 } Registers;
 
 /**
@@ -68,8 +68,6 @@ typedef struct {
  * TODO: Page table or vas2 struct? Where do we get this from?
  */
 typedef struct {
-    Registers registers;
-    //    struct * vas2 vas;
-    //    void * (union vas; l1_page_table);
     void * l1_page_table;
+    Registers registers;
 } ExecutionState;

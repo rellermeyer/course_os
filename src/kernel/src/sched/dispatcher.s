@@ -29,16 +29,18 @@ _save_state:
     mov r1, sp                  // Save Interrupt stack in r1
     mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
 
+    push {r5} // lr
+    push {r0} // pc
+
+    // Dump registers r6-r12, pc and lr onto the stack (Full Descending)
+    stmfd sp!, {r6 - r13}    
+
+    mrs r2, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
+    push {r2}                   // Put it on the stack
+ 
     mrc p15, 0, r2, c2, c0, 0   // Read 32-bit TTBR0 into r12 (l1 page table of the calling process)
     push {r2}                   // Put it on the stack
     
-    mrs r2, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
-    push {r2}                   // Put it on the stack
-
-    push {r0, r5}               // Push pc and lr on the stack
-    sub sp, #24                 // Make space for registers (6 * 4bytes) (the lowest register has to be at the bottom of the stack)
-    stm sp, {r6 - r13}^         // Dump user(^) registers r6-r12 onto the stack
-
 
     // TODO: This is where we would switch back the kernel address space?
     mov r4, sp                   // Save user space stack pointer back to r4
@@ -46,17 +48,24 @@ _save_state:
     bx lr                        // Return, remember that r4 is the pointer to the PCB
 
 /**
- * Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
- */
-_init_state:
-    // TODO: Generate new PCB
-    nop
-    bx lr
-
-/**
- * Loads and existing PCB, resuming execution of a process
+    Loads and existing PCB, resuming execution of a process
  */
 _load_state:
     // TODO: Load existing PCB
-    nop
+    mov r1, sp                      // Save interrupt stack into r1 (never lose a reference)
+    mov sp, r4                      // Set our stack pointer to user space
+
+    @ pop {r2}
+    @ mcr p15, 0, r2, c2, c0, 0       // Load the l1 page table
+
+    pop {r2}                        
+    msr spsr_cxsf, r2                    // Load the program state
+    
+    ldmfd sp!, {r6, r13, pc, lr}^     // Load all user(^) general purpose registers, pc and lr
+
+/**
+    Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
+ */
+_init_state:
+    // TODO: Generate new PCB
     bx lr
