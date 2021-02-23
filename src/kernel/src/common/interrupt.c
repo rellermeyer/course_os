@@ -81,8 +81,8 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 void __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     // (upon entry r4 contains the lr from user space)
     asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
-    asm volatile("mov r0, lr");             // Set lr as first argument
-    asm volatile("bl _save_state");         // Call save_state subroutine
+    asm volatile("mov r0, lr");                 // Set lr as first argument
+    asm volatile("bl _save_state");             // Call save_state subroutine
     asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
 
     // Now we should switch to the kernel address space (if we're not already in that)
@@ -98,7 +98,7 @@ long syscall_handler(void) {
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    register ExecutionState * es asm("r4");
+    register ExecutionState* es asm("r4");
     int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");

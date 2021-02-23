@@ -30,7 +30,7 @@ _save_state:
 
     push {r0} // pc
     // Dump registers r6-r12, pc and lr onto the stack (Full Descending)
-    stmfd sp!, {r6 - r13}    
+    stmfd sp!, {r6 - r12}    
 
     mrs r2, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
     push {r2}                   // Put it on the stack
@@ -51,7 +51,7 @@ _load_state:
     pop {r2}                        
     msr spsr_cxsf, r2                    // Load the program state
     
-    ldmfd sp!, {r6, r13}^     // Load all user(^) general purpose registers, pc and lr
+    ldmfd sp!, {r6 - r12}     // Load all user(^) general purpose registers, pc and lr
     pop {pc}
 
 /**
