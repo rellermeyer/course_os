@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/kernel/build/kernel.sym",
             "cwd": "${workspaceFolder}/src/kernel/",
-            "miDebuggerPath": "${env:GDB_PATH}",
+            "miDebuggerPath": "${workspaceFolder}/src/toolchain/arm-none-eabi/bin/arm-none-eabi-gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
