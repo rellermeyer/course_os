@@ -24,14 +24,15 @@
         {
             "name": "(gdb) Attach - Native",
             "type": "gdb",
-            "request": "launch",
-            "gdbpath": "${env:GDB_PATH}",
-            // "executable": "${workspaceFolder}/kernel/build/kernel.sym",
+            "request": "attach",
+            "gdbpath": "${workspaceFolder}/src/toolchain/arm-none-eabi/bin/arm-none-eabi-gdb",
+            "executable": "${workspaceFolder}/src/kernel/build/kernel.sym",
             "target": ":1234",
-            // "remote": true,
+            "remote": true,
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
             "preLaunchTask": "run_debug",
+            "postDebugTask": "stop_debug",
         },
     ]
 }
