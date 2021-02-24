@@ -46,6 +46,12 @@
                     "endsPattern": "Configuring tools"
                 }
             }
+        },
+        {
+            "label": "stop_debug",
+            "detail": "Stops the qemu emulator at port 1234",
+            "type": "shell",
+            "command": "kill $(sudo lsof -t -i:1234)",
         }
     ]
 }
