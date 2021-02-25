@@ -79,11 +79,17 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 }
 
 long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    asm volatile("mov r0, lr");      // Return address as argument 1
-    asm volatile("bl _save_state");  // Call save_context subroutine
+    // (upon entry r4 contains the lr from user space)
+    asm volatile("push {r0, r1, r2, r3, lr}");  // Save arguments onto the stack
+    asm volatile("mov r0, lr");                 // Set lr as first argument
+    asm volatile("bl _save_state");             // Call save_state subroutine
+    asm volatile("pop {r0, r1, r2, r3, lr}");   // Restore r0
 
     // Now we should switch to the kernel address space (if we're not already in that)
     return syscall_handler();
+
+    // TODO: load address space here
+    asm volatile("bl _load_state");  // And load the state (PCB pointer should still be in r4)
 }
 
 long syscall_handler(void) {
@@ -94,7 +100,7 @@ long syscall_handler(void) {
     asm volatile("MOV %0, r1" : "=r"(r1)::);
     asm volatile("MOV %0, r2" : "=r"(r2)::);
     asm volatile("MOV %0, r3" : "=r"(r3)::);
-    asm volatile("MOV %0, r0" : "=r"(es)::);
+    asm volatile("MOV %0, r4" : "=r"(es)::);
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
