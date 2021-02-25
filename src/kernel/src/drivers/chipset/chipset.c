@@ -10,7 +10,7 @@
 void uart_putc_stub(char c __attribute__((unused)), int channel __attribute__((unused))) {}
 
 ChipsetInterface chipset = {
-    .uart_putc = uart_putc_stub  // Stub putc
+
 };
 
 // init_chipset requests hardware info, and based on it loads the right chipset. Currently only the

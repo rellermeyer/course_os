@@ -112,51 +112,51 @@ long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
             kprintf("Create system call called!\n");
             return -1;
 
-            //		return (long) kcreate((char*) r0, r1, 0);
+            //      return (long) kcreate((char*) r0, r1, 0);
         case SYSCALL_DELETE:
             kprintf("Delete system call called!\n");
             return -1;
 
-            //		return (long) kdelete((char*) r0, 1);
+            //      return (long) kdelete((char*) r0, 1);
         case SYSCALL_OPEN:
             kprintf("Open system call called!\n");
             return -1;
 
-            //		return (long) kopen((char*) r0, r1);
+            //      return (long) kopen((char*) r0, r1);
         case SYSCALL_MKDIR:
             kprintf("Mkdir system call called!\n");
             return -1;
 
-            //		return (long) kcreate((char*) r0, 'w', 1);
+            //      return (long) kcreate((char*) r0, 'w', 1);
         case SYSCALL_READ:
             kprintf("Read system call called!\n");
             return -1;
 
-            //		return (long) kread(r0, (void*) r1, r2);
+            //      return (long) kread(r0, (void*) r1, r2);
         case SYSCALL_WRITE:
             kprintf("Write system call called!\n");
             return -1;
 
-            //		return (long) kwrite(r0, (void*) r1, r2);
+            //      return (long) kwrite(r0, (void*) r1, r2);
         case SYSCALL_CLOSE:
             kprintf("Close system call called!\n");
             return -1;
 
-            //		return (long) kclose(r0);
+            //      return (long) kclose(r0);
         case SYSCALL_SEEK:
             kprintf("Seek system call called!\n");
             return -1;
 
-            //		return (long) kseek(r0, r1);
+            //      return (long) kseek(r0, r1);
         case SYSCALL_COPY:
             kprintf("Copy system call called!\n");
             return -1;
 
-            //		return (long) kcopy((char*) r0, (char*) r1, r2);
+            //      return (long) kcopy((char*) r0, (char*) r1, r2);
         case SYSCALL_LS:
             kprintf("Ls system call called!\n");
             return -1;
-            //		return (long) kls((char*) r0);
+            //      return (long) kls((char*) r0);
         case SYSCALL_SET_PERM:
             kprintf("Set permission system call called!\n");
             kprintf("Yet to be implemented\n");
@@ -222,23 +222,23 @@ void __attribute__((interrupt("IRQ"))) irq_handler(void) {
     return chipset.handle_irq();
 
     //    int * pendingregister = (int *) 0x40000060;
-    //	int cpsr = disable_interrupt_save(IRQ);
+    //  int cpsr = disable_interrupt_save(IRQ);
 
     // os_printf("disabled CSPR:%X\n",cpsr);
     // Discover source of interrupt
     // do a straight run through the VIC_INT_STATUS to determine
     // which interrupt lines need to be tended to
-    //	for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
-    //		// is the line active?
-    //		if ((1 << i) & mmio_read(&interrupt_registers->irq_basic_pending)) {
-    //			// activate that specific handler
-    //			handle_irq_interrupt(i);
-    //		}
-    //	}
+    //  for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
+    //      // is the line active?
+    //      if ((1 << i) & mmio_read(&interrupt_registers->irq_basic_pending)) {
+    //          // activate that specific handler
+    //          handle_irq_interrupt(i);
+    //      }
+    //  }
     // we've gone through the VIC and handled all active interrupts
     // restore_proc_status(cpsr);
 
-    //	enable_interrupt(IRQ_MASK);
+    //  enable_interrupt(IRQ_MASK);
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
@@ -354,7 +354,7 @@ size_t get_proc_status() {
 
 /* restore control status (interrupt, mode bits) of the cpsr */
 /* (e.g. when we return from a handler, restore value from
- disable_interrupt_save				     */
+ disable_interrupt_save                  */
 void restore_proc_status(size_t cpsr) {
     asm volatile("msr cpsr_c, %0" : : "r"(cpsr));
 }

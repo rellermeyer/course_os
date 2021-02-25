@@ -171,7 +171,7 @@ int os_snprintf(char * buf, int buflen, const char * fmt, ...) {
 
 void puts(const char * s) {
     while (*s != '\0') {
-        chipset.uart_putc(*s, 0);
+        chipset.uart->putc(chipset.uart, *s, 0);
         s++;
     }
 }

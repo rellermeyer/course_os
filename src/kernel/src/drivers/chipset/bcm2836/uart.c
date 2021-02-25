@@ -51,40 +51,56 @@ volatile UartInterface * const UART2_ADDRESS = (volatile UartInterface *)0x101f3
 // (CR)
 //#define CTSEn  ()    // CTS Hardware Control Enable
 
-static BCM2836UartInterface * BCM2836_UART0_ADDRESS;
-static BCM2836UartInterface * BCM2836_UART1_ADDRESS;
-static BCM2836UartInterface * BCM2836_UART2_ADDRESS;
-static BCM2836UartInterface * BCM2836_UART3_ADDRESS;
+static UartInterface * BCM2836_UART0_ADDRESS;
+static UartInterface * BCM2836_UART1_ADDRESS;
+static UartInterface * BCM2836_UART2_ADDRESS;
+static UartInterface * BCM2836_UART3_ADDRESS;
 
-void bcm2836_uart_init() {
-    BCM2836_UART0_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x201000);
-    BCM2836_UART1_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x202000);
-    BCM2836_UART2_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x203000);
-    BCM2836_UART3_ADDRESS = (BCM2836UartInterface *)(bcm2836_peripheral_base + 0x204000);
+void bcm2836_uart_init(volatile UartDevice *device) {
+    BCM2836_UART0_ADDRESS = (UartInterface *)(bcm2836_peripheral_base + 0x201000);
+    BCM2836_UART1_ADDRESS = (UartInterface *)(bcm2836_peripheral_base + 0x202000);
+    BCM2836_UART2_ADDRESS = (UartInterface *)(bcm2836_peripheral_base + 0x203000);
+    BCM2836_UART3_ADDRESS = (UartInterface *)(bcm2836_peripheral_base + 0x204000);
+
+    device->length  = 4;
+    device->devices[0] = BCM2836_UART0_ADDRESS;
+    device->devices[1] = BCM2836_UART1_ADDRESS;
+    device->devices[2] = BCM2836_UART2_ADDRESS;
+    device->devices[3] = BCM2836_UART3_ADDRESS;
+
+    device->getc = bcm2836_uart_getc;
+    device->putc = bcm2836_uart_putc;
+    device->on_message = bcm2836_uart_on_message;
+
+
 }
 
-void uart_write_byte(volatile BCM2836UartInterface * interface, volatile uint8_t value) {
+void uart_write_byte(volatile UartInterface * interface,
+                     volatile uint8_t value) {
     //    while (interface->FR & TXFF ) {
     //        asm volatile ("nop");
     //    }
+    while (interface->FR & (1 << 5))
+        ;
+
     interface->DR = (uint32_t)value;
 }
 
-void bcm2836_uart_putc(char c, int uartchannel) {
-    if (uartchannel >= 4) { uartchannel = 0; }
 
-    switch (uartchannel) {
-        case 0:
-            return uart_write_byte(BCM2836_UART0_ADDRESS, c);
-        case 1:
-            return uart_write_byte(BCM2836_UART1_ADDRESS, c);
-        case 2:
-            return uart_write_byte(BCM2836_UART2_ADDRESS, c);
-        case 3:
-            return uart_write_byte(BCM2836_UART3_ADDRESS, c);
-        default:
-            panic();
-    }
+uint8_t uart_get_byte(volatile UartInterface *interface) {
+    while (interface->FR & (1 << 4))
+        ;
+    return interface->DR;
 }
 
-void bcm2836_uart_on_message(UartCallback callback, int uartchannel) {}
+char bcm2836_uart_getc(volatile UartDevice *device, int uartchannel) {
+    return uart_get_byte(device->devices[uartchannel]);
+}
+
+void bcm2836_uart_putc(volatile UartDevice *device, char c, int uartchannel) {
+    uart_write_byte(device->devices[uartchannel], c);
+}
+
+void bcm2836_uart_on_message(volatile UartDevice *device,
+                             UartCallback callback,
+                             int uartchannel) {}

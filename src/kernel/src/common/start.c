@@ -69,7 +69,30 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     //  * execute userland init program
 
     asm volatile("cpsie i");
-
     INFO("End of boot sequence.\n");
+
+    char buf[9001];
+    int i = 0;
+
+    while (true) {
+        buf[i] = chipset.uart->getc(chipset.uart, 0);
+        kprintf("%c", buf[i]);
+
+        if (buf[i] == 127) {
+            buf[i] = '\0';
+            i--;
+        } else if (buf[i] == 13) {
+            kprintf("%c", '\n');
+            buf[i] = '\n';
+            buf[i+1] = '\0';
+            kprintf("%s", buf);
+            i = 0;
+        } else {
+            i++;
+        }
+    }
+
+
+
     SLEEP;
 }
