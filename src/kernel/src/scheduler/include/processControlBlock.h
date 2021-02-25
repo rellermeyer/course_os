@@ -1,19 +1,7 @@
 #ifndef PROCESSCONTROLBLOCK_H
 #define PROCESSCONTROLBLOCK_H
 
-// TODO who builds these? where/who save/increases the idcounter?
-
-typedef void (*ExecutionStateHandler)();
-
-typedef struct ExecutionState {
-    // fill when ready
-    int reg1;
-    int reg2;
-    int reg3;
-    
-
-    ExecutionStateHandler handler;
-} ExecutionState;
+#include <sched.h>
 
 typedef struct ProcessControlBlock {
     int id;
