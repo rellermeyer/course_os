@@ -7,6 +7,7 @@
 #include <test.h>
 #include <vm2.h>
 #include <vas2.h>
+#include <scheduler.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -51,6 +52,8 @@ void start(uint32_t * p_bootargs) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+    // init the scheduler
+    init_scheduler();
 
 #ifndef ENABLE_TESTS
     // DEBUG

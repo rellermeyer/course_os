@@ -26,7 +26,7 @@ void addPCBNodeAfter(ProcessControlBlock * oldNode, ProcessControlBlock * newNod
 }
 
 ProcessControlBlock * removePCBNode(ProcessControlBlock * node) {
-    node->prev->next = node->next;
-    node->next->prev = node->prev;
+    if (node->prev != NULL) node->prev->next = node->next;
+    if (node->next != NULL) node->next->prev = node->prev;
     return node;
 }
