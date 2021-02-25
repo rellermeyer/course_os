@@ -4,6 +4,7 @@
 #include <klibc.h>
 #include <mem_alloc.h>
 #include <stdint.h>
+#include <string.h>
 #include <test.h>
 #include <vm2.h>
 
@@ -82,10 +83,14 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
             buf[i] = '\0';
             i--;
         } else if (buf[i] == 13) {
+            // Induce a kernel panic
+            buf[i] = '\0';
             kprintf("%c", '\n');
-            buf[i] = '\n';
-            buf[i+1] = '\0';
-            kprintf("%s", buf);
+
+            if (strcmp(buf, "panic") == 0)
+                panic();
+
+            kprintf("%s\n", buf);
             i = 0;
         } else {
             i++;

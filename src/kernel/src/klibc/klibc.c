@@ -25,6 +25,7 @@
 // FIXME: decouple
 #include <interrupt.h>
 
+#define _MEME_PANIC 1
 #define LOWER_CASE 0
 #define UPPER_CASE 1
 #define NO_CASE    2
@@ -40,6 +41,7 @@
 // enabled.
 void inline panic() {
     disable_interrupt(BOTH);
+    #ifndef _MEME_PANIC
     kprintf("Kernel panic!\n");
     kprintf("\n     )                        (                     \n");
     kprintf("  ( /(                   (    )\\ )                  \n");
@@ -49,6 +51,45 @@ void inline panic() {
     kprintf("| |/ (_))  ((_)_(_/((_))| |  | _ ((_)_ _(_/((_)((_) \n");
     kprintf("  ' </ -_)| '_| ' \\)) -_) |  |  _/ _` | ' \\)) / _|  \n");
     kprintf(" _|\\_\\___||_| |_||_|\\___|_|  |_| \\__,_|_||_||_\\__|\n");
+    #else
+    kprintf("                             ......                                       \n");
+    kprintf("                      .';:looodddddolc:;,'..                              \n");
+    kprintf("                   .;ccllllllloooolc:::::::::;'.                          \n");
+    kprintf("                .,:ccccccclllllllc::;;;;,,,,;;;;,.                        \n");
+    kprintf("              .,;;:::cccccllllllc::;;,,,''',,,,;;:'..                     \n");
+    kprintf("             ',,,;;;::::ccllllllc:;;;,,,'',,,,,,;:::l:,..                 \n");
+    kprintf("         ...;l:;;,,;;;;::cclllolc:;;;;;,,',;;;;;,looc;;:,'..              \n");
+    kprintf("       .',::;:ldl'''',,;::clooolc:;;;;;;cooc:;;;,c;;ll:,,;;''.            \n");
+    kprintf("     .',;;',lo:,:....'';:clloool::;;::lxdokko:;;,,co;,cl:;c;,;.           \n");
+    kprintf("    ,,;c;;cl:;cc,..'',;:ccllodol::;;:ddclllld:;;,,cll:;:c:;:,;'           \n");
+    kprintf("   .;,:;;c:;:c:,,,,,;::ccllooddoc:;:llllollccc;,;:c:clc;:c;;;;;           \n");
+    kprintf("   .;;:;c:;:;;;::::::cccllooodddl:;,,,ckk:,,,::;;ccoOxo;;;::::;           \n");
+    kprintf("   ;::;::;;oc::cccccclllllooddddoc;,''''''',;;;:;:;:clc;;:clll:.          \n");
+    kprintf("   :lclc;;;clccccccllllloooddddddl;;;;,,,,,;;,;:::;;;:l;;;:cll:.          \n");
+    kprintf("  .:llc:;;;lollllllloooooodddddddoc::::;;;;;;;;::;;;:cl:;;:cllc.          \n");
+    kprintf("   cllc:;;:loooooooooodddddddddddolcccc::::::;;:::::cllc;;;cccl:          \n");
+    kprintf("  .cccc;;;:looooooodddddddxxxdddddolccccccccc:;;::;lldol::::;:cl.         \n");
+    kprintf(" .lc::::::loddddddddddxxxxxxxxddddolccccccccloddddoooo;lc:;;;;;:,         \n");
+    kprintf(" :c:;;;::clddddddxdxxxxxxxxxxxxdddolccccccccdxkkxollo; .;lc;'.            \n");
+    kprintf("  ...,:clodddddddxxxxxxxxxxxxxxxxddlcccccc:cdxdl:clod.   ..               \n");
+    kprintf("      .'.cddddddxxxxkkkkkkkkkkxxxddolccccldxooooolod;                     \n");
+    kprintf("         .xddddddxxkkkOkOkkkkkkxxxxdolllcccoxxxoc:o:                      \n");
+    kprintf("          :xddddddxxkkOkOOOOOkkkkxxxddolcc:;;;,,;c:                       \n");
+    kprintf("           odddddddxkkOOkkOO0OOOkkkkxxdollc;;;;;c;                        \n");
+    kprintf("           'doooooddxkkkkkkOO0K000OOkkxxdolc::::,                         \n");
+    kprintf("            looooooddxxkkxxkkO00KXXXK0OOkxdolod:                          \n");
+    kprintf("            :ollllooddxxxxxxxxkkOO0KKKX0c:::c:.     (kernel)              \n");
+    kprintf("            ,olllloooddxxddddxxxxkkOO0K,                                  \n");
+    kprintf("            ,olllllooodxxdddddxxxkkO00o  ppp     a    n   n  iiii  k  k   \n");
+    kprintf("            ,olllllloodddddddddxxkkOOk,  p  p   a a   nn  n   ii   k k    \n");
+    kprintf("            :lllllllloooddoddddxxxkkoo'  ppp   a   a  n n n   ii   kk     \n");
+    kprintf("            clccccccccllllooodddxxdc:l,  p     aaaaa  n  nn   ii   k k    \n");
+    kprintf("           .cccc::::::cccccclodddl;;:::  p     a   a  n   n  iiii  k  k   \n");
+    kprintf("           :cc::::;;;:::::::clooc,,,;:c.                                  \n");
+    kprintf("           colccc::::::::::::::;,,,,;:c'                                  \n");
+    kprintf("            :dkkxddooooollc::;;::::cll;                                   \n");
+    kprintf("               .';cllodddxdddoolc:;'.                                     \n");
+    #endif
 
     SemihostingOSExit(-1);
     SLEEP;
