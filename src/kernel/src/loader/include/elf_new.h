@@ -17,7 +17,7 @@ typedef struct {
     uint8_t     bit_32_or_64;
     uint8_t     type_of_endian;
     uint8_t     header_version;
-    uint8_t     OS_ABI;::
+    uint8_t     OS_ABI;
     uint8_t     padding[PADDING_LENGTH];
 
 	Elf32_Half	e_type;
@@ -59,7 +59,7 @@ enum Elf_Type {
  
 # define ELF_ARCH_ARM32	(0x28)  // ARM Machine Type ( 32-bit ARM is just ARM)
 # define EV_CURRENT	(1)         // ELF Current Version
-// -----------------------------------------------------
+// end Header ---------------------------------------------------
 
 
 // TODO - Structures for a program header table
