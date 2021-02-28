@@ -61,6 +61,22 @@ enum Elf_Type {
 # define EV_CURRENT	(1)         // ELF Current Version
 // end Header ---------------------------------------------------
 
+//------------------------------------------------
+// The Program Header
+
+typedef struct {
+	Elf32_Word		program_type;
+	Elf32_Off		program_offset;
+	Elf32_Addr		program_virtual_addr;
+	Elf32_Addr		program_physical_addr;
+	Elf32_Word		program_filesz;
+	Elf32_Word		program_memsz;
+	Elf32_Word		flags;
+	Elf32_Word		align;
+} Elf32_Phdr;
+
+// End Program Header
+
 
 // TODO - Structures for a program header table
 // TODO - Structure  for a section header table
@@ -68,12 +84,24 @@ enum Elf_Type {
 // TODO - Structure  for a section header table entry
 // TODO - Structure  for the elf file
 
-// TODO - method which takes the path to a file and uses the file system to load
-// 		  it into memory for reading
+// TODO - method which takes the pointer to a file loaded in main memory
+//			for reading
 
-// TODO - method that takes a pointer to an ELF file in memory and begins its processing  
 
-// Cheching the ELF Header
+
+// Function declarations
+
+
+/* The main entrypoint into the loader, used when you
+	want to create a new process from an ELF file. It 
+	takes a pointer to the ELF file that should already
+	be loaded into main memory for reading.
+	@return A pointer to a newly created PCB for the new process
+*/
+void* loadProcessFromElfFile(void * file);
+
+
+// Checking the ELF Header
 // Before we process in any way an ELF file, we have to check if the machine is able to do it
 // We have to check:
 // 1) Validity  of the ELF file
