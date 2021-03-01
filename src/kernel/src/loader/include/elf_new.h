@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <kl>
  
 typedef uint16_t Elf32_Half;	// Unsigned half int
 typedef uint32_t Elf32_Off;	    // Unsigned offset
@@ -97,10 +98,12 @@ typedef struct ElfRawSection {
 // A structure for an ELF file, containing the
 // information from the parsed ELF header.
 typedef struct Elf {
-    void *entry;
+    Elf32_Addr entry;
     Elf32_Half sht_index_names;
-    Elf32_SectionHeader* sectionHeaderTable;
-    Elf32_ProgramHeader* programHeaderTable;
+    Elf32_Off sectionHeaderTableOffset;
+    Elf32_Off programHeaderTableOffset;
+    Elf32_Word sectionHeaderTableLength;
+    Elf32_Word programHeaderTableLength;
 } Elf;
 // End -----------------------------------------------
 
