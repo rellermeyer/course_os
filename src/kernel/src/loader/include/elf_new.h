@@ -63,7 +63,6 @@ enum Elf_Type {
 
 //------------------------------------------------
 // The Program Header
-
 typedef struct {
 	Elf32_Word		program_type;
 	Elf32_Off		program_offset;
@@ -73,33 +72,41 @@ typedef struct {
 	Elf32_Word		program_memsz;
 	Elf32_Word		flags;
 	Elf32_Word		align;
-} Elf32_Phdr;
-
-// End Program Header
-
-
-// TODO - Structures for a program header table
-// TODO - Structure  for a section header table
-// TODO - Structure  for a program header table entry
-// TODO - Structure  for a section header table entry
-// TODO - Structure  for the elf file
-
-// TODO - method which takes the pointer to a file loaded in main memory
-//			for reading
+} Elf32_ProgramHeader;
+// End Program Header -------------------------------------------
 
 
+// -----------------------------------------
+// The Section Header
+typedef struct ElfRawSection {
+    Elf32_Word section_name;
+    Elf32_Word section_type;
+    Elf32_Word section_flags;
+    Elf32_Addr section_addr;
+    Elf32_Off  section_offset;
+    Elf32_Word section_size;
+    Elf32_Word section_link;
+    Elf32_Word section_info;
+    Elf32_Word section_addralign;
+    Elf32_Word section_entsize;
+} Elf32_SectionHeader;
+// End Section Header -------------------------------------------
 
+
+// -----------------------------------------
+// A structure for an ELF file, containing the
+// information from the parsed ELF header.
+typedef struct Elf {
+    void *entry;
+    Elf32_Half sht_index_names;
+    Elf32_SectionHeader* sectionHeaderTable;
+    Elf32_ProgramHeader* programHeaderTable;
+} Elf;
+// End -----------------------------------------------
+
+
+// -----------------------------------------
 // Function declarations
-
-
-/* The main entrypoint into the loader, used when you
-	want to create a new process from an ELF file. It 
-	takes a pointer to the ELF file that should already
-	be loaded into main memory for reading.
-	@return A pointer to a newly created PCB for the new process
-*/
-void* loadProcessFromElfFile(void * file);
-
 
 // Checking the ELF Header
 // Before we process in any way an ELF file, we have to check if the machine is able to do it
@@ -109,10 +116,26 @@ void* loadProcessFromElfFile(void * file);
 // 3) Endianess
 // 4) CPU type
 // 5) Other OS specific semantics are satisfied
+// This is done in the following two methods: elf_validate_magic_sequence and elf_check_supported
 
-/* A function to validate that the magic number in the 
-   ELF file header is correct.
-   @return true if correct, false otherwise
-*/
+/* A function to validate that the magic number in the
+ * ELF file header is correct.
+ * @return true if correct, false otherwise
+ * */
 bool elf_validate_magic_sequence(Elf32_Header* header);
+
+/*
+ * A function to validate that the ELF file to create
+ * a process from has the correct characteristics in
+ * its header information.
+ */
+bool elf_check_supported(Elf32_Header* header);
+
+/* A function to parse the information contained in the ELF file
+ * header, including the program and section header tables' sizes
+ * and locations within the file and the entry point of the process to create.
+ * @return an Elf structure containing the gathered information.
+ */
+Elf *elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
+
 
