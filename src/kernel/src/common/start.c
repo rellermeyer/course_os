@@ -3,11 +3,12 @@
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
+#include <pmm.h>
 #include <stdint.h>
-#include <test.h>
-#include <vm2.h>
-#include <vas2.h>
 #include <syscall.h>
+#include <test.h>
+#include <vas2.h>
+#include <vm2.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -56,11 +57,17 @@ void start(uint32_t * p_bootargs) {
 #ifndef ENABLE_TESTS
     // DEBUG
     struct vas2 * vas = create_vas();
-    allocate_page(vas, 0x80000000, true);
     switch_to_vas(vas);
+    allocate_page(vas, 0x0, true);
     syscall(SYS_dummy, 1, 2, 3, 4);
-    //asm("swi 0x0");
+
     // DEBUG
+    // TODO: load address space here
+    // asm volatile("msr spsr_c, #0x10");    // load user mode to spsr
+    // asm volatile("mov lr, #0x60000000");  // set lr to (almost) user entry point
+    // asm volatile("add lr, #-8");          // adjust lr
+    // asm volatile("movs sp, lr");          // jump to user and load spsr into cpsr
+
 #else
     test_main();
     // If we return, the tests failed.
