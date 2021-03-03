@@ -83,8 +83,8 @@ int syscall(int sys, ...) {
             // software_interrupt_handler() by saving the previous lr before invoking the software
             // interrupt handler, we can return to whatever called syscall()
             asm volatile("SWI 0x0");
-            asm volatile(
-                "POP {lr}");  // pop lr from the stack to return to whoever called syscall()
+            asm volatile("POP {lr}");  // pop lr from the stack to return to whoever called syscall()
+            // TODO is the stack frame of the C function destroyed?
 
             break;
         default:

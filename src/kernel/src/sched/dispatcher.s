@@ -2,7 +2,9 @@
 .text
 .global _save_state
 .global _load_state
+.global _switch_to_usermode
 
+.equ Mode_USR, 0x10 // User
 /**
     Saves the context in an ExecutionState at the location of the stack pointer of the calling process
     Register contents on entry:
@@ -30,7 +32,7 @@ _save_state:
 
     push {r0} // pc
     // Dump registers r6-r12, pc and lr onto the stack (Full Descending)
-    stmfd sp!, {r6 - r12}    
+    stmfd sp!, {r6 - r12}
 
     mrs r2, spsr                // Load SPSR (cannot be immeadiatly loaded into memory)
     push {r2}                   // Put it on the stack
@@ -60,3 +62,15 @@ _load_state:
 _init_state:
     // TODO: Generate new PCB
     bx lr
+
+
+_switch_to_usermode:
+    MOV r1, lr
+    push {lr}
+    //mrs r3, cpsr
+    MSR     CPSR_c, #Mode_USR
+    //eret
+    pop {r0}
+    //mov lr, r1
+    blx r0
+
