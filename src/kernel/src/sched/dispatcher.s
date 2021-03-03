@@ -72,5 +72,7 @@ _switch_to_usermode:
     //eret
     pop {r0}
     //mov lr, r1
-    blx r0
+    //blx r0
+    add lr, #0x2000
+    bx lr
 

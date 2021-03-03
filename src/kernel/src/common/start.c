@@ -77,6 +77,8 @@ void start(uint32_t * p_bootargs) {
     // TODO memcpy what is in dispatcher.s to after the page is allocated
     // (the switch_to_usermode function is accessible at 0x805081d8-0x805081e8
     switch_to_vas(vas);
+
+    // TODO also don't forget to free the allocated page at some point
     allocate_page(vas, 0x508000, true);
     memcpy((void *) 0x508000, (void *) 0x805081d8,  (size_t) (0x805081e8 - 0x805081d8));
 
@@ -84,8 +86,8 @@ void start(uint32_t * p_bootargs) {
 
     int _switch_to_usermode = 0x508000;
     asm volatile("mov r1, %0"::"r"(_switch_to_usermode));
-    // for some reason you cannot jump there?
-    // it is correctly copied though
+    // you jump there and code is execuded, but gdb is very confused
+    // also the registers are changed after switching to user mode
     asm volatile("blx r1");
     //asm("swi 0x0");
 
