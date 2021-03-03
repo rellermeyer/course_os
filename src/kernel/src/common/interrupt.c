@@ -80,16 +80,25 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
 
 void __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     // (upon entry r4 contains the lr from user space)
-    asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
-    asm volatile("mov r0, lr");                 // Set lr as first argument
-    asm volatile("bl _save_state");             // Call save_state subroutine
-    asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
+    // asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
+    // asm volatile("mov r0, lr");             // Set lr as first argument
+    // asm volatile("bl _save_state");         // Call save_state subroutine
+    // asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
+
+    asm volatile("mov r1, #0x0");
+    asm volatile("ldr r2, =_user_test");
+    asm volatile("ldr r0, [r2]");
+    asm volatile("str r0, [r1, #+4]");
+    asm volatile("ldr r0, [r2, #+4]");
+    asm volatile("str r0, [r1, #+8]");
 
     // Now we should switch to the kernel address space (if we're not already in that)
     syscall_handler();
 
-    // TODO: load address space here
-    asm volatile("bl _load_state");  // And load the state (PCB pointer should still be in r4)
+    // asm volatile("msr spsr_c, #0x10");  // load user mode to spsr
+    // asm volatile("mov lr, #0x0");       // set lr to (almost) user entry point
+    // asm volatile("add lr, #-8");        // adjust lr
+    // asm volatile("movs pc, lr");        // jump to user and load spsr into cpsr
 }
 
 long syscall_handler(void) {
@@ -98,7 +107,7 @@ long syscall_handler(void) {
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    register ExecutionState* es asm("r4");
+    register ExecutionState * es asm("r4");
     int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");

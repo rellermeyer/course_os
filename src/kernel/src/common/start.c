@@ -3,15 +3,17 @@
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
+#include <pmm.h>
 #include <stdint.h>
+#include <syscall.h>
 #include <test.h>
-#include <vm2.h>
 #include <vas2.h>
 #include <syscall.h>
 #include <string.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
+#include <vm2.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -60,21 +62,36 @@ void start(uint32_t * p_bootargs) {
 #ifndef ENABLE_TESTS
     // DEBUG
     struct vas2 * vas = create_vas();
-    allocate_page(vas, 0x500000, true);
+    //allocate_page(vas, 0x500000, true);
     // TODO memcpy?
     //void *start = (void *)&user_start;
     //void *end = (void *)&user_end;
     //size_t size = end - start;
     //memcpy(vas, start, size);
-    switch_to_vas(vas);
-    kprintf("vas : %x\n", vas->l1PageTable);
+    //switch_to_vas(vas);
+    //kprintf("vas : %x\n", vas->l1PageTable);
 
-    int mode = 0;
-    asm ("mrs %0, cpsr" : "=r" (mode));
-    kprintf("mode: %x\n", mode);
-    asm volatile("bl _switch_to_usermode");
+    //int mode = 0;
+    //asm ("mrs %0, cpsr" : "=r" (mode));
+    //kprintf("mode: %x\n", mode);
+    // TODO memcpy what is in dispatcher.s to after the page is allocated
+    // (the switch_to_usermode function is accessible at 0x805081d8-0x805081e8
+    switch_to_vas(vas);
+    allocate_page(vas, 0x508000, true);
+    memcpy((void *) 0x508000, (void *) 0x805081d8,  (size_t) (0x805081e8 - 0x805081d8));
+
+    //syscall(SYS_dummy, 1, 2, 3, 4);
+
+    int _switch_to_usermode = 0x508000;
+    asm volatile("mov r1, %0"::"r"(_switch_to_usermode));
+    // for some reason you cannot jump there?
+    // it is correctly copied though
+    asm volatile("blx r1");
     //asm("swi 0x0");
+
     // DEBUG
+    // TODO: load address space here
+
 #else
     test_main();
     // If we return, the tests failed.
