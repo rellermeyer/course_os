@@ -9,10 +9,10 @@ __USER_VIRTUAL_OFFSET = 0x500000;
     in order to drop to user space
 */
 
-MEMORY
+/*MEMORY
 {
-    vas : ORIGIN = __USER_VIRTUAL_OFFSET, LENGTH = 0x2000 /* TODO lenght ? */
-}
+    vas : ORIGIN = __USER_VIRTUAL_OFFSET, LENGTH = 0x2000  TODO lenght ?
+}*/
 SECTIONS
 {
     . = __BOOT_ADDRESS;
@@ -29,7 +29,7 @@ SECTIONS
     . += __USER_VIRTUAL_OFFSET;
     /* . = ALIGN(4096); */
     user_start = .;
-    .text.user : { */dispatcher.o (.text) } > vas
+    .text.user : { */dispatcher.o (.text) } /* > vas */
     user_end = .;
 
     . += __KERNEL_VIRTUAL_OFFSET - __USER_VIRTUAL_OFFSET;
