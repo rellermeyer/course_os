@@ -37,8 +37,8 @@
 #define HIGHS      (ONES * (UCHAR_MAX / 2 + 1))
 #define HASZERO(x) (((x)-ONES) & (~(x)) & HIGHS)
 
-// Currrently states the panic and stalls the machine or exits iff run within qemu with semihosting
-// enabled.
+// Currently states the panic and stalls the machine or exits iff run
+// within qemu with semihosting enabled.
 void inline panic() {
     disable_interrupt(BOTH);
     #ifndef _MEME_PANIC

@@ -25,7 +25,7 @@ void * umalloc(uint32_t size);  // does user level malloc work
  * @param  size of the block of memory allocated, and alignment desired
  * @param  uint32_t size, uint32_alignment
  * @return returns a pointer to the allocated block of memory
- * 		   that is a multiple of the specified allignement
+ *         that is a multiple of the specified allignement
  */
 void * ualigned_alloc(uint32_t size, uint32_t alignment);  // does user level aligned_alloc work
 
