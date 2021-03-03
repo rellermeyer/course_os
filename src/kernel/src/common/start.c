@@ -63,10 +63,6 @@ void start(uint32_t * p_bootargs) {
 
     // DEBUG
     // TODO: load address space here
-    // asm volatile("msr spsr_c, #0x10");    // load user mode to spsr
-    // asm volatile("mov lr, #0x60000000");  // set lr to (almost) user entry point
-    // asm volatile("add lr, #-8");          // adjust lr
-    // asm volatile("movs sp, lr");          // jump to user and load spsr into cpsr
 
 #else
     test_main();

@@ -94,6 +94,11 @@ void __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
 
     // Now we should switch to the kernel address space (if we're not already in that)
     syscall_handler();
+
+    // asm volatile("msr spsr_c, #0x10");  // load user mode to spsr
+    // asm volatile("mov lr, #0x0");       // set lr to (almost) user entry point
+    // asm volatile("add lr, #-8");        // adjust lr
+    // asm volatile("movs pc, lr");        // jump to user and load spsr into cpsr
 }
 
 long syscall_handler(void) {
