@@ -66,20 +66,10 @@ _init_state:
 
 
 _switch_to_usermode:
-    MOV r1, lr
-    push {lr}
-    //mrs r3, cpsr
-    //MSR     CPSR_c, #Mode_USR
     MSR SPSR_c, #Mode_USR
+    // jump to the _userspace_test_program that for now just calls an empty software interrupt
     MOV r12, #0x8000
-    ADD r12, #0x4
     MOVS pc, r12
-    //eret
-    //pop {r0}
-    //mov lr, r1
-    //blx r0
-    //add lr, #0x2000
-    //bx lr
 
 _userspace_test_program:
     swi 0x0
