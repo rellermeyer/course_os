@@ -30,7 +30,6 @@ _save_state:
     mov r1, sp                  // Save Interrupt stack in r1
     mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
 
-    sub r0, #0x04
     push {r0} // pc
     // Dump registers r6-r12, pc and lr onto the stack (Full Descending)
     stmfd sp!, {r4 - r12}
@@ -55,8 +54,6 @@ _load_state:
     
     ldmfd sp!, {r4 - r12}     // Load all user(^) general purpose registers, pc and lr
     pop {lr}
-    // DEBUGGG
-    add lr, $-4
 
     mov sp, r1
 
@@ -82,9 +79,15 @@ _userspace_test_program:
     add r12, #0x100
     mov sp, r12
     mov r4, sp
-    mov r0, #0x15
+    mov r0, #100
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3
-    swi 0x21
+    swi 0
+    mov r4, sp
+    mov r0, #100
+    mov r1, #0x1
+    mov r2, #0x2
+    mov r3, #0x3
+    swi 100
 

@@ -85,7 +85,7 @@ long syscall_handler(void) {
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    int callNumber = reg0, r0 = reg7, r1 = reg1, r2 = reg2, r3 = reg3;
+    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
@@ -102,6 +102,7 @@ long syscall_handler(void) {
     switch (callNumber) {
         case SYSCALL_EXIT:
             // TODO: remove current process from scheduler
+            kprintf("BYE :)");
             for (;;)
                 ;
             break;
