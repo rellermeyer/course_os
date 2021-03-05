@@ -1,5 +1,6 @@
 #include <chipset.h>
 #include <interrupt.h>
+#include <interrupt_handler.h>
 #include <mmio.h>
 #include <sched.h>
 #include <stdio.h>
@@ -27,7 +28,7 @@ void init_vector_table() {
     /* Secondary Vector Table */
     mmio_write(HIGH_VECTOR_LOCATION + 0x20, &reset_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x24, &undef_instruction_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &software_interrupt_handler);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &_handle_swi);
     mmio_write(HIGH_VECTOR_LOCATION + 0x2C, &prefetch_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x30, &data_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x34, &reserved_handler);
@@ -78,30 +79,13 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-void __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    // (upon entry r4 contains the lr from user space)
-    // asm volatile("push {r0, r1, r2, r3}");  // Save arguments onto the stack
-    // asm volatile("mov r0, lr");             // Set lr as first argument
-    // asm volatile("bl _save_state");         // Call save_state subroutine
-    // asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
-
-    // Now we should switch to the kernel address space (if we're not already in that)
-    syscall_handler();
-
-    // asm volatile("msr spsr_c, #0x10");  // load user mode to spsr
-    // asm volatile("mov lr, #0x0");       // set lr to (almost) user entry point
-    // asm volatile("add lr, #-8");        // adjust lr
-    // asm volatile("movs pc, lr");        // jump to user and load spsr into cpsr
-}
-
 long syscall_handler(void) {
     register int reg7 asm("r7");
     register int reg0 asm("r0");
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    register ExecutionState * es asm("r4");
-    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
+    int callNumber = reg0, r0 = reg7, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
@@ -112,7 +96,6 @@ long syscall_handler(void) {
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
-    kprintf("es=%d\n", es);
     kprintf("\n");
 
     // System Call Handler
@@ -129,7 +112,7 @@ long syscall_handler(void) {
         // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
         case SYSCALL_CREATE:
             kprintf("Create system call called!\n");
-            return -1;
+            return 0;
 
             //		return (long) kcreate((char*) r0, r1, 0);
         case SYSCALL_DELETE:
@@ -192,7 +175,7 @@ long syscall_handler(void) {
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
-            return -1L;
+            return 0x21;
     }
 }
 

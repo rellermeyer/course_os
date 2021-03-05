@@ -5,11 +5,10 @@
 #include <mem_alloc.h>
 #include <pmm.h>
 #include <stdint.h>
+#include <string.h>
 #include <syscall.h>
 #include <test.h>
 #include <vas2.h>
-#include <syscall.h>
-#include <string.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
@@ -71,10 +70,10 @@ void start(uint32_t * p_bootargs) {
     int available_mem_addr = 0x8000;
 
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
-    asm volatile("mov r2, %0" :: "r"(available_mem_addr));
+    asm volatile("mov r2, %0" ::"r"(available_mem_addr));
     asm volatile("ldr r3, =_userspace_test_program");
     asm volatile("ldr r1, [r3]");
-    asm volatile("str r1, [r2, #0x4]");
+    asm volatile("str r1, [r2]");
 
     // call _switch_to_usedmode from dispatcher.s
     asm volatile("b _switch_to_usermode");
@@ -95,16 +94,16 @@ void start(uint32_t * p_bootargs) {
 
     asm volatile("cpsie i");
 
-    //asm volatile("mov sp, #0x80000000");
-    //asm volatile("MSR     CPSR_c, #0x10");
-    //asm volatile("MOV lr, pc");
-    //asm volatile("bl asdf");
-    //asm("MOV     SP, R0");
-    //asm volatile("mov r0, #0x10");
-    //asm volatile("msr SPSR, r0");
-    //asm("movs pc, lr");
-    //kprintf("heree");
-    //syscall(SYS_dummy, 1, 2, 3, 4);
+    // asm volatile("mov sp, #0x80000000");
+    // asm volatile("MSR     CPSR_c, #0x10");
+    // asm volatile("MOV lr, pc");
+    // asm volatile("bl asdf");
+    // asm("MOV     SP, R0");
+    // asm volatile("mov r0, #0x10");
+    // asm volatile("msr SPSR, r0");
+    // asm("movs pc, lr");
+    // kprintf("heree");
+    // syscall(SYS_dummy, 1, 2, 3, 4);
     INFO("End of boot sequence.\n");
     SLEEP;
 }
