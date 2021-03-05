@@ -57,6 +57,7 @@ _load_state:
     // DEBUGGG
     add lr, $-4
 
+    MSR SPSR_c, #Mode_USR
     movs pc, lr
 
 /**
@@ -71,8 +72,13 @@ _switch_to_usermode:
     MSR SPSR_c, #Mode_USR
     // jump to the _userspace_test_program that for now just calls an empty software interrupt
     MOV r12, #0x8000
+    add r12, #0x4
     MOVS pc, r12
 
 _userspace_test_program:
+    mov r12, pc
+    add r12, #0x100
+    mov sp, r12
+    mov r4, sp
     swi 0x21
 

@@ -67,13 +67,17 @@ void start(uint32_t * p_bootargs) {
     // allocate a page to put the user program in
     allocate_page(vas, 0x8000, true);
 
-    int available_mem_addr = 0x8000;
+    int available_mem_addr = 0x8004;
 
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
-    asm volatile("mov r2, %0" ::"r"(available_mem_addr));
-    asm volatile("ldr r3, =_userspace_test_program");
-    asm volatile("ldr r1, [r3]");
-    asm volatile("str r1, [r2]");
+    //asm volatile("mov r2, %0" ::"r"(available_mem_addr));
+    int userspace_test_program = 0;
+    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    //asm volatile("ldr r1, [r3]");
+    //asm volatile("str r1, [r2]");
+    // TODO size of userspace test program is hardcoded
+    kprintf("userspace test: %x\n", userspace_test_program);
+    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 20);
 
     // call _switch_to_usedmode from dispatcher.s
     asm volatile("b _switch_to_usermode");
@@ -94,16 +98,6 @@ void start(uint32_t * p_bootargs) {
 
     asm volatile("cpsie i");
 
-    // asm volatile("mov sp, #0x80000000");
-    // asm volatile("MSR     CPSR_c, #0x10");
-    // asm volatile("MOV lr, pc");
-    // asm volatile("bl asdf");
-    // asm("MOV     SP, R0");
-    // asm volatile("mov r0, #0x10");
-    // asm volatile("msr SPSR, r0");
-    // asm("movs pc, lr");
-    // kprintf("heree");
-    // syscall(SYS_dummy, 1, 2, 3, 4);
     INFO("End of boot sequence.\n");
     SLEEP;
 }

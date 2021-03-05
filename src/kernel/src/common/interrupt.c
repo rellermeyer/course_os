@@ -175,7 +175,7 @@ long syscall_handler(void) {
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
-            return 0x21;
+            return 0x0;
     }
 }
 
