@@ -4,8 +4,15 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Set gdb_path",
+            "detail": "Adds generated toolchain to PATH variable. Will first load system and package binaries if available",
+            "type": "shell",
+            "command": "if [[ $(which arm-none-eabi-gdb) == *\"not\"* ]]; then export GDB_PATH=\"$(which arm-none-eabi-gdb)\"; else export GDB_PATH=\"${PWD}/src/arm-none-eabi/bin/\"; fi"
+        },
+        {
             "label": "make test",
             "detail": "Runs the course_os test suite",
+            "dependsOn": "set gdb_path",
             "type": "shell",
             "command": "make test",
             "problemMatcher": "$gcc",
@@ -16,9 +23,35 @@
         },
         {
             "label": "run_debug",
-            "detail": "Runs qemu with gdbserver",
+            "detail": "Runs qemu with gdbserver in the background",
+            "dependsOn": "set gdb_path",
             "type": "shell",
-            "command": "make -C kernel debug",
+            "command": "cd ${workspaceFolder}/src/kernel && make debug",
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "make debug",
+                    "endsPattern": "Configuring tools"
+                }
+            }
+        },
+        {
+            "label": "stop_debug",
+            "detail": "Stops the qemu emulator at port 1234",
+            "type": "shell",
+            "command": "kill $(sudo lsof -t -i:1234)",
         }
     ]
 }
