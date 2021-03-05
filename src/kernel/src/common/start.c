@@ -77,7 +77,7 @@ void start(uint32_t * p_bootargs) {
     //asm volatile("str r1, [r2]");
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
-    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 20);
+    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 36);
 
     // call _switch_to_usedmode from dispatcher.s
     asm volatile("b _switch_to_usermode");
