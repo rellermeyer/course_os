@@ -79,17 +79,20 @@ void start(uint32_t * p_bootargs) {
     switch_to_vas(vas);
 
     // TODO also don't forget to free the allocated page at some point
-    allocate_page(vas, 0x508000, true);
-    memcpy((void *) 0x508000, (void *) 0x805081d8,  (size_t) (0x805081e8 - 0x805081d8));
+    allocate_page(vas, 0x8000, true);
+    //memcpy((void *) 0x508000, (void *) 0x805081d8,  (size_t) (0x805081e8 - 0x805081d8));
+    //asm volatile("ldr r0, =_userspace_test_program");
+    int available_mem_addr = 0x8000;
+    asm volatile("mov r2, %0" :: "r"(available_mem_addr));
+    asm volatile("ldr r3, =_userspace_test_program");
+    asm volatile("ldr r1, [r3]");
+    asm volatile("str r1, [r2, #0x4]");
 
     //syscall(SYS_dummy, 1, 2, 3, 4);
 
-    int _switch_to_usermode = 0x508000;
-    asm volatile("mov r1, %0"::"r"(_switch_to_usermode));
     // you jump there and code is execuded, but gdb is very confused
     // also the registers are changed after switching to user mode
-    asm volatile("blx r1");
-    //asm("swi 0x0");
+    asm volatile("b _switch_to_usermode");
 
     // DEBUG
     // TODO: load address space here

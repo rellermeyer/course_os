@@ -85,13 +85,6 @@ void __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
     // asm volatile("bl _save_state");         // Call save_state subroutine
     // asm volatile("pop {r0, r1, r2, r3}");   // Restore r0
 
-    asm volatile("mov r1, #0x0");
-    asm volatile("ldr r2, =_user_test");
-    asm volatile("ldr r0, [r2]");
-    asm volatile("str r0, [r1, #+4]");
-    asm volatile("ldr r0, [r2, #+4]");
-    asm volatile("str r0, [r1, #+8]");
-
     // Now we should switch to the kernel address space (if we're not already in that)
     syscall_handler();
 

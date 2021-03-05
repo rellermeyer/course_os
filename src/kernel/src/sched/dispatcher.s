@@ -3,6 +3,7 @@
 .global _save_state
 .global _load_state
 .global _switch_to_usermode
+.global _userspace_test_program
 
 .equ Mode_USR, 0x10 // User
 /**
@@ -68,11 +69,18 @@ _switch_to_usermode:
     MOV r1, lr
     push {lr}
     //mrs r3, cpsr
-    MSR     CPSR_c, #Mode_USR
+    //MSR     CPSR_c, #Mode_USR
+    MSR SPSR_c, #Mode_USR
+    MOV r12, #0x8000
+    ADD r12, #0x4
+    MOVS pc, r12
     //eret
-    pop {r0}
+    //pop {r0}
     //mov lr, r1
     //blx r0
-    add lr, #0x2000
-    bx lr
+    //add lr, #0x2000
+    //bx lr
+
+_userspace_test_program:
+    swi 0x0
 
