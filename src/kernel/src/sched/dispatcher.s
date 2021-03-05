@@ -30,6 +30,7 @@ _save_state:
     mov r1, sp                  // Save Interrupt stack in r1
     mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
 
+    sub r0, #0x04
     push {r0} // pc
     // Dump registers r6-r12, pc and lr onto the stack (Full Descending)
     stmfd sp!, {r4 - r12}
@@ -57,7 +58,8 @@ _load_state:
     // DEBUGGG
     add lr, $-4
 
-    MSR SPSR_c, #Mode_USR
+    mov sp, r1
+
     movs pc, lr
 
 /**
