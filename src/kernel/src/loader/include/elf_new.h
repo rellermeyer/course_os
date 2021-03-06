@@ -65,14 +65,14 @@ enum Elf_Type {
 //------------------------------------------------
 // The Program Header
 typedef struct {
-	Elf32_Word		program_type;
-	Elf32_Off		program_offset;
-	Elf32_Addr		program_virtual_addr;
-	Elf32_Addr		program_physical_addr;
-	Elf32_Word		program_filesz;
-	Elf32_Word		program_memsz;
-	Elf32_Word		flags;
-	Elf32_Word		align;
+	Elf32_Word	program_type;
+	Elf32_Off	program_offset;
+	Elf32_Addr	program_virtual_addr;
+	Elf32_Addr	program_physical_addr;
+	Elf32_Word	program_filesz;
+	Elf32_Word	program_memsz;
+	Elf32_Word	flags;
+	Elf32_Word	align;
 } Elf32_ProgramHeader;
 // End Program Header -------------------------------------------
 
@@ -139,6 +139,6 @@ bool elf_check_supported(Elf32_Header* header);
  * and locations within the file and the entry point of the process to create.
  * @return an Elf structure containing the gathered information.
  */
-Elf *elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
+int elf_parse_header(Elf * elf, Elf31_Header *elf_raw_header);
 
 
