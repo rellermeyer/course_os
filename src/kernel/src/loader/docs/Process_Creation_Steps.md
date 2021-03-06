@@ -25,8 +25,29 @@ The ELF files that the loader expects have to have the following common fixed va
 
     1. Validate the MAGIC NUMBER + “ELF” -> STOP if fail
     2. Validate the ELF 32 type, OS ABI, ISA, Endianess, Version, Header Size
-    3.   
-    4. ... To be continued. Possible TODOS
-       1. Determine the locations of the program/section header table
-       2. Read through the table and determine how much memory you need to allocate in pages
-       3. Reserve memoru pages for the new process using the Virtual Memory Manager
+    3. Extract all the needed information from the ELF Header:
+	- start address offset
+	- offset of program header table
+	- length of program header table
+	- offset of section header table
+	- length of section header table
+	- index into the section header table for the section names 
+    4. Create a new page table context for the new process
+    5. Go through the program header table (if exists)
+        - Check the type of segment
+          - Is it LOAD
+          - (OPTIONAL) Is it valid/reserved/extra information 
+        - Check the file size and memory size
+        - Check the virtual start address
+        - From the memory size determine how many pages have to be allocated by the VMM
+        - Allocate the pages starting from the header-specified virtual address
+            - For each page, use the flags in the header to specify permissions for the page - r/w/x
+        **- Copy the segment contents to the allocated page memory**
+          - For this part to work, we have to actually use the page tables we created
+    6.  Create a heap segment
+        1.  Allocate more pages 
+        2.  Set some kind of heap pointer in the PCB
+    7.  Create a stack segment 
+        1.  Allocate more pages
+        2.  Set an initial value for the stack pointer
+    8.  Set the starting address of the process - either in the PCB or put it in the right place on the new user process stack 
