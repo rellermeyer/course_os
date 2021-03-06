@@ -1,8 +1,8 @@
-#include <elf.h>
+
 #include <elf_common_features.h>
 #include <elf_new.h>
-
-#include "include/elf_new.h"
+#include <stddef.h>
+#include <klibc.h>
 
 bool elf_validate_magic_sequence(Elf32_Header* header) {
     if(!header) return false;
@@ -64,8 +64,8 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
     if(elf == NULL || elf_header == NULL) return -1;
 
     // Check the validity of the Header
-    if (!elf_check_supported(elf_raw_header))  {
-        kprintf("Parsing of ELF file header failed!\n")
+    if (!elf_check_supported(elf_header))  {
+        kprintf("Parsing of ELF file header failed!\n");
         return 0;
     }
 

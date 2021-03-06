@@ -1,4 +1,4 @@
-#include <elf.h>
+#include <elf_new.h>
 
 // Function declarations
 
@@ -10,3 +10,4 @@
 */
 int loadProcessFromElfFile(void* PCB, void * file);
 
+int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index); 
