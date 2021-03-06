@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <kl>
+
  
 typedef uint16_t Elf32_Half;	// Unsigned half int
 typedef uint32_t Elf32_Off;	    // Unsigned offset
@@ -14,7 +14,7 @@ typedef int32_t  Elf32_Sword;	// Signed int
  
 typedef struct {
     // Identification Information
-	uint8_t		magic_sequence[ELF_MN_ELF];
+    uint8_t	magic_sequence[ELF_MN_ELF];
     uint8_t     bit_32_or_64;
     uint8_t     type_of_endian;
     uint8_t     header_version;
