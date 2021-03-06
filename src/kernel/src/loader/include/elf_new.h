@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
  
 typedef uint16_t Elf32_Half;	// Unsigned half int
@@ -139,6 +140,6 @@ bool elf_check_supported(Elf32_Header* header);
  * and locations within the file and the entry point of the process to create.
  * @return an Elf structure containing the gathered information.
  */
-int elf_parse_header(Elf * elf, Elf31_Header *elf_raw_header);
+int elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
 
 
