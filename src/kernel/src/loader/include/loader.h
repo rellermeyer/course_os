@@ -8,6 +8,5 @@
 	be loaded into main memory for reading.
 	@return A pointer to a newly created PCB for the new process
 */
-void* loadProcessFromElfFile(void * file);
-
+int loadProcessFromElfFile(void* PCB, void * file);
 
