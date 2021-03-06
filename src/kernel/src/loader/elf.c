@@ -59,12 +59,14 @@ bool elf_check_supported(Elf32_Header* header) {
 
 }
 
-Elf *elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
+int elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
+
+    if(elf == NULL || elf_header == NULL) return -1;
 
     // Check the validity of the Header
     if (!elf_check_supported(elf_raw_header))  {
         kprintf("Parsing of ELF file header failed!\n")
-        return (void *)0;
+        return 0;
     }
 
     elf->entry = elf_header->e_entry;
@@ -74,5 +76,6 @@ Elf *elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
     elf->sectionHeaderTableLength = elf_header->e_section_header_table_num_entries;
     elf->sht_index_names = elf_header->e_index_sec_head_tb_entry_names;
 
+    return 0;
 }
 
