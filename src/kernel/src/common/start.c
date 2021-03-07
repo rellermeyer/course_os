@@ -70,20 +70,17 @@ void start(uint32_t * p_bootargs) {
     int available_mem_addr = 0x8004;
 
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
-    //asm volatile("mov r2, %0" ::"r"(available_mem_addr));
-    int userspace_test_program = 0;
-    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    //asm volatile("ldr r1, [r3]");
-    //asm volatile("str r1, [r2]");
+    // int userspace_test_program = 0;
+    // asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    
     // TODO size of userspace test program is hardcoded
-    kprintf("userspace test: %x\n", userspace_test_program);
-    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+    //    kprintf("userspace test: %x\n", userspace_test_program);
+    //    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
 
     // call _switch_to_usedmode from dispatcher.s
-    asm volatile("b _switch_to_usermode");
+    // asm volatile("b _switch_to_usermode");
 
-    // DEBUG
-    // TODO: load address space here
+    syscall(SYS_dummy, 1, 2, 3 ,4);
 
 #else
     test_main();
