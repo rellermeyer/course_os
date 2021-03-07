@@ -1,7 +1,8 @@
 #include "syscall.h"
 #include "stdio.h"
 
-#define SVC(code) asm volatile ("svc %0" :: "I" (code))
+#define SVC(code) asm volatile("MOV r4, sp"); \
+                  asm volatile ("svc %0" :: "I" (code))
 
 // if error, return -1
 int syscall(int sys, ...) {
