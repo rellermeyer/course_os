@@ -2,11 +2,6 @@
 
 // Subroutine definitions
 
-.global _save_state
-.global _load_state
-.global _switch_to_usermode
-.global _userspace_test_program
-
 // Value to store in cpsr when you want to switch to user mode
 .equ Mode_USR, 0x10 
 
@@ -41,7 +36,7 @@
     to another. It is thus also important that we save the user banked registers (sp, and lr), and not those of the
     current mode
 **/
-_save_state:
+.macro _save_state
     mov r1, sp                  // Save current mode stack in r1
     mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
 
@@ -54,13 +49,14 @@ _save_state:
 
     mov r4, sp                  // Save user space stack pointer back to r4
     mov sp, r1                  // Restore current mode stack
-    bx lr                       // Return, remember that r4 is the pointer to the PCB
+    // bx lr                       // Return, remember that r4 is the pointer to the PCB
+.endm
 
 /**
     Loads an existing Execution state, resuming execution of a process.
     This is essentially the save state in reverse.
  */
-_load_state:
+.macro _load_state
     mov r1, sp                      // Save interrupt stack into r1 (never lose a reference)
     mov sp, r4                      // Set our stack pointer to user space
 
@@ -72,6 +68,7 @@ _load_state:
 
     mov sp, r1                      // Restore the current mode stack pointer
     movs pc, lr                     // Set pc back to user program, and load the spsr into cpsr (the 's' in movs)
+.endm
 
 /**
     Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
