@@ -49,18 +49,13 @@ enum Elf_Magic {
 # define ELFMAG1	'E'  // e_ident[EI_MAG1]
 # define ELFMAG2	'L'  // e_ident[EI_MAG2]
 # define ELFMAG3	'F'  // e_ident[EI_MAG3]
- 
-# define ELFDATA2LSB	(1)  // Little Endian
-# define ELFCLASS32	    (1)  // 32-bit Architecture
 
 enum Elf_Type {
 	ET_NONE		= 0, // Unkown Type
 	ET_REL		= 1, // Relocatable File
 	ET_EXEC		= 2  // Executable File
 };
- 
-# define ELF_ARCH_ARM32	(0x28)  // ARM Machine Type ( 32-bit ARM is just ARM)
-# define EV_CURRENT	(1)         // ELF Current Version
+
 // end Header ---------------------------------------------------
 
 //------------------------------------------------
@@ -75,6 +70,27 @@ typedef struct {
 	Elf32_Word	flags;
 	Elf32_Word	align;
 } Elf32_ProgramHeader;
+
+// Program Types
+enum ELF_PROGRAM_TYPE {
+    EPT_NULL,
+    EPT_LOAD,
+    EPT_DYNAMIC,
+    EPT_INTERP,
+    EPT_NOTE,
+};
+
+#define ACCEPTABLE_PROGRAM_TYPES 4
+
+extern enum ELF_PROGRAM_TYPE validEPTypes[ACCEPTABLE_PROGRAM_TYPES];
+
+// Program Flags
+enum ELF_PROGRAM_FLAG {
+    EPF_EXEC = 1,
+    EPF_WRITE = 2,
+    EPF_READ = 4
+};
+
 // End Program Header -------------------------------------------
 
 
@@ -128,6 +144,7 @@ typedef struct Elf {
  * */
 bool elf_validate_magic_sequence(Elf32_Header* header);
 
+
 /*
  * A function to validate that the ELF file to create
  * a process from has the correct characteristics in
@@ -142,4 +159,11 @@ bool elf_check_supported(Elf32_Header* header);
  */
 int elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
 
-
+/*
+ * A function to check if a program header is a valid one.
+ * It checks if the filesize is no bigger than memsize.
+ * It also checks if the type of the program header is not
+ * an illegal or a reserved one, which is not allowed.
+ * @return true if header is valid, false otherwise
+ */
+bool validate_program_header(Elf32_ProgramHeader * header);

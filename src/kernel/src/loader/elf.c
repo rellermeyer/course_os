@@ -4,6 +4,14 @@
 #include <stddef.h>
 #include <klibc.h>
 
+
+enum ELF_PROGRAM_TYPE validEPTypes[ACCEPTABLE_PROGRAM_TYPES] = {
+    EPT_NULL,
+    EPT_LOAD,
+    EPT_DYNAMIC,
+    EPT_NOTE
+};
+
 bool elf_validate_magic_sequence(Elf32_Header* header) {
     if(!header) return false;
     if(header->magic_sequence[EI_MAG0] != ELFMAG0) {
@@ -79,3 +87,28 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
     return 0;
 }
 
+bool check_is_type_acceptable(enum ELF_PROGRAM_TYPE type) {
+    for (int i = 0; i < ACCEPTABLE_PROGRAM_TYPES; ++i) {
+        if (type == validEPTypes[i]) return true;
+    }
+    return false;
+}
+
+bool validate_program_header(Elf32_ProgramHeader * header) {
+    if (!check_is_type_acceptable(header->program_type)) {
+        kprintf("ELF Program Invalid: Type is not an acceptable or a valid one: %d", header->program_type);
+        return false;
+    }
+    if (header->program_filesz > header->program_memsz) {
+        kprintf("ELF Program Invalid: File size is bigger than Memory Size");
+        return false;
+    }
+
+    if (header->program_type == EPT_DYNAMIC) {
+        kprintf("ELF Program Invalid: Type is Dynamic and it is not currently supported.");
+        return false;
+    }
+
+    // TODO Validate other fields in case the program has LOAD type.
+    return true;
+}
