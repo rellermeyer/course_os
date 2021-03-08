@@ -16,7 +16,7 @@ int syscall(int sys, ...) {
     switch (sys) {
         case SYS_fork:
             SVC(SYS_fork);
-                
+
             break;
         case SYS_kill:
             r0 = va_arg(args, int);
@@ -25,7 +25,7 @@ int syscall(int sys, ...) {
             asm volatile ("MOV r0, %0" ::"r"(r0));
             asm volatile ("MOV r1, %0" ::"r"(r1));
             SVC(SYS_kill);
-            
+
 
             break;
         case SYS_exit:

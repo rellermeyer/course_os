@@ -3,18 +3,18 @@
 // Subroutine definitions
 
 // Value to store in cpsr when you want to switch to user mode
-.equ Mode_USR, 0x10 
+.equ Mode_USR, 0x10
 
 /**
     Save state will save the state of a process (execution state) onto the stack of said process, and return the address pointing to the top of the stack.
 
     It wil take 2 paramters:
-        r4: The current user stack pointer 
-        r0: The current user program counter 
- 
+        r4: The current user stack pointer
+        r0: The current user program counter
+
     Execution state:
-        The process state essentially consists of all the registers 
-        
+        The process state essentially consists of all the registers
+
         - r4-r12 (general purpose registers)
         - lr
         - sp
@@ -25,9 +25,9 @@
 
     Note: Currently the context switcher only works for the SVC interrupt.
           The code has to be rewritten to not require any parameters.
-        
-    Note: The return value is saved in r4 instead of r0. 
-          We use registers r0-r3 for the SYSCALL parameters. 
+
+    Note: The return value is saved in r4 instead of r0.
+          We use registers r0-r3 for the SYSCALL parameters.
           And we don't know which interrupt we're currently handling
 
 
@@ -37,37 +37,41 @@
     current mode
 **/
 .macro _save_state
-    mov r1, sp                  // Save current mode stack in r1
-    mov sp, r4                  // Now relocate stack pointer to user stack (that way we can use macros such as push/pop)
+    push {r0, r1, r2, r3}       // Save arguments onto the stack
 
-    push {r0}                   // Store program counter 
-    stmfd sp!, {r4 - r12}       // Store general purpose registers
-    // TODO: Save user banked LR onto the stack
+    // Save the banked user's sp into r0
+    stmfd sp!, {sp}^            // Save the user stack onto the interrupt stack
+    ldmfd sp!, {r0}
 
-    mrs r2, spsr                // Load SPSR into a register (cannot be immeadiatly loaded into memory)
-    push {r2}                   // Store it
+    //stmfd r0!, {r14}            // Save user PC onto the stack
+    stmfd r0!, {r0 - r12, r14}      // Save the user registers on to the user stack
 
-    mov r4, sp                  // Save user space stack pointer back to r4
-    mov sp, r1                  // Restore current mode stack
-    // bx lr                       // Return, remember that r4 is the pointer to the PCB
+    //ldr r12, [sp, #4]!
+    //stmfd r0!, {r12}
+
+    mrs r12, spsr               // Load SPSR into a register (cannot be immeadiatly loaded into memory)
+    stmfd r0!, {r12}            // Store it onto the stack
+    mov r4, r0                  // Save the user sp in r4 to be used later to load the state
+
+    pop {r0, r1, r2, r3}        // Restore arguments
+
 .endm
 
 /**
     Loads an existing Execution state, resuming execution of a process.
     This is essentially the save state in reverse.
  */
-.macro _load_state
-    mov r1, sp                      // Save interrupt stack into r1 (never lose a reference)
-    mov sp, r4                      // Set our stack pointer to user space
+.macro _load_state_swi user_sp
+    ldmfd \user_sp!, {r12}          // Retrieve the SPSR from the user stack
+    //ldmfd \user_sp!, {r0}
+    msr spsr_cxsf, r12
 
-    pop {r2}                        
-    msr spsr_cxsf, r2               // Load the program state
-    
-    ldmfd sp!, {r4 - r12}           // Load general purpose registers
-    pop {lr}                        // Load the user program counter into lr (will be stored into pc when returning)
+    // Restore the user registers from the stack
+    mov sp, \user_sp                // Store the user sp into sp (in order to restore r4)
 
-    mov sp, r1                      // Restore the current mode stack pointer
-    movs pc, lr                     // Set pc back to user program, and load the spsr into cpsr (the 's' in movs)
+    // TODO add ^ when we need to return to user mode
+    ldmfd sp!, {r0-r12}             // Restore the user registers r0-r12 (prepare to return to user mode)
+    ldmfd sp!, {pc}^                // Restore the pc
 .endm
 
 /**
