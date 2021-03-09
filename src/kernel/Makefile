@@ -36,11 +36,11 @@ BOARD = raspi2
 ifeq ($(BOARD),raspi2)
 MEMORY = 1G
 CPU = cortex-a7
-DTB = $(CURDIR)/../../dtb/bcm2708-rpi-zero.dtb
+DTB = $(CURDIR)/dtb/bcm2708-rpi-zero.dtb
 else ifeq ($(BOARD),raspi0)
 MEMORY = 512M
 CPU = arm1176
-DTB = $(CURDIR)/../../dtb/bcm2709-rpi-2-b.dtb
+DTB = $(CURDIR)/dtb/bcm2709-rpi-2-b.dtb
 endif 
 
 
