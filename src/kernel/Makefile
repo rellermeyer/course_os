@@ -16,10 +16,6 @@ LDFLAGS += -nostartfiles -fcommon -nolibc
 # PI_CFLAGS = -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s -nostartfiles
 
 # variables to define in the preprocessor.
-# amount of memory the PMM should try to allocate, may or may not match the actual amount of
-# memory in the system. Stuff will crash if this number is more than the actual amount of
-# memory. TODO: autodetect this at boot
-MEMORY = 1G
 LOG_LEVEL ?= 4
 
 # Available options:
@@ -33,7 +29,20 @@ SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have its contents autoincluded
 INCLUDEDIR = include
+
+
+BOARD = raspi2
+
+ifeq ($(BOARD),raspi2)
+MEMORY = 1G
 CPU = cortex-a7
+DTB = $(CURDIR)/../../dtb/bcm2708-rpi-zero.dtb
+else ifeq ($(BOARD),raspi0)
+MEMORY = 512M
+CPU = arm1176
+DTB = $(CURDIR)/../../dtb/bcm2709-rpi-2-b.dtb
+endif 
+
 
 # Seeds the random order in which tests are run.
 TESTS_SEED = $(shell date '+%s')
@@ -94,37 +103,34 @@ configure: configure_qemu configure_toolchain
 	
 
 build:  $(BUILDDIR)/kernel.elf configure | builddir
-build_pi: $(BUILDDIR)/kernelPi.img | builddir
+build_pi: $(BUILDDIR)/kernel.img | builddir
 
 test: build configure | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build configure | builddir
 	# nographic to turn off the gui
 	# monitor none to disable stdio monitoring so
 	# serial stdio works
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -monitor none -serial stdio -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 debug: build configure | builddir
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M  raspi2 -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting -S -s
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -semihosting -S -s
 
 start_debug: build  configure | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
 
 $(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
-	$(LD) -T linker/kernel.ld $(LDFLAGS) -Wl,-Map,kernel.map $^ -o $@
+	$(OBJCOPY) -I binary -O elf32-littlearm $(DTB) $(BUILDDIR)/dtb.o
+	$(LD) -T linker/kernel.ld $(LDFLAGS) -Wl,-Map,kernel.map $^ $(BUILDDIR)/dtb.o -o $@
 	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
 	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
 
-# Begin Pi Make
-# (aka, building for a real pi. TODO: This is mostly untested)
-$(BUILDDIR)/kernelPi.elf: $(C_OBJECT_FILES) | builddir
-	$(CC) -T kernelPi.ld -O2 $(PI_CFLAGS) $^ -o $@
 
-$(BUILDDIR)/kernelPi.img: $(BUILDDIR)/kernelPi.elf | builddir
-	$(OBJCOPY) $< -O binary $@
+$(BUILDDIR)/kernel.img: $(BUILDDIR)/kernel.elf | builddir
+	$(OBJCOPY) $< -O binary $@(Z
 # End Pi Make
 
 builddir:

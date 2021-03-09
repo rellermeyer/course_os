@@ -10,12 +10,19 @@ SECTIONS
     .boot : {
         */startup.o (.text)
         */startup.o (.data)
-        */startup.o (.bss)
+        */startup.o (.bss)	
         */stacks.o (.text)
         */memory.o (.text)
-        */memory.o (.data)
+        */memory.o (.data)	
     }
     __BOOT_END = .;
+    __DTB_START = .;
+    .dtb : {
+        */dtb.o (.data)
+    }
+    
+    __DTB_END = .;
+    
     . += __KERNEL_VIRTUAL_OFFSET;
 
     __KERNEL_BASE = .;
