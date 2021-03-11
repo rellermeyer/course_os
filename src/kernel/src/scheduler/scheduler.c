@@ -20,7 +20,9 @@ void init_scheduler() {
 }
 
 void schedulerTimerCallback() {
+    // Save program state
     getNext();
+    // Load program state
     //kprintf("schedulertimer interupt called");
 }
 
@@ -65,9 +67,9 @@ void getNext() {
         FATAL("(no processes active)");
     }
     queue = queue->next;
-    // Put queue->execution state in r4
+    switch_to_vas(queue->vas);
+    
+    // Put queue->execution state in r4, passing it to the dispatcher
     asm volatile("MOV %0, r4" : "=r"(queue->executionState));
-    // Put l1page/vas in r5
-    // TODO change l1page to vas if necessary
-    asm volatile("MOV %0, r5" : "=r"(queue->executionState->l1_page_table));
+
 }

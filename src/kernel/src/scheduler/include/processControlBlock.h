@@ -10,6 +10,7 @@ typedef struct ProcessControlBlock {
     ExecutionState * executionState;
     struct ProcessControlBlock * prev;
     struct ProcessControlBlock * next;
+    struct vas2 * vas;
     int wakeupTime;
 } ProcessControlBlock;
 
