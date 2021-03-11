@@ -9,6 +9,7 @@
 #include <syscall.h>
 #include <test.h>
 #include <vas2.h>
+#include <scheduler.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
@@ -57,6 +58,8 @@ void start(uint32_t * p_bootargs) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+    // init the scheduler
+    init_scheduler();
 
 #ifndef ENABLE_TESTS
     // DEBUG

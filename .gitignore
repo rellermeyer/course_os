@@ -9,10 +9,12 @@ build/
 
 # Toolchain dir, but not the build script
 src/toolchain/
+toolchain/
 !src/toolchain/build.sh
 
 # Qemu dir, again without its buildscript
 src/qemu/
+qemu/
 !src/qemu/build.sh
 
 # Generic build dirs
@@ -24,11 +26,13 @@ src/docs/
 src/html/
 src/latex/
 src/course_os_docs.pdf
+docs/
 
 # Editor specific
 .settings/
 .cproject
 .project
+.vs/
 /.idea/
 !/.idea/runConfigurations
 /.vscode/
@@ -55,6 +59,7 @@ compile_commands.json
 /user/hello/hello1
 /user/hello/hello2
 /user/libc/libc.a
+kernel/build/kernel.sym
 
 # Floobits (CLion collabrative editing plugin)
 .floo
