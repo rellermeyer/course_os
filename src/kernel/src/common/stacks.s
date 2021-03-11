@@ -44,6 +44,10 @@ stacks:
     MSR CPSR_c, #Mode_SVC
     ADD fp, sp, #0 // ???
 
+    //MSR     CPSR_c, #Mode_USR
+    //MOV     SP, R0
+    //LDR sp, =SYS_STACK_TOP
+
     bx lr
 
 .section .bss

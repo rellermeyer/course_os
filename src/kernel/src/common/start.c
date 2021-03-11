@@ -3,11 +3,17 @@
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
+#include <pmm.h>
 #include <stdint.h>
+#include <string.h>
+#include <syscall.h>
 #include <test.h>
-#include <vm2.h>
 #include <vas2.h>
 #include <scheduler.h>
+
+extern unsigned int user_start;
+extern unsigned int user_end;
+#include <vm2.h>
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -58,16 +64,32 @@ void start(uint32_t * p_bootargs) {
 #ifndef ENABLE_TESTS
     // DEBUG
     struct vas2 * vas = create_vas();
-    allocate_page(vas, 0x80000000, true);
     switch_to_vas(vas);
-    asm("swi 0x0");
-    // DEBUG
+
+    // TODO also don't forget to free the allocated page at some point
+    // allocate a page to put the user program in
+    allocate_page(vas, 0x8000, true);
+
+    int available_mem_addr = 0x8004;
+
+    // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
+    // int userspace_test_program = 0;
+    // asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    
+    // TODO size of userspace test program is hardcoded
+    //    kprintf("userspace test: %x\n", userspace_test_program);
+    //    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+
+    // call _switch_to_usedmode from dispatcher.s
+    // asm volatile("b _switch_to_usermode");
+
+    syscall(SYS_dummy, 1, 2, 3 ,4);
+
 #else
     test_main();
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
 #endif
-
 
     // TODO:
     //  * Mount vfs

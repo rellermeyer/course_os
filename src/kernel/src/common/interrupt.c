@@ -1,5 +1,6 @@
 #include <chipset.h>
 #include <interrupt.h>
+#include <interrupt_handler.h>
 #include <mmio.h>
 #include <sched.h>
 #include <stdio.h>
@@ -27,7 +28,7 @@ void init_vector_table() {
     /* Secondary Vector Table */
     mmio_write(HIGH_VECTOR_LOCATION + 0x20, &reset_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x24, &undef_instruction_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &software_interrupt_handler);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &_handle_swi);
     mmio_write(HIGH_VECTOR_LOCATION + 0x2C, &prefetch_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x30, &data_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x34, &reserved_handler);
@@ -78,45 +79,30 @@ void __attribute__((interrupt("UNDEF"))) undef_instruction_handler() {
     FATAL("UNDEFINED INSTRUCTION HANDLER");
 }
 
-long __attribute__((interrupt("SWI"))) software_interrupt_handler(void) {
-    // (upon entry r4 contains the lr from user space)
-    asm volatile("push {r0, r1, r2, r3, lr}");  // Save arguments onto the stack
-    asm volatile("mov r0, lr");                 // Set lr as first argument
-    asm volatile("bl _save_state");             // Call save_state subroutine
-    asm volatile("pop {r0, r1, r2, r3, lr}");   // Restore r0
-
-    // Now we should switch to the kernel address space (if we're not already in that)
-    return syscall_handler();
-
-    // TODO: load address space here
-    asm volatile("bl _load_state");  // And load the state (PCB pointer should still be in r4)
-}
-
 long syscall_handler(void) {
-    int callNumber = 0, r1 = 0, r2 = 0, r3 = 0;
-    ExecutionState * es;
-
-    asm volatile("MOV %0, r7" : "=r"(callNumber)::);
-    asm volatile("MOV %0, r1" : "=r"(r1)::);
-    asm volatile("MOV %0, r2" : "=r"(r2)::);
-    asm volatile("MOV %0, r3" : "=r"(r3)::);
-    asm volatile("MOV %0, r4" : "=r"(es)::);
+    register int reg7 asm("r7");
+    register int reg0 asm("r0");
+    register int reg1 asm("r1");
+    register int reg2 asm("r2");
+    register int reg3 asm("r3");
+    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
+    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
-    kprintf("arg3=%d\n", es);
     kprintf("\n");
 
     // System Call Handler
     switch (callNumber) {
         case SYSCALL_EXIT:
             // TODO: remove current process from scheduler
+            kprintf("BYE :)");
             for (;;)
                 ;
             break;
@@ -127,7 +113,7 @@ long syscall_handler(void) {
         // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
         case SYSCALL_CREATE:
             kprintf("Create system call called!\n");
-            return -1;
+            return 0;
 
             //		return (long) kcreate((char*) r0, r1, 0);
         case SYSCALL_DELETE:
@@ -190,7 +176,7 @@ long syscall_handler(void) {
             return 0L;
         default:
             kprintf("That wasn't a syscall you knob!\n");
-            return -1L;
+            return 0x0;
     }
 }
 

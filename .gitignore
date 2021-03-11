@@ -5,7 +5,7 @@ src/kernel/boot-commands
 src/kernel/card.sd
 src/kernel/src/test/test.c
 src/kernel/build
-build
+build/
 
 # Toolchain dir, but not the build script
 src/toolchain/
@@ -43,6 +43,7 @@ docs/
 *.un~
 Session.vim
 .netrwhist
+.cache/
 
 # CCLS files
 .ccls-cache/
