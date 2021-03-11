@@ -10,6 +10,7 @@ typedef struct ProcessControlBlock {
     ExecutionState * executionState;
     struct ProcessControlBlock * prev;
     struct ProcessControlBlock * next;
+    struct vas2 * vas;
     int wakeupTime;
 } ProcessControlBlock;
 
@@ -19,4 +20,5 @@ void addPCBNodeBefore(ProcessControlBlock * oldNode, ProcessControlBlock * newNo
 void addPCBNodeAfter(ProcessControlBlock * oldNode, ProcessControlBlock * newNode);
 
 ProcessControlBlock * removePCBNode(ProcessControlBlock *);
+ProcessControlBlock * createPCB(int parent);
 #endif

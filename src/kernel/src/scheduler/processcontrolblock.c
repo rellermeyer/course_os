@@ -1,5 +1,8 @@
 #include <processControlBlock.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+int idCounter = 0;
 
 ProcessControlBlock * findNode(int id, ProcessControlBlock * list) {
     for (ProcessControlBlock * i = list; i->next != list && i->next != NULL; i = i->next)
@@ -29,4 +32,16 @@ ProcessControlBlock * removePCBNode(ProcessControlBlock * node) {
     if (node->prev != NULL) node->prev->next = node->next;
     if (node->next != NULL) node->next->prev = node->prev;
     return node;
+}
+
+ProcessControlBlock * createPCB(int parent) {
+    ProcessControlBlock * processControlBlock = (ProcessControlBlock *)kmalloc(sizeof(ProcessControlBlock));
+    
+    *processControlBlock = (ProcessControlBlock) {
+        .id = idCounter++,
+        .parent = parent,
+        .vas = create_vas(),
+        .executionState = NULL,
+    };
+    return processControlBlock;
 }

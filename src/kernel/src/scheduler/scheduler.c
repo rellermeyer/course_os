@@ -12,15 +12,22 @@ ProcessControlBlock * sleepQueue;
 
 int timer = 0;
 
-int idCounter;
-
 void init_scheduler() {
     kprintf("setting the scheduler periodic interupt\n");
     chipset.schedule_timer_periodic(&schedulerTimerCallback, TIME_SLICE_MS);
 }
 
 void schedulerTimerCallback() {
+    timer += TIME_SLICE_MS;
+
+    // Check if any sleeping processes can be awoken
+    for (ProcessControlBlock * i = sleepQueue; i != NULL && i->wakeupTime <= timer; i = i->next) {
+        removePCBNode(i);
+        add(i, false);
+    }
+    // Save program state
     getNext();
+    // Load program state
     //kprintf("schedulertimer interupt called");
 }
 
@@ -53,21 +60,19 @@ void remove(int id) {
     removePCBNode(findNode(id, sleepQueue));
 }
 
-void getNext() {
-    timer += TIME_SLICE_MS;
-
-    for (ProcessControlBlock * i = sleepQueue; i != NULL && i->wakeupTime <= timer; i = i->next) {
-        removePCBNode(i);
-        add(i, false);
-    }
-
+void * getNext() {
+    // Check if any possible processes
     if (queue == NULL) {
         FATAL("(no processes active)");
     }
+    // Get next process
     queue = queue->next;
-    // Put queue->execution state in r4
-    asm volatile("MOV %0, r4" : "=r"(queue->executionState));
-    // Put l1page/vas in r5
-    // TODO change l1page to vas if necessary
-    asm volatile("MOV %0, r5" : "=r"(queue->executionState->l1_page_table));
+    switch_to_vas(queue->vas);
+    
+    return queue->executionState;
+}
+
+void * schedule(void * executionState) {
+    queue->executionState = executionState;
+    return getNext();
 }

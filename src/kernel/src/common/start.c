@@ -59,32 +59,30 @@ void start(uint32_t * p_bootargs) {
     chipset.late_init();
 
     // init the scheduler
-    init_scheduler();
+    // init_scheduler();
 
 #ifndef ENABLE_TESTS
     // DEBUG
-    struct vas2 * vas = create_vas();
-    switch_to_vas(vas);
 
     // TODO also don't forget to free the allocated page at some point
     // allocate a page to put the user program in
-    allocate_page(vas, 0x8000, true);
-
+    ProcessControlBlock * pcb = createPCB(0);
+    add(pcb, true);
+    allocate_page(pcb->vas, 0x8000, true);
+    getNext();
+    
     int available_mem_addr = 0x8004;
 
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
-    // int userspace_test_program = 0;
-    // asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    int userspace_test_program = 0;
+    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
     
     // TODO size of userspace test program is hardcoded
-    //    kprintf("userspace test: %x\n", userspace_test_program);
-    //    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+    kprintf("userspace test: %x\n", userspace_test_program);
+    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
 
     // call _switch_to_usedmode from dispatcher.s
-    // asm volatile("b _switch_to_usermode");
-
-    syscall(SYS_dummy, 1, 2, 3 ,4);
-
+    asm volatile("b _switch_to_usermode");
 #else
     test_main();
     // If we return, the tests failed.

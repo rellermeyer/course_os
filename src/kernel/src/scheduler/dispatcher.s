@@ -1,6 +1,8 @@
 .text
 
 // Subroutine definitions
+.global _switch_to_usermode
+.global _userspace_test_program
 
 // Value to store in cpsr when you want to switch to user mode
 .equ Mode_USR, 0x10
