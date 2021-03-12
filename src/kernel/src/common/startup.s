@@ -71,6 +71,8 @@ _Reset:
     // Setup stacks
     bl stacks
 
+
+
     // Pop everything except r1, which will hold the memory size.
     pop {r0}
     pop {r2-r11}

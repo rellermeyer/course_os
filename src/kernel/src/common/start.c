@@ -4,6 +4,7 @@
 #include <klibc.h>
 #include <mem_alloc.h>
 #include <stdint.h>
+#include <debug.h>
 #include <string.h>
 #include <test.h>
 #include <vm2.h>
@@ -53,15 +54,15 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     chipset.late_init();
 
 
-#ifndef ENABLE_TESTS
+    #ifndef ENABLE_TESTS
 //    argparse_process(p_bootargs);
 //
 // TODO: Start init process
 #else
-    test_main();
+    /* test_main();- */
     // If we return, the tests failed.
-    SemihostingCall(OSSpecific);
-#endif
+    /* SemihostingCall(OSSpecific); */
+    #endif
 
 
     // TODO:
@@ -71,33 +72,7 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
 
     asm volatile("cpsie i");
     INFO("End of boot sequence.\n");
-
-    char buf[9001];
-    int i = 0;
-
-    while (true) {
-        buf[i] = chipset.uart->getc(chipset.uart, 0);
-        kprintf("%c", buf[i]);
-
-        if (buf[i] == 127) {
-            buf[i] = '\0';
-            i--;
-        } else if (buf[i] == 13) {
-            // Induce a kernel panic
-            buf[i] = '\0';
-            kprintf("%c", '\n');
-
-            if (strcmp(buf, "panic") == 0)
-                panic();
-
-            kprintf("%s\n", buf);
-            i = 0;
-        } else {
-            i++;
-        }
-    }
-
-
+    run_debug();
 
     SLEEP;
 }

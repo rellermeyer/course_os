@@ -169,11 +169,13 @@ int os_snprintf(char * buf, int buflen, const char * fmt, ...) {
     return n;
 }
 
-void puts(const char * s) {
+int puts(const char * s) {
     while (*s != '\0') {
         chipset.uart->putc(chipset.uart, *s, 0);
         s++;
     }
+
+    return 0;
 }
 
 int kprintf(const char * str_buf, ...) {

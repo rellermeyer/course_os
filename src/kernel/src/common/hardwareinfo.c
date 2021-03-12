@@ -43,7 +43,7 @@ void init_hardwareinfo() {
         .cpuType = ARM1176,
         .boardType = boardType,
         .peripheral_base_address = peripheral_base_address,
-	.peripheral_region_size = peripheral_region_size,
+    .peripheral_region_size = peripheral_region_size,
     };
 }
 
@@ -80,5 +80,5 @@ void print_hardwareinfo() {
 
 bool address_in_reserved_region(size_t address) {
   return ((address - KERNEL_VIRTUAL_OFFSET) >= get_hardwareinfo()->peripheral_base_address &&
-	  (address - KERNEL_VIRTUAL_OFFSET) < get_hardwareinfo()->peripheral_base_address + get_hardwareinfo()->peripheral_region_size);
+      (address - KERNEL_VIRTUAL_OFFSET) < get_hardwareinfo()->peripheral_base_address + get_hardwareinfo()->peripheral_region_size);
 }

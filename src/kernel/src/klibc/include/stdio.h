@@ -2,6 +2,11 @@
 #ifndef STDIO_H
 #define STDIO_H
 
+#define BUFSIZE 1024
+#define _IOBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
 #ifndef NULL
     #define NULL ((void *)0)
 #endif
@@ -31,5 +36,12 @@ int os_vsnprintf(char * buf, int buflen, const char * str_buf, va_list args);
 int os_snprintf(char * buf, int buflen, const char * fmt_string, ...);
 int kprintf(const char * str_buf, ...);
 
+int getchar(void);
+char *gets(char *s);
+int putchar(int c);
+int puts(const char *s);
+
+ssize_t os_getline(char **lineptr, size_t *n);
+ssize_t os_getdelim(char **lineptr, int delim);
 
 #endif
