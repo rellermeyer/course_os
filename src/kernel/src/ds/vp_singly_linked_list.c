@@ -118,6 +118,13 @@ bool vpsll_contains(VPSinglyLinkedList * lst, void * value, CompareFunc compf) {
     return false;
 }
 
+void *vpsll_find(VPSinglyLinkedList * lst, void * value, CompareFunc compf) {
+    VPSLL_FOREACH(lst, i) {
+        if (compf(i->data, value)) { return i->data; }
+    }
+    return NULL;
+}
+
 size_t vpsll_length(VPSinglyLinkedList * lst) {
     return lst->length;
 }

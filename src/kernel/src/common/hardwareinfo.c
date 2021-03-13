@@ -1,4 +1,5 @@
 #include <bcm2836.h>
+#include <debug.h>
 #include <constants.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
@@ -28,6 +29,7 @@ BoardType detect_boardtype() {
 // TODO: detect hardware info.
 // Such as: CPU and RAM size.
 void init_hardwareinfo() {
+
     BoardType boardType = detect_boardtype();
     size_t peripheral_base_address;
     size_t peripheral_region_size;

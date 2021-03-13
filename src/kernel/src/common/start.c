@@ -44,6 +44,11 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
 
+    // Allow the kernel to attach to the debugger, this can be done
+    // earlier by rewriting to make it use hardcoded buffer sizes
+    // instead.
+    debug_init();
+
     // Splash screen
     splash();
 
@@ -72,7 +77,9 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
 
     asm volatile("cpsie i");
     INFO("End of boot sequence.\n");
-    run_debug();
+
+
+    debug_run();
 
     SLEEP;
 }
