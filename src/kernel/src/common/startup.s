@@ -6,7 +6,7 @@ _Reset:
     // Disable other cores
     mrc p15, #0, r1, c0, c0, #5
     and r1, r1, #3
-    cmp r1, #0
+    cmp r1, #3
     bne loop
 
     ldr sp, =EARLY_KERNEL_STACK_TOP // Set the kernel/SVC stack
