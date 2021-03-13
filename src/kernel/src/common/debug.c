@@ -1,10 +1,11 @@
+#include <allocator.h>
 #include <chipset.h>
-#include <string.h>
-#include <klibc.h>
-#include <test.h>
-#include <interrupt.h>
 #include <debug.h>
 #include <hardwareinfo.h>
+#include <interrupt.h>
+#include <klibc.h>
+#include <string.h>
+#include <test.h>
 
 VPSinglyLinkedList *commands;
 
@@ -35,14 +36,35 @@ void echo_command(VPSinglyLinkedListIterator args) {
     }
 }
 
+void malloc_command(VPSinglyLinkedListIterator args) {
+    // Ignore all other arguments
+    for (int i = 0; i < 10; i++) {
+        kfree(kmalloc(2000));
+    }
+}
+
+void trace_command(VPSinglyLinkedListIterator args) {
+    set_trace_memory(!get_trace_memory());
+    if (get_trace_memory()) {
+        puts("Enabled memory tracing");
+    } else {
+        puts("Disable memory tracing");
+    }
+}
+
 void debug_init(void) {
     commands = vpsll_create();
-
+    // Disable the memory tracing for a bit
+    const bool trace = get_trace_memory();
+    set_trace_memory(false);
     debug_add_command(debug_create_command("panic", panic_command));
     debug_add_command(debug_create_command("test", test_command));
     debug_add_command(debug_create_command("exit", exit_command));
     debug_add_command(debug_create_command("hardwareinfo", hardwareinfo_command));
     debug_add_command(debug_create_command("echo", echo_command));
+    debug_add_command(debug_create_command("malloc", malloc_command));
+    debug_add_command(debug_create_command("trace", trace_command));
+    set_trace_memory(trace);
 }
 
 struct command *debug_create_command(char *name, void (*func) (VPSinglyLinkedListIterator args)) {
@@ -95,13 +117,17 @@ void debug_run(void) {
             buf[i] = '\0';
             i--;
         } else if (buf[i] == 13) {
+            // Store the old trace memory value
+            bool trace = get_trace_memory();
+            set_trace_memory(false);
             // Skip trailing spaces for consitency
             while (buf[i - 1] == ' ') {
                 i--;
             }
 
+
             buf[i] = '\0';
-            kprintf("%c", '\n');
+            kprintf("%c", '\n');                \
             char *tokens[1] = {" "};
             VPSinglyLinkedList *words = ktokenize(buf, tokens, 1);
 
@@ -115,14 +141,16 @@ void debug_run(void) {
             struct command *cmd = vpsll_find(commands, cmd_name, debug_cmp_internal);
             kfree(cmd_name);
 
-
             if (cmd != NULL) {
+                set_trace_memory(trace);
                 cmd->command(vpslli_create(words));
+                trace = get_trace_memory();
             } else {
                 kprintf("Command '%s' not found.", buf);
             }
-
+            set_trace_memory(false);
             vpsll_free(words, kfree);
+            set_trace_memory(trace);
 
             puts("\n> ");
             i = 0;

@@ -3,11 +3,26 @@
 
 #include <allocator.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <test.h>
 #include <vm2.h>
 
+// Debug toggle
+static bool trace_memory = false;
+
 int offset = sizeof(uint32_t) * 2;
 uint32_t overhead = sizeof(footer_t) + sizeof(node_t);
+
+// ========================================================
+// Set the trace memory variable
+// ========================================================
+void set_trace_memory(const bool value) {
+    trace_memory = value;
+}
+
+bool get_trace_memory(void) {
+    return trace_memory;
+}
 
 // ========================================================
 // this function initializes a new heap structure, provided
@@ -31,10 +46,7 @@ void create_heap(heap_t * heap, uint32_t start) {
 
     heap->start = start;
     heap->end = start + HEAP_INIT_SIZE;
-
-#ifdef MEM_DEBUG
     heap->bytes_allocated = 0;
-#endif
 }
 
 // ========================================================
@@ -102,12 +114,11 @@ void * heap_alloc(heap_t * heap, uint32_t size) {
     // address of the next field
     found->prev = NULL;
     found->next = NULL;
-
-
-#ifdef MEM_DEBUG
     heap->bytes_allocated += found->size;
-    TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", found->size, &found->next);
-#endif
+
+    if (trace_memory) {
+        TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", found->size, &found->next);
+    }
 
     return &found->next;
 }
@@ -126,11 +137,11 @@ void heap_free(heap_t * heap, void * p) {
     footer_t *new_foot, *old_foot;
 
     node_t * head = (node_t *)((char *)p - offset);
-
-#ifdef MEM_DEBUG
     heap->bytes_allocated -= head->size;
-    TRACE("[MEM DEBUG] FREE %i bytes", head->size);
-#endif
+
+    if (trace_memory) {
+        TRACE("[MEM DEBUG] FREE %i bytes", head->size);
+    }
 
     if (head == (node_t *)(uintptr_t)heap->start) {
         head->hole = 1;
