@@ -6,11 +6,18 @@
 #include <stdint.h>
 #include <test.h>
 #include <vm2.h>
+#include <constants.h>
+
+extern size_t __DTB_START[];
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
-void start(uint32_t * p_bootargs, size_t memory_size) {
+void start(uint32_t * p_bootargs, void * dtb) {
+    if (dtb == NULL) {
+        dtb = __DTB_START;  // DTB not passed by bootloader, we are in QEMU. Use Embedded DTB.
+    }
+
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.
@@ -19,7 +26,7 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Initialize the chipset and enable uart
     init_chipset();
 
-    INFO("Detected memory size: 0x%x Bytes", memory_size);
+    INFO("Detected memory size: 0x%x Bytes", 0x1000000);
     INFO("Started chipset specific handlers");
 
     // just cosmetic (and for debugging)
@@ -32,7 +39,7 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // was temporary and has to be replaced here.
     // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
-    vm2_start(memory_size);
+    vm2_start(0x1000000);
 
     INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.

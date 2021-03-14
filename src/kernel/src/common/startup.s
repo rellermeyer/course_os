@@ -11,9 +11,6 @@ _Reset:
 
     ldr sp, =EARLY_KERNEL_STACK_TOP // Set the kernel/SVC stack
 
-    // Detect memory size
-    bl detect_memory
-
     push {r0-r11}
 
 
@@ -71,9 +68,8 @@ _Reset:
     // Setup stacks
     bl stacks
 
-    // Pop everything except r1, which will hold the memory size.
-    pop {r0}
-    pop {r2-r11}
+    pop {r0-r11}
+    mov r1, r2
 
     // Jumpt to the start of the kernel
     bl start
