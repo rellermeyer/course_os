@@ -99,20 +99,20 @@ void bcm2836_timer_init() {
     const uint32_t freq = get_frequency();
     INFO("System counter frequency: %u kHz\n", freq / 1000);
 
-    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 
     // Init priority queue
     scheduled_timers = prq_create();
 
     // Initially there are no timers set yet, so the interrupt is masked
-    mask_and_enable_timer();
+    mask_and_enable_timer(); 
 }
 
 void timer_handle_interrupt() {
     volatile const uint64_t current_count = get_phy_count();
 
     // Begin of critical section, disable timer interrupts
-    bcm2836_registers_base->Core0TimersInterruptControl = 0;
+    bcm2836_registers_base->Core3TimersInterruptControl = 0;
 
     // Process all timers that are not in the future, if any
     prq_node * next_timer_node = prq_peek(scheduled_timers);
@@ -153,7 +153,7 @@ void timer_handle_interrupt() {
     }
 
     // End of critical section, re-enable timer interrupts
-    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 }
 
 static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
@@ -178,7 +178,7 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
     new_timer_node->data = new_timer;
 
     // Begin of critical section, disable timer interrupts
-    bcm2836_registers_base->Core0TimersInterruptControl = 0;
+    bcm2836_registers_base->Core3TimersInterruptControl = 0;
 
     prq_enqueue(scheduled_timers, new_timer_node);
 
@@ -188,7 +188,7 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
     unmask_and_enable_timer();
 
     // End of critical section, re-enable timer interrupts
-    bcm2836_registers_base->Core0TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
 
     return new_timer->handle;
 }

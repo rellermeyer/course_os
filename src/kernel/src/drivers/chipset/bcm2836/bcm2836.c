@@ -6,7 +6,7 @@
 #include <vm2.h>
 
 void bcm2836_irq_handler() {
-    volatile const uint32_t pending = bcm2836_registers_base->Core0IRQSource;
+    volatile const uint32_t pending = bcm2836_registers_base->Core3IRQSource;
 
     switch (pending) {
         // Generic timers
