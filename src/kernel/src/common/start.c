@@ -1,4 +1,6 @@
 #include <chipset.h>
+#include <constants.h>
+#include <dtb.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
@@ -6,16 +8,16 @@
 #include <stdint.h>
 #include <test.h>
 #include <vm2.h>
-#include <constants.h>
 
 extern size_t __DTB_START[];
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
-void start(uint32_t * p_bootargs, void * dtb) {
+void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     if (dtb == NULL) {
-        dtb = __DTB_START;  // DTB not passed by bootloader, we are in QEMU. Use Embedded DTB.
+        dtb = (struct DTHeader *)
+            __DTB_START;  // DTB not passed by bootloader, we are in QEMU. Use Embedded DTB.
     }
 
     // Before this point, all code has to be hardware independent.
@@ -25,6 +27,9 @@ void start(uint32_t * p_bootargs, void * dtb) {
 
     // Initialize the chipset and enable uart
     init_chipset();
+
+    dtb_get_property(dtb, "", "");
+
 
     INFO("Detected memory size: 0x%x Bytes", 0x1000000);
     INFO("Started chipset specific handlers");
