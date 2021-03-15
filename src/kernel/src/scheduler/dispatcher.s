@@ -1,11 +1,13 @@
 .text
 
 // Subroutine definitions
-.global _switch_to_usermode
-.global _userspace_test_program
+// .global _switch_to_usermode
+// .global _userspace_test_program
 
 // Value to store in cpsr when you want to switch to user mode
 .equ Mode_USR, 0x10
+.equ Mode_SYS, 0x1FU
+.equ Mode_SVC, 0x13U
 
 /**
     Save state will save the state of a process (execution state) onto the stack of said process, and return the address pointing to the top of the stack.
@@ -38,21 +40,21 @@
     to another. It is thus also important that we save the user banked registers (sp, and lr), and not those of the
     current mode
 **/
-.macro _save_state
+.macro _save_state_swi
     push {r0, r1, r2, r3}       // Save arguments onto the stack
 
     // Save the banked user's sp into r0
     stmfd sp!, {sp}^            // Save the user stack onto the interrupt stack
     ldmfd sp!, {r0}
 
-    //stmfd r0!, {r14}            // Save user PC onto the stack
-    stmfd r0!, {r0 - r12, r14}      // Save the user registers on to the user stack
-
-    //ldr r12, [sp, #4]!
-    //stmfd r0!, {r12}
+    stmfd r0!, {r1 - r12}      // Save the user registers on to the user stack
+    stmfd r0!, {lr}^      // Save the user registers on to the user stack
 
     mrs r12, spsr               // Load SPSR into a register (cannot be immeadiatly loaded into memory)
     stmfd r0!, {r12}            // Store it onto the stack
+    
+    stmfd r0!, {lr}            // Save user PC onto the stack
+    
     mov r4, r0                  // Save the user sp in r4 to be used later to load the state
 
     pop {r0, r1, r2, r3}        // Restore arguments
@@ -64,16 +66,19 @@
     This is essentially the save state in reverse.
  */
 .macro _load_state_swi user_sp
-    ldmfd \user_sp!, {r12}          // Retrieve the SPSR from the user stack
-    //ldmfd \user_sp!, {r0}
+    ldmfd \user_sp, {lr}             // Save user pc in current mode lr
+
+    msr cpsr_c, #Mode_SYS           // Enter system mode
+    mov sp, \user_sp                
+
+    ldmfd sp!, {r12}                       // Retrieve the SPSR from the user stack
     msr spsr_cxsf, r12
 
-    // Restore the user registers from the stack
-    mov sp, \user_sp                // Store the user sp into sp (in order to restore r4)
+    ldmfd sp!, {lr}              // Restore the user registers r0-r12 (prepare to return to user mode)
+    ldmfd sp!, {r1-r12}              // Restore the user registers r0-r12 (prepare to return to user mode)
 
-    // TODO add ^ when we need to return to user mode
-    ldmfd sp!, {r0-r12}             // Restore the user registers r0-r12 (prepare to return to user mode)
-    ldmfd sp!, {pc}^                // Restore the pc
+    msr cpsr_c, #Mode_SVC           // Return to svc mode
+    movs pc, lr                     // Jump to user code, and load spsr
 .endm
 
 /**
@@ -101,7 +106,7 @@ _userspace_test_program:
     mov r3, #0x3
     svc 0
     mov r4, sp
-    mov r0, #100
+    mov r0, #69
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3
