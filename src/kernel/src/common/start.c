@@ -15,6 +15,29 @@ extern unsigned int user_start;
 extern unsigned int user_end;
 #include <vm2.h>
 
+
+void init() {
+    ProcessControlBlock * pcb = createPCB(0);
+    add(pcb, true);
+    getNext();
+    allocate_page(pcb->vas, 0x8000, true);
+
+    int available_mem_addr = 0x8004;
+
+    // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
+    int userspace_test_program = 0;
+    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    
+    // TODO size of userspace test program is hardcoded
+    kprintf("userspace test: %x\n", userspace_test_program);
+    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+
+    register ProcessControlBlock * r5 asm("r5") = pcb;
+    asm volatile("push {lr}");
+    asm volatile("bl _init");
+    asm volatile("pop {lr}");
+}
+
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
@@ -66,22 +89,9 @@ void start(uint32_t * p_bootargs) {
 
     // TODO also don't forget to free the allocated page at some point
     // allocate a page to put the user program in
-    ProcessControlBlock * pcb = createPCB(0);
-    add(pcb, true);
-    allocate_page(pcb->vas, 0x8000, true);
-    getNext();
-    
-    int available_mem_addr = 0x8004;
 
-    // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
-    int userspace_test_program = 0;
-    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
-    // TODO size of userspace test program is hardcoded
-    kprintf("userspace test: %x\n", userspace_test_program);
-    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
-
-    // call _switch_to_usedmode from dispatcher.s
+    init();
+    init();
     asm volatile("b _switch_to_usermode");
 #else
     test_main();
@@ -99,3 +109,4 @@ void start(uint32_t * p_bootargs) {
     INFO("End of boot sequence.\n");
     SLEEP;
 }
+
