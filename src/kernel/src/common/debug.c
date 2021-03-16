@@ -1,3 +1,15 @@
+/**
+ * debug.
+ *
+ * Author: Valentijn van de Beek, Zohar Cochavi, Atanas Pashov
+ *
+ * Added: Spring 2021
+ * Last modified: Spring 2021
+
+ * Purpose:
+ * This file defines a debugging shell including an API hook to add
+ * new commands to the shell easily.
+ */
 #include <allocator.h>
 #include <chipset.h>
 #include <debug.h>
@@ -8,11 +20,18 @@
 #include <test.h>
 
 VPSinglyLinkedList *commands;
-bool debug_running = true;
+static bool debug_running = true;
 
+
+/***********************************************************/
+/* Commands which apply to parts of the kernel before the  */
+/* initialization of virtual memory. This is due the fact  */
+/* that the debug shell has a dependency on kmalloc        */
+/***********************************************************/
 void panic_command(VPSinglyLinkedListIterator args) {
     panic();
 }
+
 
 void test_command(VPSinglyLinkedListIterator args) {
     #ifdef ENABLE_TESTS
@@ -22,17 +41,21 @@ void test_command(VPSinglyLinkedListIterator args) {
     #endif
 }
 
+
 void shutdown_command(VPSinglyLinkedListIterator args) {
     SemihostingCall(ApplicationExit);
 }
+
 
 void exit_debug(VPSinglyLinkedListIterator args) {
     debug_running = false;
 }
 
+
 void hardwareinfo_command(VPSinglyLinkedListIterator args) {
     print_hardwareinfo();
 }
+
 
 void echo_command(VPSinglyLinkedListIterator args) {
     while (!vpslli_empty(args)) {
@@ -41,12 +64,14 @@ void echo_command(VPSinglyLinkedListIterator args) {
     }
 }
 
+
 void malloc_command(VPSinglyLinkedListIterator args) {
     // Ignore all other arguments
     for (int i = 0; i < 10; i++) {
         kfree(kmalloc(2000));
     }
 }
+
 
 void trace_command(VPSinglyLinkedListIterator args) {
     set_trace_memory(!get_trace_memory());
@@ -57,6 +82,11 @@ void trace_command(VPSinglyLinkedListIterator args) {
     }
 }
 
+
+/**************************************************************/
+/* Initialize the the command list and popuilate with some    */
+/* good initial values.                                       */
+/**************************************************************/
 void debug_init(void) {
     commands = vpsll_create();
     // Disable the memory tracing for a bit
@@ -73,6 +103,13 @@ void debug_init(void) {
     set_trace_memory(trace);
 }
 
+
+/*******************************************************************************/
+/* Create the data structure to store a single command.                        */
+/* name: a string containing the command name                                  */
+/* func: a function for the code that the command should execute. The          */
+/* function should return a void and take a single linked list as argument.    */
+/*******************************************************************************/
 struct command *debug_create_command(char *name, void (*func) (VPSinglyLinkedListIterator args)) {
     struct command *cmd = kmalloc(sizeof(struct command));
     size_t len = strlen(name);
@@ -83,20 +120,37 @@ struct command *debug_create_command(char *name, void (*func) (VPSinglyLinkedLis
     return cmd;
 }
 
+
+/***************************************/
+/*  Add a command to the debug shell   */
+/*  cmd: a command structure.          */
+/***************************************/
 void debug_add_command(struct command *cmd) {
     vpsll_push(commands, cmd);
 }
 
+
+/*************************************************/
+/* An internal function for the freeing function */
+/*************************************************/
 void debug_free_internal(void *data) {
     struct command *cmd = data;
     kfree(cmd->name);
     kfree(cmd);
 }
 
+
+/******************************************/
+/* Cleanup the memory for the debug shell */
+/******************************************/
 void debug_free(void) {
     vpsll_free(commands, debug_free_internal);
 }
 
+
+/*****************************************************************/
+/* A small helper for the comparing function of the linked list  */
+/*****************************************************************/
 bool debug_cmp_internal(void *in, void *other) {
     if (in == NULL)
         return false;
@@ -105,6 +159,9 @@ bool debug_cmp_internal(void *in, void *other) {
     return strcmp(cmd->name, (char*) other) == 0;
 }
 
+/***************************/
+/* Actually runs the shell */
+/***************************/
 void debug_run(void) {
     char buf[9001];
     int i = 0;
@@ -114,6 +171,7 @@ void debug_run(void) {
         buf[i] = chipset.uart->getc(chipset.uart, 0);
         kprintf("%c", buf[i]);
 
+        // Find the deletion character
         if (buf[i] == 127) {
             if (i == 0)
                 continue;
@@ -131,12 +189,14 @@ void debug_run(void) {
                 i--;
             }
 
-
             buf[i] = '\0';
-            kprintf("%c", '\n');                \
+            kprintf("%c", '\n');
+
+            // Split the the input into words so we can process it easier
             char *tokens[1] = {" "};
             VPSinglyLinkedList *words = ktokenize(buf, tokens, 1);
 
+            // If it empty don't look anything up
             if (vpsll_length(words) == 0) {
                 vpsll_free(words, kfree);
                 continue;
@@ -147,6 +207,7 @@ void debug_run(void) {
             struct command *cmd = vpsll_find(commands, cmd_name, debug_cmp_internal);
             kfree(cmd_name);
 
+            // Run the command with the tracing if set.
             if (cmd != NULL) {
                 set_trace_memory(trace);
                 cmd->command(vpslli_create(words));
@@ -154,6 +215,8 @@ void debug_run(void) {
             } else {
                 kprintf("Command '%s' not found.", buf);
             }
+
+            // Cleanup after ourselves without tracing
             set_trace_memory(false);
             vpsll_free(words, kfree);
             set_trace_memory(trace);
