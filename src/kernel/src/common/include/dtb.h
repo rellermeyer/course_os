@@ -1,8 +1,11 @@
+// https://devicetree-specification.readthedocs.io/en/v0.1/flattened-format.html
+
 #ifndef DTB_H
-#define PMM_H
+#define DTB_H
 
 #include <stdint.h>
 #include <klibc.h>
+#include <string.h>
 
 struct DTHeader {
     uint32_t magic;
@@ -17,6 +20,11 @@ struct DTHeader {
     uint32_t size_dt_struct;
 };
 
+struct DTProp {
+  uint32_t len;
+  uint32_t nameoff;
+};
+
 enum StructureToken {
     FDT_BEGIN_NODE = 0x1,
     FDT_END_NODE = 0x2,
@@ -25,7 +33,7 @@ enum StructureToken {
     FDT_END = 0x9,
 };
 
-void dtb_get_property(struct DTHeader* dtbh, char* path, char* property);
+struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * property);
 
 
 #endif
