@@ -2,7 +2,7 @@
 
 // Subroutine definitions
 // .global _switch_to_usermode
-// .global _userspace_test_program
+.global _userspace_test_program
 .global _init
 
 // Value to store in cpsr when you want to switch to user mode
@@ -21,8 +21,8 @@
         - spsr
         - pc
 
-    Return values:
-        The return value is the top of the user stack, including the execution state.
+    Return value:
+        top of the user stack, including the execution state.
 
 
     An important thing to remember while reading this code is that there are certain registers that are 'banked'
