@@ -1,9 +1,5 @@
 .text
 
-// Subroutine definitions
-.global _switch_to_usermode
-// .global _userspace_test_program
-// .global _init
 
 // Value to store in cpsr when you want to switch to user mode
 .equ Mode_USR, 0x10
@@ -102,46 +98,3 @@
     msr cpsr_c, #Mode_SVC   // Return to system mode
 .endm
 
-/**
-    Initializes a process with an zeroed PCB, and putting the Program Counter at the first instruction.
- */
-_init_state:
-    // TODO: Generate new PCB
-    bx lr
-
-
-_switch_to_usermode:
-    MSR SPSR_c, #Mode_USR
-    MOV r12, #0x8000
-    add r12, #0x4
-    MOVS pc, r12
-
-_userspace_test_program:
-    mov r12, pc
-    mov r4, sp
-    mov r0, #100
-    mov r1, #0x1
-    mov r2, #0x2
-    mov r3, #0x3
-    svc 0
-    mov r4, sp
-    mov r0, #69
-    mov r1, #0x1
-    mov r2, #0x2
-    mov r3, #0x3
-    svc 100
-
-
-_init:
-    // set the new pc
-    mov r3, #0x8000
-    add r3, #0x04
-
-    // set the new sp
-    mov r4, #0x8100
-    add r4, #0x04
-    init_state r3, r4
-    add r5, #8
-    str r4, [r5]
-
-    bx lr
