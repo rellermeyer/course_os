@@ -5,9 +5,9 @@
 
 .global _handle_swi
 
+// Disable interrupts? (IRQ, reset?)
 _handle_swi:
-    // Disable interrupts? (IRQ, reset?)
-
+    // Put swi number in r7
     ldr r7, [lr, #-4]           // SWI Instruction where we left off
     bic r7, r7, #0xff000000     // The value after the SWI instruction (swi call number)
     
@@ -15,11 +15,10 @@ _handle_swi:
     push {lr}
     bl syscall_handler 
     pop {lr}
-
-    _save_state_swi             // save the state of the process calling the software interrupt (put in r4)
     
-    // Store result in executionState
-    mov r0, r4
+    // Save the state of the process calling the software interrupt 
+    _save_state_swi             
+    // Schedule and swap the processes
     bl schedule
-
+    // Load the next process
     _load_state_swi r0

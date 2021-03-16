@@ -1,8 +1,8 @@
 .text
 
 // Subroutine definitions
-//.global _switch_to_usermode
-//.global _userspace_test_program
+// .global _switch_to_usermode
+// .global _userspace_test_program
 .global _init
 
 // Value to store in cpsr when you want to switch to user mode
@@ -13,27 +13,16 @@
 /**
     Save state will save the state of a process (execution state) onto the stack of said process, and return the address pointing to the top of the stack.
 
-    It wil take 2 paramters:
-        r4: The current user stack pointer
-        r0: The current user program counter
-
     Execution state:
         The process state essentially consists of all the registers
 
-        - r4-r12 (general purpose registers)
+        - r0-r12 (general purpose registers)
         - lr
-        - sp
+        - spsr
         - pc
 
     Return values:
         The return value is the top of the user stack, including the execution state.
-
-    Note: Currently the context switcher only works for the SVC interrupt.
-          The code has to be rewritten to not require any parameters.
-
-    Note: The return value is saved in r4 instead of r0.
-          We use registers r0-r3 for the SYSCALL parameters.
-          And we don't know which interrupt we're currently handling
 
 
     An important thing to remember while reading this code is that there are certain registers that are 'banked'
@@ -42,24 +31,23 @@
     current mode
 **/
 .macro _save_state_swi
-    push {r0, r1, r2, r3}       // Save arguments onto the stack
+    // Save all the general puropse registers, and user lr
+    msr cpsr_c, #Mode_SYS           // Enter system mode
 
-    // Save the banked user's sp into r0
-    stmfd sp!, {sp}^            // Save the user stack onto the interrupt stack
-    ldmfd sp!, {r0}
+    stmfd sp!, {r0 - r12}           // Save the user registers on to the user stack
+    stmfd sp!, {lr}                 // Save the user registers on to the user stack
 
-    stmfd r0!, {r1 - r12}      // Save the user registers on to the user stack
-    stmfd r0!, {lr}^      // Save the user registers on to the user stack
-
-    mrs r12, spsr               // Load SPSR into a register (cannot be immeadiatly loaded into memory)
-    stmfd r0!, {r12}            // Store it onto the stack
+    msr cpsr_c, #Mode_SVC           // Return to svc mode
     
-    stmfd r0!, {lr}            // Save user PC onto the stack
+    // Move the banked user's sp into r0
+    stmfd sp!, {sp}^                // Save the user sp onto the interrupt stack
+    ldmfd sp!, {r0}                 // And load it into r0
+
+    // Save program status register on the process stack
+    mrs r12, spsr                   // Load SPSR into a register (cannot be immeadiatly loaded into memory)
+    stmfd r0!, {r12}                // Store it onto the stack
     
-    mov r4, r0                  // Save the user sp in r4 to be used later to load the state
-
-    pop {r0, r1, r2, r3}        // Restore arguments
-
+    stmfd r0!, {lr}                 // Save user PC onto the stack
 .endm
 
 /**
@@ -67,39 +55,51 @@
     This is essentially the save state in reverse.
  */
 .macro _load_state_swi user_sp
+    // Entry point into user proces
     ldmfd \user_sp, {lr}             // Save user pc in current mode lr
 
+    // Enter system mode, and align sp to target process
     msr cpsr_c, #Mode_SYS           // Enter system mode
-    mov sp, \user_sp
+    mov sp, \user_sp                // Set stack pointer to right position
 
+    // Restore program status register
     ldmfd sp!, {r12}                       // Retrieve the SPSR from the user stack
     msr spsr_cxsf, r12
 
-    ldmfd sp!, {lr}              // Restore the user registers r0-r12 (prepare to return to user mode)
-    ldmfd sp!, {r1-r12}              // Restore the user registers r0-r12 (prepare to return to user mode)
+    // Restore general purpose registers and lr
+    ldmfd sp!, {lr}                 // Restore the user registers r0-r12 (prepare to return to user mode)
+    ldmfd sp!, {r0-r12}             // Restore the user registers r0-r12 (prepare to return to user mode)
 
+    // Return to user process
     msr cpsr_c, #Mode_SVC           // Return to svc mode
     movs pc, lr                     // Jump to user code, and load spsr
 .endm
 
 .macro init_state new_pc, new_sp
+    // Enter System mode
     msr cpsr_c, #Mode_SYS
-    mov sp, \new_sp
-    mov r1, #12
+    mov sp, \new_sp         // Set sp to new stack
+
+    // Set up for loop
+    mov r1, #13
     mov r2, #0
+
+// Push 13 (r0-r12, lr) zeroes onto the stack
 .loop\@:
-    push { r2 }
-    add r1, #-1
-    cmp r1, #0
-    bne .loop\@
+    push { r2 }             // Push a zero
+    add r1, #-1             // Count
+    cmp r1, #0          
+    bne .loop\@             // Continue while it's not zero
 
-    mov r2, #0b10010000
-    push { r2 }
-    push { \new_pc }
-    mov \new_sp, sp
+    // Push new cpsr 
+    mov r2, #0b10010000     // IRQs are enabled and FIQs aren't [100], mode is user mode [10000]
+    push { r2 }             // Put it on the stack
 
-    msr cpsr_c, #Mode_SVC
-
+    push { \new_pc }        // Put the new user program counter on the stack
+  
+    // Return
+    mov \new_sp, sp         // Update the 'new_sp', to point to the ExectionState
+    msr cpsr_c, #Mode_SVC   // Return to system mode
 .endm
 
 /**
