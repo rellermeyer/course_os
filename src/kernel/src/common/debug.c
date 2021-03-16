@@ -8,6 +8,7 @@
 #include <test.h>
 
 VPSinglyLinkedList *commands;
+bool debug_running = true;
 
 void panic_command(VPSinglyLinkedListIterator args) {
     panic();
@@ -21,8 +22,12 @@ void test_command(VPSinglyLinkedListIterator args) {
     #endif
 }
 
-void exit_command(VPSinglyLinkedListIterator args) {
+void shutdown_command(VPSinglyLinkedListIterator args) {
     SemihostingCall(ApplicationExit);
+}
+
+void exit_debug(VPSinglyLinkedListIterator args) {
+    debug_running = false;
 }
 
 void hardwareinfo_command(VPSinglyLinkedListIterator args) {
@@ -59,11 +64,12 @@ void debug_init(void) {
     set_trace_memory(false);
     debug_add_command(debug_create_command("panic", panic_command));
     debug_add_command(debug_create_command("test", test_command));
-    debug_add_command(debug_create_command("exit", exit_command));
+    debug_add_command(debug_create_command("shutdown", shutdown_command));
     debug_add_command(debug_create_command("hardwareinfo", hardwareinfo_command));
     debug_add_command(debug_create_command("echo", echo_command));
     debug_add_command(debug_create_command("malloc", malloc_command));
     debug_add_command(debug_create_command("trace", trace_command));
+    debug_add_command(debug_create_command("exit", exit_debug));
     set_trace_memory(trace);
 }
 
@@ -104,7 +110,7 @@ void debug_run(void) {
     int i = 0;
 
     puts("> ");
-    while (true) {
+    while (debug_running) {
         buf[i] = chipset.uart->getc(chipset.uart, 0);
         kprintf("%c", buf[i]);
 

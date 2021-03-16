@@ -84,7 +84,6 @@ loop:
     WFI
     B loop
 
-
 .bss
 EARLY_KERNEL_STACK_BOTTOM:
     .space 128
