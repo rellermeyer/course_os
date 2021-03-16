@@ -10,7 +10,7 @@
 
 #ifndef INTERRUPT_HANDLER_S
 #define INTERRUPT_HANDLER_S
-.include "src/scheduler/dispatcher.S"
+.include "src/scheduler/dispatcher.s"
 #endif
 
 // Disable interrupts? (IRQ, reset?)
