@@ -6,22 +6,22 @@ __BOOT_ADDRESS = 0x8000;
 SECTIONS
 {
     . = __BOOT_ADDRESS;
+
+    
+
     __BOOT_START = .;
     .boot : {
         */startup.o (.text)
         */startup.o (.data)
-        */startup.o (.bss)	
+        */startup.o (.bss)
+	__DTB_START = .;
+        */dtb.o (.data)
         */stacks.o (.text)
         */memory.o (.text)
         */memory.o (.data)	
     }
     __BOOT_END = .;
-    __DTB_START = .;
-    .dtb : {
-        */dtb.o (.data)
-    }
-    
-    __DTB_END = .;
+
     
     . += __KERNEL_VIRTUAL_OFFSET;
 

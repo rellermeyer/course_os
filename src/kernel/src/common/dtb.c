@@ -17,7 +17,7 @@ static inline uint32_t fix_endian(const uint32_t num) {
 
 // Aligns the given pointer to 4 bytes.
 static inline void * align_pointer(void * pointer) {
-    return (void *)(((size_t)pointer + 31) & 31);
+  return (void *)(((size_t)pointer + 3) & ~3);
 }
 
 
@@ -25,7 +25,7 @@ static inline void * align_pointer(void * pointer) {
 char * parse_begin_node(void ** curr_address) {
     *curr_address += sizeof(uint32_t);
     char * string_address = (char *)*curr_address;
-    *curr_address += strlen((string_address));
+    *curr_address += strlen(string_address)+1;
     *curr_address = align_pointer(*curr_address);
     return string_address;
 }
@@ -39,7 +39,7 @@ uint32_t get_chars_to_slash(char * string) {
 }
 
 
-// Returns a structure corresponding to the requested property in the DTB
+// Performs an allocation-free traversal to find the requested property in the DTB
 struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * property) {
     if (fix_endian(dtb_h->magic) != 0xd00dfeed) { FATAL("Wrong dtb header %x", dtb_h->magic); }
     uint32_t current_level = 0;
@@ -65,7 +65,7 @@ struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * pro
                         strncmp(
                             path,
                             node_name,
-                            chars_to_slash < node_name_size ? chars_to_slash : node_name_size)) {
+                            chars_to_slash < node_name_size ? chars_to_slash : node_name_size)==0) {
                         next_level++;
                         path += chars_to_slash; // Advance path past the slash
                         if (path[0] == '/') path++;
@@ -85,8 +85,8 @@ struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * pro
 	      struct DTProp* prop = (struct DTProp*)curr_address;
 	      if(strlen(path)==0) {
 		// We are in the node that we looking for. Time to check if this is the property we were looking for		
-		  char* prop_name = (char*)(dtb_h + fix_endian(dtb_h->off_dt_strings) + fix_endian(prop->nameoff));
-		  if(strcmp(prop_name, property)){
+		  char* prop_name = (char*)((void*)dtb_h + fix_endian(dtb_h->off_dt_strings) + fix_endian(prop->nameoff));
+		  if(strcmp(prop_name, property)==0){
 		    // Found it!
 		    return prop;
 		  }

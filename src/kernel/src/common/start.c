@@ -28,7 +28,7 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Initialize the chipset and enable uart
     init_chipset();
 
-    dtb_get_property(dtb, "", "");
+    struct DTProp* property = dtb_get_property(dtb, "/memory", "reg");
 
 
     INFO("Detected memory size: 0x%x Bytes", 0x1000000);
