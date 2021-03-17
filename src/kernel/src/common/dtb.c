@@ -17,7 +17,7 @@ static inline uint32_t fix_endian(const uint32_t num) {
 
 // Aligns the given pointer to 4 bytes.
 static inline void * align_pointer(void * pointer) {
-  return (void *)(((size_t)pointer + 3) & ~3);
+    return (void *)(((size_t)pointer + 3) & ~3);
 }
 
 
@@ -25,7 +25,7 @@ static inline void * align_pointer(void * pointer) {
 char * parse_begin_node(void ** curr_address) {
     *curr_address += sizeof(uint32_t);
     char * string_address = (char *)*curr_address;
-    *curr_address += strlen(string_address)+1;
+    *curr_address += strlen(string_address) + 1;
     *curr_address = align_pointer(*curr_address);
     return string_address;
 }
@@ -40,14 +40,15 @@ uint32_t get_chars_to_slash(char * string) {
 
 
 // Performs an allocation-free traversal to find the requested property in the DTB
-struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * property) {
+struct DTProp * dtb_get_property(struct DTHeader * dtb_h, char * path, char * property) {
     if (fix_endian(dtb_h->magic) != 0xd00dfeed) { FATAL("Wrong dtb header %x", dtb_h->magic); }
     uint32_t current_level = 0;
     uint32_t next_level = 1;
 
     void * curr_address = (void *)dtb_h + fix_endian(dtb_h->off_dt_struct);
 
-    while (curr_address < (void *)dtb_h + fix_endian(dtb_h->off_dt_struct) + fix_endian(dtb_h->size_dt_struct)) {
+    while (curr_address <
+           (void *)dtb_h + fix_endian(dtb_h->off_dt_struct) + fix_endian(dtb_h->size_dt_struct)) {
         switch (fix_endian(*(uint32_t *)curr_address)) {
             case FDT_BEGIN_NODE: {
                 char * node_name = parse_begin_node(&curr_address);
@@ -58,16 +59,17 @@ struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * pro
                 }
 
                 current_level++;
-                if (current_level == next_level) { // Avoid looking at nodes which don't match the nesting level we're looking for in the path 
+                if (current_level == next_level) {  // Avoid looking at nodes which don't match the
+                                                    // nesting level we're looking for in the path
                     uint32_t chars_to_slash = get_chars_to_slash(path);
                     uint32_t node_name_size = strlen(node_name);
                     if (strlen(node_name) == 0 ||
-                        strncmp(
-                            path,
-                            node_name,
-                            chars_to_slash < node_name_size ? chars_to_slash : node_name_size)==0) {
+                        strncmp(path,
+                                node_name,
+                                chars_to_slash < node_name_size ? chars_to_slash
+                                                                : node_name_size) == 0) {
                         next_level++;
-                        path += chars_to_slash; // Advance path past the slash
+                        path += chars_to_slash;  // Advance path past the slash
                         if (path[0] == '/') path++;
                     }
                 }
@@ -77,32 +79,54 @@ struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * pro
             case FDT_END_NODE: {
                 curr_address += sizeof(uint32_t);
                 current_level--;
-                if (strlen(path) == 0) { return NULL; } // We have exited the path we were looking for
+                if (strlen(path) == 0) {
+                    return NULL;
+                }  // We have exited the path we were looking for
                 break;
             }
             case FDT_PROP:
-	      curr_address += sizeof(uint32_t);
-	      struct DTProp* prop = (struct DTProp*)curr_address;
-	      if(strlen(path)==0) {
-		// We are in the node that we looking for. Time to check if this is the property we were looking for		
-		  char* prop_name = (char*)((void*)dtb_h + fix_endian(dtb_h->off_dt_strings) + fix_endian(prop->nameoff));
-		  if(strcmp(prop_name, property)==0){
-		    // Found it!
-		    return prop;
-		  }
-	      }
-	      // Skip over the property data
-	      curr_address += sizeof(struct DTProp) + fix_endian(prop->len);
-	      curr_address = align_pointer(curr_address);
+                curr_address += sizeof(uint32_t);
+                struct DTProp * prop = (struct DTProp *)curr_address;
+                if (strlen(path) == 0) {
+                    // We are in the node that we looking for. Time to check if this is the property
+                    // we were looking for
+                    char * prop_name = (char *)((void *)dtb_h + fix_endian(dtb_h->off_dt_strings) +
+                                                fix_endian(prop->nameoff));
+                    if (strcmp(prop_name, property) == 0) {
+                        // Found it!
+                        return prop;
+                    }
+                }
+                // Skip over the property data
+                curr_address += sizeof(struct DTProp) + fix_endian(prop->len);
+                curr_address = align_pointer(curr_address);
                 break;
             case FDT_NOP:
-	      curr_address += sizeof(uint32_t);
+                curr_address += sizeof(uint32_t);
                 break;
             case FDT_END:
-	      return NULL;
+                return NULL;
                 break;
         }
     }
 
     return NULL;
+}
+
+// Wraps a property containing 2 uint32's, also fixing the endianness of the elements.
+struct DTProp2UInt dtb_wrap_2uint_prop(struct DTHeader * dtb_h, struct DTProp * prop) {
+    assert(fix_endian(prop->len) == 8);
+    struct DTProp2UInt wrapped = {
+        (char *)((void *)dtb_h + fix_endian(dtb_h->off_dt_strings) + fix_endian(prop->nameoff)),
+        fix_endian(*((uint32_t *)prop + 2)),
+        fix_endian(*((uint32_t *)prop + 3))};
+    return wrapped;
+}
+
+struct DTPropString dtb_wrap_string_prop(struct DTHeader * dtb_h, struct DTProp * prop) {
+    struct DTPropString wrapped = {
+        (char *)((void *)dtb_h + fix_endian(dtb_h->off_dt_strings) + fix_endian(prop->nameoff)),
+        fix_endian(prop->len),
+        (char *)(prop + 1)};
+    return wrapped;
 }

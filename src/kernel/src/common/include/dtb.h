@@ -25,6 +25,18 @@ struct DTProp {
   uint32_t nameoff;
 };
 
+struct DTProp2UInt {
+  char* name;
+  uint32_t first;
+  uint32_t second;
+};
+
+struct DTPropString {
+  char* name;
+  uint32_t len;
+  char* val;
+};
+
 enum StructureToken {
     FDT_BEGIN_NODE = 0x1,
     FDT_END_NODE = 0x2,
@@ -34,6 +46,10 @@ enum StructureToken {
 };
 
 struct DTProp* dtb_get_property(struct DTHeader * dtb_h, char * path, char * property);
+
+struct DTProp2UInt dtb_wrap_2uint_prop(struct DTHeader* dtb_h,struct DTProp* prop);
+
+struct DTPropString dtb_wrap_string_prop(struct DTHeader* dtb_h,struct DTProp* prop);
 
 
 #endif

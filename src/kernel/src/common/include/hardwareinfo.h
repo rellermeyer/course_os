@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <dtb.h>
 
 typedef enum CpuType { ARM1176, CortexA7 } CpuType;
 
@@ -19,13 +20,13 @@ typedef struct HardwareInfo {
 
 // Initialize the global hardware info struct. After this is ran, the get_hardwareinfo
 // function can be used to retrieve it.
-void init_hardwareinfo();
+void init_hardwareinfo(struct DTHeader* dtb_h);
 
 // Get a pointer to the hardwareinfo struct. This is a global struct containing information
 // about the cpu type, and board/chipset type. May be expanded to contain more useful info.
 HardwareInfo * get_hardwareinfo();
 void print_hardwareinfo();
-BoardType detect_boardtype();
+BoardType detect_boardtype(struct DTHeader* dtb_h);
 
 // Checks whether given address is in area occupied by MMIO
 bool address_in_reserved_region(size_t address);

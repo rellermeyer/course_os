@@ -23,20 +23,30 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.
-    init_hardwareinfo();
+    init_hardwareinfo(dtb);
 
     // Initialize the chipset and enable uart
     init_chipset();
 
-    struct DTProp* property = dtb_get_property(dtb, "/memory", "reg");
+    struct DTProp * mem_prop = dtb_get_property(dtb, "/memory", "reg");
+    assert(mem_prop != NULL);  // Failed to find memory node in the DTB
+
+    struct DTProp2UInt memory_prop = dtb_wrap_2uint_prop(
+        dtb, mem_prop);  // First element is address and second element is size of available memory
+    assert(memory_prop.first == 0);  // There can be multiple memory declarations in the DTB, but
+                                     // we're assuming there's only 1, and it starts at address 0
+
+    if (memory_prop.second == 0) {
+        memory_prop.second = Gibibyte;
+        INFO("DTB reports 0 RAM, setting size to 1 GB");
+    }
 
 
-    INFO("Detected memory size: 0x%x Bytes", 0x1000000);
+    INFO("Detected memory size: 0x%x Bytes", memory_prop.second);
     INFO("Started chipset specific handlers");
 
     // just cosmetic (and for debugging)
     print_hardwareinfo();
-    detect_boardtype();
 
     // start proper virtual and physical memory management.
     // Even though we already enabled the mmu in startup.s to
@@ -44,7 +54,7 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // was temporary and has to be replaced here.
     // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
-    vm2_start(0x1000000);
+    vm2_start(memory_prop.second);
 
     INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
