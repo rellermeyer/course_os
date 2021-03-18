@@ -44,3 +44,8 @@ SECTIONS
     . = ALIGN(1024 * 1024);
     __KERNEL_TOP = .;
 }
+
+/* MEMORY */
+/* { */
+/*     RAM (rw) : org = 0x47912343, len = 1M */
+/* } */

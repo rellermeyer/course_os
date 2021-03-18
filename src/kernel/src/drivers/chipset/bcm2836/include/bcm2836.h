@@ -2,7 +2,6 @@
 
 #ifndef BCM2836_H
 #define BCM2836_H
-
 #include <stdint.h>
 
 #define BCM2836_REGISTERS_PHYSICAL_BASE   0x40000000

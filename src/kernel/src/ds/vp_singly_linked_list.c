@@ -31,6 +31,26 @@ void vpsll_push(VPSinglyLinkedList * lst, void * data) {
     lst->length++;
 }
 
+void vpsll_push_to_back(VPSinglyLinkedList * lst, void * data) {
+    struct VPSinglyLinkedListLink * node = kmalloc(sizeof(struct VPSinglyLinkedListLink));
+    node->data = data;
+
+    struct VPSinglyLinkedListLink *search = lst->head;
+    if (search == NULL) {
+        lst->head = node;
+        lst->length++;
+        return;
+    }
+
+    while (search->next != NULL) {
+        search = search->next;
+    }
+
+    search->next = node;
+    lst->length++;
+}
+
+
 void * vpsll_pop(VPSinglyLinkedList * lst) {
     struct VPSinglyLinkedListLink * oldhead = lst->head;
     void * contents = oldhead->data;
@@ -96,6 +116,13 @@ bool vpsll_contains(VPSinglyLinkedList * lst, void * value, CompareFunc compf) {
         if (compf(i->data, value)) { return true; }
     }
     return false;
+}
+
+void *vpsll_find(VPSinglyLinkedList * lst, void * value, CompareFunc compf) {
+    VPSLL_FOREACH(lst, i) {
+        if (compf(i->data, value)) { return i->data; }
+    }
+    return NULL;
 }
 
 size_t vpsll_length(VPSinglyLinkedList * lst) {

@@ -4,6 +4,7 @@
 #define ALLOCATOR_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define HEAP_INIT_SIZE 0x10000
 #define HEAP_MAX_SIZE  0xF0000
@@ -17,8 +18,10 @@
 #define BIN_COUNT   9
 #define BIN_MAX_IDX (BIN_COUNT - 1)
 
-/// Heap
+void set_trace_memory(const bool value);
+bool get_trace_memory(void);
 
+/// Heap
 typedef struct node_t {
     uint32_t hole;
     uint32_t size;
@@ -38,10 +41,7 @@ typedef struct {
     uint32_t start;
     uint32_t end;
     bin_t * bins[BIN_COUNT];
-
-#ifdef MEM_DEBUG
     size_t bytes_allocated;
-#endif
 } heap_t;
 
 extern uint32_t overhead;

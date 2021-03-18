@@ -1,5 +1,6 @@
 #include <bcm2836.h>
 #include <bcm2835.h>
+#include <debug.h>
 #include <constants.h>
 #include <dtb.h>
 #include <hardwareinfo.h>
@@ -43,6 +44,7 @@ CpuType detect_cputype() {
 
 // TODO: detect hardware info.
 // Such as: CPU and RAM size.
+
 void init_hardwareinfo(struct DTHeader * dtb_h) {
     BoardType boardType = detect_boardtype(dtb_h);
     size_t peripheral_base_address;
@@ -53,16 +55,20 @@ void init_hardwareinfo(struct DTHeader * dtb_h) {
             peripheral_region_size = 21 * Mebibyte;
             break;
         case RaspberryPiZero:
-	  peripheral_base_address = BCM2835_PERIPHERALS_PHYSICAL_BASE;
-	  peripheral_region_size = 18 * Mebibyte;
+            peripheral_base_address = BCM2835_PERIPHERALS_PHYSICAL_BASE;
+            peripheral_region_size = 18 * Mebibyte;
         default:
             FATAL("Peripheral address for board type not implemented");
-    }    
+    }
     hardware_info = (HardwareInfo){
         .cpuType = detect_cputype(),
         .boardType = boardType,
         .peripheral_base_address = peripheral_base_address,
+
         .peripheral_region_size = peripheral_region_size,
+
+        .peripheral_region_size = peripheral_region_size,
+
     };
 }
 

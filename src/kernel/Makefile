@@ -78,6 +78,7 @@ ifneq (, $(shell which "${BARE_METAL_TUPLE}-gcc" 2> /dev/null))
 CC := $(shell which ${BARE_METAL_TUPLE}-gcc)
 AS := $(shell which ${BARE_METAL_TUPLE}-as)
 LD := $(shell which ${BARE_METAL_TUPLE}-gcc)
+GDB := $(shell which ${BARE_METAL_TUPLE}-gdb)
 OBJCOPY := $(shell which ${BARE_METAL_TUPLE}-objcopy)
 else
 ifeq ("$(wildcard $(CC))","")

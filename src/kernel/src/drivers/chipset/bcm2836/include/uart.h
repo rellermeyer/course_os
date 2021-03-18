@@ -1,14 +1,15 @@
 #ifndef UART_BCM2836_H
 #define UART_BCM2836_H
 
-#include <chipset.h>
+// Generic UART
+#include "../include/uart.h"
 #include <stdint.h>
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.ddi0183f/DDI0183.pdf
 // Section 3.2: Summary of registers
 // https://balau82.wordpress.com/2010/11/30/emulating-arm-pl011-serial-ports/
 // This struct is memory mapped. I call them registers but they all live in memory.
-typedef volatile struct BCM2836UartInterface {
+struct UartInterface {
     uint32_t DR;              // Data Register
     uint32_t RSR_ECR;         // Receive Status Register / Error Clear Register
     uint8_t reserved1[0x10];  // Reserved
@@ -25,14 +26,18 @@ typedef volatile struct BCM2836UartInterface {
     const uint32_t MIS;       // Masked Interrupt Status Register
     uint32_t ICR;             // Interrupt Clear Register
     uint32_t DMACR;           // DMA Control Register
-} BCM2836UartInterface;
+};
 
-void bcm2836_uart_init();
+void bcm2836_uart_init(volatile UartDevice *device);
 
-void uart_write_byte(BCM2836UartInterface * interface, volatile uint8_t value);
+void uart_write_byte(volatile UartInterface *interface, volatile uint8_t value);
+uint8_t uart_get_byte(volatile UartInterface *device);
 
-void bcm2836_uart_putc(char c, int uartchannel);
+void bcm2836_uart_putc(volatile UartDevice *device, char c, int uartchannel);
+char bcm2836_uart_getc(volatile UartDevice *device, int uartchannel);
 
-void bcm2836_uart_on_message(UartCallback callback, int uartchannel);
+void bcm2836_uart_on_message(volatile UartDevice *device, UartCallback callback,
+                             int uartchannel);
+
 
 #endif

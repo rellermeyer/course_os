@@ -5,11 +5,45 @@
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
+#include <pmm.h>
 #include <stdint.h>
+#include <debug.h>
+#include <string.h>
+#include <syscall.h>
 #include <test.h>
+#include <vas2.h>
+#include <scheduler.h>
+
+extern unsigned int user_start;
+extern unsigned int user_end;
 #include <vm2.h>
 
+
 extern size_t __DTB_START[];
+
+
+void init() {
+    ProcessControlBlock * pcb = createPCB(0);
+    add(pcb, true);
+    getNext();
+    allocate_page(pcb->vas, 0x8000, true);
+
+    int available_mem_addr = 0x8004;
+
+    // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
+    int userspace_test_program = 0;
+    asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
+    
+    // TODO size of userspace test program is hardcoded
+    kprintf("userspace test: %x\n", userspace_test_program);
+    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+
+    register ProcessControlBlock * r5 asm("r5") = pcb;
+    asm volatile("push {lr}");
+    asm volatile("bl _init");
+    asm volatile("pop {lr}");
+}
+
 
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
@@ -64,6 +98,11 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
 
+    // Allow the kernel to attach to the debugger, this can be done
+    // earlier by rewriting to make it use hardcoded buffer sizes
+    // instead.
+    debug_init();
+
     // Splash screen
     splash();
 
@@ -73,17 +112,17 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-
 #ifndef ENABLE_TESTS
-//    argparse_process(p_bootargs);
-//
-// TODO: Start init process
+    // DEBUG
+
+    init();
+    init();
+    asm volatile("b _switch_to_usermode");
 #else
     test_main();
     // If we return, the tests failed.
-    SemihostingCall(OSSpecific);
-#endif
-
+    /* SemihostingCall(OSSpecific); */
+    #endif
 
     // TODO:
     //  * Mount vfs
@@ -91,7 +130,8 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     //  * execute userland init program
 
     asm volatile("cpsie i");
-
     INFO("End of boot sequence.\n");
+
     SLEEP;
 }
+

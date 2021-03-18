@@ -27,7 +27,7 @@ void switch_to_vas(struct vas2 * vas) {
 
     asid_set(vas->tlbDescriptor.asid);
 
-    vm2_set_user_pagetable(vas->l1PageTable);
+    vm2_set_user_pagetable((void *)VIRT2PHYS((size_t)vas->l1PageTable));
 }
 
 void free_vas(struct vas2 * vas) {

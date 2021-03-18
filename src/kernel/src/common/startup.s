@@ -71,13 +71,13 @@ _Reset:
     pop {r0-r11}
     mov r1, r2
 
+
     // Jumpt to the start of the kernel
     bl start
 
 loop:
     WFI
     B loop
-
 
 .bss
 EARLY_KERNEL_STACK_BOTTOM:
