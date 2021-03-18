@@ -70,7 +70,7 @@ int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_Progra
              *   padding           |- header->memsize - file_size
              *  of zeroes         /
              *                   /
-             * =============  <-  header->virtual_address + memsize
+             * =============  <- header->virtual_address + memsize
              * =============
              */
 
