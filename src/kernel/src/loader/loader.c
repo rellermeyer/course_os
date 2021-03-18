@@ -1,6 +1,8 @@
 #include <loader.h>
 #include <stdio.h>
 #include <vas2.h>
+#include <vm2.h>
+#include <stdio.h>
 
 int loadProcessFromElfFile(void * PCB, void * file) {
 
@@ -28,7 +30,18 @@ int loadProcessFromElfFile(void * PCB, void * file) {
 	return 0;
 }
 
+void load_memcpy(void * dest, void * src, size_t bytes) {
+    for (size_t i = 0; i < bytes; ++i) {
+        ((char *)dest)[i] = *((char *)src);
+    }
+}
+
 int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
+
+    // Switch to the new process address space
+    switch_to_vas(vasToFill);
+
+    Elf32_Addr currentVirtualAddress = 0;
 
     // Iterate over the program headers
     for (Elf32_Word ph_index = 0; ph_index < t_size; ph_index++) {
@@ -42,10 +55,29 @@ int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_Progra
 
         if (currentProgramHeader->program_type == EPT_LOAD) {
 
+            /*
+             *   Segment
+             * =============
+             * =============  <-  header->virtual_address
+             *                   \
+             *  segment           \
+             *   data              |- header->file_size
+             *                    /
+             *                   /
+             * -------------
+             *                   \
+             *   possible         \
+             *   padding           |- header->memsize - file_size
+             *  of zeroes         /
+             *                   /
+             * =============  <-  header->virtual_address + memsize
+             * =============
+             */
+
             // Get the virtual address
             Elf32_Addr virtualAddress = currentProgramHeader->program_virtual_addr;
-            Elf32_Addr programToRead =
-                (Elf32_Addr)((char *)file + currentProgramHeader->program_offset);
+            Elf32_Addr segmentStartAddress = virtualAddress;
+            Elf32_Addr programToRead = (Elf32_Addr)((char *)file + currentProgramHeader->program_offset);
             Elf32_Word fileSize = currentProgramHeader->program_filesz;
             Elf32_Word sizeLeftToAllocate = currentProgramHeader->program_memsz;
 
@@ -58,20 +90,51 @@ int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_Progra
 
             }
 
-            // TODO copy the segment data into the newly allocated pages
+            // copy the segment data into the newly allocated pages
+            load_memcpy((void *)segmentStartAddress, (void *)programToRead, fileSize);
+
+            if (fileSize < currentProgramHeader->program_memsz) {
+                Elf32_Addr padding_address = segmentStartAddress + fileSize;
+                while (padding_address < segmentStartAddress + currentProgramHeader->program_memsz) {
+                    *(char *)padding_address = '\0';
+                    padding_address++;
+                }
+            }
+
+
+            currentVirtualAddress = virtualAddress;
 
         }
 
-        /* TODO Allocate pages for the stack and the heap.
+        /* Allocate pages for the stack and the heap.
         *  STACK
-        *   ||  - // TODO MB ?
+        *   ||  - // TODO MB ? - 16MB currently
         *   \/
         *  -----
         *   /\
-        *   ||  - // TODO MB ?
+        *   ||  - // TODO MB ? - 16MB currently
         *  HEAP
          */
 
+        Elf32_Addr heap_address = currentVirtualAddress;
+
+        // Allocate pages for the heap - 16MB = 4KB * 2^12
+        size_t counter = 0;
+        while (counter < PROCESS_HEAP_SIZE_IN_PAGES) {
+            allocate_page(vasToFill, currentVirtualAddress, false);
+            currentVirtualAddress += PAGE_SIZE;
+            counter++;
+        }
+
+        // Allocate pages for the stack - 16MB = 4KB * 2^12
+        counter = 0;
+        while (counter < PROCESS_STACK_SIZE_IN_PAGES) {
+            allocate_page(vasToFill, currentVirtualAddress, false);
+            currentVirtualAddress += PAGE_SIZE;
+            counter++;
+        }
+
+        Elf32_Addr stack_address = currentVirtualAddress - 4;
     }
 
     return 0;
