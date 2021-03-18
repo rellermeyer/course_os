@@ -1,5 +1,10 @@
 #include <elf_new.h>
 #include <vas2.h>
+#include <constants.h>
+
+
+#define PROCESS_STACK_SIZE_IN_PAGES 4096
+#define PROCESS_HEAP_SIZE_IN_PAGES 4096
 
 // Function declarations
 
