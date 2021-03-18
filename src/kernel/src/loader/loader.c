@@ -4,7 +4,7 @@
 #include <vm2.h>
 #include <stdio.h>
 
-int loadProcessFromElfFile(void * PCB, void * file) {
+int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
 	// validate the input
 	if(PCB == NULL || file == NULL) return -1;
@@ -26,6 +26,9 @@ int loadProcessFromElfFile(void * PCB, void * file) {
     processProgramHeaderTable(new_vas, file, program_header_table, elf_info.programHeaderTableLength);
 
     // Add the pointer to the new address space to the PCB
+    PCB->vas = new_vas;
+
+    // Call init_state with pc = start_address and sp = top of stack
 
 	return 0;
 }
