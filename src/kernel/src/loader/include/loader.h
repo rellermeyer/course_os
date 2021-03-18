@@ -1,6 +1,7 @@
 #include <elf_new.h>
 #include <vas2.h>
 #include <constants.h>
+#include <processControlBlock.h>
 
 
 #define PROCESS_STACK_SIZE_IN_PAGES 4096
@@ -14,7 +15,7 @@
 	be loaded into main memory for reading.
 	@return A pointer to a newly created PCB for the new process
 */
-int loadProcessFromElfFile(void* PCB, void * file);
+int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file);
 
 int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size);
 
