@@ -20,9 +20,11 @@ typedef struct BCM2835InterruptRegisters {
   uint32_t DisableIRQ2;
   uint32_t DisableBasicIRQ;
 } BCM2835InterruptRegisters;
-enum BasicInterruptSource {
-  TIMER_IRQ = (1<<0),
+
+enum IRQ1Source {
+  SysTimerCMP1 = 1 << 1,
 };
+
 
 void bcm2835_init();
 void bcm2835_late_init();

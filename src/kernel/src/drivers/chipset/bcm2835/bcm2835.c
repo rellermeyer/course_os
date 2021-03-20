@@ -7,7 +7,14 @@
 
 volatile UartDevice bcm2835_uart;
 
-void bcm2835_irq_handler() {}
+void bcm2835_irq_handler() {
+  volatile const uint32_t pending = bcm2835_timer_registers_base->ControlStatus;
+
+  if(pending&Match1){
+    bcm2835_timer_registers_base->ControlStatus |= Match1;
+    bcm2835_timer_handle_interrupt();
+  }
+}
 
 void bcm2835_fiq_handler() {}
 

@@ -120,8 +120,12 @@ TEST_CREATE(test_first_free, {
 })
 
 TEST_CREATE(test_slice_reserved, {
-    size_t address = get_hardwareinfo()->peripheral_base_address + KERNEL_VIRTUAL_OFFSET;
-    union MemorySlice * slice =  (union MemorySlice*) address;
-    struct MemorySliceInfo * sliceinfo = NULL;
-    ASSERT_EQ(pmm_get_sliceinfo_for_slice(slice, &sliceinfo), SI_RESERVED_MMIO_MEMORY);
+    // For a raspi 1, mmio doesn't overlap memory. So this test doesn't make sense there.
+    // TODO: Find a better solution
+    if(get_hardwareinfo()->boardType==RaspBerryPiTwo){ 
+      size_t address = get_hardwareinfo()->peripheral_base_address + KERNEL_VIRTUAL_OFFSET;
+      union MemorySlice * slice =  (union MemorySlice*) address;
+      struct MemorySliceInfo * sliceinfo = NULL;
+      ASSERT_EQ(pmm_get_sliceinfo_for_slice(slice, &sliceinfo), SI_RESERVED_MMIO_MEMORY);
+    }
 });

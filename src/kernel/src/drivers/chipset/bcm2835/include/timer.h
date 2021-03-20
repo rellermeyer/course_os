@@ -22,10 +22,10 @@ typedef struct BCM2835SystemTimerRegisters {
 } BCM2835SystemTimerRegisters;
 
 enum ControlStatus {
-  Match3 = 0x1 << 16,
-  Match2 = 0x1 << 12,
-  Match1 = 0x1 << 8,
-  Match0 = 0x1 << 4,
+  Match3 = 0x1 << 3,
+  Match2 = 0x1 << 2,
+  Match1 = 0x1 << 1,
+  Match0 = 0x1 << 0,
 };
 
 void bcm2835_timer_init();

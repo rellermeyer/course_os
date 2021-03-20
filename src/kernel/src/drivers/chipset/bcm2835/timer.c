@@ -41,18 +41,20 @@ static inline uint32_t get_frequency() {
 
 
 static inline void mask_and_enable_timer() {
-    // Set compare value to 0
-    bcm2835_timer_registers_base->Compare0 = 0;
+    // Set compare value to 0  
+    bcm2835_timer_registers_base->Compare1 = 0;
+    // Disable CMP1 interrupt
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
 }
 
 static inline uint64_t get_phy_count() {
-    return bcm2835_timer_registers_base->Compare0;
+    return bcm2835_timer_registers_base->CounterLower;
 }
 
 
 
 static inline void set_phy_timer_cmp_val(uint32_t val) {
-  bcm2835_timer_registers_base->Compare0=val;
+  bcm2835_timer_registers_base->Compare1=val;
 }
 
 static inline ScheduledTimer * get_prq_node_data(prq_node * node) {
@@ -63,21 +65,22 @@ void bcm2835_timer_init() {
     const uint32_t freq = SYSTEM_TIMER_FREQ;
     INFO("System counter frequency: %u kHz\n", freq / 1000);
 
-    bcm2835_int_registers_base->DisableBasicIRQ = TIMER_IRQ;
+
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
 
 
     // Init priority queue
     scheduled_timers = prq_create();
 
 
-    bcm2835_int_registers_base->EnableBasicIRQ = TIMER_IRQ;
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
 }
 
 void bcm2835_timer_handle_interrupt() {
     volatile const uint64_t current_count = get_phy_count();
 
     // Begin of critical section, disable timer interrupts
-    bcm2835_int_registers_base->DisableBasicIRQ = TIMER_IRQ;
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
 
     // Process all timers that are not in the future, if any
     prq_node * next_timer_node = prq_peek(scheduled_timers);
@@ -117,7 +120,8 @@ void bcm2835_timer_handle_interrupt() {
     }
 
     // End of critical section, re-enable timer interrupts
-    bcm2835_int_registers_base->EnableBasicIRQ= TIMER_IRQ;
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
+
 }
 
 static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
@@ -142,7 +146,8 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
     new_timer_node->data = new_timer;
 
     // Begin of critical section, disable timer interrupts
-    bcm2835_int_registers_base->DisableBasicIRQ = TIMER_IRQ;
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
+
 
     prq_enqueue(scheduled_timers, new_timer_node);
 
@@ -150,7 +155,7 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
 
 
     // End of critical section, re-enable timer interrupts
-    bcm2835_int_registers_base->EnableBasicIRQ = TIMER_IRQ;
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
 
     return new_timer->handle;
 }
