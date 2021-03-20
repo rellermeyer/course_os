@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <vas2.h>
 #include <vm2.h>
-#include <stdio.h>
+
+#define init(pc, sp) asm volatile("init_state %0 %1"::"i"(pc), "i"(sp));
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
@@ -21,14 +22,23 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
     // Initialize a new address space for the new process to create
     struct vas2 * new_vas = create_vas();
+    stack_and_heap stackAndHeap;
 
     // Process the program(segment) header table - allocate pages, copy the loadable segments
-    processProgramHeaderTable(new_vas, file, program_header_table, elf_info.programHeaderTableLength);
+    int processResult = processProgramHeaderTable(new_vas, &stackAndHeap, file, program_header_table, elf_info.programHeaderTableLength);
+
+    if (processResult == -1) {
+        free_vas(new_vas);
+        FATAL("Creating a process image failed!\n");
+    }
+
+    kprintf("Creating the process image was successful!\n");
 
     // Add the pointer to the new address space to the PCB
     PCB->vas = new_vas;
 
     // Call init_state with pc = start_address and sp = top of stack
+    init(elf_info.entry, stackAndHeap.stack_pointer)
 
 	return 0;
 }
@@ -39,7 +49,7 @@ void load_memcpy(void * dest, void * src, size_t bytes) {
     }
 }
 
-int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
+int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
 
     // Switch to the new process address space
     switch_to_vas(vasToFill);
@@ -104,12 +114,11 @@ int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_Progra
                 }
             }
 
-
             currentVirtualAddress = virtualAddress;
-
         }
+    }
 
-        /* Allocate pages for the stack and the heap.
+    /* Allocate pages for the stack and the heap.
         *  STACK
         *   ||  - // TODO MB ? - 16MB currently
         *   \/
@@ -119,26 +128,29 @@ int processProgramHeaderTable(struct vas2 * vasToFill, void * file, Elf32_Progra
         *  HEAP
          */
 
-        Elf32_Addr heap_address = currentVirtualAddress;
+    Elf32_Addr heap_address = currentVirtualAddress;
 
-        // Allocate pages for the heap - 16MB = 4KB * 2^12
-        size_t counter = 0;
-        while (counter < PROCESS_HEAP_SIZE_IN_PAGES) {
-            allocate_page(vasToFill, currentVirtualAddress, false);
-            currentVirtualAddress += PAGE_SIZE;
-            counter++;
-        }
-
-        // Allocate pages for the stack - 16MB = 4KB * 2^12
-        counter = 0;
-        while (counter < PROCESS_STACK_SIZE_IN_PAGES) {
-            allocate_page(vasToFill, currentVirtualAddress, false);
-            currentVirtualAddress += PAGE_SIZE;
-            counter++;
-        }
-
-        Elf32_Addr stack_address = currentVirtualAddress - 4;
+    // Allocate pages for the heap - 16MB = 4KB * 2^12
+    size_t counter = 0;
+    while (counter < PROCESS_HEAP_SIZE_IN_PAGES) {
+        allocate_page(vasToFill, currentVirtualAddress, false);
+        currentVirtualAddress += PAGE_SIZE;
+        counter++;
     }
+
+    // Allocate pages for the stack - 16MB = 4KB * 2^12
+    counter = 0;
+    while (counter < PROCESS_STACK_SIZE_IN_PAGES) {
+        allocate_page(vasToFill, currentVirtualAddress, false);
+        currentVirtualAddress += PAGE_SIZE;
+        counter++;
+    }
+
+    Elf32_Addr stack_address = currentVirtualAddress - 4;
+
+    //Set the stack and heap pointers in the passed structure.
+    stackAndHeap->stack_pointer = stack_address;
+    stackAndHeap->heap_pointer = heap_address;
 
     return 0;
 
