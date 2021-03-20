@@ -3,6 +3,7 @@
 #include <vas2.h>
 #include <vm2.h>
 
+void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
@@ -44,12 +45,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
     // Add the pointer to the new address space to the PCB
     PCB->vas = new_vas;
 
-    // Call init_state with pc = start_address and sp = top of stack
-//    asm volatile("mov r3, %0 \n"
-//                 "mov r4, %1 \n"
-//                 "#init_state r3 r4"
-//                 :: "r"(elf_info.entry),
-//                    "r"(stackAndHeap.stack_pointer));
+    call_init_state(elf_info.entry, stackAndHeap.stack_pointer);
 
 	return 0;
 }
