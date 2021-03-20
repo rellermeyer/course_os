@@ -21,7 +21,7 @@ void bcm2835_init() {
     chipset.uart = &bcm2835_uart;
 
     bcm2835_peripheral_base = vm2_map_peripheral(BCM2835_PERIPHERALS_PHYSICAL_BASE, 16);
-    bcm2835_int_registers_base = (BCM2835InterruptRegisters *)(bcm2835_peripheral_base + 0xB000);
+    bcm2835_int_registers_base = (BCM2835InterruptRegisters *)(bcm2835_peripheral_base + 0xB200);
     bcm2835_timer_registers_base = (BCM2835SystemTimerRegisters *)(bcm2835_peripheral_base + 0x3000);
 
     bcm2835_uart_init(&bcm2835_uart);
