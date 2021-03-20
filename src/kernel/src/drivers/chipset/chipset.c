@@ -1,4 +1,5 @@
 
+#include <bcm2835.h>
 #include <bcm2836.h>
 #include <chipset.h>
 #include <hardwareinfo.h>
@@ -23,6 +24,10 @@ void init_chipset() {
     switch (info->boardType) {
         case RaspBerryPiTwo:
             bcm2836_init();
+            break;
+
+        case RaspberryPiZero:
+            bcm2835_init();
             break;
         default: {
             FATAL("Board type not supported for interrupts \n");

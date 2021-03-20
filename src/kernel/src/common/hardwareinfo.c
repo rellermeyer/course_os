@@ -57,6 +57,7 @@ void init_hardwareinfo(struct DTHeader * dtb_h) {
         case RaspberryPiZero:
             peripheral_base_address = BCM2835_PERIPHERALS_PHYSICAL_BASE;
             peripheral_region_size = 18 * Mebibyte;
+	    break;
         default:
             FATAL("Peripheral address for board type not implemented");
     }

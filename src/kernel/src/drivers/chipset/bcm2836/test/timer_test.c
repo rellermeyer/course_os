@@ -1,4 +1,4 @@
-#include <timer.h>
+#include "../include/timer.h"
 #include <test.h>
 
 static int callback_count_1;
