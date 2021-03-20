@@ -3,7 +3,6 @@
 #include <vas2.h>
 #include <vm2.h>
 
-#define init(pc, sp) asm volatile("init_state %0 %1"::"i"(pc), "i"(sp));
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
@@ -46,7 +45,11 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
     PCB->vas = new_vas;
 
     // Call init_state with pc = start_address and sp = top of stack
-    init(elf_info.entry, stackAndHeap.stack_pointer)
+//    asm volatile("mov r3, %0 \n"
+//                 "mov r4, %1 \n"
+//                 "#init_state r3 r4"
+//                 :: "r"(elf_info.entry),
+//                    "r"(stackAndHeap.stack_pointer));
 
 	return 0;
 }
