@@ -98,3 +98,21 @@
     msr cpsr_c, #Mode_SVC   // Return to system mode
 .endm
 
+.macro save_state_rsi
+    nop
+    // Save all non-banked registers on current stack
+    // Find out from which mode we interrupted
+    // Retrieve the sp, and lr from that mode (lr should be pushed last, since that's the first we want to retrieve when loading)
+    // Transfer all registers from the irq stack, onto the target mode stack (what do we do if we've come from an irq?)
+    // Update target sp to be the new stack top (including the execution state)
+.endm
+
+.macro load_state_rsi target_sp
+    nop
+    // Load target pc into irq lr
+    // Jump to that mode (system if it's the user_mode)
+    // Restore the banked registers of the target mode
+    // Then restore the other registers
+    // Jump back to irq mode
+    // Resume program using movs
+.endm
