@@ -12,12 +12,12 @@ ProcessControlBlock * sleepQueue;
 
 int timer = 0;
 
-void init_scheduler() {
+void init_scheduler(void) {
     kprintf("setting the scheduler periodic interupt\n");
     chipset.schedule_timer_periodic(&schedulerTimerCallback, TIME_SLICE_MS);
 }
 
-void schedulerTimerCallback() {
+void schedulerTimerCallback(void) {
     timer += TIME_SLICE_MS;
 
     // Check if any sleeping processes can be awoken
@@ -31,11 +31,11 @@ void schedulerTimerCallback() {
     //kprintf("schedulertimer interupt called");
 }
 
-void sleep(int id, int sleepTime) 
+void sleep(int id, int sleepTime)
 {
     ProcessControlBlock * node = findNode(id, queue);
     removePCBNode(node);
-    
+
     node->wakeupTime = timer + min(MINSLEEPTIME, sleepTime);
     ProcessControlBlock * j = sleepQueue;
     while (j->wakeupTime <= node->wakeupTime && j->next == NULL) { j = j->next; }
@@ -60,7 +60,7 @@ void remove(int id) {
     removePCBNode(findNode(id, sleepQueue));
 }
 
-void * getNext() {
+void getNext(void) {
     // Check if any possible processes
     if (queue == NULL) {
         FATAL("(no processes active)");
@@ -68,11 +68,8 @@ void * getNext() {
     // Get next process
     queue = queue->next;
     switch_to_vas(queue->vas);
-    
-    return queue->executionState;
 }
 
-void * schedule(void * executionState) {
-    queue->executionState = executionState;
+void schedule(void) {
     return getNext();
 }
