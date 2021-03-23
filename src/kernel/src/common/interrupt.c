@@ -220,41 +220,25 @@ void reserved_handler(void) {
     INFO("RESERVED HANDLER\n");
 }
 
-// the attribute automatically saves and restores state
-// TODO: We might not want that! (context switches etc)
+// TODO: Please, turn this into assembly
 void __attribute__((interrupt("IRQ"))) irq_handler(void) {
-    DEBUG("IRQ HANDLER");
-    return chipset.handle_irq();
+    // Save lr for the execution state, since it's gonna be lost when branching
+    asm volatile("push {lr}");
+    
+    // The subroutine is gonna do all the restoring, but unlike SWI won't return the 
+    // Execection State (sp), but save it in the banked sp to make sure we can access it when
+    // going though all the different C functions
+    asm volatile("bl save_state_irq");
 
-    //    int * pendingregister = (int *) 0x40000060;
-    //  int cpsr = disable_interrupt_save(IRQ);
+    chipset.handle_irq();
 
-    // os_printf("disabled CSPR:%X\n",cpsr);
-    // Discover source of interrupt
-    // do a straight run through the VIC_INT_STATUS to determine
-    // which interrupt lines need to be tended to
-    //  for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
-    //      // is the line active?
-    //      if ((1 << i) & mmio_read(&interrupt_registers->irq_basic_pending)) {
-    //          // activate that specific handler
-    //          handle_irq_interrupt(i);
-    //      }
-    //  }
-    // we've gone through the VIC and handled all active interrupts
-    // restore_proc_status(cpsr);
-
-    //  enable_interrupt(IRQ_MASK);
+    asm volatile("b load_state_irq");
+    // return popping and shit in disassembler is an issue?
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
     DEBUG("FIQ HANDLER\n");
     return chipset.handle_fiq();
-
-    //    handle_irq_interrupt(interrupt_registers->fiq_control & 0x7f);
-
-
-    // FIQ handler returns from the interrupt by executing:
-    // SUBS PC, R14_fiq, #4
 }
 
 void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI mode) {
