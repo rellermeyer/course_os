@@ -27,7 +27,7 @@ void init() {
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
     int userspace_test_program = 0;
     asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
+
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
     memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
@@ -94,9 +94,9 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     init();
     asm volatile("b _switch_to_usermode");
 #else
-    /* test_main();- */
+    test_main();
     // If we return, the tests failed.
-    /* SemihostingCall(OSSpecific); */
+    SemihostingCall(OSSpecific);
     #endif
 
     // TODO:
@@ -109,4 +109,3 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
 
     SLEEP;
 }
-
