@@ -2,6 +2,8 @@
 #include <string.h>
 #include <vm2.h>
 
+extern size_t __DTB_START[];
+
 
 // DTB is in big endian, so it must be converted to little endian
 static inline uint32_t fix_endian(const uint32_t num) {
@@ -127,3 +129,4 @@ struct DTPropString dtb_wrap_string_prop(struct DTHeader * dtb_h, struct DTProp 
         (char *)(prop + 1)};
     return wrapped;
 }
+

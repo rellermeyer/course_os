@@ -1,25 +1,22 @@
 #include <chipset.h>
 #include <constants.h>
+#include <debug.h>
 #include <dtb.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
 #include <pmm.h>
+#include <scheduler.h>
 #include <stdint.h>
-#include <debug.h>
 #include <string.h>
 #include <syscall.h>
 #include <test.h>
 #include <vas2.h>
-#include <scheduler.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
 #include <vm2.h>
-
-
-extern size_t __DTB_START[];
 
 
 void init() {
@@ -33,10 +30,10 @@ void init() {
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
     int userspace_test_program = 0;
     asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
+
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
-    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+    memcpy((void *)available_mem_addr, (void *)userspace_test_program, (size_t)60);
 
     register ProcessControlBlock * r5 asm("r5") = pcb;
     asm volatile("push {lr}");
@@ -49,11 +46,6 @@ void init() {
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
 void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
-    if (dtb == NULL) {
-        dtb = (struct DTHeader *)
-            __DTB_START;  // DTB not passed by bootloader, we are in QEMU. Use Embedded DTB.
-    }
-
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.
@@ -62,21 +54,8 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Initialize the chipset and enable uart
     init_chipset();
 
-    struct DTProp * mem_prop = dtb_get_property(dtb, "/memory", "reg");
-    assert(mem_prop != NULL);  // Failed to find memory node in the DTB
 
-    struct DTProp2UInt memory_prop = dtb_wrap_2uint_prop(
-        dtb, mem_prop);  // First element is address and second element is size of available memory
-    assert(memory_prop.first == 0);  // There can be multiple memory declarations in the DTB, but
-                                     // we're assuming there's only 1, and it starts at address 0
-
-    if (memory_prop.second == 0) {
-        memory_prop.second = Gibibyte;
-        INFO("DTB reports 0 RAM, setting size to 1 GB");
-    }
-
-
-    INFO("Detected memory size: 0x%x Bytes", memory_prop.second);
+    INFO("Detected memory size: 0x%x Bytes", get_hardwareinfo()->memory_size);
     INFO("Started chipset specific handlers");
 
     // just cosmetic (and for debugging)
@@ -88,7 +67,7 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // was temporary and has to be replaced here.
     // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
-    vm2_start(memory_prop.second);
+    vm2_start(get_hardwareinfo()->memory_size);
 
     INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
@@ -134,4 +113,3 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
 
     SLEEP;
 }
-
