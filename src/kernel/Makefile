@@ -34,11 +34,9 @@ INCLUDEDIR = include
 BOARD = raspi2
 
 ifeq ($(BOARD),raspi2)
-MEMORY = 1G
 CPU = cortex-a7
 DTB = $(CURDIR)/dtb/bcm2709-rpi-2-b.dtb
 else ifeq ($(BOARD),raspi0)
-MEMORY = 512M
 CPU = arm1176
 DTB = $(CURDIR)/dtb/bcm2708-rpi-zero-dumped.dtb
 endif 
@@ -108,7 +106,7 @@ build_pi: $(BUILDDIR)/kernel.img | builddir
 
 test: build configure | builddir
 	#${QEMU} -M versatilepb -cpu arm1176 -sd $(BUILDDIR)/card.sd -m $(MEMORY) -nographic -semihosting -kernel build/flash.bin -append "-load 0x410000 0x14000"
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 run: build configure | builddir
 	# nographic to turn off the gui
@@ -118,7 +116,7 @@ run: build configure | builddir
 	${QEMU} -kernel $(BUILDDIR)/kernel.elf -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -append "-load 0x410000 0x14000" -semihosting
 
 debug: build configure | builddir
-	${QEMU} -kernel $(BUILDDIR)/kernel.elf -m $(MEMORY) -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -semihosting -S -s
+	${QEMU} -kernel $(BUILDDIR)/kernel.elf -serial stdio -monitor none -M $(BOARD) -cpu $(CPU) -nographic -semihosting -S -s
 
 start_debug: build  configure | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
