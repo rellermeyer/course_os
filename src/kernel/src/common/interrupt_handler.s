@@ -5,7 +5,6 @@
 
 .global save_state_irq
 .global load_state_irq
-.global enter_priviledged_previous_mode
 .global get_previous_sp
 .global save_to_previous_sp
 
@@ -18,6 +17,17 @@
 #define INTERRUPT_HANDLER_S
 .include "src/scheduler/dispatcher.s"
 #endif
+
+.macro enter_priviledged_previous_mode
+    // Find out from which mode we interrupted
+    mrs r0, spsr
+    and r0, #0x1f          // Mask off the Mode bits [4:0]
+    cmp r0, #Mode_USR
+
+    // Move to target mode (SYS if we came from user mode)
+    msreq cpsr_c, r0
+    msrne cpsr_c, #Mode_SYS
+.endm
 
 // Disable interrupts? (IRQ, reset?)
 _handle_swi:
@@ -42,6 +52,7 @@ _handle_swi:
 
 save_state_irq:
     // TODO: Disable interrupts (VEWY INPOTRANT)
+    cpsid if
 
     // Save all non-banked registers on current stack
     stmfd sp!, {r0-r12}
@@ -53,10 +64,9 @@ save_state_irq:
     // Save a reference to the current stack
     mov r1, sp
 
-    push {lr}
-    bl enter_priviledged_previous_mode
-    pop {lr}
-    
+    enter_priviledged_previous_mode
+    cpsid if
+
     // Move everything from irq stack to target mode stack
     ldmfd r1!, {r3-r11}         // actually r0-r9 (I think)
     stmfd sp!, {r3-r11}         // r1 contains target mode sp
@@ -81,9 +91,7 @@ load_state_irq:
     ldmfd r0!, {lr}
 
     // Jump to that mode (system if it's the user_mode)
-    push {lr}
-    bl enter_priviledged_previous_mode
-    pop {lr}
+    enter_priviledged_previous_mode
 
     // Restore the banked registers of the target mode
     mov sp, r0                  // Update after getting lr from other mode
@@ -91,6 +99,7 @@ load_state_irq:
     ldmfd sp!, {lr}             
 
     ldmfd sp!, {r9-r12}         // Load r10-12, and spsr (is in r9 ?????)
+    // TODO enable interrupts in the other mode
     msr spsr_cxsf, r9           // Restore spsr
 
     ldmfd sp!, {r0-r9}          // Restore rest of the general purpose registers
@@ -98,26 +107,15 @@ load_state_irq:
     // Jump back to irq mode
     msr cpsr_c, #Mode_IRQ
 
+
+    cpsie if
     // Resume program using movs
     movs pc, lr
 
-enter_priviledged_previous_mode:
-    // Find out from which mode we interrupted
-    mrs r0, spsr
-    and r0, #0x1f          // Mask off the Mode bits [4:0]
-    cmp r0, #Mode_USR
-
-    // Move to target mode (SYS if we came from user mode)
-    msreq cpsr_c, r0            
-    msrne cpsr_c, #Mode_SYS
-
-    bx lr
 
 get_previous_sp:
-    push {lr}
-    bl enter_priviledged_previous_mode 
-    pop {lr}
-   
+    enter_priviledged_previous_mode 
+
     // Get sp, and return to IRQ (Should be any mode)
     mov r1, sp
     msr cpsr_c, #Mode_IRQ
@@ -126,10 +124,8 @@ get_previous_sp:
     bx lr
 
 save_to_previous_sp:
-    push {lr}
-    bl enter_priviledged_previous_mode 
-    pop {lr}
-   
+    enter_priviledged_previous_mode 
+
     // Get sp, and return to IRQ (Should be any mode)
     mov sp, r0
     msr cpsr_c, #Mode_IRQ

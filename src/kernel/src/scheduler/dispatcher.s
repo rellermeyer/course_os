@@ -2,10 +2,10 @@
 
 
 // Value to store in cpsr when you want to switch to user mode
-.equ Mode_USR, 0x10U
-.equ Mode_SYS, 0x1FU
-.equ Mode_SVC, 0x13U
-.equ Mode_IRQ, 0x12U
+.equ Mode_USR, 0x10
+.equ Mode_SYS, 0x1F
+.equ Mode_SVC, 0x13
+.equ Mode_IRQ, 0x12
 
 /**
     Save state will save the state of a process (execution state) onto the stack of said process, and return the address pointing to the top of the stack.

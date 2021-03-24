@@ -88,6 +88,8 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+    init_scheduler();
+
 #ifndef ENABLE_TESTS
     // DEBUG
 
