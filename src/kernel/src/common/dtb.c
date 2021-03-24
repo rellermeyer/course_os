@@ -1,5 +1,6 @@
 #include <dtb.h>
 #include <string.h>
+#include <vm2.h>
 
 
 // DTB is in big endian, so it must be converted to little endian
@@ -15,10 +16,6 @@ static inline uint32_t fix_endian(const uint32_t num) {
     return ret;
 }
 
-// Aligns the given pointer to 4 bytes.
-static inline void * align_pointer(void * pointer) {
-    return (void *)(((size_t)pointer + 3) & ~3);
-}
 
 
 // Advances past the begin node and returns name of the node
@@ -26,7 +23,7 @@ char * parse_begin_node(void ** curr_address) {
     *curr_address += sizeof(uint32_t);
     char * string_address = (char *)*curr_address;
     *curr_address += strlen(string_address) + 1;
-    *curr_address = align_pointer(*curr_address);
+    *curr_address = (void*)ALIGN(*curr_address,4);
     return string_address;
 }
 
@@ -99,7 +96,7 @@ struct DTProp * dtb_get_property(struct DTHeader * dtb_h, char * path, char * pr
                 }
                 // Skip over the property data
                 curr_address += sizeof(struct DTProp) + fix_endian(prop->len);
-                curr_address = align_pointer(curr_address);
+                curr_address = (void*)ALIGN(curr_address,4);
                 break;
             case FDT_NOP:
                 curr_address += sizeof(uint32_t);
