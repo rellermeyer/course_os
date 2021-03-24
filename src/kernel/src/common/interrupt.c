@@ -29,11 +29,11 @@ void init_vector_table() {
     /* Secondary Vector Table */
     mmio_write(HIGH_VECTOR_LOCATION + 0x20, &reset_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x24, &undef_instruction_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &_handle_swi);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &handle_swi);
     mmio_write(HIGH_VECTOR_LOCATION + 0x2C, &prefetch_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x30, &data_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x34, &reserved_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x38, &irq_handler);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x38, &handle_irq);
     mmio_write(HIGH_VECTOR_LOCATION + 0x3C, &fiq_handler);
 
     /// Enable high vectors (Vectors located at HIGH_VECTOR_LOCATION).
@@ -218,22 +218,6 @@ void __attribute__((interrupt("ABORT"))) data_abort_handler(void) {
 
 void reserved_handler(void) {
     INFO("RESERVED HANDLER\n");
-}
-
-// TODO: Please, turn this into assembly
-void __attribute__((interrupt("IRQ"))) irq_handler(void) {
-    // Save lr for the execution state, since it's gonna be lost when branching
-    asm volatile("push {lr}");
-    
-    // The subroutine is gonna do all the restoring, but unlike SWI won't return the 
-    // Execection State (sp), but save it in the banked sp to make sure we can access it when
-    // going though all the different C functions
-    asm volatile("bl save_state_irq");
-
-    chipset.handle_irq();
-
-    asm volatile("b load_state_irq");
-    // return popping and shit in disassembler is an issue?
 }
 
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
