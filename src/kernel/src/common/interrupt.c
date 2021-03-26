@@ -28,11 +28,11 @@ void init_vector_table() {
     /* Secondary Vector Table */
     mmio_write(HIGH_VECTOR_LOCATION + 0x20, &reset_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x24, &undef_instruction_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &_handle_swi);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x28, &handle_swi);
     mmio_write(HIGH_VECTOR_LOCATION + 0x2C, &prefetch_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x30, &data_abort_handler);
     mmio_write(HIGH_VECTOR_LOCATION + 0x34, &reserved_handler);
-    mmio_write(HIGH_VECTOR_LOCATION + 0x38, &irq_handler);
+    mmio_write(HIGH_VECTOR_LOCATION + 0x38, &handle_irq);
     mmio_write(HIGH_VECTOR_LOCATION + 0x3C, &fiq_handler);
 
     /// Enable high vectors (Vectors located at HIGH_VECTOR_LOCATION).
@@ -219,41 +219,9 @@ void reserved_handler(void) {
     INFO("RESERVED HANDLER\n");
 }
 
-// the attribute automatically saves and restores state
-// TODO: We might not want that! (context switches etc)
-void __attribute__((interrupt("IRQ"))) irq_handler(void) {
-    DEBUG("IRQ HANDLER");
-    return chipset.handle_irq();
-
-    //    int * pendingregister = (int *) 0x40000060;
-    //  int cpsr = disable_interrupt_save(IRQ);
-
-    // os_printf("disabled CSPR:%X\n",cpsr);
-    // Discover source of interrupt
-    // do a straight run through the VIC_INT_STATUS to determine
-    // which interrupt lines need to be tended to
-    //  for (int i = 0; i < MAX_NUM_INTERRUPTS; i++) {
-    //      // is the line active?
-    //      if ((1 << i) & mmio_read(&interrupt_registers->irq_basic_pending)) {
-    //          // activate that specific handler
-    //          handle_irq_interrupt(i);
-    //      }
-    //  }
-    // we've gone through the VIC and handled all active interrupts
-    // restore_proc_status(cpsr);
-
-    //  enable_interrupt(IRQ_MASK);
-}
-
 void __attribute__((interrupt("FIQ"))) fiq_handler(void) {
     DEBUG("FIQ HANDLER\n");
     return chipset.handle_fiq();
-
-    //    handle_irq_interrupt(interrupt_registers->fiq_control & 0x7f);
-
-
-    // FIQ handler returns from the interrupt by executing:
-    // SUBS PC, R14_fiq, #4
 }
 
 void __attribute__((always_inline)) inline SemihostingCall(enum SemihostingSWI mode) {
