@@ -8,7 +8,7 @@
 .global load_state_irq
 .global get_previous_sp
 .global save_to_previous_sp
-
+.global perform_syscall
 .extern chipset
 
 // Subroutine definitions
@@ -50,6 +50,7 @@
 
 // Disable interrupts? (IRQ, reset?)
 handle_swi:
+    push {lr}
     // Put swi number in r7
     push {r7}                   // Save r7
     ldr r7, [lr, #-4]           // SWI Instruction where we left off
@@ -57,23 +58,31 @@ handle_swi:
 
     // Save lr when going into subroutine
     push {lr}
-    bl syscall_handler 
-    pop {lr} 
+    bl syscall_handler
+    pop {lr}
 
-    pop {r7}                    // Restore r7
+    ## Whenever the SVC uses 0, the syscall is coming from the
+    ## kernel. This means that there might not be a process to
+    ## schedule. Arguably only useful for debugging purposes.
+    cmp r7, #0
+    pop {r7}
+    ble handle_swi_finish
 
-    // Save the state of the process calling the software interrupt 
-    _save_state_swi             
+handle_swi_user:
+    // Save the state of the process calling the software interrupt
+    _save_state_swi
     // Schedule and swap the processes
     bl schedule
     // Load the next process
     _load_state_swi r0
 
+handle_swi_finish:
+    pop {pc}
 
 handle_irq:
     push {lr}                   // Save lr for the execution state, since it's gonna be lost when branching
 
-    // The subroutine is gonna do all the restoring, but unlike SWI won't return the 
+    // The subroutine is gonna do all the restoring, but unlike SWI won't return the
     // Execection State (sp), but save it in the banked sp to make sure we can access it when
     // going though all the different C functions
     bl save_state_irq
@@ -104,11 +113,11 @@ save_state_irq:
     stmfd sp!, {r3-r11}         // r1 contains target mode sp
 
     ldmfd r1!, {r3-r6}          // actually r10-r12, and spsr
-    stmfd sp!, {r3-r6}          
+    stmfd sp!, {r3-r6}
 
     stmfd sp!, {lr}             // Target mode lr
-    
-    ldmfd r1!, {r2}             // Target mode pc 
+
+    ldmfd r1!, {r2}             // Target mode pc
     adds r2, #-4                // Compensate, historic reasons don't ask me why
     stmfd sp!, {r2}             // Actually put it on there
 
@@ -127,8 +136,8 @@ load_state_irq:
 
     // Restore the banked registers of the target mode
     mov sp, r0                  // Update after getting lr from other mode
-    
-    ldmfd sp!, {lr}             
+
+    ldmfd sp!, {lr}
 
     ldmfd sp!, {r9-r12}         // Load r10-12, and spsr (is in r9 ?????)
     // TODO enable interrupts in the other mode
@@ -146,17 +155,17 @@ load_state_irq:
 
 
 get_previous_sp:
-    enter_priviledged_previous_mode 
+    enter_priviledged_previous_mode
 
     // Get sp, and return to IRQ (Should be any mode)
     mov r1, sp
     msr cpsr_c, #Mode_IRQ
 
-    mov r0, r1 
+    mov r0, r1
     bx lr
 
 save_to_previous_sp:
-    enter_priviledged_previous_mode 
+    enter_priviledged_previous_mode
 
     // Get sp, and return to IRQ (Should be any mode)
     mov sp, r0
@@ -170,16 +179,23 @@ _switch_to_usermode:
     add r12, #0x4
     MOVS pc, r12
 
+perform_syscall:
+    push {lr}
+    mov r12, pc
+    mov r4, sp
+    svc 0
+    pop {pc}
+
 _userspace_test_program:
     mov r12, pc
     mov r4, sp
-    mov r0, #100
+    mov r0, #10
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3
-    svc 0
+    svc 100
     mov r4, sp
-    mov r0, #69
+    mov r0, #120
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3

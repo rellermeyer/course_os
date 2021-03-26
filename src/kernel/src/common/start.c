@@ -10,11 +10,8 @@
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>
-
-extern unsigned int user_start;
-extern unsigned int user_end;
+#include <syscall.h>
 #include <vm2.h>
-
 
 void init() {
     ProcessControlBlock * pcb = createPCB(0);
@@ -65,10 +62,6 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     INFO("Initializing the physical and virtual memory managers.");
     vm2_start(memory_size);
 
-    INFO("Setting up interrupt vector tables");
-    // Set up the exception handlers.
-    init_vector_table();
-
     INFO("Setting up heap");
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
@@ -77,6 +70,10 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // earlier by rewriting to make it use hardcoded buffer sizes
     // instead.
     debug_init();
+
+    INFO("Setting up interrupt vector tables");
+    // Set up the exception handlers.
+    init_vector_table();
 
     // Splash screen
     splash();
@@ -87,18 +84,19 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-    init_scheduler();
+    /* init_scheduler(); */
 
-#ifndef ENABLE_TESTS
+    #ifndef ENABLE_TESTS
     // DEBUG
 
     init();
     init();
     asm volatile("b _switch_to_usermode");
-#else
-    test_main();
+    #else
+    debug_run();
+    /* test_main(); */
     // If we return, the tests failed.
-    SemihostingCall(OSSpecific);
+    /* SemihostingCall(OSSpecific); */
     #endif
 
     // TODO:
