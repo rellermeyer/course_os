@@ -5,7 +5,7 @@
 #include <interrupt.h>
 #include <interrupt_handler.h>
 
-#define TIME_SLICE_MS       10
+#define TIME_SLICE_MS       1000
 #define MINSLEEPTIME        20
 
 ProcessControlBlock * queue;
