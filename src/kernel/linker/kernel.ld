@@ -34,7 +34,7 @@ SECTIONS
     }
 
     .process_exec : AT(ADDR(.process_exec) - __KERNEL_VIRTUAL_OFFSET) {
-	*/simple_program.o (.exec_file)
+	*/simple_program.mo (.exec_file)
     }
 
     /*make kernel top megabyte aligned*/

@@ -57,7 +57,7 @@ S_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.s))
 S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
     $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
 
-MITKO_FILE := src/loader/simple_program.o
+MITKO_FILE := $(foreach dir, $(DIRS), $(wildcard $(dir)/simple_program.mo))
 
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
 
