@@ -57,6 +57,8 @@ S_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.s))
 S_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.s, \
     $(BUILDDIR)/%.o, $(S_SOURCE_FILES))
 
+MITKO_FILE := src/loader/simple_program.o
+
 OBJECT_FILES := $(S_OBJECT_FILES) $(C_OBJECT_FILES)
 
 INCLUDEDIRS := $(sort $(foreach dir, $(foreach dir1, $(DIRS), $(shell dirname $(dir1))), $(wildcard $(dir)/$(INCLUDEDIR))))
@@ -114,10 +116,11 @@ debug: build configure | builddir
 start_debug: build  configure | builddir
 	$(GDB) -ex "target remote localhost:1234" -ex "symbol-file $(BUILDDIR)/kernel.sym"
 
-$(BUILDDIR)/kernel.elf: $(OBJECT_FILES) | builddir
+$(BUILDDIR)/kernel.elf: $(OBJECT_FILES) $(MITKO_FILE) | builddir
 	$(LD) -T linker/kernel.ld $(LDFLAGS) -Wl,-Map,kernel.map $^ -o $@
 	$(OBJCOPY) --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
 	$(OBJCOPY) --strip-debug $(BUILDDIR)/kernel.elf
+	@echo "Mitko now puts his section ..."
 
 # Begin Pi Make
 # (aka, building for a real pi. TODO: This is mostly untested)

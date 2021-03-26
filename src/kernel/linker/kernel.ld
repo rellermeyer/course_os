@@ -33,6 +33,10 @@ SECTIONS
         *(EXCLUDE_FILE (*/startup.o) .bss)
     }
 
+    .process_exec : AT(ADDR(.process_exec) - __KERNEL_VIRTUAL_OFFSET) {
+	*/simple_program.o (.exec_file)
+    }
+
     /*make kernel top megabyte aligned*/
     . = ALIGN(1024 * 1024);
     __KERNEL_TOP = .;
