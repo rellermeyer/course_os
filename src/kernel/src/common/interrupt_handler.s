@@ -22,11 +22,11 @@
 #endif
 
 .macro enter_priviledged_previous_mode
-    push {r0}               // save r0 because it will be used to store the current mode
+    push {r0}                   // save r0 because it will be used to store the current mode
 
     // Find out from which mode we interrupted
     mrs r0, spsr
-    and r0, #0x1f          // Mask off the Mode bits [4:0]
+    and r0, #0x1f               // Mask off the Mode bits [4:0]
 
     // Move to target mode (SYS if we came from user mode)
     mrs r12, cpsr
@@ -35,17 +35,17 @@
     orreq r12, r0
     orrne r12, #Mode_SYS
 
-    pop {r0}                // retrieve the previous value of r0
+    pop {r0}                    // retrieve the previous value of r0
 
     msr cpsr_c, r12
 .endm
 
-.macro enter_mode mode
+.macro enter_mode mode          // enter mode "\mode" with DISABLED interrupts
     mrs r12, cpsr
-    and r12, #0b11100000
+    and r12, #0b11100000        // disable irq and fiq interrupts
     orr r12, \mode
 
-    msr cpsr_c, r12
+    msr cpsr_c, r12             // switch to the given mode
 .endm
 
 // Disable interrupts? (IRQ, reset?)
@@ -78,20 +78,19 @@ handle_irq:
     // going though all the different C functions
     bl save_state_irq
 
-    push {r0, r1}
+    push {r0, r1}               // save r0 and r1, because they will be overwritten
     add lr, pc, #8              // save pc + 8 to lr
-    ldr r0, =chipset
-    add r0, #16
-    ldr r1, [r0]
+    ldr r0, =chipset            // get the address of the chipset variable
+    add r0, #16                 // add 16 to the address of chipset to get a pointer to handle_irq()
+    ldr r1, [r0]                // get the address of the handle_irq() function, stored in chipset
 
-    pop {r0}
-    blx r1
-    pop {r1}
-    //ldr pc, r12         // call chipset.handle_irq()
+    pop {r0}                    // retrieve the old value of r0
+    blx r1                      // call chipset.handle_irq()
+    pop {r1}                    // retrieve the old value of r1
+
     b load_state_irq
 
 save_state_irq:
-    // TODO: Disable interrupts (VEWY INPOTRANT)
     cpsid if
 
     // Save all non-banked registers on current stack
@@ -119,18 +118,9 @@ save_state_irq:
     adds r2, #-4                // Compensate, historic reasons don't ask me why
     stmfd sp!, {r2}             // Actually put it on there
 
-    // Return to irq, and resume execution
-    //msr cpsr_c, #Mode_IRQ          // reenables interrupts
-    //mrs r12, cpsr
-    //and r12, #0b11100000
-    //orr r12, #Mode_IRQ
-
-    //msr spsr, r12
-
-    //push {lr}
+    // Return to irq mode (with disabled interrupts), and resume execution
     enter_mode #Mode_IRQ        // for some reason lr is 0?
 
-    //ldmfd r1!, {lr}
     bx lr
 
 load_state_irq:
@@ -144,8 +134,8 @@ load_state_irq:
 
     // Restore the banked registers of the target mode
     mov sp, r0                  // Update after getting lr from other mode
-    
-    ldmfd sp!, {lr}             
+
+    ldmfd sp!, {lr}
 
     ldmfd sp!, {r9-r12}         // Load r10-12, and spsr (is in r9 ?????)
     // TODO enable interrupts in the other mode
@@ -156,24 +146,24 @@ load_state_irq:
     // Jump back to irq mode
     msr cpsr_c, #Mode_IRQ
 
+    cpsie if                    // enable the interrupts
 
-    cpsie if
     // Resume program using movs
     movs pc, lr
 
 
 get_previous_sp:
-    enter_priviledged_previous_mode 
+    enter_priviledged_previous_mode
 
     // Get sp, and return to IRQ (Should be any mode)
     mov r1, sp
     msr cpsr_c, #Mode_IRQ
 
-    mov r0, r1 
+    mov r0, r1
     bx lr
 
 save_to_previous_sp:
-    enter_priviledged_previous_mode 
+    enter_priviledged_previous_mode
 
     // Get sp, and return to IRQ (Should be any mode)
     mov sp, r0
