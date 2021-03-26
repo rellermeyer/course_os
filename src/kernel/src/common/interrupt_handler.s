@@ -41,11 +41,11 @@
 .endm
 
 .macro enter_mode mode
-    msr r12, cpsr
+    mrs r12, cpsr
     and r12, #0b11100000
     orr r12, \mode
 
-    msr spsr, r12
+    msr cpsr_c, r12
 .endm
 
 // Disable interrupts? (IRQ, reset?)
@@ -57,13 +57,13 @@ handle_swi:
 
     // Save lr when going into subroutine
     push {lr}
-    bl syscall_handler 
-    pop {lr} 
+    bl syscall_handler
+    pop {lr}
 
     pop {r7}                    // Restore r7
 
     // Save the state of the process calling the software interrupt 
-    _save_state_swi             
+    _save_state_swi
     // Schedule and swap the processes
     bl schedule
     // Load the next process
@@ -78,8 +78,16 @@ handle_irq:
     // going though all the different C functions
     bl save_state_irq
 
+    push {r0, r1}
     add lr, pc, #8              // save pc + 8 to lr
-    ldr pc, =chipset+16         // call chipset.handle_irq()
+    ldr r0, =chipset
+    add r0, #16
+    ldr r1, [r0]
+
+    pop {r0}
+    blx r1
+    pop {r1}
+    //ldr pc, r12         // call chipset.handle_irq()
     b load_state_irq
 
 save_state_irq:
@@ -97,23 +105,32 @@ save_state_irq:
     mov r1, sp
 
     enter_priviledged_previous_mode
-    cpsid if
 
     // Move everything from irq stack to target mode stack
     ldmfd r1!, {r3-r11}         // actually r0-r9 (I think)
     stmfd sp!, {r3-r11}         // r1 contains target mode sp
 
     ldmfd r1!, {r3-r6}          // actually r10-r12, and spsr
-    stmfd sp!, {r3-r6}          
+    stmfd sp!, {r3-r6}
 
     stmfd sp!, {lr}             // Target mode lr
-    
+
     ldmfd r1!, {r2}             // Target mode pc 
     adds r2, #-4                // Compensate, historic reasons don't ask me why
     stmfd sp!, {r2}             // Actually put it on there
 
     // Return to irq, and resume execution
-    msr cpsr_c, #Mode_IRQ
+    //msr cpsr_c, #Mode_IRQ          // reenables interrupts
+    //mrs r12, cpsr
+    //and r12, #0b11100000
+    //orr r12, #Mode_IRQ
+
+    //msr spsr, r12
+
+    //push {lr}
+    enter_mode #Mode_IRQ        // for some reason lr is 0?
+
+    //ldmfd r1!, {lr}
     bx lr
 
 load_state_irq:
