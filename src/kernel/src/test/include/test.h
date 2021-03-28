@@ -61,86 +61,7 @@ __attribute__((__common__)) size_t global_counter;
 
     #define PASS() return TEST_PASS
     #define FAIL() return TEST_FAIL
-    #define ASSERT(expr)                                                                       \
-        do {                                                                                   \
-            if (!expr) {                                                                       \
-                kprintf("failed assertion: %s:%i at ASSERT(%s)\n", __FILE__, __LINE__, #expr); \
-                return TEST_FAIL;                                                              \
-            }                                                                                  \
-        } while (0)
-    #define ASSERT_EQ(l, r)                                                                        \
-        do {                                                                                       \
-            if (l != r) {                                                                          \
-                kprintf(                                                                           \
-                    "failed assertion: %s:%i at ASSERT_EQ(%s, %s)\n", __FILE__, __LINE__, #l, #r); \
-                return TEST_FAIL;                                                                  \
-            }                                                                                      \
-        } while (0)
-    #define ASSERT_GT(l, r)                                                                        \
-        do {                                                                                       \
-            if (l <= r) {                                                                          \
-                kprintf(                                                                           \
-                    "failed assertion: %s:%i at ASSERT_GT(%s, %s)\n", __FILE__, __LINE__, #l, #r); \
-                return TEST_FAIL;                                                                  \
-            }                                                                                      \
-        } while (0)
-    #define ASSERT_GTEQ(l, r)                                               \
-        do {                                                                \
-            if (l < r) {                                                    \
-                kprintf("failed assertion: %s:%i at ASSERT_GTEQ(%s, %s)\n", \
-                        __FILE__,                                           \
-                        __LINE__,                                           \
-                        #l,                                                 \
-                        #r);                                                \
-                return TEST_FAIL;                                           \
-            }                                                               \
-        } while (0)
-    #define ASSERT_LT(l, r)                                                                        \
-        do {                                                                                       \
-            if (l >= r) {                                                                          \
-                kprintf(                                                                           \
-                    "failed assertion: %s:%i at ASSERT_LT(%s, %s)\n", __FILE__, __LINE__, #l, #r); \
-                return TEST_FAIL;                                                                  \
-            }                                                                                      \
-        } while (0)
-    #define ASSERT_LTEQ(l, r)                                               \
-        do {                                                                \
-            if (l > r) {                                                    \
-                kprintf("failed assertion: %s:%i at ASSERT_LTEQ(%s, %s)\n", \
-                        __FILE__,                                           \
-                        __LINE__,                                           \
-                        #l,                                                 \
-                        #r);                                                \
-                return TEST_FAIL;                                           \
-            }                                                               \
-        } while (0)
-    #define ASSERT_NEQ(l, r)                                               \
-        do {                                                               \
-            if (l == r) {                                                  \
-                kprintf("failed assertion: %s:%i at ASSERT_NEQ(%s, %s)\n", \
-                        __FILE__,                                          \
-                        __LINE__,                                          \
-                        #l,                                                \
-                        #r);                                               \
-                return TEST_FAIL;                                          \
-            }                                                              \
-        } while (0)
-    #define ASSERT_NOT_NULL(e)                                                                     \
-        do {                                                                                       \
-            if (e == NULL) {                                                                       \
-                kprintf(                                                                           \
-                    "failed assertion: %s:%i\n at ASSERT_NOT_NULL(%s)\n", __FILE__, __LINE__, #e); \
-                return TEST_FAIL;                                                                  \
-            }                                                                                      \
-        } while (0)
-    #define ASSERT_NULL(e)                                                                         \
-        do {                                                                                       \
-            if (e != NULL) {                                                                       \
-                kprintf("failed assertion: %s:%i\n at ASSERT_NULL(%s)\n", __FILE__, __LINE__, #e); \
-                return TEST_FAIL;                                                                  \
-            }                                                                                      \
-        } while (0)
-
+    #include "assert.h"
 #else
 
     // If tests are disabled during compile time, all the macros expand to nothing
@@ -149,7 +70,7 @@ __attribute__((__common__)) size_t global_counter;
     #define PASS()          0
     #define FAIL()          0
     #define ASSERT(expr)    0
-    #define ASSERT_EQ(l, r) d0
+    /* #define ASSERT_EQ(l, r) 0 */
 
 #endif
 
