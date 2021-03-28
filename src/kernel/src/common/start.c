@@ -7,15 +7,11 @@
 #include <stdint.h>
 #include <debug.h>
 #include <string.h>
-#include <syscall.h>
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>
-
-extern unsigned int user_start;
-extern unsigned int user_end;
+#include <syscall.h>
 #include <vm2.h>
-
 
 void init() {
     ProcessControlBlock * pcb = createPCB(0);
@@ -28,7 +24,7 @@ void init() {
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
     int userspace_test_program = 0;
     asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
+
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
     memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
@@ -66,10 +62,6 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     INFO("Initializing the physical and virtual memory managers.");
     vm2_start(memory_size);
 
-    INFO("Setting up interrupt vector tables");
-    // Set up the exception handlers.
-    init_vector_table();
-
     INFO("Setting up heap");
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
@@ -78,6 +70,10 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // earlier by rewriting to make it use hardcoded buffer sizes
     // instead.
     debug_init();
+
+    INFO("Setting up interrupt vector tables");
+    // Set up the exception handlers.
+    init_vector_table();
 
     // Splash screen
     splash();
@@ -88,16 +84,17 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-    init_scheduler();
+    /* init_scheduler(); */
 
-#ifndef ENABLE_TESTS
+    #ifndef ENABLE_TESTS
     // DEBUG
 
     init();
     init();
     asm volatile("b _switch_to_usermode");
-#else
-    /* test_main();- */
+    #else
+    debug_run();
+    /* test_main(); */
     // If we return, the tests failed.
     /* SemihostingCall(OSSpecific); */
     #endif
@@ -112,4 +109,3 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
 
     SLEEP;
 }
-

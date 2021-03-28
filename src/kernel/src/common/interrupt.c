@@ -1,14 +1,29 @@
+#include <debug.h>
 #include <chipset.h>
 #include <interrupt.h>
 #include <interrupt_handler.h>
+#include <syscall.h>
 #include <mmio.h>
-#include <sched.h>
 #include <stdio.h>
 #include <vm2.h>
 #include <debug.h>
 
+#define SYSCALL_NEXT(args) (* ((int*) vpslli_next(&args)))
+
+void syscall_command(VPSinglyLinkedListIterator args) {
+    int syscall_num = SYSCALL_NEXT(args);
+    int one = SYSCALL_NEXT(args);
+    int two = SYSCALL_NEXT(args);
+    int three = SYSCALL_NEXT(args);
+    kprintf("%d %d %d %d\n", syscall_num, one, two, three);
+    syscall(syscall_num, one, two, three);
+}
+
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
+    // Register syscall debug command
+    debug_add_command(debug_create_command("syscall", syscall_command));
+
     // allocate space for the IVR at the high vector location.
     vm2_allocate_page(kernell1PageTable,
                       HIGH_VECTOR_LOCATION,
@@ -86,18 +101,18 @@ long syscall_handler(void) {
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
+    int callNumber = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
-    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
     kprintf("\n");
+
 
     // System Call Handler
     switch (callNumber) {
@@ -111,7 +126,7 @@ long syscall_handler(void) {
             return 0L;
             break;
 
-        // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
+            // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
         case SYSCALL_CREATE:
             kprintf("Create system call called!\n");
             debug_run();
