@@ -1,11 +1,14 @@
 #ifndef ASSERT_TEST_H
 #define ASSERT_TEST_H
 #include <string.h>
+#include <ansi_escape.h>
 
 #define _ASSERT_INTERNAL(name, expr)                                    \
     do {                                                                \
         if (!expr) {                                                    \
-            kprintf("failed assertion: %s:%i at %s(%s)\n", __FILE__, __LINE__, name, #expr); \
+            ANSI_256(160);                                              \
+            kprintf("├─failed assertion: %s:%i at %s(%s)\n", __FILE__, __LINE__, name, #expr); \
+            ANSI(RESET);                                                \
             return TEST_FAIL;                                           \
         }                                                               \
     } while (0)
@@ -33,8 +36,10 @@
 #define _ASSERT_TYPED(name, expr, print, l, r)                          \
     do {                                                                \
         if (!expr) {                                                    \
-            kprintf("failed assertion: %s:%i at %s(%s)\n", __FILE__, __LINE__, name, #expr); \
-            kprintf("expected: " print "\n", l, r);                     \
+            ANSI_256(160);                                              \
+            kprintf("├─failed assertion: %s:%i at %s(%s)\n", __FILE__, __LINE__, name, #expr); \
+            ANSI(RESET);                                                \
+            kprintf("├─expected: " print "\n", l, r);                     \
             return TEST_FAIL;                                           \
         }                                                               \
     } while (0)

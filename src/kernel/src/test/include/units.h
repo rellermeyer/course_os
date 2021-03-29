@@ -16,14 +16,16 @@ __attribute__((__common__)) size_t global_counter;
         heap_t * heap = mem_get_allocator();                            \
         isize_t nbytes = heap->bytes_allocated;                         \
         bool res = run_test_##name();                                   \
+                                                                        \
+        if (res == TEST_FAIL) return TEST_FAIL;                         \
         if (nbytes != (isize_t)heap->bytes_allocated) {                 \
             ANSI_256(160);                                              \
-            kprintf("FAILED (MEMORY LEAK: %i bytes)\n",                 \
+            kprintf("├─FAILED (MEMORY LEAK: %i bytes)\n",               \
                     heap->bytes_allocated - nbytes);                    \
             ANSI(RESET);                                                \
             return TEST_FAIL;                                           \
         }                                                               \
-        return res;                                                     \
+        return TEST_PASS;                                               \
     }                                                                   \
                                                                         \
     bool test_##name() {                                                \
