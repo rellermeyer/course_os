@@ -1,0 +1,14 @@
+{% import 'unit.tmpl' as unit %}
+#include <stdlib.h>
+#include <stdbool.h>
+#include <ansi_escape.h>
+#include <test.h>
+
+
+
+{{ group.preamble }}
+
+{% for test in group.tests %}
+{{ unit.test(test.name, test.code) }}
+{{ test.additional }}
+{% endfor %}

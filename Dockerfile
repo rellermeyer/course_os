@@ -1,7 +1,7 @@
 FROM fedora:33
 MAINTAINER  Jan S. Rellermeyer <J.S.Rellermeyer@tudelft.nl>
 
-RUN yum install -y arm-none-eabi-gcc-cs arm-none-eabi-binutils-cs arm-none-eabi-newlib qemu-system-arm-core make which findutils
+RUN yum install -y arm-none-eabi-gcc-cs arm-none-eabi-binutils-cs arm-none-eabi-newlib qemu-system-arm-core make which findutils python3 python3-jinja2
 
 WORKDIR /work
 COPY src .

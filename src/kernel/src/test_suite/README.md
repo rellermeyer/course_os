@@ -1,6 +1,6 @@
 # Course OS Testing framework
 
-This directory is a custom-build testing framework by [Jonathan Dönszelmann](https://github.com/jonay2000/), [Victor Roest](https://github.com/nullx76/), and [Valentijn van de Beek](https://gtihub.com/ValentijnvdBeek)
+This directory is a custom-build testing framework by [
 
 To run tests, run
 

@@ -4,7 +4,8 @@ src/kernel/kernel.bin
 src/kernel/flash.bin
 src/kernel/boot-commands
 src/kernel/card.sd
-src/kernel/src/test/test.c
+src/kernel/src/test_suite/test.c
+src/kernel/src/test_suited/generated/
 src/kernel/build
 src/kernel/build/kernel.sym
 build/

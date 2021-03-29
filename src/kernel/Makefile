@@ -31,7 +31,7 @@ DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 # Use bash for recursive globbing
 SHELL:=/bin/bash -O globstar
 
-test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
+ # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build
 # every directory named `include` will have its contents autoincluded
@@ -42,6 +42,9 @@ CPU = cortex-a7
 # Seeds the random order in which tests are run.
 TESTS_SEED = $(shell date '+%s')
 
+test: DEFINITIONS += ENABLE_TESTS
+  $(shell $(SOURCEDIR)/test_suite/generate_tests.py $(TESTS_SEED))
+
 # =================== End Configuration ===================
 TOOLCHAIN_PATH=$(CURDIR)/../$(TOOLCHAIN_DIR)/$(BARE_METAL_TARGET)/bin
 CC=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gcc
@@ -51,11 +54,10 @@ OBJCOPY=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 GDB=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 QEMU ?= $(CURDIR)/../qemu/qemu/bin/qemu-system-arm
 
-DIRS = $(shell find $(SOURCEDIR)/ -type d -print | grep -v -e "**\/test" -)
-DIRS += ${SOURCEDIR}/test_suite
-DIRS += ${SOURCEDIR}/test_suite/include
+DIRS = $(shell find $(SOURCEDIR)/ -type d -print | grep -v -e "**\/test" -) 
+DIRS += $(shell find ${SOURCEDIR}/test_suite -type d -print)
 
-C_GEN_SOURCE_FILES := $(SOURCEDIR)/test_suite/test.c
+C_GEN_SOURCE_FILES := $(SOURCEDIR)/test_suite/test.c 
 C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(C_GEN_SOURCE_FILES)
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
@@ -99,7 +101,6 @@ endif
 .PHONY: configure
 configure: configure_qemu configure_toolchain
 	@echo "Configuring tools"
-	
 
 build:  $(BUILDDIR)/kernel.elf configure | builddir
 build_pi: $(BUILDDIR)/kernelPi.img | builddir
@@ -143,10 +144,6 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(SOURCEDIR)/test_suite/test.c: dummy | builddir
-	@echo Generating tests
-	@echo $(shell pwd)
-	@$(SOURCEDIR)/test_suite/generate_tests.py $(TESTS_SEED)
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
@@ -154,7 +151,7 @@ $(SOURCEDIR)/test_suite/test.c: dummy | builddir
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c dummy configure_toolchain | builddir
 	@mkdir -p $(shell dirname $@)
 	@echo Compiling $<
-	@echo ${CC}
+	@echo $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

@@ -9,13 +9,13 @@
 
 size_t global_counter = 0;
 
-{% for test_name in tests %}
-int test_{{test_name}}();
+{% for test in tests %}
+extern bool test_{{test.name}}(void);
 {% endfor %}
 
 void test_main() {
-    {% for test_name in tests %}
-    test_{{test_name}}();
+    {% for test in tests %}
+    if (test_{{test.name}}() == TEST_FAIL) return;
     {% endfor %}
     puts("TESTS COMPLETE. Passed {{ tests | length }} tests\n");
     //SemihostingCall(ApplicationExit);
