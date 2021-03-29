@@ -15,7 +15,7 @@ enum ELF_PROGRAM_TYPE validEPTypes[ACCEPTABLE_PROGRAM_TYPES] = {
 bool elf_validate_magic_sequence(Elf32_Header* header) {
     if(!header) return false;
     if(header->magic_sequence[EI_MAG0] != ELFMAG0) {
-        kprintf("ELF Header EI_MAG0 incorrect.\n");
+        kprintf("ELF Header EI_MAG0 incorrect. \n");
         return false;
     }
     if(header->magic_sequence[EI_MAG1] != ELFMAG1) {
@@ -34,6 +34,8 @@ bool elf_validate_magic_sequence(Elf32_Header* header) {
 }
 
 bool elf_check_supported(Elf32_Header* header) {
+
+    kprintf("Header address: %p\n", header);
 
     if(!elf_validate_magic_sequence(header)) {
         kprintf("Invalid ELF File.\n");
@@ -59,10 +61,10 @@ bool elf_check_supported(Elf32_Header* header) {
         kprintf("Unsupported ELF File type.\n");
         return false;
     }
-    if (header->e_header_size != EXPECTED_HEADER_SIZE) {
-        kprintf("Invalid header size.\n");
-        return false;
-    }
+//    if (header->e_header_size != EXPECTED_HEADER_SIZE) {
+//        kprintf("Invalid header size.\n");
+//        return false;
+//    }
     return true;
 
 }
@@ -74,7 +76,7 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
     // Check the validity of the Header
     if (!elf_check_supported(elf_header))  {
         kprintf("Parsing of ELF file header failed!\n");
-        return 0;
+        return -1;
     }
 
     elf->entry = elf_header->e_entry;

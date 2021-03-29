@@ -3,6 +3,8 @@
 #include <vas2.h>
 #include <vm2.h>
 
+#define DEBUG_LOADER
+
 void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
@@ -12,22 +14,39 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
 	// Parse the ELF header
 	Elf elf_info;
+
+#ifdef DEBUG_LOADER
+	kprintf("Parsing elf header ...\n");
+#endif
+
 	Elf32_Header * header = (Elf32_Header *)file;
 	int result = elf_parse_header(&elf_info, header);
     if (result == -1) return -1;
 
+#ifdef DEBUG_LOADER
+    kprintf("Getting the pointers to the tables ...\n");
+#endif
 
     // Get the pointers to the header tables
-	Elf32_SectionHeader * section_header_table = file + elf_info.sectionHeaderTableOffset;
-	Elf32_ProgramHeader * program_header_table = file + elf_info.programHeaderTableOffset;
+	Elf32_SectionHeader * section_header_table = (Elf32_SectionHeader *)((char *)file + elf_info.sectionHeaderTableOffset);
+	Elf32_ProgramHeader * program_header_table = (Elf32_ProgramHeader *)((char *)file + elf_info.programHeaderTableOffset);
+
+	printSectionNames(file, section_header_table, elf_info.sectionHeaderTableLength, elf_info.sht_index_names);
 
 
+#ifdef DEBUG_LOADER
+    kprintf("Creating a new vas ...\n");
+#endif
     // Initialize a new address space for the new process to create
     struct vas2 * new_vas = create_vas();
 
     // The structure holding the stack and heap pointers if the
     // header tables' are processed successfully.
     stack_and_heap stackAndHeap;
+
+#ifdef DEBUG_LOADER
+    kprintf("Processing program header table ...\n");
+#endif
 
     // Process the program(segment) header table - allocate pages and copy data for the loadable segments
     int processResult = processProgramHeaderTable(new_vas, &stackAndHeap, file, program_header_table, elf_info.programHeaderTableLength);
@@ -59,8 +78,12 @@ void load_memcpy(void * dest, void * src, size_t bytes) {
 
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
 
+    kprintf("Program header table size: %d \n", t_size);
+
     // Switch to the new process address space
     switch_to_vas(vasToFill);
+
+    INFO("Switched to new vas!");
 
     // Use this variable to keep track of the first free virtual address after the
     // already populated with segment data -> Then use it for the heap and the stack
@@ -76,6 +99,8 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
         if (!validate_program_header(currentProgramHeader)) {
             return -1;
         }
+
+        INFO("Header has valid data.");
 
         // If the segment is a LOAD type, move on to allocate space for it and copy its data
         if (currentProgramHeader->program_type == EPT_LOAD) {
@@ -113,12 +138,17 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
 
             // Get the required size of the segment in memory
             Elf32_Word memorySize = currentProgramHeader->program_memsz;
-            Elf32_Word sizeLeftToAllocate = memorySize;
+            int32_t sizeLeftToAllocate = memorySize;
+
+            INFO("Header data: ");
+            kprintf("VIRTUAL_ADDRESS: %x  -  FILE_ADDRESS: %x  -  FILE_SIZE: %d  -  MEM_SIZE: %d\n", virtualAddress, programToRead, fileSize, memorySize);
 
             // While there is more memory space that needs to be allocated for the segment
             // allocate a page for it and adjust the starting virtual address for the
             // next page.
             while (sizeLeftToAllocate > 0) {
+
+                    INFO(" ---- Allocating page ...");
 
                     allocate_page(vasToFill,virtualAddress, currentProgramHeader->flags & EPF_EXEC);
                     sizeLeftToAllocate -= PAGE_SIZE;
@@ -132,6 +162,7 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
             // In case the memory size is bigger than the file size, pad with zeroes.
             if (fileSize < memorySize) {
                 Elf32_Addr padding_address = segmentStartAddress + fileSize;
+                kprintf("Padding is needed of size: %d\n", memorySize - fileSize);
                 while (padding_address < segmentStartAddress + memorySize) {
                     *(char *)padding_address = '\0';
                     padding_address++;
@@ -196,7 +227,7 @@ int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_s
 	while(i < t_size) {
 		
 		// Do not make boundary checks for the offset into the section name table
-		kprintf("%s \n", (char *)names + shtable[i].section_name);
+		kprintf("Section name: %s ,Section size: %d\n", (char *)names + shtable[i].section_name, size);
         i++;
 	}
 

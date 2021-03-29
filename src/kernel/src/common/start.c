@@ -11,6 +11,7 @@
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>
+#include <loader.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
@@ -28,7 +29,7 @@ void init() {
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
     int userspace_test_program = 0;
     asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
+
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
     memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
@@ -37,6 +38,17 @@ void init() {
     asm volatile("push {lr}");
     asm volatile("bl _init");
     asm volatile("pop {lr}");
+}
+
+#define EXEC_FILE_ADDRESS ((void *)0x0000000080000000)
+
+void load_process() {
+    void * file = EXEC_FILE_ADDRESS;
+
+    struct ProcessControlBlock * pcb = createPCB(0);
+
+    loadProcessFromElfFile(pcb, file);
+
 }
 
 /// Entrypoint for the C part of the kernel.
@@ -88,10 +100,12 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+
 #ifndef ENABLE_TESTS
     // DEBUG
 
     init_scheduler();
+    load_process();
 
     init();
     init();
