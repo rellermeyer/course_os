@@ -28,6 +28,9 @@ LOG_LEVEL ?= 4
 # * LOG_LEVEL (number between 0 and 4)
 DEFINITIONS = MEM_DEBUG LOG_LEVEL=${LOG_LEVEL}
 
+# Use bash for recursive globbing
+SHELL:=/bin/bash -O globstar
+
 test: DEFINITIONS += ENABLE_TESTS # if we execute the test: rule, enable tests before recompiling
 SOURCEDIR = src
 BUILDDIR = build
@@ -35,6 +38,7 @@ BUILDDIR = build
 INCLUDEDIR = include
 CPU = cortex-a7
 
+# Get the sources
 # Seeds the random order in which tests are run.
 TESTS_SEED = $(shell date '+%s')
 
@@ -47,8 +51,11 @@ OBJCOPY=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-objcopy
 GDB=$(TOOLCHAIN_PATH)/$(BARE_METAL_TUPLE)-gdb
 QEMU ?= $(CURDIR)/../qemu/qemu/bin/qemu-system-arm
 
-DIRS = $(shell find $(SOURCEDIR)/ -type d -print)
-C_GEN_SOURCE_FILES := $(SOURCEDIR)/test/test.c
+DIRS = $(shell find $(SOURCEDIR)/ -type d -print | grep -v -e "**\/test" -)
+DIRS += ${SOURCEDIR}/test_suite
+DIRS += ${SOURCEDIR}/test_suite/include
+
+C_GEN_SOURCE_FILES := $(SOURCEDIR)/test_suite/test.c
 C_SOURCE_FILES := $(foreach dir,$(DIRS),$(wildcard $(dir)/*.c)) $(C_GEN_SOURCE_FILES)
 C_OBJECT_FILES := $(patsubst $(SOURCEDIR)/%.c, \
     $(BUILDDIR)/%.o, $(C_SOURCE_FILES))
@@ -136,9 +143,10 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s | builddir
 	@echo Assembling $<
 	@$(AS) -mcpu=arm1176jzf-s -g $< -o $@
 
-$(SOURCEDIR)/test/test.c: dummy | builddir
+$(SOURCEDIR)/test_suite/test.c: dummy | builddir
 	@echo Generating tests
-	@$(SOURCEDIR)/test/generate_tests.py $(TESTS_SEED)
+	@echo $(shell pwd)
+	@$(SOURCEDIR)/test_suite/generate_tests.py $(TESTS_SEED)
 
 # depend on dummy to always recompile. There aren't that many files atm anyway and
 # when the definitions change, we have to recompile. TODO: move definitions to some kind of file
