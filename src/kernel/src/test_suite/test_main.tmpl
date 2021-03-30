@@ -9,15 +9,15 @@
 
 size_t global_counter = 0;
 
-{% for test in tests %}
-extern bool test_{{test.name}}(void);
+{% for group in groups %}
+extern bool test_{{group.name}}(void);
 {% endfor %}
 
 void test_main() {
-    {% for test in tests %}
-    if (test_{{test.name}}() == TEST_FAIL) return;
+    {% for group in groups %}
+    if (test_{{group.name}}() == TEST_FAIL) return;
     {% endfor %}
-    puts("TESTS COMPLETE. Passed {{ tests | length }} tests\n");
+    puts("TESTS COMPLETE. Passed {{ groups | length }} test suites\n");
     //SemihostingCall(ApplicationExit);
 }
 

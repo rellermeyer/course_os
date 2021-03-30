@@ -12,7 +12,7 @@ bool __internal_test_{{name}}(void) {
     if (res == TEST_FAIL) return TEST_FAIL;
     if (nbytes != (isize_t)heap->bytes_allocated) {
         ANSI_256(160);
-        kprintf("├─FAILED (MEMORY LEAK: %i bytes)\n",
+        kprintf("├──FAILED (MEMORY LEAK: %i bytes)\n",
                 heap->bytes_allocated - nbytes);
         ANSI(RESET);
         return TEST_FAIL;
@@ -23,7 +23,7 @@ bool __internal_test_{{name}}(void) {
 
 bool test_{{name}}(void) {
     ANSI_256(163);
-    puts("[TEST] ");
+    puts("├─[TEST] ");
     ANSI(RESET);
     puts("{{name}}\n");
 
@@ -32,13 +32,13 @@ bool test_{{name}}(void) {
     if (res == TEST_PASS) {
         ANSI(HI_GREEN);
 
-        puts("└─PASSED {{name}}\n");
+        puts("├──PASSED {{name}}\n");
         ANSI(RESET);
         return 1;
     }
 
     ANSI(HI_RED);
-    puts("└─FAILED {{name}}\n");
+    puts("└──FAILED {{name}}\n");
     ANSI(RESET);
     return 0;
 }

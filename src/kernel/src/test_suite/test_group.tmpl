@@ -4,11 +4,29 @@
 #include <ansi_escape.h>
 #include <test.h>
 
-
-
 {{ group.preamble }}
 
 {% for test in group.tests %}
 {{ unit.test(test.name, test.code) }}
 {{ test.additional }}
 {% endfor %}
+
+bool test_{{group.name}}(void) {
+    ANSI_256(163);
+    puts("┌[SUITE] ");
+    ANSI(RESET);
+    puts("{{group.name}}\n");
+    /* ANSI_256(163); */
+    /* puts("│\n"); */
+    /* ANSI(RESET); */
+
+    {% for test in group.tests %}
+    if (test_{{test.name}}() == TEST_FAIL) return TEST_FAIL;
+    {% endfor %}
+
+    ANSI_256(163);
+    puts("└[SUITE COMPLETE] ");
+    ANSI(RESET);
+    puts("Passed {{group.tests | length}} tests\n\n");
+    return TEST_PASS;
+}

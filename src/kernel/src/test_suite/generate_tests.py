@@ -127,7 +127,7 @@ def generate_groups() -> list[TestGroup]:
                 # Add the name of the module to the name of the
                 # TestGroup. For example: fs/tmpfs/inodes/corruption.c
                 # -> fs_tmpfs_inodes_corruption.c
-                name = '_'.join(p.parts[1:-2]) + "_" + p.name
+                name = '_'.join(p.parts[1:-2]) + "_" + p.stem
                 group = TestGroup(name, f.read())
                 test_groups.append(group)
 
@@ -164,12 +164,12 @@ if __name__ == "__main__":
 
     for group in groups:
         # Write each unit into a C file
-        with open(TESTDIR + "generated/" + group.name, 'w') as f:
+        with open(TESTDIR + "generated/" + group.name + '.c', 'w') as f:
             template = env.get_template("test_group.tmpl")
             f.write(template.render(group=group))
 
     template = env.get_template("test_main.tmpl")
-    test_content = template.render(tests=tests)
+    test_content = template.render(groups=groups)
 
     with open(TESTDIR + "test.c", "w") as f:
         f.write(test_content)
