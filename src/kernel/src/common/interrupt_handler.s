@@ -138,11 +138,12 @@ load_state_irq:
 
     ldmfd sp!, {lr}
 
-    ldmfd sp!, {r9-r12}         // Load r10-12, and spsr (is in r9 ?????)
+    ldmfd sp!, {r8-r12}         // Load r10-12, and spsr (is in r9 ?????)
     // TODO enable interrupts in the other mode
-    msr spsr_cxsf, r9           // Restore spsr
+    ldmfd sp!, {r7}
+    msr spsr_cxsf, r7           // Restore spsr
 
-    ldmfd sp!, {r0-r9}          // Restore rest of the general purpose registers
+    ldmfd sp!, {r0-r7}          // Restore rest of the general purpose registers
 
     // Jump back to irq mode
     msr cpsr_c, #Mode_IRQ

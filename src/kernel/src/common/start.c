@@ -88,19 +88,19 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-    init_scheduler();
-
 #ifndef ENABLE_TESTS
     // DEBUG
+
+    init_scheduler();
 
     init();
     init();
     asm volatile("b _switch_to_usermode");
 #else
-    /* test_main();- */
+    test_main();
     // If we return, the tests failed.
-    /* SemihostingCall(OSSpecific); */
-    #endif
+    SemihostingCall(OSSpecific);
+#endif
 
     // TODO:
     //  * Mount vfs
