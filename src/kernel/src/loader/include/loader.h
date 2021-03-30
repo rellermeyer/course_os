@@ -4,8 +4,8 @@
 #include <processControlBlock.h>
 
 
-#define PROCESS_STACK_SIZE_IN_PAGES 4096
-#define PROCESS_HEAP_SIZE_IN_PAGES 4096
+#define PROCESS_STACK_SIZE_IN_PAGES 4
+#define PROCESS_HEAP_SIZE_IN_PAGES 4
 
 /**
  * A structure holding the addresses

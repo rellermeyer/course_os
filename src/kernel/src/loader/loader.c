@@ -15,28 +15,29 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 	// Parse the ELF header
 	Elf elf_info;
 
-#ifdef DEBUG_LOADER
-	kprintf("Parsing elf header ...\n");
-#endif
+	INFO("Parsing elf header ...");
 
 	Elf32_Header * header = (Elf32_Header *)file;
 	int result = elf_parse_header(&elf_info, header);
     if (result == -1) return -1;
 
-#ifdef DEBUG_LOADER
-    kprintf("Getting the pointers to the tables ...\n");
-#endif
+    INFO("Getting the pointers to the tables ...");
+
+    if (elf_info.programHeaderTableOffset == 0) {
+        INFO("This ELF file does not have a program header table!");
+        return -1;
+    } else if(elf_info.sectionHeaderTableOffset == 0) {
+        INFO("This ELF file does not have a section header table!");
+        return -1;
+    }
 
     // Get the pointers to the header tables
 	Elf32_SectionHeader * section_header_table = (Elf32_SectionHeader *)((char *)file + elf_info.sectionHeaderTableOffset);
 	Elf32_ProgramHeader * program_header_table = (Elf32_ProgramHeader *)((char *)file + elf_info.programHeaderTableOffset);
 
-	printSectionNames(file, section_header_table, elf_info.sectionHeaderTableLength, elf_info.sht_index_names);
 
+    INFO("Creating a new vas ...");
 
-#ifdef DEBUG_LOADER
-    kprintf("Creating a new vas ...\n");
-#endif
     // Initialize a new address space for the new process to create
     struct vas2 * new_vas = create_vas();
 
@@ -44,9 +45,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
     // header tables' are processed successfully.
     stack_and_heap stackAndHeap;
 
-#ifdef DEBUG_LOADER
-    kprintf("Processing program header table ...\n");
-#endif
+    INFO("Processing program header table ...\n");
 
     // Process the program(segment) header table - allocate pages and copy data for the loadable segments
     int processResult = processProgramHeaderTable(new_vas, &stackAndHeap, file, program_header_table, elf_info.programHeaderTableLength);
@@ -59,7 +58,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
     }
 
     // If the operation was successful, continue ...
-    kprintf("Creating the process image was successful!\n");
+    INFO("Creating the process image was successful!\n");
 
     // Add the pointer to the new address space to the PCB
     PCB->vas = new_vas;
@@ -72,18 +71,18 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 // Helper function like the standard memcpy function.
 void load_memcpy(void * dest, void * src, size_t bytes) {
     for (size_t i = 0; i < bytes; ++i) {
-        ((char *)dest)[i] = *((char *)src);
+        ((char *)dest)[i] = ((char *)src)[i];
     }
 }
 
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
 
-    kprintf("Program header table size: %d \n", t_size);
 
     // Switch to the new process address space
     switch_to_vas(vasToFill);
 
     INFO("Switched to new vas!");
+    INFO("Program header table size: %d\n", t_size);
 
     // Use this variable to keep track of the first free virtual address after the
     // already populated with segment data -> Then use it for the heap and the stack
@@ -146,15 +145,13 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
             // While there is more memory space that needs to be allocated for the segment
             // allocate a page for it and adjust the starting virtual address for the
             // next page.
+            INFO("Allocating %d pages for segment ...", sizeLeftToAllocate / PAGE_SIZE + ((sizeLeftToAllocate % PAGE_SIZE) ? 0 : 1));
             while (sizeLeftToAllocate > 0) {
-
-                    INFO(" ---- Allocating page ...");
-
                     allocate_page(vasToFill,virtualAddress, currentProgramHeader->flags & EPF_EXEC);
                     sizeLeftToAllocate -= PAGE_SIZE;
                     virtualAddress += PAGE_SIZE;
-
             }
+
 
             // copy the segment data into the newly allocated pages
             load_memcpy((void *)segmentStartAddress, (void *)programToRead, fileSize);
@@ -162,25 +159,33 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
             // In case the memory size is bigger than the file size, pad with zeroes.
             if (fileSize < memorySize) {
                 Elf32_Addr padding_address = segmentStartAddress + fileSize;
-                kprintf("Padding is needed of size: %d\n", memorySize - fileSize);
+                INFO("Padding is needed of size: %d", memorySize - fileSize);
                 while (padding_address < segmentStartAddress + memorySize) {
                     *(char *)padding_address = '\0';
                     padding_address++;
                 }
+                INFO("Padding completed!");
+
             }
 
             // Keep track of the first free virtual address after the last segment.
             currentVirtualAddress = virtualAddress;
+
+            INFO("Pages allocated for segment and data is set up!\n");
+
         }
     }
 
+    INFO("Program headers processed successfully!");
+    INFO("Allocating stack and heap memory ...");
+
     /* Allocate pages for the stack and the heap.
         *  STACK
-        *   ||  - // TODO MB ? - 16MB currently
+        *   ||  - // - 16KB currently
         *   \/
         *  -----
         *   /\
-        *   ||  - // TODO MB ? - 16MB currently
+        *   ||  - // - 16KB currently
         *  HEAP
          */
 
@@ -188,12 +193,15 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
     Elf32_Addr heap_address = currentVirtualAddress;
 
     // Allocate pages for the heap - 16MB = 4KB * 2^12
+    kprintf("Heap starts at address: %x\n", currentVirtualAddress);
     size_t counter = 0;
     while (counter < PROCESS_HEAP_SIZE_IN_PAGES) {
         allocate_page(vasToFill, currentVirtualAddress, false);
         currentVirtualAddress += PAGE_SIZE;
         counter++;
     }
+    INFO("Pages for heap allocated successfully!");
+
 
     // Allocate pages for the stack - 16MB = 4KB * 2^12
     counter = 0;
@@ -202,6 +210,11 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
         currentVirtualAddress += PAGE_SIZE;
         counter++;
     }
+    kprintf("Stack starts at address: %x\n", currentVirtualAddress - 4);
+    INFO("Pages for stack allocated successfully!");
+
+
+    INFO("Returning from the segment processing routine ...");
 
     // Get the stack pointer for the new process
     Elf32_Addr stack_address = currentVirtualAddress - 4;
