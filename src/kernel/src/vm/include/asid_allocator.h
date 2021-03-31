@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/// We have made a special allocator to keep track of all the ASIDs used and to determine if we
+/// We have made a special oldlocator to keep track of all the ASIDs used and to determine if we
 /// would need to flush the caches upon a context switch. This should greatly reduce the amount of
 /// cache flushes needed and optimizes the usage of ASIDs.
 ///

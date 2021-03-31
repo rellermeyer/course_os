@@ -1,76 +1,45 @@
-// Adapted from https://github.com/CCareaga/heap_allocator
+///
+
 
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
+#include <stdbool.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-#define HEAP_INIT_SIZE 0x10000
-#define HEAP_MAX_SIZE  0xF0000
-#define HEAP_MIN_SIZE  0x10000
+#define HEAP_SIZE ((size_t)((1 << 20) + sizeof(buddy_allocator)))
+#define MIN_ORDER 4
+#define MAX_ORDER 21
 
-#define MIN_ALLOC_SZ 4
+typedef struct {
+    size_t base;
+    size_t free_lists[MAX_ORDER - MIN_ORDER];
 
-#define MIN_WILDERNESS 0x2000
-#define MAX_WILDERNESS 0x1000000
-
-#define BIN_COUNT   9
-#define BIN_MAX_IDX (BIN_COUNT - 1)
+#ifdef MEM_DEBUG
+    size_t bytes_allocated;
+#endif
+} buddy_allocator;
 
 void set_trace_memory(const bool value);
 bool get_trace_memory(void);
 
-/// Heap
-typedef struct node_t {
-    uint32_t hole;
-    uint32_t size;
-    struct node_t * next;
-    struct node_t * prev;
-} node_t;
+typedef buddy_allocator heap_t;
 
 typedef struct {
-    node_t * header;
-} footer_t;
+    size_t size;
+} buddy_allocation_header;
 
 typedef struct {
-    node_t * head;
-} bin_t;
+    buddy_allocation_header header;
+    uint8_t allocation[];
+} buddy_allocation;
 
-typedef struct {
-    uint32_t start;
-    uint32_t end;
-    bin_t * bins[BIN_COUNT];
-    size_t bytes_allocated;
-} heap_t;
-
-extern uint32_t overhead;
-
-void create_heap(heap_t * heap, uint32_t start);
-
-void * heap_alloc(heap_t * heap, uint32_t size);
-void heap_free(heap_t * heap, void * p);
-uint32_t expand(heap_t * heap);
-void contract(heap_t * heap);
-
-uint32_t get_bin_index(uint32_t sz);
-void create_foot(node_t * head);
-footer_t * get_foot(node_t * head);
-
-node_t * get_wilderness(heap_t * heap);
-
-uint32_t get_alloc_size(void * ptr);
-
-/// Linked list
-
-void add_node(bin_t * bin, node_t * node);
-
-void remove_node(bin_t * bin, node_t * node);
-
-node_t * get_best_fit(bin_t * list, uint32_t size);
-node_t * get_last_node(bin_t * list);
-
-node_t * next(node_t * current);
-node_t * prev(node_t * current);
+buddy_allocator * buddy_init(buddy_allocator *address, size_t size);
+void* buddy_alloc(buddy_allocator * buddy, size_t size);
+void buddy_dealloc(buddy_allocator * buddy, size_t address);
+size_t get_alloc_size(size_t address);
+void buddy_status(buddy_allocator * buddy);
 
 #endif

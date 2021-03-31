@@ -130,7 +130,7 @@ char * __strchrnul(char * s, char c) {
 
     if (!c) return (char *)s + strlen(s);
 
-    for (; (uintptr_t)s % ALIGN; s++)
+    for (; (size_t)s % ALIGN; s++)
         if (!*s || *(unsigned char *)s == c) return (char *)s;
     k = ONES * c;
     for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w ^ k); w++)
