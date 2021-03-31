@@ -2,7 +2,8 @@
 #include <chipset.h>
 #include <klibc.h>
 #include <stdint.h>
-#include <uart.h>
+#include <bcm2836_uart.h>
+
 
 /*
 // raspberry pi zero, 1, b+ etc

@@ -10,6 +10,7 @@ src/kernel/build
 src/kernel/build/kernel.sym
 build/
 .cache/
+builddir/
 
 # Toolchain dir, but not the build script
 src/toolchain/

@@ -1,17 +1,17 @@
 /********************************************************************
- *	libc.h
+ *  libc.h
  *
  *       (Any collaborators, please add your name)
- *	Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
+ *  Author: Jared McArthur, Taylor Smith, Sheldon Sandbekkhaug, Kaelen Haag
  *
- *	Last edited: 20 April 2014
+ *  Last edited: 20 April 2014
  *
- *	Purpose:	Provide basic libc funtionality for CourseOS
- *				This header provides function skeletons
- *				for libc.c
+ *  Purpose:    Provide basic libc funtionality for CourseOS
+ *              This header provides function skeletons
+ *              for libc.c
  *
- *	Usage:	Compile into kernel. Adaptations of normal libc functions
- *			can be used by prepending os_ suffix.
+ *  Usage:  Compile into kernel. Adaptations of normal libc functions
+ *          can be used by prepending os_ suffix.
  ********************************************************************/
 
 /* LOG:
@@ -95,8 +95,8 @@ unsigned int rand();
 #else
     #define INFO(...) ALL_UNUSED(__VA_ARGS__)
 #endif
-#if ENABLE_TESTS
-    #define WARN(format, ...)                                                        \
+#ifdef  ENABLE_TESTS
+#define WARN(format, ...)                                               \
         kprintf("\e[38;5;208m[WARN] \e[38;5;208m%s:%i\e[38;5;208m" format "\e[0m\n", \
                 __FILE__,                                                            \
                 __LINE__,                                                            \

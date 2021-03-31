@@ -93,10 +93,10 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     init();
     asm volatile("b _switch_to_usermode");
     #else
-    debug_run();
-    /* test_main(); */
+    /* debug_run(); */
+    test_main();
     // If we return, the tests failed.
-    /* SemihostingCall(OSSpecific); */
+    SemihostingCall(OSSpecific);
     #endif
 
     // TODO:

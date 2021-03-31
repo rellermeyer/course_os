@@ -18,7 +18,7 @@
 
 #ifndef INTERRUPT_HANDLER_S
 #define INTERRUPT_HANDLER_S
-.include "src/scheduler/dispatcher.s"
+.include "../src/scheduler/dispatcher.s"
 #endif
 
 .macro enter_priviledged_previous_mode

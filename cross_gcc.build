@@ -1,0 +1,34 @@
+[binaries]
+c  = 'arm-none-eabi-gcc'
+ld = 'arm-none-eabi-gcc'
+as = 'arm-none-eabi-as'
+objcopy = 'arm-none-eabi-objcopy'
+gdb = 'arm-none-eabi-gdb'
+
+[properties]
+c_args      = ['-pipe', '-std=gnu99', '-ffreestanding', '-Wall',
+            '-Werror',
+            '-Wno-error=unused-function',
+            '-Wno-error=unused-label',
+            '-Wno-error=unused-parameter',
+            '-Wno-error=unused-variable',
+            '-Wno-error=unused-value',
+            '-Wno-error=unused-local-typedefs',
+            '-g', '-O0', '-mtune=arm1176jzf-s',
+            '-march=armv6zk', '-mfpu=vfp', '-fpic', '-mcpu=arm1176jz-s',
+            ]
+
+c_link_args = ['-fcommon',
+              '-nostartfiles',
+               '-nolibc',
+	       '-Wl,-Map,kernel.map',
+               '-T', 
+	       '../linker/kernel.ld',
+              ]
+
+
+[target_machine]
+system     = 'none'
+cpu_family = 'arm'
+cpu        = 'cortex-a7'
+endian     = 'little'
