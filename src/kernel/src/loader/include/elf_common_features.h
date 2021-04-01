@@ -11,6 +11,6 @@
 
 #define EXPECTED_VERSION	(0x01)
 
-#define EXPECTED_HEADER_SIZE	(0x36)
+#define EXPECTED_HEADER_SIZE	(0x34)
 
 

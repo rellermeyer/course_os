@@ -143,7 +143,7 @@ typedef struct Elf {
  * ELF file header is correct.
  * @return true if correct, false otherwise
  * */
-bool elf_validate_magic_sequence(Elf32_Header* header);
+int elf_validate_magic_sequence(Elf32_Header* header);
 
 
 /*
@@ -151,7 +151,7 @@ bool elf_validate_magic_sequence(Elf32_Header* header);
  * a process from has the correct characteristics in
  * its header information.
  */
-bool elf_check_supported(Elf32_Header* header);
+int elf_check_supported(Elf32_Header* header);
 
 /* A function to parse the information contained in the ELF file
  * header, including the program and section header tables' sizes
@@ -167,4 +167,4 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
  * an illegal or a reserved one, which is not allowed.
  * @return true if header is valid, false otherwise
  */
-bool validate_program_header(Elf32_ProgramHeader * header);
+int validate_program_header(Elf32_ProgramHeader * header);
