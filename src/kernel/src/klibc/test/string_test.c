@@ -183,7 +183,7 @@ TEST_CREATE(test_ktokenize, {
         token_conf[0] = ": ";
         token_conf[1] = ", ";
 
-        // Perse a very simple config file
+        // Parse a very simple config file
         lst = ktokenize("name: val, course: os, uni: tud", token_conf, 2);
         kprintf("%s\n", vpsll_get(lst, 1));
         ASSERT_EQ(strcmp(vpsll_get(lst, 0), "name"), 0);

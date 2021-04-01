@@ -98,11 +98,11 @@ void* buddy_alloc_helper(buddy_allocator * buddy, size_t size) {
             // Try to return it's buddies
             size_t found_size = 1 << order;
 
-            if ( found_size != want_size ) {
+            if (found_size != want_size) {
                 // Keep halving the found size, returning the second parts of the halves into
                 // the free list as we go, until we find the right size.
 
-                while ( found_size > want_size ) {
+                while (found_size > want_size) {
                     found_size = found_size >> 1;
                     buddy_add_free_item(buddy, address + found_size,
                                         32 - __builtin_clz(found_size - 1), true);
@@ -113,7 +113,7 @@ void* buddy_alloc_helper(buddy_allocator * buddy, size_t size) {
         }
     }
 
-    // Didin't find anything :(
+    // Didn't find anything :(
     return NULL;
 }
 
@@ -129,7 +129,6 @@ void * buddy_alloc(buddy_allocator * buddy, size_t size) {
 #endif
     return &start->allocation;
 }
-
 
 // Return a chunk of memory ack into the buddy allocator
 void buddy_dealloc_helper(buddy_allocator * buddy, size_t address, size_t size) {
