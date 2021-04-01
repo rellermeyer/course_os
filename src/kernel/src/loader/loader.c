@@ -3,8 +3,6 @@
 #include <vas2.h>
 #include <vm2.h>
 
-#define DEBUG_LOADER
-
 void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
@@ -229,18 +227,19 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
 
 int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index) {
 
+    // Get the pointer to the names section
 	Elf32_SectionHeader * names_section = shtable + names_index;
 
+	// Get a pointer to the names section data
 	Elf32_Addr names = (uint32_t)((char *)file + names_section->section_offset);
-	
-	Elf32_Word size = names_section->section_size;
+
 
 	Elf32_Word i = 0;
 
 	while(i < t_size) {
 		
 		// Do not make boundary checks for the offset into the section name table
-		kprintf("Section name: %s ,Section size: %d\n", (char *)names + shtable[i].section_name, size);
+		kprintf("Section name: %s \n", (char *)names + (shtable[i].section_name));
         i++;
 	}
 
