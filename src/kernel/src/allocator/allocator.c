@@ -1,9 +1,6 @@
-// Adapted from https://github.com/CCareaga/heap_allocator
-
-
 /**
  * buddy system page frame allocator
- * modified from :https://github.com/block8437/buddyalloc
+ * modified from: https://github.com/block8437/buddyalloc
  */
 
 #include <allocator.h>
@@ -28,7 +25,6 @@ bool get_trace_memory(void) {
     return trace_memory;
 }
 
-
 // Determines whether or not a and b are buddies of size size.
 bool buddy_check(buddy_allocator * buddy, size_t a, size_t b, size_t size) {
     size_t lower = min(a, b) - buddy->base;
@@ -44,43 +40,36 @@ void buddy_add_free_item(buddy_allocator * buddy, size_t address, size_t order, 
     GET_NEXT(address) = 0;
     size_t size = 1 << order;
 
-    if ( !new && head != 0) {
-        // Old address with a nonempty list, lets find some buddies!
-        size_t prev = 0;
-
-        // Kind of ugly but w\e
-        while (true) {
-            // Check for buddies
-            if ( buddy_check(buddy, head, address, size) ) {
-                // We found buddies
-
-                if ( prev != 0 ) {
-                    // Remove this item from it's old list
-                    GET_NEXT(prev) = GET_NEXT(head);
-                }
-                else {
-                    buddy->free_lists[order - MIN_ORDER] = GET_NEXT(head);
-                }
-
-                buddy_add_free_item(buddy, min(head, address), order + 1, false);
-                return;
-            }
-
-            if(GET_NEXT(head) == 0 ) {
-                // We reached the end of the list, add it here.
-                GET_NEXT(head) = address;
-                break;
-            }
-
-            prev = head;
-            head = GET_NEXT(head);
-        }
-    }
-    else {
+    if (new || head == 0) {
         // Fresh address, push to the head.
         GET_NEXT(address) = head;
         buddy->free_lists[order - MIN_ORDER] = address;
+        return;
     }
+
+    // Old address with a nonempty list, lets find some buddies!
+    size_t prev = 0;
+    while (!buddy_check(buddy, head, address, size)) {
+        // We reached the end of the list, add it here and return
+        if (GET_NEXT(head) == 0) {
+            GET_NEXT(head) = address;
+            return;
+        }
+
+        prev = head;
+        head = GET_NEXT(head);
+
+    }
+
+    // We found buddies
+    if (prev != 0) {
+        // Remove this item from it's old list
+        GET_NEXT(prev) = GET_NEXT(head);
+    } else {
+        buddy->free_lists[order - MIN_ORDER] = GET_NEXT(head);
+    }
+
+    buddy_add_free_item(buddy, min(head, address), order + 1, false);
 }
 
 // Allocate a chunk from a buddy allocator
@@ -115,7 +104,8 @@ void* buddy_alloc_helper(buddy_allocator * buddy, size_t size) {
 
                 while ( found_size > want_size ) {
                     found_size = found_size >> 1;
-                    buddy_add_free_item(buddy, address + found_size, 32 - __builtin_clz(found_size - 1), true);
+                    buddy_add_free_item(buddy, address + found_size,
+                                        32 - __builtin_clz(found_size - 1), true);
                 }
             }
 
@@ -128,14 +118,15 @@ void* buddy_alloc_helper(buddy_allocator * buddy, size_t size) {
 }
 
 void * buddy_alloc(buddy_allocator * buddy, size_t size) {
-    buddy_allocation * start = buddy_alloc_helper(buddy, size + sizeof(buddy_allocation_header));
+    buddy_allocation * start = buddy_alloc_helper(buddy,
+                                                  size + sizeof(buddy_allocation_header));
     start->header.size = size;
 
-    #ifdef MEM_DEBUG
+#ifdef MEM_DEBUG
     buddy->bytes_allocated += start->header.size;
     TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", start->header.size, &start->allocation);
 //    buddy_status(buddy);
-    #endif
+#endif
     return &start->allocation;
 }
 
@@ -161,20 +152,22 @@ void buddy_dealloc(buddy_allocator * buddy, size_t address) {
     }
 
     // get the header
-    buddy_allocation_header * header = (buddy_allocation_header *)(address - sizeof(buddy_allocation_header));
+    buddy_allocation_header * header = (buddy_allocation_header *)
+        (address - sizeof(buddy_allocation_header));
     size_t size = header->size;
 
-    // deallocate from the start of the header to the end of the allocation (so add 4 bytes to deallocate)
+    // deallocate from the start of the header to the end of the
+    // allocation (so add 4 bytes to deallocate)
     buddy_dealloc_helper(buddy, (size_t)header, size + sizeof(buddy_allocation_header));
-    #ifdef MEM_DEBUG
+#ifdef MEM_DEBUG
     buddy->bytes_allocated -= size;
     TRACE("[MEM DEBUG] FREE %i bytes", size);
-    #endif
+#endif
 }
 
 // Prints out the current status of the allocator
 void buddy_status(buddy_allocator * buddy) {
-    for ( int order = MIN_ORDER; order < MAX_ORDER; order++ ) {
+    for (int order = MIN_ORDER; order < MAX_ORDER; order++ ) {
         INFO("Order %d", order);
 
         size_t head = buddy->free_lists[order - MIN_ORDER];
@@ -188,7 +181,8 @@ void buddy_status(buddy_allocator * buddy) {
 
 /// Finds size of an allocation
 size_t get_alloc_size(size_t address) {
-    buddy_allocation_header * header = (buddy_allocation_header *)(address - sizeof(buddy_allocation_header));
+    buddy_allocation_header * header = (buddy_allocation_header*)
+                                        (address - sizeof(buddy_allocation_header));
     return header->size;
 
 }
@@ -210,7 +204,7 @@ buddy_allocator * buddy_init(buddy_allocator *address, size_t size) {
     buddy->base = (size_t) address;
 
     // Carve out as many chunks of space as possible.
-    while ( size > (1U << MIN_ORDER) ) {
+    while (size > (1U << MIN_ORDER) ) {
         for(int order = MAX_ORDER - 1; order >= MIN_ORDER; order--) {
             // Find the largest order to cut out of the size.
             if ( size >= (1U << order) ) {
@@ -223,9 +217,9 @@ buddy_allocator * buddy_init(buddy_allocator *address, size_t size) {
         }
     }
 
-    #ifdef MEM_DEBUG
+#ifdef MEM_DEBUG
     buddy->bytes_allocated = 0;
-    #endif
+#endif
 
     return buddy;
 }
