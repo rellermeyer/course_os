@@ -3,12 +3,14 @@
 #include <vas2.h>
 #include <vm2.h>
 
+
+
 void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
 	// validate the input
-	if(PCB == NULL || file == NULL) return -1;
+	if(PCB == NULL || file == NULL) return NULL_POINTER;
 
 	// Parse the ELF header
 	Elf elf_info;
@@ -17,17 +19,20 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
 	Elf32_Header * header = (Elf32_Header *)file;
 	int result = elf_parse_header(&elf_info, header);
-    if (result == -1) return -1;
+    if (result == -1) return INVALID_HEADER;
 
-    INFO("Getting the pointers to the tables ...");
 
+    // Here we check for the presence of a table that in the case
+    // of the specific ELF file type found is mandatory
+    // TODO: Make the check depend on the e_type field
+    // Currently it just checks if the program header table
+    // is present.
     if (elf_info.programHeaderTableOffset == 0) {
         INFO("This ELF file does not have a program header table!");
-        return -1;
-    } else if(elf_info.sectionHeaderTableOffset == 0) {
-        INFO("This ELF file does not have a section header table!");
-        return -1;
+        return PH_TABLE_MISSING;
     }
+
+    INFO("Getting the pointers to the tables ...");
 
     // Get the pointers to the header tables
 	Elf32_SectionHeader * section_header_table = (Elf32_SectionHeader *)((char *)file + elf_info.sectionHeaderTableOffset);
@@ -37,7 +42,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
     INFO("Creating a new vas ...");
 
     // Initialize a new address space for the new process to create
-    struct vas2 * new_vas = create_vas();
+    struct vas2 * new_vas = PCB->vas;
 
     // The structure holding the stack and heap pointers if the
     // header tables' are processed successfully.
@@ -50,16 +55,12 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 
     // If the operation was not successful, free up any data in the vas structure
     // and signal a FATAL error.
-    if (processResult == -1) {
-        free_vas(new_vas);
-        FATAL("Creating a process image failed!\n");
+    if (processResult < 0) {
+        FATAL("Creating a process image failed: Loader error code %d! \n", processResult);
     }
 
     // If the operation was successful, continue ...
     INFO("Creating the process image was successful!\n");
-
-    // Add the pointer to the new address space to the PCB
-    PCB->vas = new_vas;
 
     call_init_state(elf_info.entry, stackAndHeap.stack_pointer);
 
@@ -67,14 +68,13 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file) {
 }
 
 // Helper function like the standard memcpy function.
-void load_memcpy(void * dest, void * src, size_t bytes) {
+void load_memcpy(char * dest, const char * src, size_t bytes) {
     for (size_t i = 0; i < bytes; ++i) {
-        ((char *)dest)[i] = ((char *)src)[i];
+        dest[i] = src[i];
     }
 }
 
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
-
 
     // Switch to the new process address space
     switch_to_vas(vasToFill);
@@ -93,8 +93,11 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
         Elf32_ProgramHeader * currentProgramHeader = phtable + ph_index;
 
         // Check if the header has valid data and whether it is supported
-        if (!validate_program_header(currentProgramHeader)) {
-            return -1;
+        int result;
+        if ((result = validate_program_header(currentProgramHeader)) < 0) {
+            // On error clean the vas structure
+            free_vas(vasToFill);
+            return result;
         }
 
         INFO("Header has valid data.");
@@ -103,22 +106,23 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
         if (currentProgramHeader->program_type == EPT_LOAD) {
 
             /*
-             *   Segment
-             * =============
-             * =============  <-  header->virtual_address
-             *                   \
-             *  segment           \
-             *   data              |- header->file_size
-             *                    /
-             *                   /
-             * -------------
-             *                   \
-             *   possible         \
-             *   padding           |- header->memsize - file_size
-             *  of zeroes         /
-             *                   /
-             * =============  <- header->virtual_address + memsize
-             * =============
+                Segment
+             |=============                                                 |------
+             |=============  <-  header->virtual_address                    | Page
+             |                                                              |
+             |                   \                                          |------
+             |  segment           \                                         | Page
+             |   data              |- header->file_size                     |
+             |                    /                                         |------
+             |                   /                                          | Page
+             |-------------                                                 |
+             |                                                              |------
+             |   possible                                                   | Page
+             |   padding                                                    |
+             |  of zeroes                                                   |------
+             |                                                              | Page
+             |=============  <- header->virtual_address + memsize           |
+             |=============                                                 |------
              */
 
             // Get the virtual address
@@ -178,13 +182,13 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndH
     INFO("Allocating stack and heap memory ...");
 
     /* Allocate pages for the stack and the heap.
-        *  STACK
-        *   ||  - // - 16KB currently
-        *   \/
-        *  -----
-        *   /\
-        *   ||  - // - 16KB currently
-        *  HEAP
+        |  STACK
+        |   ||  - // - 16KB currently
+        |   \/
+        |  -----
+        |   /\
+        |   ||  - // - 16KB currently
+        |  HEAP
          */
 
     // Get the heap pointer for the new process

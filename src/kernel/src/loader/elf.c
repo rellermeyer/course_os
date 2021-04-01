@@ -1,6 +1,6 @@
 
 #include <elf_common_features.h>
-#include <elf_new.h>
+#include <elf.h>
 #include <klibc.h>
 
 

@@ -1,4 +1,4 @@
-#include <elf_new.h>
+#include <elf.h>
 #include <vas2.h>
 #include <constants.h>
 #include <processControlBlock.h>
@@ -16,6 +16,16 @@ typedef struct stack_and_heap {
     Elf32_Addr stack_pointer;
     Elf32_Addr heap_pointer;
 } stack_and_heap;
+
+/**
+ * Loader error codes
+ */
+enum LOADER_ERROR_CODE {
+    NULL_POINTER=-1,
+    INVALID_HEADER=-2,
+    PH_TABLE_MISSING=-3,
+    SH_TABLE_MISSING=-4,
+};
 
 
 // Function declarations
