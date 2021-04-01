@@ -40,15 +40,16 @@ void init() {
     asm volatile("pop {lr}");
 }
 
-#define EXEC_FILE_ADDRESS ((void *)0x0000000080000000)
+extern const size_t __PROCESS_START[];
+#define EXEC_FILE_ADDRESS  ((void *) (__PROCESS_START))
 
 void load_process() {
-    void * file = EXEC_FILE_ADDRESS;
 
-    struct ProcessControlBlock * pcb = createPCB(0);
+    char *file = EXEC_FILE_ADDRESS;
 
-    loadProcessFromElfFile(pcb, file);
+    struct ProcessControlBlock *pcb = createPCB(0);
 
+    int result = loadProcessFromElfFile(pcb, file);
 }
 
 /// Entrypoint for the C part of the kernel.

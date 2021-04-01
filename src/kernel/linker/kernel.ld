@@ -26,15 +26,13 @@ SECTIONS
 
     .data : AT(ADDR(.data) - __KERNEL_VIRTUAL_OFFSET){
         *(EXCLUDE_FILE (*/startup.o) .data)
+        __PROCESS_START = .;
+        */simple_program.mo (.exec_file)
      }
 
     .bss : AT(ADDR(.bss) - __KERNEL_VIRTUAL_OFFSET) {
         *(EXCLUDE_FILE (*/startup.o) COMMON)
         *(EXCLUDE_FILE (*/startup.o) .bss)
-    }
-
-    .process_exec : AT(ADDR(.process_exec) - __KERNEL_VIRTUAL_OFFSET) {
-	*/simple_program.mo (.exec_file)
     }
 
     /*make kernel top megabyte aligned*/
