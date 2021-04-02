@@ -15,6 +15,8 @@
 
 extern unsigned int user_start;
 extern unsigned int user_end;
+void call_init_state(Elf32_Addr pc, Elf32_Addr sp, Elf32_Addr pcb);
+
 #include <vm2.h>
 
 
@@ -38,6 +40,7 @@ void init() {
     asm volatile("push {lr}");
     asm volatile("bl _init");
     asm volatile("pop {lr}");
+
 }
 
 extern const size_t __PROCESS_START[];
@@ -45,13 +48,27 @@ extern const size_t __PROCESS_START[];
 
 void load_process() {
 
+
     char *file = EXEC_FILE_ADDRESS;
 
     struct ProcessControlBlock *pcb = createPCB(0);
 
-    stack_and_heap stackAndHeap;
+    stack_and_heap_and_entry stackAndHeapAndEntry;
 
-    int result = loadProcessFromElfFile(pcb, file, &stackAndHeap);
+    int result = loadProcessFromElfFile(pcb, file, &stackAndHeapAndEntry);
+
+    if (result < 0) {
+        kprintf("Loader operation failed due to error %d\n", result);
+        return;
+    }
+
+    add(pcb, true);
+    getNext();
+
+    call_init_state(stackAndHeapAndEntry.entry, stackAndHeapAndEntry.stack_pointer, (Elf32_Addr) pcb);
+
+    INFO("Stack initialized successfully!\n");
+
 }
 
 /// Entrypoint for the C part of the kernel.

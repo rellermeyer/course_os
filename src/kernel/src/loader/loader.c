@@ -7,7 +7,7 @@
 
 void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
-int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_and_heap * stackAndHeap) {
+int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_and_heap_and_entry * stackAndHeapAndEntry) {
 
 	// validate the input
 	if(PCB == NULL || file == NULL) return NULL_POINTER;
@@ -47,7 +47,9 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
     INFO("Processing program header table ...\n");
 
     // Process the program(segment) header table - allocate pages and copy data for the loadable segments
-    int processResult = processProgramHeaderTable(new_vas, stackAndHeap, file, program_header_table, elf_info.programHeaderTableLength);
+    int processResult = processProgramHeaderTable(new_vas, stackAndHeapAndEntry, file, program_header_table, elf_info.programHeaderTableLength);
+
+    stackAndHeapAndEntry->entry = elf_info.entry;
 
     // If the operation was not successful, free up any data in the vas structure
     // and signal a FATAL error.
@@ -57,10 +59,6 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
 
     // If the operation was successful, continue ...
     INFO("Creating the process image was successful!\n");
-
-    call_init_state(elf_info.entry, stackAndHeap->stack_pointer);
-
-    INFO("Stack initialized successfully!\n");
 
 	return 0;
 }
@@ -72,7 +70,7 @@ void load_memcpy(char * dest, const char * src, size_t bytes) {
     }
 }
 
-int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
+int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
 
     // Switch to the new process address space
     switch_to_vas(vasToFill);

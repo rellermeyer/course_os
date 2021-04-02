@@ -12,10 +12,11 @@
  * of the stack and the heap after the
  * process image is created.
  */
-typedef struct stack_and_heap {
+typedef struct stack_and_heap_and_entry {
     Elf32_Addr stack_pointer;
     Elf32_Addr heap_pointer;
-} stack_and_heap;
+    Elf32_Addr entry;
+} stack_and_heap_and_entry;
 
 /**
  * Loader error codes
@@ -52,7 +53,7 @@ enum LOADER_ERROR_CODE {
  * @return          A pointer to a newly created PCB for the new
  *                   process.
 */
-int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_heap * stackAndHeap);
+int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_heap_and_entry * stackAndHeap);
 
 /**
  *  A function to go through the segment header table,
@@ -71,9 +72,9 @@ int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_hea
  * @param t_size   :        The size of the program/segment header table.
  * @return 0 on successful validation and page allocation for the segments, -1 otherwise.
  */
-int processProgramHeaderTable(struct vas2 * vasToFill,stack_and_heap * stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size);
+int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry * stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size);
 
 /**
  * Function meant for debugging: Should print the names of all sections in a file.
  */
-int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index); 
+int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index);
