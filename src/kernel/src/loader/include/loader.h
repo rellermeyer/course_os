@@ -24,7 +24,7 @@ enum LOADER_ERROR_CODE {
     NULL_POINTER=-1,
     INVALID_HEADER=-2,
     PH_TABLE_MISSING=-3,
-    SH_TABLE_MISSING=-4,
+    SH_TABLE_MISSING=-4
 };
 
 
@@ -52,7 +52,7 @@ enum LOADER_ERROR_CODE {
  * @return          A pointer to a newly created PCB for the new
  *                   process.
 */
-int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file);
+int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_heap * stackAndHeap);
 
 /**
  *  A function to go through the segment header table,

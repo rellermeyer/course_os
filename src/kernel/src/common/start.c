@@ -49,7 +49,9 @@ void load_process() {
 
     struct ProcessControlBlock *pcb = createPCB(0);
 
-    int result = loadProcessFromElfFile(pcb, file);
+    stack_and_heap stackAndHeap;
+
+    int result = loadProcessFromElfFile(pcb, file, &stackAndHeap);
 }
 
 /// Entrypoint for the C part of the kernel.

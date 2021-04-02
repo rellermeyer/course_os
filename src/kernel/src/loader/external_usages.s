@@ -12,7 +12,8 @@
 // 1) r0 - the start address for the new process
 // 2) r1 - the initial stack pointer for the new process
 call_init_state:
-    mov r3, r0
-    mov r4, r1
-    init_state r3, r4
-
+    push {lr}       // Save the link register, containing the return address, on the stack
+    mov r3, r0      // Move the arguments to r3 and r4 to
+    mov r4, r1      // make sure no problems with substitution happen in the macro
+    init_state r3, r4   // Use the macro to initialize the stack of the new process
+    pop {pc}        // Return from the subroutine: pc <- pushed lr
