@@ -15,6 +15,7 @@ import sys
 from jinja2 import Environment, FileSystemLoader
 
 TESTDIR = "src/test_suite/"
+GENDIR = "build/generated/"
 
 
 class Test:
@@ -156,20 +157,23 @@ if __name__ == "__main__":
 
     # Remove all the prior generated tests to ensure a clean state
     try:
-        shutil.rmtree(TESTDIR + "generated/")
+        shutil.rmtree(GENDIR)
     except FileNotFoundError:
         pass
 
-    pathlib.Path(TESTDIR + "generated/").mkdir()
+    pathlib.Path(GENDIR).mkdir(parents=True)
 
     for group in groups:
+        name = GENDIR + group.name + ".c"
         # Write each unit into a C file
-        with open(TESTDIR + "generated/" + group.name + '.c', 'w') as f:
+        with open(name, 'w') as f:
             template = env.get_template("test_group.tmpl")
             f.write(template.render(group=group))
+        print(name)
 
     template = env.get_template("test_main.tmpl")
     test_content = template.render(groups=groups)
 
-    with open(TESTDIR + "test.c", "w") as f:
+    with open(GENDIR + "test.c", "w") as f:
         f.write(test_content)
+    print(GENDIR + "test.c")

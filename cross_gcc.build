@@ -4,6 +4,7 @@ ld = 'arm-none-eabi-gcc'
 as = 'arm-none-eabi-as'
 objcopy = 'arm-none-eabi-objcopy'
 gdb = 'arm-none-eabi-gdb'
+strip = 'arm-none-eabi-objcopy --strip-only-debug'
 
 [properties]
 c_args      = ['-pipe', '-std=gnu99', '-ffreestanding', '-Wall',
@@ -15,16 +16,14 @@ c_args      = ['-pipe', '-std=gnu99', '-ffreestanding', '-Wall',
             '-Wno-error=unused-value',
             '-Wno-error=unused-local-typedefs',
             '-g', '-O0', '-mtune=arm1176jzf-s',
-            '-march=armv6zk', '-mfpu=vfp', '-fpic', '-mcpu=arm1176jz-s',
-            ]
+            '-march=armv6zk', '-mfpu=vfp', '-fpic', '-mcpu=arm1176jz-s']
 
 c_link_args = ['-fcommon',
               '-nostartfiles',
                '-nolibc',
-	       '-Wl,-Map,kernel.map',
-               '-T', 
-	       '../linker/kernel.ld',
-              ]
+               '-Wl,-Map,kernel.map',
+               '-T',
+               '../linker/kernel.ld']
 
 
 [target_machine]
