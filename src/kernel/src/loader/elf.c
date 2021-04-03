@@ -76,7 +76,7 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_header) {
 
     // Check the validity of the Header
     int result;
-    if ((result = elf_check_supported(elf_header) < 0)) {
+    if ((result = elf_check_supported(elf_header)) < 0) {
         kprintf("Parsing of ELF file header failed!\n");
         return result;
     }

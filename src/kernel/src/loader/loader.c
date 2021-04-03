@@ -1,11 +1,8 @@
 #include <loader.h>
-#include <stdio.h>
+#include <string.h>
 #include <vas2.h>
 #include <vm2.h>
 
-
-
-void call_init_state(Elf32_Addr pc, Elf32_Addr sp);
 
 int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_and_heap_and_entry * stackAndHeapAndEntry) {
 
@@ -19,7 +16,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
 
 	Elf32_Header * header = (Elf32_Header *)file;
 	int result = elf_parse_header(&elf_info, header);
-    if (result == -1) return INVALID_HEADER;
+    if (result < 0) return INVALID_HEADER;
 
 
     // Here we check for the presence of a table that in the case
@@ -61,13 +58,6 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
     INFO("Creating the process image was successful!\n");
 
 	return 0;
-}
-
-// Helper function like the standard memcpy function.
-void load_memcpy(char * dest, const char * src, size_t bytes) {
-    for (size_t i = 0; i < bytes; ++i) {
-        dest[i] = src[i];
-    }
 }
 
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
@@ -152,7 +142,7 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry 
 
 
             // copy the segment data into the newly allocated pages
-            load_memcpy((void *)segmentStartAddress, (void *)programToRead, fileSize);
+            memcpy((void *)segmentStartAddress, (void *)programToRead, fileSize);
 
             // In case the memory size is bigger than the file size, pad with zeroes.
             if (fileSize < memorySize) {
@@ -223,25 +213,4 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry 
 
     return 0;
 
-}
-
-int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index) {
-
-    // Get the pointer to the names section
-	Elf32_SectionHeader * names_section = shtable + names_index;
-
-	// Get a pointer to the names section data
-	Elf32_Addr names = (uint32_t)((char *)file + names_section->section_offset);
-
-
-	Elf32_Word i = 0;
-
-	while(i < t_size) {
-		
-		// Do not make boundary checks for the offset into the section name table
-		kprintf("Section name: %s \n", (char *)names + (shtable[i].section_name));
-        i++;
-	}
-
-	return 0;
 }

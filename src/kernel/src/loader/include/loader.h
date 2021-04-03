@@ -10,7 +10,9 @@
 /**
  * A structure holding the addresses
  * of the stack and the heap after the
- * process image is created.
+ * process image is created. It also
+ * holds the entry point for the process
+ * execution.
  */
 typedef struct stack_and_heap_and_entry {
     Elf32_Addr stack_pointer;
@@ -50,6 +52,7 @@ enum LOADER_ERROR_CODE {
  *                   the address space is to be saved.
  * @param file  :   A pointer to the ELF file to be read and
  *                   from which a process image is to be created.
+ *
  * @return          A pointer to a newly created PCB for the new
  *                   process.
 */
@@ -73,8 +76,3 @@ int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_hea
  * @return 0 on successful validation and page allocation for the segments, -1 otherwise.
  */
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry * stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size);
-
-/**
- * Function meant for debugging: Should print the names of all sections in a file.
- */
-int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index);

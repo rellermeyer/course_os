@@ -1,18 +1,34 @@
 # Process Creation - Overview of Steps
 
-
-    **Attention!!!** Currently this document will be more focused on the procedure for loading normal independent executable files. The document will/should be extended in the future for other types of ELF files as well.
+```
+    Attention!!!    Currently this document will be more focused on the 
+                    procedure for loading simple static executable files. 
+                    The document will/should be extended in the future for 
+                    other types of ELF files as well.
+```
 
 ## Target ELF files common characteristics
 
 The ELF files that the loader expects have to have the following common fixed values for their fields:
 
-- **ELF Type**      - 32-bit                - 0x01
-- **OS ABI**        - To be determined ( Possibly System V as it is common to be used regardless the target platform)
-- **Machine ISA**   - ARM ( not AArch64 )   - 0x28
-- **Endianess**     - little endian         - 0x01
-- **Version**       - always 1              - 0x01
-- **Header Size**   - 54 bytes - 32-bit ELF - 0x36
+|       |           |               |
+| ---   |   ---     |      ---      |
+|**ELF Type**   |   32-bit          |      0x01 |
+| **OS ABI**    |    To be determined ( Possibly System V as it is common to be used regardless the target platform)
+| **Machine ISA**    |  ARM ( not AArch64 ) | 0x28
+| **Endianess**      | little endian        | 0x01
+| **Version**        |always 1              | 0x01
+| **Header Size**    |54 bytes - 32-bit ELF | 0x36
+
+## ELF structures
+
+```
+
+```
+
+```
+
+```
 
 
 ## Loading Steps
@@ -51,3 +67,14 @@ The ELF files that the loader expects have to have the following common fixed va
         1.  Allocate more pages
         2.  Set an initial value for the stack pointer
     8.  Set the starting address of the process - either in the PCB or put it in the right place on the new user process stack 
+    
+
+
+## Loader Error Codes
+
+| Number   |   Name    |   Meaning     |
+|   ---    |    ---    |     ---       |
+|    -1     |   NULL_POINTER        |  Loader received NULL argument|
+|    -2     |   INVALID_HEADER      |  The ELF header has invalid data      |
+|    -3     |   PH_TABLE_MISSING    |  There is no program/segment header table in the ELF file |
+|    -4     |   SH_TABLE_MISSING    |  There is no section header table in the ELF file |
