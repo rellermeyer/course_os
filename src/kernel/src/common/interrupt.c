@@ -2,7 +2,6 @@
 #include <interrupt.h>
 #include <interrupt_handler.h>
 #include <mmio.h>
-#include <sched.h>
 #include <stdio.h>
 #include <vm2.h>
 #include <debug.h>

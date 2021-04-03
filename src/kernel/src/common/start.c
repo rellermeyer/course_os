@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <debug.h>
 #include <string.h>
-#include <syscall.h>
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>

@@ -2,8 +2,7 @@
 #include <scheduler.h>
 #include <math.h>
 #include <stdio.h>
-#include <interrupt.h>
-#include <interrupt_handler.h>
+#include <vas2.h>
 
 #define TIME_SLICE_MS       100
 #define MINSLEEPTIME        20

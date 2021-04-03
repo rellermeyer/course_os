@@ -1,6 +1,7 @@
 #include <processControlBlock.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vas2.h>
 
 int idCounter = 0;
 
