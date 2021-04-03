@@ -4,7 +4,6 @@ ld = 'arm-none-eabi-gcc'
 as = 'arm-none-eabi-as'
 objcopy = 'arm-none-eabi-objcopy'
 gdb = 'arm-none-eabi-gdb'
-strip = 'arm-none-eabi-objcopy --strip-only-debug'
 
 [properties]
 c_args      = ['-pipe', '-std=gnu99', '-ffreestanding', '-Wall',
@@ -27,6 +26,12 @@ c_link_args = ['-fcommon',
 
 
 [target_machine]
+system     = 'none'
+cpu_family = 'arm'
+cpu        = 'cortex-a7'
+endian     = 'little'
+
+[host_machine]
 system     = 'none'
 cpu_family = 'arm'
 cpu        = 'cortex-a7'

@@ -16,6 +16,7 @@ from jinja2 import Environment, FileSystemLoader
 
 TESTDIR = "src/test_suite/"
 GENDIR = "build/generated/"
+SEARCHDIR = "src/**/test/"
 
 
 class Test:
@@ -121,7 +122,7 @@ def generate_groups() -> list[TestGroup]:
     """
     test_groups = []
 
-    for directory in glob.glob("src/**/test/", recursive=True):
+    for directory in glob.glob(SEARCHDIR, recursive=True):
         for file in pathlib.Path(directory).rglob('*.c'):
             with open(file, 'r') as f:
                 p = pathlib.Path(f.name)
@@ -146,7 +147,17 @@ def get_tests(groups: list[TestGroup]) -> list[Test]:
 
 
 if __name__ == "__main__":
-    random.seed(int(sys.argv[1]))
+    argument = 0
+    try:
+        argument = int(sys.argv[1])
+        random.seed(argument)
+    except IndexError:
+        pass
+
+    if argument == -1:
+        import os
+        os.chdir(os.environ['MESON_SOURCE_ROOT'])
+
     env = Environment(loader=FileSystemLoader(TESTDIR))
 
     groups = generate_groups()

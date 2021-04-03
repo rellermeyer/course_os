@@ -18,7 +18,7 @@ void test_main() {
     if (test_{{group.name}}() == TEST_FAIL) return;
     {% endfor %}
     puts("TESTS COMPLETE. Passed {{ groups | length }} test suites\n");
-    //SemihostingCall(ApplicationExit);
+    SemihostingCall(ApplicationExit);
 }
 
 #endif
