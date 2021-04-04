@@ -24,17 +24,10 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
     // TODO: Make the check depend on the e_type field
     // Currently it just checks if the program header table
     // is present.
-    if (elf_info.programHeaderTableOffset == 0) {
+    if (header->e_program_header_table_offset == 0) {
         INFO("This ELF file does not have a program header table!");
         return PH_TABLE_MISSING;
     }
-
-    INFO("Getting the pointers to the tables ...");
-
-    // Get the pointers to the header tables
-	Elf32_SectionHeader * section_header_table = (Elf32_SectionHeader *)((char *)file + elf_info.sectionHeaderTableOffset);
-	Elf32_ProgramHeader * program_header_table = (Elf32_ProgramHeader *)((char *)file + elf_info.programHeaderTableOffset);
-
 
     INFO("Creating a new vas ...");
 
@@ -44,7 +37,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
     INFO("Processing program header table ...\n");
 
     // Process the program(segment) header table - allocate pages and copy data for the loadable segments
-    int processResult = processProgramHeaderTable(new_vas, stackAndHeapAndEntry, file, program_header_table, elf_info.programHeaderTableLength);
+    int processResult = processProgramHeaderTable(new_vas, stackAndHeapAndEntry, file, elf_info.programHeaderTableAddress, elf_info.programHeaderTableLength);
 
     stackAndHeapAndEntry->entry = elf_info.entry;
 
@@ -80,10 +73,10 @@ int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry 
 
         // Check if the header has valid data and whether it is supported
         int result;
-        if ((result = validate_program_header(currentProgramHeader)) < 0) {
+        if ((result = elf_validate_program_header(currentProgramHeader)) < 0) {
             // On error clean the vas structure
             free_vas(vasToFill);
-            return result;
+            return PH_TYPE_INVALID_OR_UNSUPPORTED;
         }
 
         INFO("Header has valid data.");

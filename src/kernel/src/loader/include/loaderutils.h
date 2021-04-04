@@ -16,7 +16,7 @@
 /**
  * Function that prints the names of all sections in an ELF file.
  */
-int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_Half names_index);
+int printSectionNames(void * file, Elf32_SectionHeader * shtable, Elf32_Word t_size, Elf32_SectionHeader * section_names);
 
 
 #endif //COURSE_OS_LOADERUTILS_H

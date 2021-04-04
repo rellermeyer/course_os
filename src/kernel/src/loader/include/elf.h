@@ -6,12 +6,30 @@ typedef uint16_t Elf32_Half;	// Unsigned half int
 typedef uint32_t Elf32_Off;	    // Unsigned offset
 typedef uint32_t Elf32_Addr;	// Unsigned address
 typedef uint32_t Elf32_Word;	// Unsigned int
-typedef int32_t  Elf32_Sword;	// Signed int
 
 //----------------------------------------
 // The ELF Header
 # define ELF_MN_ELF 4
 # define PADDING_LENGTH 8
+
+# define ELFMAG0	0x7F // e_ident[EI_MAG0]
+# define ELFMAG1	'E'  // e_ident[EI_MAG1]
+# define ELFMAG2	'L'  // e_ident[EI_MAG2]
+# define ELFMAG3	'F'  // e_ident[EI_MAG3]
+
+enum Elf_Magic {
+    EI_MAG0		= 0, // 0x7F
+    EI_MAG1		= 1, // 'E'
+    EI_MAG2		= 2, // 'L'
+    EI_MAG3		= 3, // 'F'
+};
+
+enum Elf_Type {
+    ET_NONE		= 0, // Unknown Type
+    ET_REL		= 1, // Relocatable File
+    ET_EXEC		= 2, // Executable File
+    ET_DYN      = 3, // Object File
+};
  
 typedef struct {
     // Identification Information
@@ -37,29 +55,38 @@ typedef struct {
 	Elf32_Half	e_index_sec_head_tb_entry_names;
 } Elf32_Header;
 
-// The magic number: 7FELF
-enum Elf_Magic {
-	EI_MAG0		= 0, // 0x7F
-	EI_MAG1		= 1, // 'E'
-	EI_MAG2		= 2, // 'L'
-	EI_MAG3		= 3, // 'F'
-};
- 
-# define ELFMAG0	0x7F // e_ident[EI_MAG0]
-# define ELFMAG1	'E'  // e_ident[EI_MAG1]
-# define ELFMAG2	'L'  // e_ident[EI_MAG2]
-# define ELFMAG3	'F'  // e_ident[EI_MAG3]
-
-enum Elf_Type {
-	ET_NONE		= 0, // Unkown Type
-	ET_REL		= 1, // Relocatable File
-	ET_EXEC		= 2  // Executable File
-};
-
 // end Header ---------------------------------------------------
+
 
 //------------------------------------------------
 // The Program Header
+
+#define PROGRAM_TYPES 7
+#define SUPPORTED_PROGRAM_TYPES 4
+
+// Program Types
+enum ELF_PROGRAM_TYPE {
+    EPT_NULL,
+    EPT_LOAD,
+    EPT_DYNAMIC,
+    EPT_INTERP,
+    EPT_NOTE,
+    PT_SHLIB,
+    PT_PHDR,
+};
+
+extern enum ELF_PROGRAM_TYPE validEPTypes[SUPPORTED_PROGRAM_TYPES];
+extern char * program_types[PROGRAM_TYPES];
+
+#define strloaderr(num) program_types[num]
+
+// Program Flags
+enum ELF_PROGRAM_FLAG {
+    EPF_EXEC = 1,
+    EPF_WRITE = 2,
+    EPF_READ = 4
+};
+
 typedef struct {
 	Elf32_Word	program_type;
 	Elf32_Off	program_offset;
@@ -72,32 +99,13 @@ typedef struct {
 
 } Elf32_ProgramHeader;
 
-// Program Types
-enum ELF_PROGRAM_TYPE {
-    EPT_NULL,
-    EPT_LOAD,
-    EPT_DYNAMIC,
-    EPT_INTERP,
-    EPT_NOTE,
-};
-
-#define ACCEPTABLE_PROGRAM_TYPES 4
-
-extern enum ELF_PROGRAM_TYPE validEPTypes[ACCEPTABLE_PROGRAM_TYPES];
-
-// Program Flags
-enum ELF_PROGRAM_FLAG {
-    EPF_EXEC = 1,
-    EPF_WRITE = 2,
-    EPF_READ = 4
-};
-
 // End Program Header -------------------------------------------
 
 
 // -----------------------------------------
 // The Section Header
-typedef struct ElfRawSection {
+
+typedef struct {
     Elf32_Word section_name;
     Elf32_Word section_type;
     Elf32_Word section_flags;
@@ -106,9 +114,10 @@ typedef struct ElfRawSection {
     Elf32_Word section_size;
     Elf32_Word section_link;
     Elf32_Word section_info;
-    Elf32_Word section_addralign;
-    Elf32_Word section_entsize;
+    Elf32_Word section_addr_align;
+    Elf32_Word section_entry_size;
 } Elf32_SectionHeader;
+
 // End Section Header -------------------------------------------
 
 
@@ -117,9 +126,9 @@ typedef struct ElfRawSection {
 // information from the parsed ELF header.
 typedef struct Elf {
     Elf32_Addr entry;
-    Elf32_Half sht_index_names;
-    Elf32_Off sectionHeaderTableOffset;
-    Elf32_Off programHeaderTableOffset;
+    Elf32_SectionHeader * section_names_address;
+    Elf32_SectionHeader * sectionHeaderTableAddress;
+    Elf32_ProgramHeader * programHeaderTableAddress;
     Elf32_Word sectionHeaderTableLength;
     Elf32_Word programHeaderTableLength;
 } Elf;
@@ -137,7 +146,7 @@ typedef struct Elf {
 // 3) Endianess
 // 4) CPU type
 // 5) Other OS specific semantics are satisfied
-// This is done in the following two methods: elf_validate_magic_sequence and elf_check_supported
+// This is done in the following two methods: elf_validate_magic_sequence and elf_validate_header_support
 
 /* A function to validate that the magic number in the
  * ELF file header is correct.
@@ -151,7 +160,7 @@ int elf_validate_magic_sequence(Elf32_Header* header);
  * a process from has the correct characteristics in
  * its header information.
  */
-int elf_check_supported(Elf32_Header* header);
+int elf_validate_header_support(Elf32_Header* header);
 
 /* A function to parse the information contained in the ELF file
  * header, including the program and section header tables' sizes
@@ -167,4 +176,9 @@ int elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
  * an illegal or a reserved one, which is not allowed.
  * @return true if header is valid, false otherwise
  */
-int validate_program_header(Elf32_ProgramHeader * header);
+int elf_validate_program_header(Elf32_ProgramHeader * header);
+
+/*
+ *
+ */
+int elf_validate_program_type_support(enum ELF_PROGRAM_TYPE type);
