@@ -1,11 +1,29 @@
-# Process Creation - Overview of Steps
-
 ```
     Attention!!!    Currently this document will be more focused on the 
                     procedure for loading simple static executable files. 
                     The document will/should be extended in the future for 
                     other types of ELF files as well.
 ```
+
+## Description
+
+This module provides an implementation of an OS loader.
+It is meant to work with files conforming to the Executable and Linkable Format (ELF). 
+
+The data structures and functions defined in this module are found in the following files:
+- elf.h : Structures and functions for working with elf files
+- elf_common_features : Features every ELF file has to have for this OS.
+- loader.h  : Structures and functions for loading files
+- loaderutils.h : Helper debugging functions for ELF files.
+
+In order to use the loader, one has to invoke the function:
+
+`  int load_elf_file(void *file, union loader_result *input)  `
+- file  - the pointer to the ELF file in memory to process
+- input - depending on the type of the elf file you will process it can be interpreted as a different structure
+
+For more information on the function, visit the loader.h file.
+
 
 ## Sources of Information
 
@@ -43,18 +61,6 @@ The ELF files that the loader expects have to have the following common fixed va
 |    -2     |   INVALID_HEADER      |  The ELF header has invalid data      |
 |    -3     |   PH_TABLE_MISSING    |  There is no program/segment header table in the ELF file |
 |    -4     |   SH_TABLE_MISSING    |  There is no section header table in the ELF file |
-
-
-### Loader functions
-
-In order to use the loader, one has to invoke the function:
-
-`  int load_elf_file(void *file, union loader_result *input)  `
-- file  - the pointer to the ELF file in memory to process
-- input - depending on the type of the elf file you will process it can be interpreted as a different structure
-
-For more information on the function, visit the loader.h file.
-
 
 ### Loading Steps for a Static Executable ELF file
 
