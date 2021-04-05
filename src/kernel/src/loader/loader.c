@@ -64,7 +64,9 @@ int load_static_executable(void * file, struct ProcessControlBlock * PCB, stack_
     INFO("Processing program header table ...\n");
 
     // Process the program(segment) header table - allocate pages and copy data for the loadable segments
-    int processResult = processProgramHeaderTable(new_vas, stackAndHeapAndEntry, file, elf_info.programHeaderTableAddress, elf_info.programHeaderTableLength);
+    int processResult = process_program_header_table(new_vas, stackAndHeapAndEntry, file,
+                                                     elf_info.programHeaderTableAddress,
+                                                     elf_info.programHeaderTableLength);
 
     stackAndHeapAndEntry->entry = elf_info.entry;
 
@@ -79,7 +81,7 @@ int load_static_executable(void * file, struct ProcessControlBlock * PCB, stack_
     return 0;
 }
 
-int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
+int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_entry *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {
 
     // Switch to the new process address space
     switch_to_vas(vasToFill);
