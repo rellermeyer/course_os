@@ -25,10 +25,10 @@ enum Elf_Magic {
 };
 
 enum Elf_Type {
-    ET_NONE		= 0, // Unknown Type
-    ET_REL		= 1, // Relocatable File
-    ET_EXEC		= 2, // Executable File
-    ET_DYN      = 3, // Object File
+    ET_NONE,    // Unknown type
+    ET_REL,     // Relocatable object file
+    ET_EXEC,    // Static executable file
+    ET_DYN      // Dynamic executables and shared object files
 };
  
 typedef struct {
@@ -141,44 +141,55 @@ typedef struct Elf {
 // Checking the ELF Header
 // Before we process in any way an ELF file, we have to check if the machine is able to do it
 // We have to check:
-// 1) Validity  of the ELF file
+// 1) Validity of the ELF file - the magic sequence
 // 2) Architecture correspondence
 // 3) Endianess
 // 4) CPU type
 // 5) Other OS specific semantics are satisfied
 // This is done in the following two methods: elf_validate_magic_sequence and elf_validate_header_support
 
-/* A function to validate that the magic number in the
- * ELF file header is correct.
- * @return true if correct, false otherwise
+/*
+ * A function to validate that the magic number in the
+ * ELF file header.
+ *
+ * @return 0 if correct, negative error code otherwise
  * */
 int elf_validate_magic_sequence(Elf32_Header* header);
 
 
 /*
- * A function to validate that the ELF file to create
- * a process from has the correct characteristics in
+ * A function to validate that the ELF file being
+ * processed has the correct characteristics in
  * its header information.
+ *
+ * @return 0 if correct, negative error code otherwise
  */
 int elf_validate_header_support(Elf32_Header* header);
 
-/* A function to parse the information contained in the ELF file
+/*
+ * A function to parse the information contained in the ELF file
  * header, including the program and section header tables' sizes
- * and locations within the file and the entry point of the process to create.
- * @return an Elf structure containing the gathered information.
+ * and locations and the entry point of the process to create.
+ *
+ * @return 0 if correct, negative error code otherwise
  */
 int elf_parse_header(Elf * elf, Elf32_Header *elf_raw_header);
 
 /*
  * A function to check if a program header is a valid one.
  * It checks if the filesize is no bigger than memsize.
- * It also checks if the type of the program header is not
- * an illegal or a reserved one, which is not allowed.
- * @return true if header is valid, false otherwise
+ * It also checks if the type of the program header is a
+ * supported one.
+ *
+ * @return 0 if correct, negative error code otherwise
  */
 int elf_validate_program_header(Elf32_ProgramHeader * header);
 
 /*
+ * A function that iterates over the list of supported
+ * segment types and checks if a provided type is part
+ * of it.
  *
+ * @return 0 if correct, negative error code otherwise
  */
 int elf_validate_program_type_support(enum ELF_PROGRAM_TYPE type);

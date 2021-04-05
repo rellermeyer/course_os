@@ -1,5 +1,5 @@
 // This file defines macros for the expected elf file characteristics
-// that are going to be processesd by the loader.
+// that are going to be processed by the loader.
 
 #define EXPECTED_ELF_TYPE (0x01)
 
