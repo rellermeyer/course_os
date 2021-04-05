@@ -32,6 +32,21 @@ enum LOADER_ERROR_CODE {
     SH_TYPE_INVALID_OR_UNSUPPORTED=-6
 };
 
+union loader_result {
+    struct {
+        ProcessControlBlock * PCB;
+        stack_and_heap_and_entry * stackAndHeapAndEntry;
+    } static_exec_result;
+
+    struct {
+        // TODO
+    } dynamic_exec_result;
+
+    struct {
+        // TODO
+    } shared_object_result;
+};
+
 
 // Function declarations
 
@@ -58,7 +73,10 @@ enum LOADER_ERROR_CODE {
  * @return          A pointer to a newly created PCB for the new
  *                   process.
 */
-int loadProcessFromElfFile(ProcessControlBlock * PCB, void * file, stack_and_heap_and_entry * stackAndHeap);
+int load_elf_file(void *file, union loader_result *input);
+
+int load_static_executable(void * file, struct ProcessControlBlock * PCB, stack_and_heap_and_entry * stackAndHeapAndEntry);
+
 
 /**
  *  A function to go through the segment header table,

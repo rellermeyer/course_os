@@ -4,20 +4,47 @@
 #include <vm2.h>
 
 
-int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_and_heap_and_entry * stackAndHeapAndEntry) {
+int load_elf_file(void *file, union loader_result *input) {
 
-	// validate the input
-	if(PCB == NULL || file == NULL) return NULL_POINTER;
+    if (file == NULL || input == NULL) return NULL_POINTER;
 
-	// Parse the ELF header
-	Elf elf_info;
+	// Make sure this is an Elf file
+    Elf32_Header * header = (Elf32_Header *)file;
+    int result = elf_validate_magic_sequence(header);
+    if (result < 0) return result;
 
-	INFO("Parsing elf header ...");
+    INFO("Loader: Input file is indeed an ELF file.");
 
-	Elf32_Header * header = (Elf32_Header *)file;
-	int result = elf_parse_header(&elf_info, header);
+    // Determine what to do based on the type of the ELF file
+    enum Elf_Type e_type = header->e_type;
+    switch(e_type) {
+        case ET_EXEC:
+            INFO("Loader: ELF file type is EXEC: Supported!\n");
+            return load_static_executable(file, input->static_exec_result.PCB, input->static_exec_result.stackAndHeapAndEntry);
+        case ET_NONE:
+            FATAL("ELF file type is NONE!");
+        case ET_REL:
+            FATAL("ELF file type is REL: Not allowed in the loader!");
+        case ET_DYN:
+            FATAL("ELF file type is DYN: Dynamic executables and shared object files are not supported!");
+        default:
+            FATAL("ELF file type not recognised");
+    }
+}
+
+int load_static_executable(void * file, struct ProcessControlBlock * PCB, stack_and_heap_and_entry * stackAndHeapAndEntry) {
+
+    // validate the input
+    if(PCB == NULL || stackAndHeapAndEntry == NULL) return NULL_POINTER;
+
+    Elf32_Header * header = (Elf32_Header *)file;
+
+    Elf elf_info;
+
+    INFO("Parsing elf header ...");
+
+    int result = elf_parse_header(&elf_info, header);
     if (result < 0) return INVALID_HEADER;
-
 
     // Here we check for the presence of a table that in the case
     // of the specific ELF file type found is mandatory
@@ -49,8 +76,7 @@ int loadProcessFromElfFile(struct ProcessControlBlock * PCB, void * file, stack_
 
     // If the operation was successful, continue ...
     INFO("Creating the process image was successful!\n");
-
-	return 0;
+    return 0;
 }
 
 int processProgramHeaderTable(struct vas2 * vasToFill, stack_and_heap_and_entry *stackAndHeap, void * file, Elf32_ProgramHeader * phtable, Elf32_Word t_size) {

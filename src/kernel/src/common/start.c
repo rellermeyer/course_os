@@ -54,7 +54,11 @@ void load_process() {
 
     stack_and_heap_and_entry stackAndHeapAndEntry;
 
-    int result = loadProcessFromElfFile(pcb, file, &stackAndHeapAndEntry);
+    union loader_result input;
+    input.static_exec_result.PCB = pcb;
+    input.static_exec_result.stackAndHeapAndEntry = &stackAndHeapAndEntry;
+
+    int result = load_elf_file(file, &input);
 
     if (result < 0) {
         kprintf("Loader operation failed due to error %d\n", result);
