@@ -8,29 +8,29 @@ SECTIONS
     . = __BOOT_ADDRESS;
     __BOOT_START = .;
     .boot : {
-        */startup.o (.text)
-        */startup.o (.data)
-        */startup.o (.bss)
-        */stacks.o (.text)
-        */memory.o (.text)
-        */memory.o (.data)
+        */src_common_startup.s.o (.text)
+        */src_common_startup.s.o (.data)
+        */src_common_startup.s.o (.bss)
+        */src_common_stacks.s.o (.text)
+        */src_common_memory.s.o (.text)
+        */src_common_memory.s.o (.data)
     }
     __BOOT_END = .;
     . += __KERNEL_VIRTUAL_OFFSET;
 
     __KERNEL_BASE = .;
     .text : AT(ADDR(.text) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/startup.o */stacks.o) .text)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o */src_common_stacks.s.o) .text)
         *(.rodata*)
     }
 
     .data : AT(ADDR(.data) - __KERNEL_VIRTUAL_OFFSET){
-        *(EXCLUDE_FILE (*/startup.o) .data)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) .data)
      }
 
     .bss : AT(ADDR(.bss) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/startup.o) COMMON)
-        *(EXCLUDE_FILE (*/startup.o) .bss)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) COMMON)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) .bss)
     }
 
     /*make kernel top megabyte aligned*/

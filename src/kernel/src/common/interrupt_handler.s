@@ -18,7 +18,7 @@
 
 #ifndef INTERRUPT_HANDLER_S
 #define INTERRUPT_HANDLER_S
-.include "src/scheduler/dispatcher.s"
+.include "../src/scheduler/dispatcher.s"
 #endif
 
 .macro enter_priviledged_previous_mode
@@ -90,14 +90,15 @@ handle_irq:
     // going though all the different C functions
     bl save_state_irq
 
-    push {r0, r1}               // save r0 and r1, because they will be overwritten
+    push {r1}
+    push {r0}               // save r0 and r1, because they will be overwritten
     add lr, pc, #8              // save pc + 8 to lr
     ldr r0, =chipset            // get the address of the chipset variable
     add r0, #16                 // add 16 to the address of chipset to get a pointer to handle_irq()
     ldr r1, [r0]                // get the address of the handle_irq() function, stored in chipset
 
-    pop {r0}                    // retrieve the old value of r0
     blx r1                      // call chipset.handle_irq()
+    pop {r0}                    // retrieve the old value of r0
     pop {r1}                    // retrieve the old value of r1
 
     b load_state_irq
@@ -121,8 +122,8 @@ save_state_irq:
     ldmfd r1!, {r3-r11}         // actually r0-r9 (I think)
     stmfd sp!, {r3-r11}         // r1 contains target mode sp
 
-    ldmfd r1!, {r3-r6}          // actually r10-r12, and spsr
-    stmfd sp!, {r3-r6}
+    ldmfd r1!, {r3-r7}          // actually r10-r12, and spsr
+    stmfd sp!, {r3-r7}
 
     stmfd sp!, {lr}             // Target mode lr
 
@@ -132,7 +133,7 @@ save_state_irq:
     stmfd sp!, {r2}             // Actually put it on there
 
     // Return to irq mode (with disabled interrupts), and resume execution
-    enter_mode #Mode_IRQ        // for some reason lr is 0?
+    enter_mode #Mode_IRQ
 
     bx lr
 

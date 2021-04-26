@@ -34,6 +34,7 @@ TEST_CREATE(test_calloc, {
 })
 
 TEST_CREATE(test_expand_heap, {
+    heap_t * heap = mem_get_allocator();
     uint32_t initial_end = heap->end;
 
     expand(heap);

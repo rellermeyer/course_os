@@ -6,7 +6,6 @@ TEST_CREATE(test_strcpy, {
         char buf[8];
         strcpy(buf, "hello");
         ASSERT_EQ(strcmp(buf, "hello"), 0);
-
         // Overwrite and make sure the NULL character
         // was copied too.
         char test[8] = "R&L";
@@ -48,7 +47,7 @@ TEST_CREATE(test_strncat, {
 
         char three[8] = "foo";
         strncat(three, bar, 20);
-    } );
+    });
 
 TEST_CREATE(test_memcmp, {
         ASSERT_EQ(memcmp("a", "c", 1), -2);
@@ -179,13 +178,11 @@ TEST_CREATE(test_ktokenize, {
 
         vpsll_free(lst, kfree);
 
-        string token_conf[2];
-        token_conf[0] = ": ";
-        token_conf[1] = ", ";
+        string token_conf[2] = {": ", ", "};
 
         // Perse a very simple config file
         lst = ktokenize("name: val, course: os, uni: tud", token_conf, 2);
-        kprintf("%s\n", vpsll_get(lst, 1));
+
         ASSERT_EQ(strcmp(vpsll_get(lst, 0), "name"), 0);
         ASSERT_EQ(strcmp(vpsll_get(lst, 1), "val"), 0);
         ASSERT_EQ(strcmp(vpsll_get(lst, 2), "course"), 0);
