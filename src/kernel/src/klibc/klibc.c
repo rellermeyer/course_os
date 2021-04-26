@@ -130,7 +130,7 @@ char * __strchrnul(char * s, char c) {
 
     if (!c) return (char *)s + strlen(s);
 
-    for (; (uintptr_t)s % ALIGN; s++)
+    for (; (size_t)s % ALIGN; s++)
         if (!*s || *(unsigned char *)s == c) return (char *)s;
     k = ONES * c;
     for (w = (void *)s; !HASZERO(*w) && !HASZERO(*w ^ k); w++)
@@ -278,68 +278,6 @@ double katof(char * string) {
 long int katol(char * string) {
     return (long int)katoi(string);
 }
-
-/*
-// Same a
-#include "../../old/include/klibc.h"s katof, but makes endptr point to the string which comes after
-the number double kstrtod(const char *string, char **endptr)
-{
-    if (!string)
-        return 0.0;
-
-    double integer = 0.0;
-    double fraction = 0.0;
-    int sign = 1;
-    int divisor = 1;
-    Boolean after_decimal = FALSE;
-    Boolean result_found = FALSE;
-    double result = 0.0;
-
-    if (*string == '-')
-    {
-        sign = -1;
-        string++;
-    }
-    else if (*string == '+')
-        string++;
-}
-
-while (!result_found)
-{
-    if (*string >= '0' && *string <= '9')
-    {
-        if (after_decimal)
-        {
-            fraction *= 10;
-            fraction += (*string - '0');
-            divisor *= 10;
-        }
-        else
-        {
-            integer *= 10;
-            integer += (*string - '0');
-        }
-        string++;
-    }
-    else if (*string == '.')
-    {
-        if (after_decimal)
-        return 0.0;
-        after_decimal = true;
-        string++;
-    }
-    else
-    {
-        result = sign * (integer + (fraction/divisor));
-        result_found = true;
-    }
-}
-
-*endptr = string;
-
-return result;
-}
-*/
 
 // Same as katol, but makes endptr point to the string which comes after the number
 long int kstrtol(char * string, char ** endptr) {

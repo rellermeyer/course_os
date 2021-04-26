@@ -8,7 +8,7 @@ int load_elf_file(void *file, union loader_result *input) {
 
     if (file == NULL || input == NULL) return NULL_POINTER;
 
-	// Make sure this is an Elf file
+    // Make sure this is an Elf file
     Elf32_Header * header = (Elf32_Header *)file;
     int result = elf_validate_magic_sequence(header);
     if (result < 0) return result;
@@ -113,24 +113,24 @@ int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_ent
         if (currentProgramHeader->program_type == EPT_LOAD) {
 
             /*
-                Segment
-             |=============                                                 |------
-             |=============  <-  header->virtual_address                    | Page
-             |                                                              |
-             |                   \                                          |------
-             |  segment           \                                         | Page
-             |   data              |- header->file_size                     |
-             |                    /                                         |------
-             |                   /                                          | Page
-             |-------------                                                 |
-             |                                                              |------
-             |   possible                                                   | Page
-             |   padding                                                    |
-             |  of zeroes                                                   |------
-             |                                                              | Page
-             |=============  <- header->virtual_address + memsize           |
-             |=============                                                 |------
-             */
+              Segment
+              |=============                                                 |------
+              |=============  <-  header->virtual_address                    | Page
+              |                                                              |
+              |                   \                                          |------
+              |  segment           \                                         | Page
+              |   data              |- header->file_size                     |
+              |                    /                                         |------
+              |                   /                                          | Page
+              |-------------                                                 |
+              |                                                              |------
+              |   possible                                                   | Page
+              |   padding                                                    |
+              |  of zeroes                                                   |------
+              |                                                              | Page
+              |=============  <- header->virtual_address + memsize           |
+              |=============                                                 |------
+            */
 
             // Get the virtual address
             Elf32_Addr virtualAddress = currentProgramHeader->program_virtual_addr;
@@ -156,9 +156,9 @@ int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_ent
             // next page.
             INFO("Allocating %d pages for segment ...", sizeLeftToAllocate / PAGE_SIZE + ((sizeLeftToAllocate % PAGE_SIZE) ? 0 : 1));
             while (sizeLeftToAllocate > 0) {
-                    allocate_page(vasToFill,virtualAddress, currentProgramHeader->flags & EPF_EXEC);
-                    sizeLeftToAllocate -= PAGE_SIZE;
-                    virtualAddress += PAGE_SIZE;
+                allocate_page(vasToFill,virtualAddress, currentProgramHeader->flags & EPF_EXEC);
+                sizeLeftToAllocate -= PAGE_SIZE;
+                virtualAddress += PAGE_SIZE;
             }
 
 
@@ -189,14 +189,14 @@ int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_ent
     INFO("Allocating stack and heap memory ...");
 
     /* Allocate pages for the stack and the heap.
-        |  STACK
-        |   ||  - // - 16KB currently
-        |   \/
-        |  -----
-        |   /\
-        |   ||  - // - 16KB currently
-        |  HEAP
-         */
+       |  STACK
+       |   ||  - // - 16KB currently
+       |   \/
+       |  -----
+       |   /                                    \
+       |   ||  - // - 16KB currently
+       |  HEAP
+    */
 
     // Get the heap pointer for the new process
     Elf32_Addr heap_address = currentVirtualAddress;
@@ -233,5 +233,4 @@ int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_ent
     stackAndHeap->heap_pointer = heap_address;
 
     return 0;
-
 }

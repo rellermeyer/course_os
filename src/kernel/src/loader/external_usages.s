@@ -3,7 +3,7 @@
 
 #ifndef INTERRUPT_HANDLER_S
 #define INTERRUPT_HANDLER_S
-.include "src/scheduler/dispatcher.s"
+.include "../src/scheduler/dispatcher.s"
 #endif
 
 .global call_init_state

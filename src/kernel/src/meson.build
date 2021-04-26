@@ -1,0 +1,10 @@
+kernel_sources = []
+subdir('allocator')
+subdir('common')
+subdir('drivers')
+subdir('ds')
+subdir('fs')
+subdir('klibc')
+subdir('loader')
+subdir('scheduler')
+subdir('vm')
