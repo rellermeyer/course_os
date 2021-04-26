@@ -2,28 +2,12 @@
 #include <chipset.h>
 #include <interrupt.h>
 #include <interrupt_handler.h>
-#include <syscall.h>
 #include <mmio.h>
 #include <stdio.h>
 #include <vm2.h>
-#include <debug.h>
-
-#define SYSCALL_NEXT(args) (* ((int*) vpslli_next(&args)))
-
-void syscall_command(VPSinglyLinkedListIterator args) {
-    int syscall_num = SYSCALL_NEXT(args);
-    int one = SYSCALL_NEXT(args);
-    int two = SYSCALL_NEXT(args);
-    int three = SYSCALL_NEXT(args);
-    kprintf("%d %d %d %d\n", syscall_num, one, two, three);
-    syscall(syscall_num, one, two, three);
-}
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
-    // Register syscall debug command
-    debug_add_command(debug_create_command("syscall", syscall_command));
-
     // allocate space for the IVR at the high vector location.
     vm2_allocate_page(kernell1PageTable,
                       HIGH_VECTOR_LOCATION,
