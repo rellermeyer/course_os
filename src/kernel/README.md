@@ -65,9 +65,9 @@ At the time of writing there is no filesystem available, meaning that binaries h
 
 ## Dispatcher
 Switching between processes is done in the dispatcher. The dispatcher currently supports switching from User to SVC mode when calling software interrupts (SWI), as well as timer-based interrupts from any mode to IRQ. The interrupts are handled by the `interrupt_handler.s` assembly file, which can be found in `common`. 
-The context switching is done by subroutines in `dispatcher.s`, and can be found in `scheduler`.
+The context switching is done by subroutines and macros in `scheduler/dispatcher.s` and `common/interrupt_handler.s`.
 
-> The dispatcher can be written more cleanly by replacing some subroutines with macros.
+> The dispatcher can be written more cleanly by replacing some subroutines with macros. Also it would make more sense if the software interrupts (swi) and hardware interrupts (irq) code is in the same directory (currently they are split between `common/` and `scheduler/`.
 > Interrupts should always be disabled during task switching.
 > The current implementation for switching tasks when an IRQ occurs, is not very robust.
 
