@@ -10,7 +10,16 @@
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>
+<<<<<<< HEAD
 #include <syscall.h>
+=======
+#include <loader.h>
+
+extern unsigned int user_start;
+extern unsigned int user_end;
+void call_init_state(Elf32_Addr pc, Elf32_Addr sp, Elf32_Addr pcb);
+
+>>>>>>> origin/elf_loader
 #include <vm2.h>
 
 void init() {
@@ -33,6 +42,39 @@ void init() {
     asm volatile("push {lr}");
     asm volatile("bl _init");
     asm volatile("pop {lr}");
+
+}
+
+extern const size_t __PROCESS_START[];
+#define EXEC_FILE_ADDRESS  ((void *) (__PROCESS_START))
+
+void load_process() {
+
+
+    char *file = EXEC_FILE_ADDRESS;
+
+    struct ProcessControlBlock *pcb = createPCB(0);
+
+    stack_and_heap_and_entry stackAndHeapAndEntry;
+
+    union loader_result input;
+    input.static_exec_result.PCB = pcb;
+    input.static_exec_result.stackAndHeapAndEntry = &stackAndHeapAndEntry;
+
+    int result = load_elf_file(file, &input);
+
+    if (result < 0) {
+        kprintf("Loader operation failed due to error %d\n", result);
+        return;
+    }
+
+    add(pcb, true);
+    getNext();
+
+    call_init_state(stackAndHeapAndEntry.entry, stackAndHeapAndEntry.stack_pointer, (Elf32_Addr) pcb);
+
+    INFO("Stack initialized successfully!\n");
+
 }
 
 /// Entrypoint for the C part of the kernel.
@@ -84,20 +126,34 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
+<<<<<<< HEAD
     /* init_scheduler(); */
+=======
+>>>>>>> origin/elf_loader
 
     #ifndef ENABLE_TESTS
     // DEBUG
 
+    init_scheduler();
+    load_process();
+
     init();
     init();
     asm volatile("b _switch_to_usermode");
+<<<<<<< HEAD
     #else
     /* debug_run(); */
     test_main();
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
     #endif
+=======
+#else
+    test_main();
+    // If we return, the tests failed.
+    SemihostingCall(OSSpecific);
+#endif
+>>>>>>> origin/elf_loader
 
     // TODO:
     //  * Mount vfs

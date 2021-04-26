@@ -1,12 +1,14 @@
 #ifndef PROCESSCONTROLBLOCK_H
 #define PROCESSCONTROLBLOCK_H
+
 #include <vas2.h>
 #include <stdint.h>
 
 typedef struct ProcessControlBlock {
     int id;
     int parent;
-
+    // Runningtime? total? starttime? last time active?
+    void * executionState;
     struct ProcessControlBlock * prev;
     struct ProcessControlBlock * next;
     struct vas2 * vas;

@@ -26,6 +26,8 @@ SECTIONS
 
     .data : AT(ADDR(.data) - __KERNEL_VIRTUAL_OFFSET){
         *(EXCLUDE_FILE (*/src_common_startup.s.o) .data)
+        __PROCESS_START = .;
+        */process_wrapper.mo (.exec_file)
      }
 
     .bss : AT(ADDR(.bss) - __KERNEL_VIRTUAL_OFFSET) {
