@@ -94,14 +94,16 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
 #ifndef ENABLE_TESTS
     // DEBUG
 
+    init_scheduler();
+
     init();
     init();
     asm volatile("b _switch_to_usermode");
 #else
     test_main();
     // If we return, the tests failed.
-    /* SemihostingCall(OSSpecific); */
-    #endif
+    SemihostingCall(OSSpecific);
+#endif
 
     // TODO:
     //  * Mount vfs

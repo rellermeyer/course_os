@@ -3,8 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <interrupt.h>
+#include <interrupt_handler.h>
 
-#define TIME_SLICE_MS       10
+#define TIME_SLICE_MS       100
 #define MINSLEEPTIME        20
 
 ProcessControlBlock * queue;
@@ -25,10 +26,20 @@ void schedulerTimerCallback() {
         removePCBNode(i);
         add(i, false);
     }
-    // Save program state
-    getNext();
-    // Load program state
-    //kprintf("schedulertimer interupt called");
+    // Get banked sp, and put it in r0
+    asm volatile("push {lr}");
+    asm volatile("bl get_previous_sp");
+    asm volatile("pop {lr}");
+
+    asm volatile("push {lr}");
+    asm volatile("bl schedule");
+    asm volatile("pop {lr}");
+
+    asm volatile("push {lr}");
+    asm volatile("bl save_to_previous_sp");
+    asm volatile("pop {lr}");
+
+    kprintf("schedulertimer interupt called");
 }
 
 void sleep(int id, int sleepTime) 

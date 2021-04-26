@@ -26,7 +26,6 @@
             "detail": "Runs qemu with gdbserver in the background",
             "dependsOn": "set gdb_path",
             "type": "shell",
-<<<<<<< HEAD
             "command": "cd ${workspaceFolder}/src/kernel && make debug",
             "isBackground": true,
             "presentation": {
@@ -39,7 +38,7 @@
             },
             "problemMatcher": {
                 "pattern": {
-                    "regexp": "^.*$",
+                    "regexp": "^.*$"
                 },
                 "background": {
                     "activeOnStart": true,
@@ -52,8 +51,8 @@
             "label": "stop_debug",
             "detail": "Stops the qemu emulator at port 1234",
             "type": "shell",
-            "command": "kill $(sudo lsof -t -i:1234)",
-            "command": "make -C kernel debug",
+
+            "command": "kill $(sudo lsof -t -i:1234)"
         }
     ]
 }

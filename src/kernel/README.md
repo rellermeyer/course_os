@@ -49,3 +49,34 @@ then in a second terminal/tmux window/whatever run `make start_debug` to attach 
 
 It's important to only ever run course_os with the provided makefile and ***never*** use cmake's run configuration. 
 It doesn't work and can't ever work as the emulator must be started. 
+
+# Current State of the kernel
+
+Please read this before starting development on the kernel. This section includes the currently working (and not so working) parts in the kernel.
+It's important to keep this section up-to-date so other groups can easily continue working, without backtracking every implementation.
+Any points about the current implementation that might be improved upon, or other notes worth mentioning will be writtin in markdown quotes.
+
+##  Virtual memory management
+The kernel supports virtual memory management. The implementation, and header files can be found in the `vmm` folder.
+
+## Loading of compiled ELF binaries
+A loader is available in the `loader` folder. This can be used in conjuction with the `dispatcher` to start processes, and load them into memory.
+At the time of writing there is no filesystem available, meaning that binaries have to be compiled _before_ compiling the kernel and injecting them into the compiled kernel using the CMake linker.
+
+## Dispatcher
+Switching between processes is done in the dispatcher. The dispatcher currently supports switching from User to SVC mode when calling software interrupts (SWI), as well as timer-based interrupts from any mode to IRQ. The interrupts are handled by the `interrupt_handler.s` assembly file, which can be found in `common`. 
+The context switching is done by subroutines and macros in `scheduler/dispatcher.s` and `common/interrupt_handler.s`.
+
+> The dispatcher can be written more cleanly by replacing some subroutines with macros. Also it would make more sense if the software interrupts (swi) and hardware interrupts (irq) code is in the same directory (currently they are split between `common/` and `scheduler/`.
+> Interrupts should always be disabled during task switching.
+> The current implementation for switching tasks when an IRQ occurs, is not very robust.
+
+## Basic task scheduling
+The scheduler can be fuond in the `scheduler` folder (duh). Currently, the scheduler is a simple circularly linked list where new processes are inserted at the end and popped from the front.
+Scheduling new tasks always 
+It also supports timeslicing, which is done by setting a set interval timer at initialization.
+
+> There should be more information about a process than is currently the case. 
+> There is not support for task prioritization
+
+
