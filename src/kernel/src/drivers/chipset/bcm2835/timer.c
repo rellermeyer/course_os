@@ -1,5 +1,6 @@
-#include "./include/timer.h"
-#include <bcm2836.h>
+#include "timer.h"
+
+#include <bcm2835.h>
 #include <chipset.h>
 #include <priority_queue.h>
 #include <stdint.h>
@@ -23,13 +24,9 @@ typedef union LittleEndianUint64 {
 
 // Internal implementation functions
 static uint32_t get_frequency();
-static void unmask_and_enable_timer();
 static void mask_and_enable_timer();
 static uint64_t get_phy_count();
-static int32_t get_phy_timer_val();
-static void set_phy_timer_val(int32_t);
-static uint64_t get_phy_timer_cmp_val();
-static void set_phy_timer_cmp_val(uint64_t);
+static void set_phy_timer_cmp_val(uint32_t);
 static ScheduledTimer * get_prq_node_data(prq_node *);
 static TimerHandle schedule_timer(TimerCallback, uint32_t, bool);
 
@@ -39,86 +36,56 @@ static prq_handle * scheduled_timers;
  * Gives the frequency of the counter in Hz
  */
 static inline uint32_t get_frequency() {
-    uint32_t val;
-    // Read CNTFRQ
-    asm volatile("mrc p15, 0, %0, c14, c0, 0" : "=r"(val));
-    return val;
+    return SYSTEM_TIMER_FREQ;
 }
 
-static inline void unmask_and_enable_timer() {
-    // Disable output mask, enable timer
-    static const uint32_t cntp_ctl = 0b01;
-    // Write CNTP_CTL
-    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(cntp_ctl));
-}
 
 static inline void mask_and_enable_timer() {
-    // Enable output mask, enable timer
-    static const uint32_t cntp_ctl = 0b11;
-    // Write CNTP_CTL
-    asm volatile("mcr p15, 0, %0, c14, c2, 1" ::"r"(cntp_ctl));
+    // Set compare value to 0  
+    bcm2835_timer_registers_base->Compare1 = 0;
+    // Disable CMP1 interrupt
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
 }
 
 static inline uint64_t get_phy_count() {
-    LittleEndianUint64 val;
-    // Read CNTPCT
-    asm volatile("mrrc p15, 0, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
-    return val.dword;
+    return bcm2835_timer_registers_base->CounterLower;
 }
 
-static inline int32_t get_phy_timer_val() {
-    int32_t val;
-    // Read CNTP_TVAL
-    asm volatile("mrc p15, 0, %0, c14, c2, 0" : "=r"(val));
-    return val;
-}
 
-static inline void set_phy_timer_val(int32_t val) {
-    // Write CNTP_TVAL
-    asm volatile("mcr p15, 0, %0, c14, c2, 0" ::"r"(val));
-}
 
-static inline uint64_t get_phy_timer_cmp_val() {
-    LittleEndianUint64 val;
-    // Read CNTP_CVAL
-    asm volatile("mrrc p15, 2, %0, %1, c14" : "=r"(val.low_word), "=r"(val.high_word));
-    return val.dword;
-}
-
-static inline void set_phy_timer_cmp_val(uint64_t val) {
-    const LittleEndianUint64 le_val = (LittleEndianUint64)val;
-    // Write CNTP_CVAL
-    asm volatile("mcrr p15, 2, %0, %1, c14" ::"r"(le_val.low_word), "r"(le_val.high_word));
+static inline void set_phy_timer_cmp_val(uint32_t val) {
+  bcm2835_timer_registers_base->Compare1=val;
 }
 
 static inline ScheduledTimer * get_prq_node_data(prq_node * node) {
     return (ScheduledTimer *)node->data;
 }
 
-void bcm2836_timer_init() {
-    const uint32_t freq = get_frequency();
+void bcm2835_timer_init() {
+    const uint32_t freq = SYSTEM_TIMER_FREQ;
     INFO("System counter frequency: %u kHz\n", freq / 1000);
 
-    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
+
 
     // Init priority queue
     scheduled_timers = prq_create();
 
-    // Initially there are no timers set yet, so the interrupt is masked
-    mask_and_enable_timer(); 
+
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
 }
 
-void timer_handle_interrupt() {
+void bcm2835_timer_handle_interrupt() {
     volatile const uint64_t current_count = get_phy_count();
 
     // Begin of critical section, disable timer interrupts
-    bcm2836_registers_base->Core3TimersInterruptControl = 0;
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
 
     // Process all timers that are not in the future, if any
     prq_node * next_timer_node = prq_peek(scheduled_timers);
     while (next_timer_node != NULL &&
            get_prq_node_data(next_timer_node)->scheduled_count <= current_count) {
-
         prq_dequeue(scheduled_timers);
         ScheduledTimer * const next_timer = get_prq_node_data(next_timer_node);
 
@@ -153,7 +120,8 @@ void timer_handle_interrupt() {
     }
 
     // End of critical section, re-enable timer interrupts
-    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
+
 }
 
 static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, bool periodic) {
@@ -178,30 +146,29 @@ static TimerHandle schedule_timer(TimerCallback callback, uint32_t delay_ms, boo
     new_timer_node->data = new_timer;
 
     // Begin of critical section, disable timer interrupts
-    bcm2836_registers_base->Core3TimersInterruptControl = 0;
+    bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;
+
 
     prq_enqueue(scheduled_timers, new_timer_node);
 
     set_phy_timer_cmp_val(get_prq_node_data(prq_peek(scheduled_timers))->scheduled_count);
 
-    // Unmask interrupt if not already so
-    unmask_and_enable_timer();
 
     // End of critical section, re-enable timer interrupts
-    bcm2836_registers_base->Core3TimersInterruptControl = PHYSICAL_SECURE_TIMER;
+    bcm2835_int_registers_base->EnableIRQ1 |= SysTimerCMP1;
 
     return new_timer->handle;
 }
 
-TimerHandle bcm2836_schedule_timer_once(TimerCallback callback, uint32_t delay_ms) {
+TimerHandle bcm2835_schedule_timer_once(TimerCallback callback, uint32_t delay_ms) {
     return schedule_timer(callback, delay_ms, false);
 }
 
-TimerHandle bcm2836_schedule_timer_periodic(TimerCallback callback, uint32_t delay_ms) {
+TimerHandle bcm2835_schedule_timer_periodic(TimerCallback callback, uint32_t delay_ms) {
     return schedule_timer(callback, delay_ms, true);
 }
 
-void bcm2836_deschedule_timer(TimerHandle handle) {
+void bcm2835_deschedule_timer(TimerHandle handle) {
     assert(sizeof(prq_node *) >= sizeof(TimerHandle));
     prq_node * const timer_node = (prq_node *)handle;
 

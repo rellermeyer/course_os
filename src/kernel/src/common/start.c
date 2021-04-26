@@ -1,16 +1,18 @@
 #include <chipset.h>
+#include <constants.h>
+#include <debug.h>
+#include <dtb.h>
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
 #include <mem_alloc.h>
 #include <pmm.h>
+#include <scheduler.h>
 #include <stdint.h>
-#include <debug.h>
 #include <string.h>
 #include <syscall.h>
 #include <test.h>
 #include <vas2.h>
-#include <scheduler.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
@@ -28,10 +30,10 @@ void init() {
     // copy the SWI instruction from _userspace_test_program to the allocated page at 0x8000
     int userspace_test_program = 0;
     asm volatile("ldr %0, =_userspace_test_program" : "=r"(userspace_test_program));
-    
+
     // TODO size of userspace test program is hardcoded
     kprintf("userspace test: %x\n", userspace_test_program);
-    memcpy((void *) available_mem_addr, (void *) userspace_test_program, (size_t) 60);
+    memcpy((void *)available_mem_addr, (void *)userspace_test_program, (size_t)60);
 
     register ProcessControlBlock * r5 asm("r5") = pcb;
     asm volatile("push {lr}");
@@ -39,24 +41,25 @@ void init() {
     asm volatile("pop {lr}");
 }
 
+
 /// Entrypoint for the C part of the kernel.
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
-void start(uint32_t * p_bootargs, size_t memory_size) {
+void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.
-    init_hardwareinfo();
+    init_hardwareinfo(dtb);
 
     // Initialize the chipset and enable uart
     init_chipset();
 
-    INFO("Detected memory size: 0x%x Bytes", memory_size);
+
+    INFO("Detected memory size: 0x%x Bytes", get_hardwareinfo()->memory_size);
     INFO("Started chipset specific handlers");
 
     // just cosmetic (and for debugging)
     print_hardwareinfo();
-    detect_boardtype();
 
     // start proper virtual and physical memory management.
     // Even though we already enabled the mmu in startup.s to
@@ -64,7 +67,7 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // was temporary and has to be replaced here.
     // This will actually map the whole kernel in memory and initialize the physicalMemoryManager.
     INFO("Initializing the physical and virtual memory managers.");
-    vm2_start(memory_size);
+    vm2_start(get_hardwareinfo()->memory_size);
 
     INFO("Setting up interrupt vector tables");
     // Set up the exception handlers.
@@ -112,4 +115,3 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
 
     SLEEP;
 }
-

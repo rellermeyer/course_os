@@ -90,18 +90,10 @@ void vm2_set_user_pagetable(struct L1PageTable * l1) {
 
 // Starts the actual MMU after this function we live in Virtual Memory
 void vm2_start(size_t detected_size) {
-    size_t available_RAM;
+    size_t available_RAM = detected_size;
 
-    switch (get_hardwareinfo()->boardType) {
-        case RaspberryPiZero:
-            available_RAM = 512 * Mebibyte;
-            break;
-        case RaspBerryPiTwo:
-            available_RAM = 1 * Gibibyte;
-            break;
-        default:
-	  available_RAM = detected_size;
-    }
+
+
 
     INFO("Using memory size 0x%x", available_RAM);
 

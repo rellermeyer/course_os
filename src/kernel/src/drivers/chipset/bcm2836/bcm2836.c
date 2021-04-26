@@ -1,15 +1,14 @@
 // https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
 #include <bcm2836.h>
 #include <chipset.h>
-#include <timer.h>
-#include "uart.h"
+#include "./include/timer.h"
+#include "./include/uart.h"
 #include <vm2.h>
 
 volatile UartDevice bcm2836_uart;
 
 void bcm2836_irq_handler() {
-    volatile const uint32_t pending = bcm2836_registers_base->Core0IRQSource;
-
+    volatile const uint32_t pending = bcm2836_registers_base->Core3IRQSource;
     switch (pending) {
         // Generic timers
         case PHYSICAL_SECURE_TIMER:

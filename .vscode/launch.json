@@ -2,6 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
+
             "name": "(gdb) Attach - C/C++",
             "type": "cppdbg",
             "request": "launch",
@@ -20,6 +21,7 @@
             },
             "miDebuggerServerAddress": "localhost:1234",
             "preLaunchTask": "run_debug"
+
         },
         {
             "name": "(gdb) Attach - Native",
