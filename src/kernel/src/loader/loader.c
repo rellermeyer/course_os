@@ -193,7 +193,7 @@ int process_program_header_table(struct vas2 * vasToFill, stack_and_heap_and_ent
        |   ||  - // - 16KB currently
        |   \/
        |  -----
-       |   /\
+       |   /                                    \
        |   ||  - // - 16KB currently
        |  HEAP
     */

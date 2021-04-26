@@ -10,17 +10,13 @@
 #include <test.h>
 #include <vas2.h>
 #include <scheduler.h>
-<<<<<<< HEAD
-#include <syscall.h>
-=======
 #include <loader.h>
+#include <vm2.h>
 
 extern unsigned int user_start;
 extern unsigned int user_end;
 void call_init_state(Elf32_Addr pc, Elf32_Addr sp, Elf32_Addr pcb);
 
->>>>>>> origin/elf_loader
-#include <vm2.h>
 
 void init() {
     ProcessControlBlock * pcb = createPCB(0);
@@ -126,11 +122,6 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-<<<<<<< HEAD
-    /* init_scheduler(); */
-=======
->>>>>>> origin/elf_loader
-
     #ifndef ENABLE_TESTS
     // DEBUG
 
@@ -140,20 +131,11 @@ void start(uint32_t * p_bootargs, size_t memory_size) {
     init();
     init();
     asm volatile("b _switch_to_usermode");
-<<<<<<< HEAD
     #else
-    /* debug_run(); */
-    test_main();
-    // If we return, the tests failed.
-    SemihostingCall(OSSpecific);
-    #endif
-=======
-#else
     test_main();
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);
 #endif
->>>>>>> origin/elf_loader
 
     // TODO:
     //  * Mount vfs
