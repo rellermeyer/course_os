@@ -7,12 +7,6 @@ project('kernel', 'c')
 add_project_arguments('-DMEM_DEBUG', language: 'c')
 add_project_arguments('-DLOG_LEVEL=4', language: 'c')
 
-# Available options:
-# * Any custom definition you'd like to have enabled
-# * MEM_DEBUG - Compiles in part of the code that will print debug information about memory management
-# * LOG_LEVEL (number between 0 and 4)
-# DEFINITIONS = MEM_DEBUG LOG_LEVEL=LOG_LEVEL
-
 c_args = []
 link_args = []
 includes = []

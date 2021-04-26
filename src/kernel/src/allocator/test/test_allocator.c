@@ -1,5 +1,10 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <test.h>
+
+TEST_CREATE(test_free_null, {
+    kfree(NULL);
+})
 
 TEST_CREATE(test_alloc_free, {
     uint32_t * a = kmalloc(sizeof(uint32_t));
@@ -23,8 +28,6 @@ TEST_CREATE(test_alloc_realloc_free, {
     kfree(a);
 })
 
-TEST_CREATE(test_free_null, { kfree(NULL); })
-
 TEST_CREATE(test_calloc, {
     int * test = kcalloc(100, sizeof(int));
 
@@ -33,21 +36,8 @@ TEST_CREATE(test_calloc, {
     kfree(test);
 })
 
-TEST_CREATE(test_expand_heap, {
-    heap_t * heap = mem_get_allocator();
-    uint32_t initial_end = heap->end;
-
-    expand(heap);
-
-    ASSERT_EQ(heap->end, initial_end + 0x1000);
-
-    uint8_t * yolo = (void *)(heap->end - 300);
-    uint8_t prev = *yolo;
-    *yolo = 42;
-    ASSERT_EQ(*yolo, 42);
-    *yolo = prev;
-
-    contract(heap);
-
-    ASSERT_EQ(heap->end, initial_end);
+TEST_CREATE( test_allocation_size ,{
+    void * a = kmalloc(12);
+    ASSERT_EQ(allocation_size(a), 12 );
+    kfree(a);
 })

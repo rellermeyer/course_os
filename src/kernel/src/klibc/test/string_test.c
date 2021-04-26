@@ -173,32 +173,34 @@ TEST_CREATE(test_strlen, {
 TEST_CREATE(test_ktokenize, {
         string tokens_nv[1] = {":"};
         VPSinglyLinkedList *lst = ktokenize("key: value", tokens_nv, 1);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 0), "key"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 1), " value"), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 0), "key", 3), 0);
+        kprintf("%s\n", vpsll_get(lst, 1));
+        ASSERT_EQ(strncmp(vpsll_get(lst, 1), " value", 5), 0);
 
         vpsll_free(lst, kfree);
 
         string token_conf[2] = {": ", ", "};
 
-        // Perse a very simple config file
+        // Parse a very simple config file
         lst = ktokenize("name: val, course: os, uni: tud", token_conf, 2);
 
-        ASSERT_EQ(strcmp(vpsll_get(lst, 0), "name"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 1), "val"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 2), "course"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 3), "os"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 4), "uni"), 0);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 5), "tud"), 0);
+        kprintf("%s\n", vpsll_get(lst, 1));
+        ASSERT_EQ(strncmp(vpsll_get(lst, 0), "name", 4), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 1), "val", 3), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 2), "course", 6), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 3), "os", 2), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 4), "uni", 3), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 5), "tud", 3), 0);
 
         vpsll_free(lst, kfree);
 
         // No matches
         lst = ktokenize("2 + 4", tokens_nv, 1);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 0), "2 + 4"), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 0), "2 + 4", 5), 0);
         vpsll_free(lst, kfree);
 
         // Empty string
         lst = ktokenize("", tokens_nv, 1);
-        ASSERT_EQ(strcmp(vpsll_get(lst, 0), ""), 0);
+        ASSERT_EQ(strncmp(vpsll_get(lst, 0), "", 0), 0);
         vpsll_free(lst, kfree);
     })

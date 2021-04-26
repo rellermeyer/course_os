@@ -12,7 +12,9 @@ VPSinglyLinkedList * vpsll_create() {
 
 void vpsll_free(VPSinglyLinkedList * lst, FreeFunc freef) {
     struct VPSinglyLinkedListLink * curr = lst->head;
-    while (curr != NULL) {
+
+    int length = lst->length;
+    while (length-- > 0) {
         struct VPSinglyLinkedListLink * last = curr;
         curr = curr->next;
         if (freef != NULL) { freef(last->data); }
@@ -36,17 +38,19 @@ void vpsll_push_to_back(VPSinglyLinkedList * lst, void * data) {
     node->data = data;
 
     struct VPSinglyLinkedListLink *search = lst->head;
-    if (search == NULL) {
+    if (lst->length == 0) {
         lst->head = node;
         lst->length++;
         return;
     }
 
-    while (search->next != NULL) {
+    int length = lst->length;
+    while (--length > 0) {
         search = search->next;
     }
 
     search->next = node;
+    node->next = NULL;
     lst->length++;
 }
 
@@ -57,7 +61,6 @@ void * vpsll_pop(VPSinglyLinkedList * lst) {
 
     lst->head = oldhead->next;
     kfree(oldhead);
-
     lst->length--;
 
     return contents;

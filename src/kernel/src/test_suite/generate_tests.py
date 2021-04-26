@@ -53,7 +53,7 @@ class Test:
 
     def __init__(self, test: str):
         name_partitioned = test.partition(',')
-        self.name = name_partitioned[0][1:]
+        self.name = name_partitioned[0][1:].strip()
 
         # Get the argument after the first comma, take out the brace
         # and split into two parts. The part before the test and the
@@ -89,7 +89,7 @@ class TestGroup:
     tests: list[Test] = []
 
     def __init__(self, name: str, test_file: str):
-        self.name = name
+        self.name = name.strip()
         self.tests = []
 
         # Split the file into the test cases

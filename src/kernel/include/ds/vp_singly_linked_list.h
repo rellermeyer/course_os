@@ -16,7 +16,6 @@ typedef struct VPSinglyLinkedList {
     size_t length;
 } VPSinglyLinkedList;
 
-
 // Iterator over a SLL
 typedef struct VPSinglyLinkedListLink * VPSinglyLinkedListIterator;
 
