@@ -84,7 +84,8 @@ TEST_CREATE(test_prq_3, {
     ASSERT_EQ(hn->priority, 0);
     prq_free_node(hn);
 
-    prq_dequeue(queue);
+    hn = prq_dequeue(queue);
+    prq_free_node(hn);
 
     hn = prq_dequeue(queue);
     ASSERT_EQ(hn->priority, 2);

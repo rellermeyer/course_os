@@ -8,7 +8,7 @@
  */
 
 
-#include "include/HashMap.h"
+#include <HashMap.h>
 
 #include <stdint.h>
 #include <stdio.h>

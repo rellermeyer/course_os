@@ -13,10 +13,10 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_C_COMPILER ${CMAKE_CURRENT_SOURCE_DIR}/src/toolchain/arm-none-eabi/bin/arm-none-eabi-gcc)
 set(CMAKE_C_LINK_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/src/toolchain/arm-none-eabi/bin/arm-none-eabi-ld)
 
-file(GLOB_RECURSE kernel_sources ./src/kernel/src/*.c ./src/kernel/src/**/*.c)
+file(GLOB_RECURSE kernel_sources ./src/kernel/src/*.c ./src/kernel/src/**/*.c ./src/kernel/src/**/*.s)
 file(GLOB_RECURSE kernel_include LIST_DIRECTORIES true ./src/kernel/src/**/include)
 
-set(SOURCE_FILES ${kernel_sources} src/kernel/src/sched/sched.c src/kernel/src/sched/elf.c src/kernel/src/sched/include/elf.h)
+set(SOURCE_FILES ${kernel_sources})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 

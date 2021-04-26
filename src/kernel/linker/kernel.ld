@@ -7,45 +7,40 @@ SECTIONS
 {
     . = __BOOT_ADDRESS;
 
-    
-
     __BOOT_START = .;
     .boot : {
-        */startup.o (.text)
-        */startup.o (.data)
-        */startup.o (.bss)
-	__DTB_START = .;
+        */src_common_startup.s.o (.text)
+        */src_common_startup.s.o (.data)
+        */src_common_startup.s.o (.bss)
+    __DTB_START = .;
         */dtb.o (.data)
-        */stacks.o (.text)
-        */memory.o (.text)
-        */memory.o (.data)	
+        */src_common_stacks.s.o (.text)
+        */src_common_memory.s.o (.text)
+        */src_common_memory.s.o (.data)
     }
     __BOOT_END = .;
 
-    
+
     . += __KERNEL_VIRTUAL_OFFSET;
 
     __KERNEL_BASE = .;
     .text : AT(ADDR(.text) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/startup.o */stacks.o) .text)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o */src_common_stacks.s.o) .text)
         *(.rodata*)
     }
 
     .data : AT(ADDR(.data) - __KERNEL_VIRTUAL_OFFSET){
-        *(EXCLUDE_FILE (*/startup.o) .data)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) .data)
+        __PROCESS_START = .;
+        */process_wrapper.mo (.exec_file)
      }
 
     .bss : AT(ADDR(.bss) - __KERNEL_VIRTUAL_OFFSET) {
-        *(EXCLUDE_FILE (*/startup.o) COMMON)
-        *(EXCLUDE_FILE (*/startup.o) .bss)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) COMMON)
+        *(EXCLUDE_FILE (*/src_common_startup.s.o) .bss)
     }
 
     /*make kernel top megabyte aligned*/
     . = ALIGN(1024 * 1024);
     __KERNEL_TOP = .;
 }
-
-/* MEMORY */
-/* { */
-/*     RAM (rw) : org = 0x47912343, len = 1M */
-/* } */

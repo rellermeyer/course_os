@@ -1,6 +1,7 @@
 #include <processControlBlock.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vas2.h>
 
 int idCounter = 0;
 
@@ -36,12 +37,11 @@ ProcessControlBlock * removePCBNode(ProcessControlBlock * node) {
 
 ProcessControlBlock * createPCB(int parent) {
     ProcessControlBlock * processControlBlock = (ProcessControlBlock *)kmalloc(sizeof(ProcessControlBlock));
-    
+
     *processControlBlock = (ProcessControlBlock) {
         .id = idCounter++,
         .parent = parent,
-        .vas = create_vas(),
-        .executionState = NULL,
+        .vas = create_vas()
     };
     return processControlBlock;
 }

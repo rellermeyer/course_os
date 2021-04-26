@@ -2,8 +2,8 @@
 #include <chipset.h>
 #include <vm2.h>
 
-#include "timer.h"
-#include "uart.h"
+#include <bcm2835_timer.h>
+#include <bcm2835_uart.h>
 
 volatile UartDevice bcm2835_uart;
 

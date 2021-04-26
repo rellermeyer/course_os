@@ -5,19 +5,20 @@
 #include <hardwareinfo.h>
 #include <interrupt.h>
 #include <klibc.h>
+#include <loader.h>
 #include <mem_alloc.h>
 #include <pmm.h>
 #include <scheduler.h>
 #include <stdint.h>
 #include <string.h>
-#include <syscall.h>
 #include <test.h>
 #include <vas2.h>
-
-extern unsigned int user_start;
-extern unsigned int user_end;
 #include <vm2.h>
 
+#define EXEC_FILE_ADDRESS  ((void *) (__PROCESS_START))
+
+extern const size_t __PROCESS_START[];
+void call_init_state(Elf32_Addr pc, Elf32_Addr sp, Elf32_Addr pcb);
 
 void init() {
     ProcessControlBlock * pcb = createPCB(0);
@@ -39,6 +40,33 @@ void init() {
     asm volatile("push {lr}");
     asm volatile("bl _init");
     asm volatile("pop {lr}");
+
+}
+
+
+void load_process() {
+    char *file = EXEC_FILE_ADDRESS;
+    struct ProcessControlBlock *pcb = createPCB(0);
+    stack_and_heap_and_entry stackAndHeapAndEntry;
+
+    union loader_result input;
+    input.static_exec_result.PCB = pcb;
+    input.static_exec_result.stackAndHeapAndEntry = &stackAndHeapAndEntry;
+
+    int result = load_elf_file(file, &input);
+
+    if (result < 0) {
+        kprintf("Loader operation failed due to error %d\n", result);
+        return;
+    }
+
+    add(pcb, true);
+    getNext();
+
+    call_init_state(stackAndHeapAndEntry.entry, stackAndHeapAndEntry.stack_pointer, (Elf32_Addr) pcb);
+
+    INFO("Stack initialized successfully!\n");
+
 }
 
 
@@ -69,10 +97,6 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     INFO("Initializing the physical and virtual memory managers.");
     vm2_start(get_hardwareinfo()->memory_size);
 
-    INFO("Setting up interrupt vector tables");
-    // Set up the exception handlers.
-    init_vector_table();
-
     INFO("Setting up heap");
     // After this point kmalloc and kfree can be used for dynamic memory management.
     init_heap();
@@ -81,6 +105,10 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // earlier by rewriting to make it use hardcoded buffer sizes
     // instead.
     debug_init();
+
+    INFO("Setting up interrupt vector tables");
+    // Set up the exception handlers.
+    init_vector_table();
 
     // Splash screen
     splash();
@@ -91,15 +119,16 @@ void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
     // Call the chipset again to do any initialization after enabling interrupts and the heap.
     chipset.late_init();
 
-#ifndef ENABLE_TESTS
+    #ifndef ENABLE_TESTS
     // DEBUG
 
     init_scheduler();
+    load_process();
 
     init();
     init();
     asm volatile("b _switch_to_usermode");
-#else
+    #else
     test_main();
     // If we return, the tests failed.
     SemihostingCall(OSSpecific);

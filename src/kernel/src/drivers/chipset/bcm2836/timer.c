@@ -1,4 +1,4 @@
-#include "./include/timer.h"
+#include <bcm2836_timer.h>
 #include <bcm2836.h>
 #include <chipset.h>
 #include <priority_queue.h>
@@ -105,7 +105,7 @@ void bcm2836_timer_init() {
     scheduled_timers = prq_create();
 
     // Initially there are no timers set yet, so the interrupt is masked
-    mask_and_enable_timer(); 
+    mask_and_enable_timer();
 }
 
 void timer_handle_interrupt() {

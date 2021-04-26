@@ -13,4 +13,4 @@ jobs:
         run: docker build -t course_os .
         
       - name: test
-        run: docker run course_os make test
+        run: docker run course_os sh -c 'cd kernel/build && ninja test-run'

@@ -1,17 +1,20 @@
-// Adapted from https://github.com/CCareaga/heap_allocator
-
+/**
+ * buddy system page frame allocator
+ * modified from: https://github.com/block8437/buddyalloc
+ */
 
 #include <allocator.h>
+#include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <test.h>
-#include <vm2.h>
+
+#define min(a, b) ((a) > (b) ? (b) : (a))
+#define max(a, b) ((a) < (b) ? (b) : (a))
+
+#define GET_NEXT(head) *(size_t*)(head)
+#define BUDDY_CHECK(a, b, size) ((a ^ size) == (b))
 
 // Debug toggle
 static bool trace_memory = false;
-
-int offset = sizeof(uint32_t) * 2;
-uint32_t overhead = sizeof(footer_t) + sizeof(node_t);
 
 // ========================================================
 // Set the trace memory variable
@@ -24,237 +27,191 @@ bool get_trace_memory(void) {
     return trace_memory;
 }
 
-// ========================================================
-// this function initializes a new heap structure, provided
-// an empty heap struct, and a place to start the heap
-//
-// NOTE: this function uses HEAP_INIT_SIZE to determine
-// how large the heap is so make sure the same constant
-// is used when allocating memory for your heap!
-// ========================================================
-void create_heap(heap_t * heap, uint32_t start) {
-    // first we create the initial region, this is the "wilderness" chunk
-    // the heap starts as just one big chunk of allocatable memory
-    node_t * init_region = (node_t *)start;
-    init_region->hole = 1;
-    init_region->size = (HEAP_INIT_SIZE) - sizeof(node_t) - sizeof(footer_t);
+// Add a free chunk into a certain order
+void buddy_add_free_item(buddy_allocator * buddy, size_t address, size_t order, bool new) {
+    size_t head = buddy->free_lists[order - MIN_ORDER];
+    GET_NEXT(address) = 0;
+    size_t size = 1 << order;
 
-    create_foot(init_region);  // create a foot (size must be defined)
-
-    // now we add the region to the correct bin and setup the heap struct
-    add_node(heap->bins[get_bin_index(init_region->size)], init_region);
-
-    heap->start = start;
-    heap->end = start + HEAP_INIT_SIZE;
-    heap->bytes_allocated = 0;
-}
-
-// ========================================================
-// this is the allocation function of the heap, it takes
-// the heap struct pointer and the size of the chunk we
-// want. this function will search through the bins until
-// it finds a suitable chunk. it will then split the chunk
-// if neccesary and return the start of the chunk
-// ========================================================
-void * heap_alloc(heap_t * heap, uint32_t size) {
-    // first get the bin index that this chunk size should be in
-    int index = get_bin_index(size);
-    // now use this bin to try and find a good fitting chunk!
-    bin_t * temp = (bin_t *)heap->bins[index];
-
-    node_t * found = get_best_fit(temp, size);
-
-    // while no chunk if found advance through the bins until we
-    // find a chunk or get to the wilderness
-    while (found == NULL) {
-        if (index + 1 >= BIN_COUNT) return NULL;
-
-        temp = heap->bins[++index];
-        found = get_best_fit(temp, size);
-    }
-
-    // if the difference between the found chunk and the requested chunk
-    // is bigger than the overhead (metadata size) + the min alloc size
-    // then we should split this chunk, otherwise just return the chunk
-    if ((found->size - size) > (overhead + MIN_ALLOC_SZ)) {
-        // do the math to get where to split at, then set its metadata
-        node_t * split = (node_t *)(((char *)found + overhead) + size);
-        split->size = found->size - size - (overhead);
-        split->hole = 1;
-
-        create_foot(split);  // create a footer for the split
-
-        // now we need to get the new index for this split chunk
-        // place it in the correct bin
-        int new_idx = get_bin_index(split->size);
-        add_node(heap->bins[new_idx], split);
-
-        found->size = size;  // set the found chunks size
-        create_foot(found);  // since size changed, remake foot
-    }
-
-
-    found->hole = 0;                        // not a hole anymore
-    remove_node(heap->bins[index], found);  // remove it from its bin
-
-    // these following lines are checks to determine if the heap should
-    // be expanded or contracted
-    // ==========================================
-    node_t * wild = get_wilderness(heap);
-    if (wild->size < MIN_WILDERNESS) {
-        int success = expand(heap);
-        if (success == 0) { return NULL; }
-    } else if (wild->size > MAX_WILDERNESS) {
-        contract(heap);
-    }
-    // ==========================================
-
-    // since we don't need the prev and next fields when the chunk
-    // is in use by the user, we can clear these and return the
-    // address of the next field
-    found->prev = NULL;
-    found->next = NULL;
-    heap->bytes_allocated += found->size;
-
-    if (trace_memory) {
-        TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", found->size, &found->next);
-    }
-
-    return &found->next;
-}
-
-// ========================================================
-// this is the free function of the heap, it takes the
-// heap struct pointer and the pointer provided by the
-// heap_alloc function. the given chunk will be possibly
-// coalesced  and then placed in the correct bin
-// ========================================================
-void heap_free(heap_t * heap, void * p) {
-    if (p == NULL) { return; }
-
-
-    bin_t * list;
-    footer_t *new_foot, *old_foot;
-
-    node_t * head = (node_t *)((char *)p - offset);
-    heap->bytes_allocated -= head->size;
-
-    if (trace_memory) {
-        TRACE("[MEM DEBUG] FREE %i bytes", head->size);
-    }
-
-    if (head == (node_t *)(uintptr_t)heap->start) {
-        head->hole = 1;
-        add_node(heap->bins[get_bin_index(head->size)], head);
+    if (new || head == 0) {
+        // Fresh address, push to the head.
+        GET_NEXT(address) = head;
+        buddy->free_lists[order - MIN_ORDER] = address;
         return;
     }
 
-    node_t * next = (node_t *)((char *)get_foot(head) + sizeof(footer_t));
-    footer_t * f = (footer_t *)((char *)head - sizeof(footer_t));
-    node_t * prev = f->header;
+    // Old address with a nonempty list, lets find some buddies!
+    size_t prev = 0;
+    while (!BUDDY_CHECK(head, address, size)) {
+        // We reached the end of the list, add it here and return
+        if (GET_NEXT(head) == 0) {
+            GET_NEXT(head) = address;
+            return;
+        }
 
-    if (prev->hole) {
-        list = heap->bins[get_bin_index(prev->size)];
-        remove_node(list, prev);
-
-        prev->size += overhead + head->size;
-        new_foot = get_foot(head);
-        new_foot->header = prev;
-
-        head = prev;
+        prev = head;
+        head = GET_NEXT(head);
     }
 
-    if (next->hole) {
-        list = heap->bins[get_bin_index(next->size)];
-        remove_node(list, next);
-
-        head->size += overhead + next->size;
-
-        old_foot = get_foot(next);
-        old_foot->header = 0;
-        next->size = 0;
-        next->hole = 0;
-
-        new_foot = get_foot(head);
-        new_foot->header = head;
-    }
-
-    head->hole = 1;
-    add_node(heap->bins[get_bin_index(head->size)], head);
-}
-
-
-// these are left here to implement contraction / expansion
-uint32_t expand(heap_t * heap) {
-    if (vm2_allocate_page(kernell1PageTable,
-                          heap->end,
-                          false,
-                          (struct PagePermission){.access = KernelRW, .executable = false},
-                          NULL) == NULL) {
-        // Pointer is NULL so error
-        return 0;
+    // We found buddies
+    if (prev != 0) {
+        // Remove this item from it's old list
+        GET_NEXT(prev) = GET_NEXT(head);
     } else {
-        // Pointer is non-bn
-        heap->end += PAGE_SIZE;
-        return 1;
+        buddy->free_lists[order - MIN_ORDER] = GET_NEXT(head);
+    }
+
+    buddy_add_free_item(buddy, min(head, address), order + 1, false);
+}
+
+// Allocate a chunk from a buddy allocator
+void* buddy_alloc_helper(buddy_allocator * buddy, size_t size) {
+    // Round up by getting highest order and calculating the size form that
+    int original_order = (32 - __builtin_clz(size - 1));
+
+    // Not enough size for this request;
+    if (original_order >= MAX_ORDER) {
+        return NULL;
+    }
+
+    if (original_order < MIN_ORDER) {
+        original_order = MIN_ORDER;
+    }
+
+    size_t want_size = 1 << original_order;
+
+    // Find the smallest order with space
+    for ( int order = original_order; order < MAX_ORDER; order++ ) {
+        if (buddy->free_lists[order - MIN_ORDER] != 0 ) {
+            // Pop the head
+            size_t address = buddy->free_lists[order - MIN_ORDER];
+            buddy->free_lists[order - MIN_ORDER] = GET_NEXT(address);
+
+            // Try to return it's buddies
+            size_t found_size = 1 << order;
+
+            if (found_size != want_size) {
+                // Keep halving the found size, returning the second parts of the halves into
+                // the free list as we go, until we find the right size.
+
+                while (found_size > want_size) {
+                    found_size = found_size >> 1;
+                    buddy_add_free_item(buddy, address + found_size,
+                                        32 - __builtin_clz(found_size - 1), true);
+                }
+            }
+
+            return (void*) address;
+        }
+    }
+
+    // Didn't find anything :(
+    return NULL;
+}
+
+void * buddy_alloc(buddy_allocator * buddy, size_t size) {
+    buddy_allocation * start = buddy_alloc_helper(buddy,
+                                                  size + sizeof(buddy_allocation_header));
+    start->header.size = size;
+
+    if (get_trace_memory()) {
+        buddy->bytes_allocated += start->header.size;
+        TRACE("[MEM DEBUG] ALLOC %i bytes at 0x%x", start->header.size, &start->allocation);
+    }
+
+    return &start->allocation;
+}
+
+// Return a chunk of memory ack into the buddy allocator
+void buddy_dealloc_helper(buddy_allocator * buddy, size_t address, size_t size) {
+
+    int order = 32 - __builtin_clz(size - 1);
+    if (order < MIN_ORDER) {
+        order = MIN_ORDER;
+    }
+    if (order >= MAX_ORDER) {
+        FATAL("Deallocation larger than MAX_ORDER");
+    }
+
+
+    buddy_add_free_item(buddy, address, order, false);
+}
+
+void buddy_dealloc(buddy_allocator * buddy, size_t address) {
+    if (address == (size_t)NULL) {
+        return;
+    }
+
+    // get the header
+    buddy_allocation_header * header = (buddy_allocation_header *)
+        (address - sizeof(buddy_allocation_header));
+    size_t size = header->size;
+
+    // deallocate from the start of the header to the end of the
+    // allocation (so add 4 bytes to deallocate)
+    buddy_dealloc_helper(buddy, (size_t)header, size + sizeof(buddy_allocation_header));
+
+    if (get_trace_memory()) {
+        buddy->bytes_allocated -= size;
+        TRACE("[MEM DEBUG] FREE %i bytes", size);
     }
 }
 
-void contract(heap_t * heap) {
-    heap->end -= PAGE_SIZE;
-    vm2_free_page(kernell1PageTable, heap->end);
+// Prints out the current status of the allocator
+void buddy_status(buddy_allocator * buddy) {
+    for (int order = MIN_ORDER; order < MAX_ORDER; order++ ) {
+        INFO("Order %d", order);
+
+        size_t head = buddy->free_lists[order - MIN_ORDER];
+
+        while (head != 0) {
+            INFO("| 0x%x", head);
+            head = GET_NEXT(head);
+        }
+    }
 }
 
-// ========================================================
-// this function is the hashing function that converts
-// size => bin index. changing this function will change
-// the binning policy of the heap. right now it just
-// places any allocation < 8 in bin 0 and then for anything
-// above 8 it bins using the log base 2 of the size
-// ========================================================
-uint32_t get_bin_index(uint32_t sz) {
-    int index = 0;
-    sz = sz < 4 ? 4 : sz;
+/// Finds size of an allocation
+size_t get_alloc_size(size_t address) {
+    buddy_allocation_header * header = (buddy_allocation_header*)
+                                        (address - sizeof(buddy_allocation_header));
+    return header->size;
 
-    while (sz >>= 1) index++;
-    index -= 2;
-
-    if (index > BIN_MAX_IDX) index = BIN_MAX_IDX;
-
-    return index;
 }
 
-// ========================================================
-// this function will create a footer given a node
-// the node's size must be set to the correct value!
-// ========================================================
-void create_foot(node_t * head) {
-    footer_t * foot = get_foot(head);
-    foot->header = head;
-}
+// Initialize a buddy allocator
+buddy_allocator * buddy_init(buddy_allocator *address, size_t size) {
+    // If we don't have enough space for a header and the smallest chunk of space, ignore.
+    if ( size <= sizeof(buddy_allocator) + (1 << MIN_ORDER)) {
+        return NULL;
+    }
 
+    // Take the first chunk of space for the header
+    buddy_allocator * buddy = (buddy_allocator *) address;
+    address += sizeof(buddy_allocator);
+    size -= sizeof(buddy_allocator);
 
-// ========================================================
-// this function will get the footer pointer given a node
-// ========================================================
-footer_t * get_foot(node_t * node) {
-    return (footer_t *)((char *)node + sizeof(node_t) + node->size);
-}
+    // Setup the header
+    memset(buddy, 0, sizeof(buddy_allocator));
+    buddy->base = (size_t) address;
 
-// ========================================================
-// this function will get the wilderness node given a
-// heap struct pointer
-//
-// NOTE: this function banks on the heap's end field being
-// correct, it simply uses the footer at the end of the
-// heap because that is always the wilderness
-// ========================================================
-node_t * get_wilderness(heap_t * heap) {
-    footer_t * wild_foot = (footer_t *)((char *)heap->end - sizeof(footer_t));
-    return wild_foot->header;
-}
+    // Carve out as many chunks of space as possible.
+    while (size > (1U << MIN_ORDER)) {
+        for(int order = MAX_ORDER - 1; order >= MIN_ORDER; order--) {
+            // Find the largest order to cut out of the size.
+            if ( size >= (1U << order) ) {
+                buddy_add_free_item(buddy, (size_t)address, order, true);
 
-uint32_t get_alloc_size(void * ptr) {
-    node_t * head = (node_t *)(ptr - offset);
-    return head->size;
+                address += 1U << order;
+                size -= 1U << order;
+                break;
+            }
+        }
+    }
+
+    if (get_trace_memory()) {
+        buddy->bytes_allocated = 0;
+    }
+
+    return buddy;
 }

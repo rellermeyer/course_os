@@ -1,4 +1,4 @@
-#include "../include/timer.h"
+#include <bcm2836_timer.h>
 #include <test.h>
 
 static int callback_count_1;

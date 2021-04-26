@@ -1,5 +1,4 @@
-#include "timer.h"
-
+#include <bcm2835_timer.h>
 #include <bcm2835.h>
 #include <chipset.h>
 #include <priority_queue.h>
@@ -41,7 +40,7 @@ static inline uint32_t get_frequency() {
 
 
 static inline void mask_and_enable_timer() {
-    // Set compare value to 0  
+    // Set compare value to 0
     bcm2835_timer_registers_base->Compare1 = 0;
     // Disable CMP1 interrupt
     bcm2835_int_registers_base->DisableIRQ1 |= SysTimerCMP1;

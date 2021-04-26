@@ -2,7 +2,7 @@
 #include <chipset.h>
 #include <klibc.h>
 #include <stdint.h>
-#include "uart.h"
+#include <bcm2836_uart.h>
 #include <pl011.h>
 
 /*
