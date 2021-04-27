@@ -13,7 +13,7 @@ SECTIONS
         */src_common_startup.s.o (.data)
         */src_common_startup.s.o (.bss)
     __DTB_START = .;
-        */dtb.o (.data)
+        */src_common_dtb.c.o (.data)
         */src_common_stacks.s.o (.text)
         */src_common_memory.s.o (.text)
         */src_common_memory.s.o (.data)

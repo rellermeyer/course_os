@@ -33,51 +33,43 @@ qemu-system-arm -kernel kernel.elf -m 1G -serial stdio -monitor none -M raspi2 -
 
 ## Toolchain
 To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
-
-To build the c toolchain for ARM, and `qemu-system-arm` version 4.20, run
-```bash
-make requirements
-```
-from the root project directory. We build `qemu-system-arm` from source as this gives us better support
-for attaching debuggers. Any up to date version of `qemu-system-arm` should work and if you already have this installed
-through your package manager, just running
-```bash
-make toolchain
-```
-should be sufficient.
+You can find in scripts to install known working versions of qemu and the compilation toolchain. Run those and add the generated bin directories to your PATH. 
 
 ## Running
 
-After you built the toolchain, the kernel can be ran with:
+After you built the toolchain go into the project directory and generate a build directory.
 ```bash
-make run
+cd project
+meson --cross-file cross_gcc.build build
 ```
-from the root project directory, or from the `kernel` directory.
+
+Having generated the directory you can cd into the build directory and run the kernel with the following command.
+```bash
+ninja run-kernel
+```
 
 ## Running tests
 
 To run the test suite for the kernel, execute:
 
 ```bash
-make test
+make run-test
 ```
-from the root project directory, or from the `kernel` directory.
-
 
 ## Debugging
 
 To debug the kernel, you have to perform two steps. First you have to build and start the kernel with
 ```bash
-make debug
+make run-debug
 ```
 
-from the `kernel` directory. This prepares qemu so it waits for a debugger to be attached.
+This prepares qemu so it waits for a debugger to be attached.
 
 now, if you have CLion or VSCode you can run the supplied run configuration called `debug` which attaches a debugger, loads the sourcemap and runs the kernel. Now you can create breakpoints from within your IDE.
 
-If however you don't have either of those IDEs, or want to use gdb from a terminal, one can run the following command from the kernel directory:
+If however you don't have either of those IDEs, or want to use gdb from a terminal, one can run the following command:
 ```bash
-make start_debug
+make run-gdb
 ```
 
 # Creating tests
@@ -93,23 +85,7 @@ This file can *not* be used to actually run the kernel but it does give clion th
 
 ## Emacs/Vim + CCLS
 
-To generate the required `compile_commands.json` so that CCLS correctly index the project. You have to do the following:
-
-First, generate the file using cmake:
-```bash
-cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=YES
-```
-Then, copy the file to the root folder:
-```bash
-cp Debug/compile_commands.json .
-```
-
-Afterwards you can remove the `Debug` folder with:
-```bash
-rm -rf Debug
-```
-
-Now Emacs/Vim and CCLS will correctly know how to index the project.
+You can use the `compile_commands.json` from the kernel build directory by creating a softlink from that file to this directory. Doing so will keep it up to date. 
 
 ## Emacs + GDB
 
