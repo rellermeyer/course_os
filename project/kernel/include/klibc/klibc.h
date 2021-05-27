@@ -115,6 +115,8 @@ unsigned int rand();
     panic()
 
 // 4-17-15: Initial panic * assert_fail functions added
+// 6-24-21: Simple panic for very early code added.
+void simple_panic() __attribute__((noreturn));
 void panic() __attribute__((noreturn));
 int _assert_fail(char * _file, unsigned int _line, char * _func);
 //__attribute__ ((__noreturn__));

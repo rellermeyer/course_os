@@ -1,5 +1,6 @@
 #include <dtb.h>
 #include <string.h>
+#include <klibc.h>
 #include <vm2.h>
 
 extern size_t __DTB_START[];
@@ -17,8 +18,6 @@ static inline uint32_t fix_endian(const uint32_t num) {
 
     return ret;
 }
-
-
 
 // Advances past the begin node and returns name of the node
 char * parse_begin_node(void ** curr_address) {
@@ -40,7 +39,13 @@ uint32_t get_chars_to_slash(char * string) {
 
 // Performs an allocation-free traversal to find the requested property in the DTB
 struct DTProp * dtb_get_property(struct DTHeader * dtb_h, char * path, char * property) {
-    if (fix_endian(dtb_h->magic) != 0xd00dfeed) { FATAL("Wrong dtb header %x", dtb_h->magic); }
+    // Probably shouldn't use FATAL here.
+    if (fix_endian(dtb_h->magic) != 0xd00dfeed) {
+        /* FATAL("Wrong dtb header %x", dtb_h->magic); */
+        simple_panic();
+
+    }
+
     uint32_t current_level = 0;
     uint32_t next_level = 1;
 
@@ -129,4 +134,3 @@ struct DTPropString dtb_wrap_string_prop(struct DTHeader * dtb_h, struct DTProp 
         (char *)(prop + 1)};
     return wrapped;
 }
-

@@ -2,4 +2,5 @@
 cd $MESON_SOURCE_ROOT/kernel
 meson --cross-file $MESON_SOURCE_ROOT/cross_gcc.build build
 cd build
+ninja gen-dtb
 ninja test-run

@@ -31,12 +31,12 @@ dtb = run_target('gen-dtb', command: ['sh', '-c',
                                       '$MESON_SOURCE_ROOT/../scripts/generate-dtb.sh ' + DTB])
 
 kernel_test = executable('kernel-test', sources: [kernel_sources, test_files],
-                         name_suffix: 'elf', link_args: [link_args, 'dtb.o'],
+                         name_suffix: 'elf', link_args: [link_args, 'dtb_binary.o'],
                          c_args: [c_args, '-DENABLE_TESTS'],
                          include_directories: includes)
 
 kernel_elf = executable('kernel', kernel_sources, c_args : [c_args],
-                        link_args: [link_args, 'dtb.o'], name_suffix: 'elf',
+                        link_args: [link_args, 'dtb_binary.o'], name_suffix: 'elf',
                         include_directories: includes)
 
 kernel_run = run_target('kernel-start', depends: [kernel_elf],

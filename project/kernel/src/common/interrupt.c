@@ -1,10 +1,10 @@
-#include <debug.h>
 #include <chipset.h>
 #include <interrupt.h>
 #include <interrupt_handler.h>
 #include <mmio.h>
 #include <stdio.h>
 #include <vm2.h>
+#include <debug.h>
 
 /* copy vector table from wherever QEMU loads the kernel to 0x00 */
 void init_vector_table() {
@@ -85,18 +85,18 @@ long syscall_handler(void) {
     register int reg1 asm("r1");
     register int reg2 asm("r2");
     register int reg3 asm("r3");
-    int callNumber = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
+    int callNumber = reg7, r0 = reg0, r1 = reg1, r2 = reg2, r3 = reg3;
 
     kprintf("SOFTWARE INTERRUPT HANDLER\n");
 
     // Print out syscall # for debug purposes
     kprintf("Syscall #: ");
     kprintf("%d\n", callNumber);
+    kprintf("arg0=%d\n", r0);
     kprintf("arg1=%d\n", r1);
     kprintf("arg2=%d\n", r2);
     kprintf("arg3=%d\n", r3);
     kprintf("\n");
-
 
     // System Call Handler
     switch (callNumber) {
@@ -110,7 +110,7 @@ long syscall_handler(void) {
             return 0L;
             break;
 
-            // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
+        // NOTE: All FS syscalls have been *DISABLED* until the filesystem works again.
         case SYSCALL_CREATE:
             kprintf("Create system call called!\n");
             debug_run();

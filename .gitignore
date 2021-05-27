@@ -16,6 +16,9 @@ builddir/
 src/toolchain/
 toolchain/
 !src/toolchain/build.sh
+project/scripts/qemu-*/
+*.bz2
+arm-none-eabi/
 
 # Qemu dir, again without its buildscript
 src/qemu/

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PREFIX=$(pwd)/arm-none-eabi
-TARGET=$(pwd)/target
+PREFIX=$(pwd)/../../arm-none-eabi
+TARGET=$(pwd)/../../target
 URL=ftp://ftp.gnu.org/gnu
 
 # toolchain

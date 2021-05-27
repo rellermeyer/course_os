@@ -39,6 +39,12 @@
 
 // Currently states the panic and stalls the machine or exits iff run
 // within qemu with semihosting enabled.
+void inline simple_panic() {
+    // Find some way to indicate to the user that everything is borked.
+    SemihostingOSExit(-1);
+    SLEEP;
+}
+
 void inline panic() {
     disable_interrupt(BOTH);
     #ifndef _MEME_PANIC

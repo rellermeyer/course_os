@@ -8,7 +8,7 @@
 .global load_state_irq
 .global get_previous_sp
 .global save_to_previous_sp
-.global perform_syscall
+
 .extern chipset
 
 // Subroutine definitions
@@ -18,7 +18,7 @@
 
 #ifndef INTERRUPT_HANDLER_S
 #define INTERRUPT_HANDLER_S
-.include "../src/scheduler/dispatcher.s"
+.include "src/scheduler/dispatcher.s"
 #endif
 
 .macro enter_priviledged_previous_mode
@@ -50,7 +50,6 @@
 
 // Disable interrupts? (IRQ, reset?)
 handle_swi:
-    push {lr}
     // Put swi number in r7
     push {r7}                   // Save r7
     ldr r7, [lr, #-4]           // SWI Instruction where we left off
@@ -61,15 +60,6 @@ handle_swi:
     bl syscall_handler
     pop {lr}
 
-    ## Whenever the SVC uses 0, the syscall is coming from the
-    ## kernel. This means that there might not be a process to
-    ## schedule. Arguably only useful for debugging purposes.
-    cmp r7, #0
-    pop {r7}
-    ble handle_swi_finish
-
-handle_swi_user:
-    // Save the state of the process calling the software interrupt
     pop {r7}                    // Restore r7
 
     // Save the state of the process calling the software interrupt
@@ -79,8 +69,6 @@ handle_swi_user:
     // Load the next process
     _load_state_swi r0
 
-handle_swi_finish:
-    pop {pc}
 
 handle_irq:
     push {lr}                   // Save lr for the execution state, since it's gonna be lost when branching
@@ -128,7 +116,6 @@ save_state_irq:
     stmfd sp!, {lr}             // Target mode lr
 
     ldmfd r1!, {r2}             // Target mode pc
-
     adds r2, #-4                // Compensate, historic reasons don't ask me why
     stmfd sp!, {r2}             // Actually put it on there
 
@@ -192,23 +179,16 @@ _switch_to_usermode:
     add r12, #0x4
     MOVS pc, r12
 
-perform_syscall:
-    push {lr}
-    mov r12, pc
-    mov r4, sp
-    svc 0
-    pop {pc}
-
 _userspace_test_program:
     mov r12, pc
     mov r4, sp
-    mov r0, #10
+    mov r0, #99
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3
-    svc 100
+    svc 0
     mov r4, sp
-    mov r0, #120
+    mov r0, #69
     mov r1, #0x1
     mov r2, #0x2
     mov r3, #0x3

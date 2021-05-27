@@ -35,7 +35,7 @@
     stmfd sp!, {lr}                 // Save the user registers on to the user stack
 
     msr cpsr_c, #Mode_SVC           // Return to svc mode
-    
+
     // Move the banked user's sp into r0
     stmfd sp!, {sp}^                // Save the user sp onto the interrupt stack
     ldmfd sp!, {r0}                 // And load it into r0
@@ -43,7 +43,7 @@
     // Save program status register on the process stack
     mrs r12, spsr                   // Load SPSR into a register (cannot be immeadiatly loaded into memory)
     stmfd r0!, {r12}                // Store it onto the stack
-    
+
     stmfd r0!, {lr}                 // Save user PC onto the stack
 .endm
 
@@ -85,17 +85,16 @@
 .loop\@:
     push { r2 }             // Push a zero
     add r1, #-1             // Count
-    cmp r1, #0          
+    cmp r1, #0
     bne .loop\@             // Continue while it's not zero
 
-    // Push new cpsr 
+    // Push new cpsr
     mov r2, #0b10010000     // IRQs are enabled and FIQs aren't [100], mode is user mode [10000]
     push { r2 }             // Put it on the stack
 
     push { \new_pc }        // Put the new user program counter on the stack
-  
+
     // Return
     mov \new_sp, sp         // Update the 'new_sp', to point to the ExectionState
     msr cpsr_c, #Mode_SVC   // Return to system mode
 .endm
-

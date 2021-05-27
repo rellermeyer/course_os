@@ -12,11 +12,12 @@ SECTIONS
         */src_common_startup.s.o (.text)
         */src_common_startup.s.o (.data)
         */src_common_startup.s.o (.bss)
-    __DTB_START = .;
-        */src_common_dtb.c.o (.data)
         */src_common_stacks.s.o (.text)
         */src_common_memory.s.o (.text)
         */src_common_memory.s.o (.data)
+
+    __DTB_START = .;
+        dtb_binary.o (.data)
     }
     __BOOT_END = .;
 

@@ -2,7 +2,8 @@
 #include <scheduler.h>
 #include <math.h>
 #include <stdio.h>
-#include <vas2.h>
+#include <interrupt.h>
+#include <interrupt_handler.h>
 
 #define TIME_SLICE_MS       100
 #define MINSLEEPTIME        20
@@ -12,12 +13,11 @@ ProcessControlBlock * sleepQueue;
 
 int timer = 0;
 
-void init_scheduler(void) {
-    kprintf("setting the scheduler periodic interupt\n");
+void init_scheduler() {
     chipset.schedule_timer_periodic(&schedulerTimerCallback, TIME_SLICE_MS);
 }
 
-void schedulerTimerCallback(void) {
+void schedulerTimerCallback() {
     timer += TIME_SLICE_MS;
 
     // Check if any sleeping processes can be awoken
@@ -37,8 +37,6 @@ void schedulerTimerCallback(void) {
     asm volatile("push {lr}");
     asm volatile("bl save_to_previous_sp");
     asm volatile("pop {lr}");
-
-    kprintf("schedulertimer interupt called");
 }
 
 void sleep(int id, int sleepTime)
@@ -70,7 +68,7 @@ void remove(int id) {
     removePCBNode(findNode(id, sleepQueue));
 }
 
-void getNext(void) {
+void * getNext() {
     // Check if any possible processes
     if (queue == NULL) {
         FATAL("(no processes active)");
@@ -78,8 +76,11 @@ void getNext(void) {
     // Get next process
     queue = queue->next;
     switch_to_vas(queue->vas);
+
+    return queue->executionState;
 }
 
-void schedule(void) {
+void * schedule(void * executionState) {
+    queue->executionState = executionState;
     return getNext();
 }
