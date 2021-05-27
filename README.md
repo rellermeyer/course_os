@@ -33,7 +33,7 @@ qemu-system-arm -kernel kernel.elf -m 1G -serial stdio -monitor none -M raspi2 -
 
 ## Toolchain
 To build and run the project, you will need a cross compiler. Since the kernel is made to run on ARM, the compiler has to output ARM instructions.
-You can find in scripts to install known working versions of qemu and the compilation toolchain. Run those and add the generated bin directories to your PATH. 
+You can find in scripts to install known working versions of qemu and the compilation toolchain. Run those and add the generated bin directories to your PATH.
 
 ## Running
 
@@ -53,14 +53,14 @@ ninja run-kernel
 To run the test suite for the kernel, execute:
 
 ```bash
-make run-test
+ninja run-test
 ```
 
 ## Debugging
 
 To debug the kernel, you have to perform two steps. First you have to build and start the kernel with
 ```bash
-make run-debug
+ninja run-debug
 ```
 
 This prepares qemu so it waits for a debugger to be attached.
@@ -69,7 +69,7 @@ now, if you have CLion or VSCode you can run the supplied run configuration call
 
 If however you don't have either of those IDEs, or want to use gdb from a terminal, one can run the following command:
 ```bash
-make run-gdb
+ninja run-gdb
 ```
 
 # Creating tests
@@ -85,7 +85,7 @@ This file can *not* be used to actually run the kernel but it does give clion th
 
 ## Emacs/Vim + CCLS
 
-You can use the `compile_commands.json` from the kernel build directory by creating a softlink from that file to this directory. Doing so will keep it up to date. 
+You can use the `compile_commands.json` from the kernel build directory by creating a softlink from that file to this directory. Doing so will keep it up to date.
 
 ## Emacs + GDB
 

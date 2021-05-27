@@ -74,8 +74,6 @@ void load_process() {
 /// This function is called by the assembly located in [startup.s].
 /// The MMU has already been initialized here but only the first MiB of the kernel has been mapped.
 void start(uint32_t * p_bootargs, struct DTHeader * dtb) {
-    4 + 2;
-
     // Before this point, all code has to be hardware independent.
     // After this point, code can request the hardware info struct to find out what
     // Code should be ran.

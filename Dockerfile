@@ -9,5 +9,5 @@ EXPOSE 1234
 
 # Since we installed the toolchain from the repositories we don't need
 # to install them separately. So we can just fake 'em.
-RUN cd kernel && meson build --cross-file ../cross_gcc.build && cd build && meson compile
-VOLUME build /work/kernel/build
+RUN meson build --cross-file cross_gcc.build && cd build && meson compile
+#VOLUME build /work/kernel/build
