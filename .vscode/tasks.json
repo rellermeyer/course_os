@@ -38,7 +38,7 @@
             },
             "problemMatcher": {
                 "pattern": {
-                    "regexp": "^.*$",
+                    "regexp": "^.*$"
                 },
                 "background": {
                     "activeOnStart": true,
@@ -51,7 +51,8 @@
             "label": "stop_debug",
             "detail": "Stops the qemu emulator at port 1234",
             "type": "shell",
-            "command": "kill $(sudo lsof -t -i:1234)",
+
+            "command": "kill $(sudo lsof -t -i:1234)"
         }
     ]
 }

@@ -2,11 +2,14 @@
 .github
 .idea
 .vscode
+projet/build/
+project/kernel/build/
 
 src/toolchain/
 src/qemu/
 !src/toolchain/build.sh
 src/build/
+src/kernel/build
 !src/build/build.sh
 src/docs/
 src/html/

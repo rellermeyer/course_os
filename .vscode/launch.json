@@ -2,6 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
+
             "name": "(gdb) Attach - C/C++",
             "type": "cppdbg",
             "request": "launch",
@@ -12,14 +13,15 @@
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
-                    "ignoreFailures": true,
+                    "ignoreFailures": true
                 }
             ],
             "linux": {
-                "MIMode": "gdb",
+                "MIMode": "gdb"
             },
             "miDebuggerServerAddress": "localhost:1234",
-            "preLaunchTask": "run_debug",
+            "preLaunchTask": "run_debug"
+
         },
         {
             "name": "(gdb) Attach - Native",
@@ -32,7 +34,8 @@
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
             "preLaunchTask": "run_debug",
-            "postDebugTask": "stop_debug",
-        },
+            "postDebugTask": "stop_debug"
+        }
     ]
 }
+

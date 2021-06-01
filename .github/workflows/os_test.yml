@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        
+
       - name: build
         run: docker build -t course_os .
-        
+
       - name: test
-        run: docker run course_os make test
+        run: docker run course_os sh -c 'cd build && ninja run-test'
