@@ -150,13 +150,14 @@ if __name__ == "__main__":
     argument = 0
     try:
         argument = int(sys.argv[1])
-        random.seed(argument)
+
+        if argument == -1:
+            import os
+            TESTDIR = os.environ['MESON_SOURCE_ROOT'] + '/' + TESTDIR
+        else:
+            random.seed(argument)
     except IndexError:
         pass
-
-    if argument == -1:
-        import os
-        os.chdir(os.environ['MESON_SOURCE_ROOT'])
 
     env = Environment(loader=FileSystemLoader(TESTDIR))
 

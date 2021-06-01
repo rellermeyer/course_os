@@ -24,7 +24,7 @@ subdir('src')
 
 prog_python = import('python').find_installation('python3')
 
-test_files = run_command(prog_python, 'src/test_suite/generate_tests.py')\
+test_files = run_command(prog_python, 'src/test_suite/generate_tests.py', '-1')\
                         .stdout().strip().split('\n')
 
 dtb = run_target('gen-dtb', command: ['sh', '-c',

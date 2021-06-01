@@ -2,6 +2,8 @@
 .github
 .idea
 .vscode
+projet/build/
+project/kernel/build/
 
 src/toolchain/
 src/qemu/
